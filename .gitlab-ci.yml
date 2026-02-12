@@ -10,6 +10,8 @@ backend:test:
   script:
     - cd api
     - mvn -B test
+  tags:
+    - docker
 
 backend:build:
   stage: build
