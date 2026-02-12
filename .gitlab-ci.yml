@@ -1,0 +1,45 @@
+stages: [test, build]
+
+backend:test:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  rules:
+    - changes:
+        - backend/**/*
+        - .gitlab-ci.yml
+  script:
+    - cd backend
+    - mvn -B test
+
+backend:build:
+  stage: build
+  image: maven:3.9.9-eclipse-temurin-21
+  rules:
+    - changes:
+        - backend/**/*
+        - .gitlab-ci.yml
+  script:
+    - cd backend
+    - mvn -B -DskipTests package
+  artifacts:
+    when: always
+    paths:
+      - backend/target/*.jar
+    expire_in: 1 week
+
+frontend:build:
+  stage: build
+  image: node:20-alpine
+  rules:
+    - changes:
+        - frontend/**/*
+        - .gitlab-ci.yml
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    when: always
+    paths:
+      - frontend/dist/
+    expire_in: 1 week
