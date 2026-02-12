@@ -28,6 +28,8 @@ backend:build:
     paths:
       - api/target/*.jar
     expire_in: 1 week
+  tags:
+    - docker
 
 frontend:build:
   stage: build
@@ -45,4 +47,5 @@ frontend:build:
     paths:
       - frontend/dist/
     expire_in: 1 week
-
+  tags:
+    - docker
