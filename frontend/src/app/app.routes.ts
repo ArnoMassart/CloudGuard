@@ -10,11 +10,13 @@ import { AppPasswords } from './pages/security-section/app-passwords/app-passwor
 import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
 import { LicensesBilling } from './pages/control-section/licenses-billing/licenses-billing';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: Home,
+    canActivate: [authGuard],
   },
   {
     path: 'login',
@@ -23,38 +25,47 @@ export const routes: Routes = [
   {
     path: 'users-groups',
     component: UsersGroups,
+    canActivate: [authGuard],
   },
   {
     path: 'organizational-units',
     component: OrganizationalUnits,
+    canActivate: [authGuard],
   },
   {
     path: 'shared-drives',
     component: SharedDrives,
+    canActivate: [authGuard],
   },
   {
     path: 'mobile-devices',
     component: MobileDevices,
+    canActivate: [authGuard],
   },
   {
     path: 'app-access',
     component: AppAccess,
+    canActivate: [authGuard],
   },
   {
     path: 'app-passwords',
     component: AppPasswords,
+    canActivate: [authGuard],
   },
   {
     path: 'domain-dns',
     component: DomainDns,
+    canActivate: [authGuard],
   },
   {
     path: 'licenses-billing',
     component: LicensesBilling,
+    canActivate: [authGuard],
   },
   {
     path: 'reports-reactions',
     component: ReportsReactions,
+    canActivate: [authGuard],
   },
   {
     path: 'test',

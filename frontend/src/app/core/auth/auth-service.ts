@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { RouteService } from './route-service';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { RouteService } from '../../services/route-service';
+import { BehaviorSubject, Observable, ReplaySubject, tap } from 'rxjs';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -12,7 +12,18 @@ export class AuthService {
   readonly #http = inject(HttpClient);
   readonly #router = inject(Router);
 
-  #loggedInStatus = new BehaviorSubject<boolean>(this.#hasToken());
+  #loggedInStatus = new ReplaySubject<boolean>(1);
+
+  constructor() {
+    this.#checkServerSession();
+  }
+
+  #checkServerSession() {
+    this.#http.get(`${this.#API_URL}/check-session`, { withCredentials: true }).subscribe({
+      next: () => this.#loggedInStatus.next(true),
+      error: () => this.#loggedInStatus.next(false),
+    });
+  }
 
   logout(): Observable<void> {
     return this.#http
@@ -20,7 +31,7 @@ export class AuthService {
         `${this.#API_URL}/logout`,
         {},
         {
-          withCredentials: true, // Cruciaal: stuurt de HttpOnly cookie mee naar de server
+          withCredentials: true,
         },
       )
       .pipe(

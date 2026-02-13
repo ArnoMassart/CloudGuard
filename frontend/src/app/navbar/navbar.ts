@@ -17,7 +17,7 @@ import { NavItem } from './nav-item/nav-item';
 import { MatDialog } from '@angular/material/dialog';
 import { LogOutDialog } from '../log-out-dialog/log-out-dialog';
 import { CookieService } from 'ngx-cookie-service';
-import { AuthService } from '../services/auth-service';
+import { AuthService } from '../core/auth/auth-service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -58,7 +58,6 @@ export class Navbar {
 
   openLogoutDialog(): void {
     // create session token for example
-    this.cookieService.set('AuthToken', 'test', 1, '/', undefined, true, 'Strict');
     localStorage.setItem('Userdata', 'TEst');
     sessionStorage.setItem('Sessiondata', 'TEST');
 
