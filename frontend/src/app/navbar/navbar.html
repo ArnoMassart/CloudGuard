@@ -1,6 +1,6 @@
 <nav class="h-full flex flex-col bg-navbar-background p-5 animation-fade-in">
   <div class="flex items-center gap-4 pb-7 px-4">
-    <i-lucide [img]="Shield" size="30" class="text-primary"></i-lucide>
+    <i-lucide [img]="Shield" size="30" class="text-primary" />
     <h2 class="text-white font-bold text-2xl">CloudGuard</h2>
   </div>
   <span class="text-muted-foreground font-medium text-sm px-4 pb-2 tracking-wider">SECURITY</span>
@@ -29,13 +29,15 @@
       </div>
 
       <div class="flex flex-col min-w-0">
-        <span class="text-white truncate font-medium leading-tight">
-          Jan Janssenhkjlsdnfvsdjbkfgsjf
-        </span>
+        <span class="text-white truncate font-medium leading-tight"> Jan Janssen </span>
         <span class="text-muted-foreground text-sm leading-tight"> Admin </span>
       </div>
     </div>
 
-    <i-lucide [img]="LogOut" size="20" class="text-muted-foreground shrink-0 ml-4"></i-lucide>
+    <div class="shrink-0 ml-4">
+      <div class="logout rounded-md">
+        <i-lucide [img]="LogOut" size="20" class="text-muted-foreground cursor-pointer" />
+      </div>
+    </div>
   </div>
 </nav>
