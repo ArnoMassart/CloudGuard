@@ -1,0 +1,51 @@
+stages: [test, build]
+
+backend:test:
+  stage: test
+  image: maven:3.9.9-eclipse-temurin-21
+  rules:
+    - changes:
+        - api/**/*
+        - .gitlab-ci.yml
+  script:
+    - cd api
+    - mvn -B test
+  tags:
+    - docker
+
+backend:build:
+  stage: build
+  image: maven:3.9.9-eclipse-temurin-21
+  rules:
+    - changes:
+        - api/**/*
+        - .gitlab-ci.yml
+  script:
+    - cd api
+    - mvn -B -DskipTests package
+  artifacts:
+    when: always
+    paths:
+      - api/target/*.jar
+    expire_in: 1 week
+  tags:
+    - docker
+
+frontend:build:
+  stage: build
+  image: node:20-alpine
+  rules:
+    - changes:
+        - frontend/**/*
+        - .gitlab-ci.yml
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    when: always
+    paths:
+      - frontend/dist/
+    expire_in: 1 week
+  tags:
+    - docker
