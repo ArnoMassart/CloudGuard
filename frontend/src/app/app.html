@@ -1,8 +1,12 @@
-<div class="main-wrapper">
-  @if (showNavbar) {
-    <app-navbar />
-  }
-  <main class="content-area">
-    <router-outlet />
-  </main>
-</div>
+@if (hasSeenSplash()) {
+  <div class="main-wrapper">
+    @if (showNavbar) {
+      <app-navbar />
+    }
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+} @else {
+  <app-splash-screen (animationFinished)="onSplashEnded()" />
+}
