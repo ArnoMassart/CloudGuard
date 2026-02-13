@@ -1,0 +1,30 @@
+.selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.icon {
+  color: var(--color-navbar-foreground-not-selected);
+  transition: color 0.3s ease-in-out;
+}
+
+li {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+li:not(.selected):hover {
+  background-color: color-mix(
+    in srgb,
+    var(--color-navbar-foreground-not-selected) 20%,
+    transparent
+  );
+}
+
+.selected > .icon,
+.selected > a {
+  color: white;
+}
+
+.a {
+  transition: color 0.3s ease-in-out;
+}
