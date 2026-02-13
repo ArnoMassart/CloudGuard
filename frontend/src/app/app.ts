@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { Navbar } from './navbar/navbar';
 
 @Component({
@@ -10,4 +10,13 @@ import { Navbar } from './navbar/navbar';
 })
 export class App {
   protected readonly title = signal('CloudGuard');
+  readonly #router = inject(Router);
+
+  showNavbar: boolean = true;
+
+  ngOnInit(): void {
+    this.#router.events.subscribe(() => {
+      this.showNavbar = !this.#router.url.includes('/login');
+    });
+  }
 }

@@ -17,6 +17,10 @@ export const routes: Routes = [
     component: Home,
   },
   {
+    path: 'login',
+    component: ApiTest,
+  },
+  {
     path: 'users-groups',
     component: UsersGroups,
   },

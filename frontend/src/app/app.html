@@ -1,6 +1,8 @@
 <div class="main-wrapper">
+  @if (showNavbar) {
     <app-navbar />
-    <main class="content-area">
-        <router-outlet />
-    </main>
+  }
+  <main class="content-area">
+    <router-outlet />
+  </main>
 </div>
