@@ -29,7 +29,7 @@ export class Navbar {
 
   readonly NavItemsSecurity = [
     { Icon: Shield, Label: 'Dashboard', Route: '/' },
-    { Icon: Users, Label: 'Gebruikers & Groepen', Route: '/users' },
+    { Icon: Users, Label: 'Gebruikers & Groepen', Route: '/users-groups' },
     { Icon: Building2, Label: 'Organisatie-eenheden', Route: '/organizational-units' },
     { Icon: FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
     { Icon: Smartphone, Label: 'Mobiele Apparaten', Route: '/mobile-devices' },
@@ -39,7 +39,7 @@ export class Navbar {
   ];
 
   readonly NavItemsControl = [
-    { Icon: CreditCard, Label: 'Licenties & Billing', Route: '/licenses' },
-    { Icon: Bell, Label: 'Meldingen & Feedback', Route: '/reports' },
+    { Icon: CreditCard, Label: 'Licenties & Billing', Route: '/licenses-billing' },
+    { Icon: Bell, Label: 'Meldingen & Feedback', Route: '/reports-reactions' },
   ];
 }

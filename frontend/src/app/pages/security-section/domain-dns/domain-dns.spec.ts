@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Users } from './users';
+import { DomainDns } from './domain-dns';
 
-describe('Users', () => {
-  let component: Users;
-  let fixture: ComponentFixture<Users>;
+describe('DomainDns', () => {
+  let component: DomainDns;
+  let fixture: ComponentFixture<DomainDns>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Users]
+      imports: [DomainDns]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(Users);
+    fixture = TestBed.createComponent(DomainDns);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
