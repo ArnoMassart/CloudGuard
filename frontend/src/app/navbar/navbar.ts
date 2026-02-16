@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
 import { CommonModule } from '@angular/common';
 import {
@@ -16,6 +16,8 @@ import {
   LogOut,
 } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
+import { Profile } from '../pages/profile/profile';
+import { RouterLinkActive, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { LogOutDialog } from '../log-out-dialog/log-out-dialog';
 import { CookieService } from 'ngx-cookie-service';
@@ -25,6 +27,7 @@ import { Router } from '@angular/router';
 @Component({
   standalone: true,
   selector: 'app-navbar',
+  imports: [LucideAngularModule, NavItem, RouterLinkActive, RouterLink, CommonModule, Profile],
   imports: [LucideAngularModule, NavItem, RouterLinkActive, RouterLink, CommonModule],
   imports: [LucideAngularModule, NavItem],
   templateUrl: './navbar.html',
@@ -36,6 +39,7 @@ export class Navbar {
 
   readonly  user$ = this.auth.user$;
   readonly isLoading$ = this.auth.isLoading$;
+  readonly profilePopupOpen = signal(false);
 
   readonly Shield = Shield;
   readonly LogOut = LogOut;
@@ -69,6 +73,14 @@ export class Navbar {
     if (user.email)
       return user.email.slice(0, 2).toUpperCase();
     return '?';
+  }
+
+  openProfilePopup(){
+    this.profilePopupOpen.set(true);
+  }
+
+  closeProfilePopup(){
+    this.profilePopupOpen.set(false);
   }
 
   readonly dialog = inject(MatDialog);
