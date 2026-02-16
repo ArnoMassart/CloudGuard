@@ -2,23 +2,36 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.UserDto;
+import com.cloudmen.cloudguard.repository.UserRepository;
+import com.sun.jdi.event.ExceptionEvent;
+import org.slf4j.Logger;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public AuthService(UserService userService, JwtService jwtService) {
+    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     public LoginResult processLogin(String externalIdToken) {
         // 1. Decode the token to get all details (Name, Picture, Email)
         Jwt jwt = jwtService.decodeGoogleToken(externalIdToken);
+
+        if (!jwtService.isGoogleAdmin(jwt)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: Non-Admin User");
+        }
 
         String email = jwt.getClaimAsString("email");
 
@@ -47,6 +60,20 @@ public class AuthService {
         newUser.setCreatedAt(java.time.LocalDateTime.now());
 
         return userService.save(newUser);
+    }
+
+    public UserDto validateSession(String token) {
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+
+        try {
+            String email = jwtService.validateInternalToken(token);
+
+            return userRepository.findByEmail(email).map(userService::convertToDto).orElse(null);
+        } catch (Exception e ) {
+            return null;
+        }
     }
 
     public ResponseCookie createEmptyCookie() {
