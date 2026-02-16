@@ -1,6 +1,8 @@
 <div class="main-wrapper">
-    <app-navbar />
-    <main class="content-area">
+    @if (router.url !== '/login') {
+        <app-navbar />
+      }
+    <main class="content-area" [class.no-padding]="router.url === '/login'">
         <router-outlet />
     </main>
 </div>
