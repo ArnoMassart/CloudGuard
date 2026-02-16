@@ -23,7 +23,3 @@
   justify-content: center;
   padding: 1rem;
 }
-
-.profile-popup-container {
-  /* no need to size; app-profile has min/max width */
-}
