@@ -16,16 +16,12 @@ import { authGuard } from './core/auth/auth.guard';
 export const routes: Routes = [
   {
     path: 'login',
-    component: Login
+    component: Login,
   },
   {
     path: '',
     component: Home,
     canActivate: [authGuard],
-  },
-  {
-    path: 'login',
-    component: ApiTest,
   },
   {
     path: 'users-groups',

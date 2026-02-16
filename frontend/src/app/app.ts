@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Navbar } from './navbar/navbar';
-import { AuthService } from './core/auth/auth-service';
+import { CustomAuthService } from './core/auth/custom-auth-service';
 import { CommonModule } from '@angular/common';
 import { SplashScreen } from './components/splash-screen/splash-screen';
 
@@ -14,7 +14,7 @@ import { SplashScreen } from './components/splash-screen/splash-screen';
 export class App {
   protected readonly title = signal('CloudGuard');
   readonly #router = inject(Router);
-  readonly authService = inject(AuthService);
+  readonly authService = inject(CustomAuthService);
 
   showNavbar: boolean = true;
   showSplash = true;

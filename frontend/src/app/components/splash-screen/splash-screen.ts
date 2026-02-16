@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
 import { Shield, Code, LucideAngularModule } from 'lucide-angular';
-import { AuthService } from '../../core/auth/auth-service';
+import { CustomAuthService } from '../../core/auth/custom-auth-service';
 
 @Component({
   selector: 'app-splash-screen',
@@ -14,7 +14,7 @@ export class SplashScreen {
   readonly shieldIcon = Shield;
   readonly codeIcon = Code;
 
-  #authService: AuthService = inject(AuthService);
+  #authService: CustomAuthService = inject(CustomAuthService);
 
   @Output() animationFinished = new EventEmitter<void>();
 

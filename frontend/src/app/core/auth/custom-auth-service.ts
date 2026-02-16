@@ -1,14 +1,16 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { RouteService } from '../../services/route-service';
 import { BehaviorSubject, Observable, ReplaySubject, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, tap, timeout } from 'rxjs/operators';
+import { User } from '../../models/User';
+import { AuthService } from '@auth0/auth0-angular';
 
 @Injectable({
   providedIn: 'root',
 })
-export class AuthService {
+export class CustomAuthService {
   readonly #API_URL = RouteService.getBackendUrl('/auth');
   readonly #http = inject(HttpClient);
   readonly #router = inject(Router);
@@ -17,6 +19,10 @@ export class AuthService {
   readonly #loggedInStatus = new ReplaySubject<boolean>(1);
   // BehaviorSubject voor de @if check in de HTML
   readonly #initializedStatus = new BehaviorSubject<boolean>(false);
+
+  readonly #auth0 = inject(AuthService);
+
+  readonly currentUser = signal<User | null>(null);
 
   constructor() {
     this.#checkServerSession();
@@ -33,7 +39,7 @@ export class AuthService {
         catchError((err) => {
           // If it's a 401, catchError triggers. We return 'null' to signal "not logged in"
           return of(null);
-        }),
+        })
       )
       .subscribe((res) => {
         // If res exists and status is 200-299, the user is authenticated
@@ -55,19 +61,31 @@ export class AuthService {
       });
   }
 
-  logout(): Observable<void> {
-    return this.#http.post<void>(`${this.#API_URL}/logout`, {}, { withCredentials: true }).pipe(
-      tap(() => {
-        this.#completeLogout();
-      }),
-    );
+  logout(): void {
+    this.#http.post(`${this.#API_URL}/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => {
+        this.#performAuth0Logout();
+      },
+      error: () => {
+        this.#performAuth0Logout();
+      },
+    });
+  }
+
+  #performAuth0Logout() {
+    this.#completeLogout();
+
+    this.#auth0.logout({
+      logoutParams: {
+        returnTo: window.location.origin + '/login',
+      },
+    });
   }
 
   #completeLogout(): void {
     this.#loggedInStatus.next(false);
+    this.currentUser.set(null);
     localStorage.clear();
-    sessionStorage.clear();
-    this.#router.navigate(['/login']);
   }
 
   get isLoggedIn$(): Observable<boolean> {
@@ -76,5 +94,23 @@ export class AuthService {
 
   get isInitialized$(): Observable<boolean> {
     return this.#initializedStatus.asObservable();
+  }
+
+  /**
+   * 1. Receives the ID Token from Auth0/Google
+   * 2. Sends it to Backend
+   * 3. Backend validates & sets HttpOnly Cookie
+   * 4. Frontend updates state
+   */
+  loginWithGoogle(idToken: string): Observable<User> {
+    return this.#http
+      .post<User>(`${this.#API_URL}/login`, { token: idToken }, { withCredentials: true })
+      .pipe(
+        tap((user) => {
+          this.currentUser.set(user);
+          this.#loggedInStatus.next(true);
+          this.#initializedStatus.next(true);
+        })
+      );
   }
 }

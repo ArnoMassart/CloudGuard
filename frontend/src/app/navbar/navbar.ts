@@ -17,7 +17,7 @@ import { NavItem } from './nav-item/nav-item';
 import { MatDialog } from '@angular/material/dialog';
 import { LogOutDialog } from '../log-out-dialog/log-out-dialog';
 import { CookieService } from 'ngx-cookie-service';
-import { AuthService } from '../core/auth/auth-service';
+import { CustomAuthService } from '../core/auth/custom-auth-service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -52,15 +52,11 @@ export class Navbar {
 
   readonly cookieService = inject(CookieService);
 
-  readonly authService = inject(AuthService);
+  readonly authService = inject(CustomAuthService);
 
   readonly router = inject(Router);
 
   openLogoutDialog(): void {
-    // create session token for example
-    localStorage.setItem('Userdata', 'TEst');
-    sessionStorage.setItem('Sessiondata', 'TEST');
-
     const ref = this.dialog.open(LogOutDialog, {
       width: '500px',
     });
@@ -73,8 +69,6 @@ export class Navbar {
   }
 
   onLogout() {
-    this.authService.logout().subscribe({
-      error: (err) => console.error('Er ging iets mis bij het uitloggen', err),
-    });
+    this.authService.logout();
   }
 }

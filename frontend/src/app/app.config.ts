@@ -15,6 +15,7 @@ export const appConfig: ApplicationConfig = {
         redirect_uri: window.location.origin,
         audience: 'https://cloudguard-api',
       },
+      cacheLocation: 'memory',
     }),
   ],
 };
