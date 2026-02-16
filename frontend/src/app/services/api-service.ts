@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { BACKEND_URL } from '../../../env';
 import { Observable } from 'rxjs';
 import { RouteService } from './route-service';
 
