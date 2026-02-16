@@ -1,8 +1,12 @@
+@if (hasSeenSplash()) {
 <div class="main-wrapper">
-    @if (router.url !== '/login') {
-        <app-navbar />
-      }
-    <main class="content-area" [class.no-padding]="router.url === '/login'">
-        <router-outlet />
-    </main>
+  @if (showNavbar) {
+  <app-navbar />
+  }
+  <main class="content-area">
+    <router-outlet></router-outlet>
+  </main>
 </div>
+} @else {
+<app-splash-screen (animationFinished)="onSplashEnded()" />
+}

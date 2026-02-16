@@ -1,0 +1,19 @@
+<div class="px-6 py-4 flex flex-col gap-2">
+  <h3 class="pt-1">Uitloggen</h3>
+  <span class="text-sm text-muted-foreground"> Weet u zeker dat u wilt uitloggen? </span>
+  <div class="flex items-center justify-end my-2 gap-2">
+    <button
+      class="border border-muted rounded-md py-1.5 px-3 text-sm hover:bg-muted/80 cursor-pointer transition-background-color ease-in-out duration-300"
+      mat-dialog-close
+      cdkFocusInitial
+    >
+      Annuleren
+    </button>
+    <button
+      class="bg-primary text-white border border-muted rounded-md py-1.5 px-3 text-sm cursor-pointer hover:bg-primary/80 transition ease-in-out duration-300"
+      [mat-dialog-close]="true"
+    >
+      Uitloggen
+    </button>
+  </div>
+</div>

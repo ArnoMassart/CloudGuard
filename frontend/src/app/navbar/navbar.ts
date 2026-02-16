@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   LucideAngularModule,
   Shield,
@@ -14,14 +14,19 @@ import {
   LogOut,
 } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
-import { RouterLinkActive, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { LogOutDialog } from '../log-out-dialog/log-out-dialog';
+import { CookieService } from 'ngx-cookie-service';
+import { CustomAuthService } from '../core/auth/custom-auth-service';
+import { Router } from '@angular/router';
 
 @Component({
   standalone: true,
   selector: 'app-navbar',
-  imports: [LucideAngularModule, NavItem, RouterLinkActive, RouterLink],
+  imports: [LucideAngularModule, NavItem],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
+  providers: [CookieService],
 })
 export class Navbar {
   readonly Shield = Shield;
@@ -42,4 +47,28 @@ export class Navbar {
     { Icon: CreditCard, Label: 'Licenties & Billing', Route: '/licenses-billing' },
     { Icon: Bell, Label: 'Meldingen & Feedback', Route: '/reports-reactions' },
   ];
+
+  readonly dialog = inject(MatDialog);
+
+  readonly cookieService = inject(CookieService);
+
+  readonly authService = inject(CustomAuthService);
+
+  readonly router = inject(Router);
+
+  openLogoutDialog(): void {
+    const ref = this.dialog.open(LogOutDialog, {
+      width: '500px',
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (result == true) {
+        this.onLogout();
+      }
+    });
+  }
+
+  onLogout() {
+    this.authService.logout();
+  }
 }
