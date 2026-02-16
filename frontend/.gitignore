@@ -46,3 +46,5 @@ Thumbs.db
 /.editorconfig
 /.vscode
 .env
+
+proxy.conf.js
