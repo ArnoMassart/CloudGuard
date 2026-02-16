@@ -1,0 +1,23 @@
+<div class="profile-popup">
+  <header class="profile-header">
+    <h3>Profiel</h3>
+    <button type="button" (click)="close()" aria-label="Sluiten">×</button>
+  </header>
+  @if (user$ | async; as user) {
+    <div class="profile-body">
+      <div class="profile-avatar">
+        @if (user.picture) {
+          <img [src]="user.picture" alt="" />
+        } @else {
+          <span>{{ getInitials(user) }}</span>
+        }
+      </div>
+      <p class="profile-name">{{ user.name ?? user.email ?? 'Gebruiker' }}</p>
+      @if (user.email) {
+        <p class="profile-email">{{ user.email }}</p>
+      }
+      <p class="profile-role">Admin</p>
+      <button type="button" class="profile-logout" (click)="logout()">Uitloggen</button>
+    </div>
+  }
+</div>
