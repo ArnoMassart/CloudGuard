@@ -19,7 +19,9 @@ export class Login {
       .loginWithRedirect({
         authorizationParams: { connection: 'google-oauth2' },
       })
-      .subscribe();
+      .subscribe({
+        error: (err) => console.error('Login redirect failed:', err),
+      });
   }
 
 }
