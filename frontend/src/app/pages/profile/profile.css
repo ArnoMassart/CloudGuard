@@ -79,6 +79,18 @@
   line-height: 1.25;
 }
 
+.profile-link {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--primary, #3abfad);
+  text-decoration: none;
+}
+
+.profile-link:hover {
+  text-decoration: underline;
+}
+
 .profile-logout {
   margin-top: 0.5rem;
   padding: 0.5rem 1rem;
