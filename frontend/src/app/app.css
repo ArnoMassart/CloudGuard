@@ -16,3 +16,7 @@ app-navbar {
   overflow-y: auto;
   padding: 20px;
 }
+
+.content-area.no-padding {
+  padding: 0;
+}
