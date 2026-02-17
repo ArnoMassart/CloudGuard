@@ -19,7 +19,7 @@ export class Callback implements OnInit {
   private customAuth = inject(CustomAuthService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-
+  
   ngOnInit(): void {
     const returningFromAuth0 = sessionStorage.getItem('auth0_redirect_pending') === '1';
 
@@ -48,8 +48,7 @@ export class Callback implements OnInit {
         },
         error: (err) => {
           console.error('Login callback error', err);
-          sessionStorage.removeItem('auth0_redirect_pending');
-          this.router.navigate(['/login']);
+          this.router.navigate(['/forbidden']);
         },
       });
   }

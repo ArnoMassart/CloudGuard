@@ -102,6 +102,7 @@ export class CustomAuthService {
     this.#loggedInStatus.next(false);
     this.currentUser.set(null);
     localStorage.clear();
+    sessionStorage.removeItem('auth0_redirect_pending');
   }
 
   get isLoggedIn$(): Observable<boolean> {

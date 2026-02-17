@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '@auth0/auth0-angular';
 import { LucideAngularModule, ShieldCheck } from 'lucide-angular';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -12,6 +13,7 @@ import { LucideAngularModule, ShieldCheck } from 'lucide-angular';
 })
 export class Login {
   private auth0 = inject(AuthService);
+  readonly #router = inject(Router);
 
   readonly ShieldCheck = ShieldCheck;
 

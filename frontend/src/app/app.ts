@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Navbar } from './navbar/navbar';
 import { CustomAuthService } from './core/auth/custom-auth-service';
+import { AuthService } from '@auth0/auth0-angular';
 import { CommonModule } from '@angular/common';
 import { SplashScreen } from './components/splash-screen/splash-screen';
 
@@ -14,6 +15,7 @@ import { SplashScreen } from './components/splash-screen/splash-screen';
 export class App {
   protected readonly title = signal('CloudGuard');
   readonly #router = inject(Router);
+  readonly #auth0 = inject(AuthService);
   readonly authService = inject(CustomAuthService);
 
   showNavbar: boolean = true;
@@ -38,6 +40,10 @@ export class App {
         !this.#router.url.includes('/login') &&
         !this.#router.url.includes('/forbidden') &&
         !this.#router.url.includes('/callback');
+    });
+
+    this.#auth0.error$.subscribe(() => {
+      this.#router.navigate(['/forbidden']);
     });
   }
 }
