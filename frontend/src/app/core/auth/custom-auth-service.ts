@@ -55,8 +55,13 @@ export class CustomAuthService {
             this.#router.navigate(['/']);
           }
         } else {
-          console.warn('No session found. Redirecting to login.');
-          this.#router.navigate(['/login']);
+          const onCallbackPage = window.location.pathname.includes('/callback');
+          const redirectPending = sessionStorage.getItem('auth0_redirect_pending') === '1';
+
+          if (!onCallbackPage && !redirectPending) {
+            console.warn('No session found. Redirecting to login.');
+            this.#router.navigate(['/login']);
+          }
         }
       });
   }
@@ -97,6 +102,7 @@ export class CustomAuthService {
     this.#loggedInStatus.next(false);
     this.currentUser.set(null);
     localStorage.clear();
+    sessionStorage.removeItem('auth0_redirect_pending');
   }
 
   get isLoggedIn$(): Observable<boolean> {
@@ -121,6 +127,7 @@ export class CustomAuthService {
           this.currentUser.set(user);
           this.#loggedInStatus.next(true);
           this.#initializedStatus.next(true);
+          this.#fetchCurrentUser();
         })
       );
   }
