@@ -16,11 +16,6 @@ import { Forbidden } from './pages/forbidden/forbidden';
 
 export const routes: Routes = [
   {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full',
-  },
-  {
     path: 'login',
     component: Login,
   },
@@ -29,7 +24,7 @@ export const routes: Routes = [
     component: Forbidden,
   },
   {
-    path: 'home',
+    path: '',
     component: Home,
     canActivate: [authGuard],
   },

@@ -1,6 +1,7 @@
 import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CustomAuthService } from '../../core/auth/custom-auth-service';
+import { UserService } from '../../services/user-service';
 
 @Component({
   selector: 'app-profile',
@@ -11,6 +12,7 @@ import { CustomAuthService } from '../../core/auth/custom-auth-service';
 export class Profile {
   readonly authService = inject(CustomAuthService);
   readonly currentUser = this.authService.currentUser;
+  readonly userService = inject(UserService);
   closed$ = output<void>();
 
   close() {
@@ -19,13 +21,5 @@ export class Profile {
 
   logout() {
     this.authService.logout();
-  }
-
-  getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
-    if (user?.firstName && user?.lastName)
-      return (user.firstName[0] + user.lastName[0]).toUpperCase();
-    if (user?.firstName) return user.firstName.slice(0, 2).toUpperCase();
-    if (user?.email) return user.email.slice(0, 2).toUpperCase();
-    return '?';
   }
 }

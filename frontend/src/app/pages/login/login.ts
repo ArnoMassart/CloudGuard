@@ -23,34 +23,40 @@ export class Login implements OnInit {
   readonly ShieldCheck = ShieldCheck;
 
   ngOnInit(): void {
-    this.auth0.error$.subscribe((err) => {
-      console.log('Auth0 Error detected:', err.message);
+    const returningFromAuth0 = sessionStorage.getItem('auth0_redirect_pending') === '1';
 
-      this.#router.navigate(['/forbidden']);
-    });
+    if (returningFromAuth0) {
+      sessionStorage.removeItem('auth0_redirect_pending');
 
-    this.auth0.isLoading$
-      .pipe(
-        filter((isLoading) => !isLoading),
-        take(1),
-        switchMap(() => this.auth0.idTokenClaims$)
-      )
-      .subscribe({
-        next: (claims) => {
-          // Hebben we een token? Dan komen we net terug van Google!
-          if (claims && claims.__raw) {
-            console.log('Redirect succesvol! Token gevonden.');
-            this.#handleBackendExchange(claims.__raw);
-          }
-        },
-        error: (err) => console.error('Fout bij ophalen claims:', err),
+      this.auth0.error$.subscribe((err) => {
+        console.log('Auth0 Error detected:', err.message);
+
+        this.#router.navigate(['/forbidden']);
       });
 
-    this.auth0.idTokenClaims$.subscribe((claims) => {
-      if (claims && claims.__raw) {
-        this.#handleBackendExchange(claims.__raw);
-      }
-    });
+      this.auth0.isLoading$
+        .pipe(
+          filter((isLoading) => !isLoading),
+          take(1),
+          switchMap(() => this.auth0.idTokenClaims$)
+        )
+        .subscribe({
+          next: (claims) => {
+            // Hebben we een token? Dan komen we net terug van Google!
+            if (claims && claims.__raw) {
+              console.log('Redirect succesvol! Token gevonden.');
+              this.#handleBackendExchange(claims.__raw);
+            }
+          },
+          error: (err) => console.error('Fout bij ophalen claims:', err),
+        });
+
+      this.auth0.idTokenClaims$.subscribe((claims) => {
+        if (claims && claims.__raw) {
+          this.#handleBackendExchange(claims.__raw);
+        }
+      });
+    }
   }
 
   loginWithGoogle() {
@@ -70,7 +76,7 @@ export class Login implements OnInit {
 
     this.#authService.loginWithGoogle(idToken).subscribe({
       next: () => {
-        this.#router.navigate(['/home']);
+        this.#router.navigate(['/']);
       },
       error: (err) => {
         console.error('Backend error status:', err.status);

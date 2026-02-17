@@ -16,12 +16,12 @@ import {
 } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
 import { Profile } from '../pages/profile/profile';
-import { RouterLinkActive, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { CookieService } from 'ngx-cookie-service';
 import { CustomAuthService } from '../core/auth/custom-auth-service';
 import { Router } from '@angular/router';
 import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
+import { UserService } from '../services/user-service';
 
 @Component({
   standalone: true,
@@ -33,6 +33,7 @@ import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 })
 export class Navbar {
   readonly authService = inject(CustomAuthService);
+  readonly userService = inject(UserService);
 
   readonly currentUser = this.authService.currentUser;
   readonly profilePopupOpen = signal(false);
@@ -41,7 +42,7 @@ export class Navbar {
   readonly LogOut = LogOut;
 
   readonly NavItemsSecurity = [
-    { Icon: Shield, Label: 'Dashboard', Route: '/home' },
+    { Icon: Shield, Label: 'Dashboard', Route: '/' },
     { Icon: Users, Label: 'Gebruikers & Groepen', Route: '/users-groups' },
     { Icon: Building2, Label: 'Organisatie-eenheden', Route: '/organizational-units' },
     { Icon: FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
@@ -65,11 +66,11 @@ export class Navbar {
     return '?';
   }
 
-  openProfilePopup(){
+  openProfilePopup() {
     this.profilePopupOpen.set(true);
   }
 
-  closeProfilePopup(){
+  closeProfilePopup() {
     this.profilePopupOpen.set(false);
   }
 

@@ -12,17 +12,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final GoogleAdminService googleAdminService;
 
-    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository) {
+    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleAdminService googleAdminService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.googleAdminService = googleAdminService;
     }
 
     public LoginResult processLogin(String externalIdToken) {
@@ -106,11 +109,26 @@ public class AuthService {
     public java.util.Optional<UserDto> getCurrentUser(String token) {
         try {
             String email = jwtService.validateInternalToken(token);
-            return userService.findByEmail(email)
+            Optional<UserDto> userDto = userService.findByEmail(email)
                     .map(userService::convertToDto);
+
+            if (userDto.isPresent()) {
+                List<String> roles = googleAdminService.getUserRoles(email).stream().map(this::translateRoleName).toList();
+                userDto.get().setRoles(roles);
+            }
+
+            return userDto;
         } catch (Exception e) {
             return java.util.Optional.empty();
         }
+    }
+
+    public String translateRoleName(String googleName) {
+        return switch (googleName) {
+            case "_SEED_ADMIN_ROLE" -> "Super Admin";
+            case "_READ_ONLY_ADMIN_ROLE" -> "Read Only Admin";
+            default -> "Admin";
+        };
     }
 
     public record LoginResult(ResponseCookie cookie, UserDto userDto) {}
