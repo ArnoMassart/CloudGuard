@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { ApiTest } from './pages/api-test/api-test';
-import { Login } from './login/login';
+import { Login } from './pages/login/login';
 import { Home } from './pages/home/home';
 import { UsersGroups } from './pages/security-section/users-groups/users-groups';
 import { OrganizationalUnits } from './pages/security-section/organizational-units/organizational-units';
@@ -12,19 +12,19 @@ import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
 import { LicensesBilling } from './pages/control-section/licenses-billing/licenses-billing';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
 import { authGuard } from './core/auth/auth.guard';
+import { Forbidden } from './pages/forbidden/forbidden';
 
 export const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full',
-  },
   {
     path: 'login',
     component: Login,
   },
   {
-    path: 'home',
+    path: 'forbidden',
+    component: Forbidden,
+  },
+  {
+    path: '',
     component: Home,
     canActivate: [authGuard],
   },

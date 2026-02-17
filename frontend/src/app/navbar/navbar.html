@@ -22,58 +22,49 @@
   <div class="seperator"></div>
 
   <!-- User section -->
-   @if (currentUser(); as user) {
-    <div class="flex items-center justify-between px-3 pt-2">
-      <div
-      class="flex items-center gap-3 min-w-0 cursor-pointer"
-      (click)="openProfilePopup()"
-      >
-        <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center">
-          <span class="text-white text-lg">{{ getInitials(user) }}</span>
-        </div>
-
-        <div class="flex flex-col min-w-0">
-          <span class="text-white truncate font-medium leading-tight">
-            {{ user.firstName }} {{ user.lastName }}
-          </span>
-          <span class="text-muted-foreground text-sm leading-tight"> Admin </span>
-        </div>
+  @if (currentUser(); as user) {
+  <div class="flex items-center justify-between px-3 pt-2">
+    <div class="flex items-center gap-3 min-w-0 cursor-pointer" (click)="openProfilePopup()">
+      <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center">
+        <span class="text-white text-lg">{{ getInitials(user) }}</span>
       </div>
 
-      <div class="shrink-0 ml-4">
-        <div (click)="openLogoutDialog()" class="logout rounded-md">
-          <i-lucide [img]="LogOut" size="20" class="text-muted-foreground cursor-pointer" />
-        </div>
+      <div class="flex flex-col min-w-0">
+        <span class="text-white truncate font-medium leading-tight">
+          {{ user.firstName }} {{ user.lastName }}
+        </span>
+        <span class="text-muted-foreground truncate text-sm leading-tight"> {{ userService.getRole(user) }} </span>
       </div>
     </div>
-   } @else {
-    <div class="flex items-center justify-between px-3 pt-2">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-muted animate-pulse"></div>
-        <div class="flex flex-col gap-1">
-          <div class="h-4 w-24 bg-muted rounded animate-pulse"></div>
-          <div class="h-3 w-16 bg-muted rounded animate-pulse"></div>
-        </div>
-      </div>
-      <div class="shrink-0 ml-4">
-        <div (click)="openLogoutDialog()" class="logout rounded-md">
-          <i-lucide [img]="LogOut" size="20" class="text-muted-foreground cursor-pointer" />
-        </div>
+
+    <div class="shrink-0 ml-4">
+      <div (click)="openLogoutDialog()" class="logout rounded-md">
+        <i-lucide [img]="LogOut" size="20" class="text-muted-foreground cursor-pointer" />
       </div>
     </div>
-   }
+  </div>
+  } @else {
+  <div class="flex items-center justify-between px-3 pt-2">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-muted animate-pulse"></div>
+      <div class="flex flex-col gap-1">
+        <div class="h-4 w-24 bg-muted rounded animate-pulse"></div>
+        <div class="h-3 w-16 bg-muted rounded animate-pulse"></div>
+      </div>
+    </div>
+    <div class="shrink-0 ml-4">
+      <div (click)="openLogoutDialog()" class="logout rounded-md">
+        <i-lucide [img]="LogOut" size="20" class="text-muted-foreground cursor-pointer" />
+      </div>
+    </div>
+  </div>
+  }
 </nav>
 
 @if(profilePopupOpen()){
-  <div
-  class="profile-overlay"
-  (click)="closeProfilePopup()"
-  >
-    <div
-    class="profile-popup-container"
-    (click)="$event.stopPropagation()"
-    >
-      <app-profile (closed$)="closeProfilePopup()"></app-profile>
-    </div>
+<div class="profile-overlay" (click)="closeProfilePopup()">
+  <div class="profile-popup-container" (click)="$event.stopPropagation()">
+    <app-profile (closed$)="closeProfilePopup()"></app-profile>
   </div>
+</div>
 }

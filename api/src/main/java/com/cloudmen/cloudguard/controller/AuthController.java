@@ -3,19 +3,24 @@ package com.cloudmen.cloudguard.controller;
 import com.cloudmen.cloudguard.dto.TokenRequestDto;
 import com.cloudmen.cloudguard.dto.UserDto;
 import com.cloudmen.cloudguard.service.AuthService;
+import com.cloudmen.cloudguard.service.GoogleAdminService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
+    private final GoogleAdminService googleAdminService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, GoogleAdminService googleAdminService) {
         this.authService = authService;
+        this.googleAdminService = googleAdminService;
     }
 
     @PostMapping("/logout")
@@ -28,16 +33,14 @@ public class AuthController {
     }
 
     @GetMapping("/check-session")
-    public ResponseEntity<Void> checkSession(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
+    public ResponseEntity<UserDto> checkSession(@CookieValue(name = "AuthToken", required = false) String token) {
+        UserDto user = authService.validateSession(token);
+
+        if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        try {
-            authService.validateSessionToken(token);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        return ResponseEntity.ok().build();
+
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/me")
@@ -45,6 +48,8 @@ public class AuthController {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+
         return authService.getCurrentUser(token)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { RouteService } from '../../services/route-service';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, tap, timeout } from 'rxjs/operators';
 import { User } from '../../models/User';
@@ -16,7 +16,7 @@ export class CustomAuthService {
   readonly #router = inject(Router);
 
   // BehaviorSubject(false): app start altijd op login tot sessie bevestigd is
-  readonly #loggedInStatus = new BehaviorSubject<boolean>(false);
+  readonly #loggedInStatus = new ReplaySubject<boolean>(1);
   // BehaviorSubject voor de @if check in de HTML
   readonly #initializedStatus = new BehaviorSubject<boolean>(false);
 
@@ -52,7 +52,7 @@ export class CustomAuthService {
           console.log('Session valid. Welcome back!');
           this.#fetchCurrentUser();
           if (this.#router.url === '/login' || this.#router.url === '/') {
-            this.#router.navigate(['/home']);
+            this.#router.navigate(['/']);
           }
         } else {
           console.warn('No session found. Redirecting to login.');
@@ -66,7 +66,9 @@ export class CustomAuthService {
       .get<User>(`${this.#API_URL}/me`, { withCredentials: true })
       .pipe(catchError(() => of(null)))
       .subscribe((user) => {
-        if (user) this.currentUser.set(user);
+        if (user) {
+          this.currentUser.set(user);
+        }
       });
   }
 
