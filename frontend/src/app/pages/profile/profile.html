@@ -3,22 +3,22 @@
     <h3>Profiel</h3>
     <button type="button" (click)="close()" aria-label="Sluiten">×</button>
   </header>
-  @if (user$ | async; as user) {
+  @if (currentUser(); as user) {
     <div class="profile-body">
       <div class="profile-avatar">
-        @if (user.picture) {
-          <img [src]="user.picture" alt="" />
-        } @else {
-          <span>{{ getInitials(user) }}</span>
-        }
+        <span>{{ getInitials(user) }}</span>
       </div>
-      <p class="profile-name">{{ user.name ?? user.email ?? 'Gebruiker' }}</p>
+      <p class="profile-name">{{ user.firstName }} {{ user.lastName }}</p>
       @if (user.email) {
         <p class="profile-email">{{ user.email }}</p>
       }
       <p class="profile-role">Admin</p>
       <button type="button" class="profile-link"><a href="https://myaccount.google.com">Mijn Google account beheren</a></button>
       <button type="button" class="profile-logout" (click)="logout()">Uitloggen</button>
+    </div>
+  } @else {
+    <div class="profile-body">
+      <p class="profile-role">Bezig met laden...</p>
     </div>
   }
 </div>

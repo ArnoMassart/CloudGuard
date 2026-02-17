@@ -23,31 +23,34 @@ export class Login implements OnInit {
   readonly ShieldCheck = ShieldCheck;
 
   ngOnInit(): void {
-    this.auth0.isLoading$
-      .pipe(
-        filter((isLoading) => !isLoading),
-        take(1),
-        switchMap(() => this.auth0.idTokenClaims$)
-      )
-      .subscribe({
-        next: (claims) => {
-          // Hebben we een token? Dan komen we net terug van Google!
-          if (claims && claims.__raw) {
+    // Alleen token uitwisselen als we terugkomen van Auth0 redirect.
+    // Zonder deze check zouden gecachte Auth0-tokens direct doorsturen naar home.
+    const returningFromAuth0 =
+      sessionStorage.getItem('auth0_redirect_pending') === '1';
+
+    if (returningFromAuth0) {
+      sessionStorage.removeItem('auth0_redirect_pending');
+
+      this.auth0.isLoading$
+        .pipe(
+          filter((isLoading) => !isLoading),
+          take(1),
+          switchMap(() => this.auth0.idTokenClaims$),
+          filter((claims): claims is NonNullable<typeof claims> => !!claims?.__raw),
+          take(1)
+        )
+        .subscribe({
+          next: (claims) => {
             console.log('Redirect succesvol! Token gevonden.');
             this.#handleBackendExchange(claims.__raw);
-          }
-        },
-        error: (err) => console.error('Fout bij ophalen claims:', err),
-      });
-
-    this.auth0.idTokenClaims$.subscribe((claims) => {
-      if (claims && claims.__raw) {
-        this.#handleBackendExchange(claims.__raw);
-      }
-    });
+          },
+          error: (err) => console.error('Fout bij ophalen claims:', err),
+        });
+    }
   }
 
   loginWithGoogle() {
+    sessionStorage.setItem('auth0_redirect_pending', '1');
     this.auth0.loginWithRedirect({
       authorizationParams: {
         connection: 'google-oauth2',
@@ -62,7 +65,7 @@ export class Login implements OnInit {
 
     this.#authService.loginWithGoogle(idToken).subscribe({
       next: () => {
-        this.#router.navigate(['/']);
+        this.#router.navigate(['/home']);
       },
       error: (err) => {
         console.error('Backend error status:', err.status);

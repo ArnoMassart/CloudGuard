@@ -1,5 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { AuthService } from '@auth0/auth0-angular';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -27,25 +26,22 @@ import { Router } from '@angular/router';
 @Component({
   standalone: true,
   selector: 'app-navbar',
-  imports: [LucideAngularModule, NavItem, RouterLinkActive, RouterLink, CommonModule, Profile],
-  imports: [LucideAngularModule, NavItem, RouterLinkActive, RouterLink, CommonModule],
-  imports: [LucideAngularModule, NavItem],
+  imports: [LucideAngularModule, NavItem, CommonModule, Profile],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   providers: [CookieService],
 })
 export class Navbar {
-  private auth = inject(AuthService);
+  readonly authService = inject(CustomAuthService);
 
-  readonly  user$ = this.auth.user$;
-  readonly isLoading$ = this.auth.isLoading$;
+  readonly currentUser = this.authService.currentUser;
   readonly profilePopupOpen = signal(false);
 
   readonly Shield = Shield;
   readonly LogOut = LogOut;
 
   readonly NavItemsSecurity = [
-    { Icon: Shield, Label: 'Dashboard', Route: '/' },
+    { Icon: Shield, Label: 'Dashboard', Route: '/home' },
     { Icon: Users, Label: 'Gebruikers & Groepen', Route: '/users-groups' },
     { Icon: Building2, Label: 'Organisatie-eenheden', Route: '/organizational-units' },
     { Icon: FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
@@ -60,18 +56,12 @@ export class Navbar {
     { Icon: Bell, Label: 'Meldingen & Feedback', Route: '/reports-reactions' },
   ];
 
-  getInitials(user: {name?: string; given_name?: string; family_name?: string; email?: string;}) {
-    if (user.given_name && user.family_name) {
-      return (user.given_name[0] + user.family_name[0]).toUpperCase();
+  getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
+    if (user.firstName && user.lastName) {
+      return (user.firstName[0] + user.lastName[0]).toUpperCase();
     }
-    if (user.name) {
-      const parts = user.name.trim().split(/\s+/);
-      if (parts.length >= 2)
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-      return user.name.slice(0, 2).toUpperCase();
-    }
-    if (user.email)
-      return user.email.slice(0, 2).toUpperCase();
+    if (user.firstName) return user.firstName.slice(0, 2).toUpperCase();
+    if (user.email) return user.email.slice(0, 2).toUpperCase();
     return '?';
   }
 
@@ -87,13 +77,13 @@ export class Navbar {
 
   readonly cookieService = inject(CookieService);
 
-  readonly authService = inject(CustomAuthService);
-
   readonly router = inject(Router);
 
   openLogoutDialog(): void {
     const ref = this.dialog.open(LogOutDialog, {
       width: '500px',
+      panelClass: 'logout-dialog-panel',
+      backdropClass: 'logout-dialog-backdrop',
     });
 
     ref.afterClosed().subscribe((result) => {

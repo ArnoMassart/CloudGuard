@@ -1,6 +1,6 @@
 import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '@auth0/auth0-angular';
+import { CustomAuthService } from '../../core/auth/custom-auth-service';
 
 @Component({
   selector: 'app-profile',
@@ -9,28 +9,22 @@ import { AuthService } from '@auth0/auth0-angular';
   styleUrl: './profile.css',
 })
 export class Profile {
-  private auth = inject(AuthService);
-
-  readonly user$ = this.auth.user$;
+  readonly authService = inject(CustomAuthService);
+  readonly currentUser = this.authService.currentUser;
   closed$ = output<void>();
 
-  close(){
+  close() {
     this.closed$.emit();
   }
 
-  logout(){
-    this.auth.logout();
+  logout() {
+    this.authService.logout();
   }
 
-  getInitials(user: { name?: string; given_name?: string; family_name?: string; email?: string }) {
-    if (user?.given_name && user?.family_name)
-      return (user.given_name[0] + user.family_name[0]).toUpperCase();
-    if (user?.name) {
-      const parts = user.name.trim().split(/\s+/);
-      return parts.length >= 2
-        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-        : user.name.slice(0, 2).toUpperCase();
-    }
+  getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
+    if (user?.firstName && user?.lastName)
+      return (user.firstName[0] + user.lastName[0]).toUpperCase();
+    if (user?.firstName) return user.firstName.slice(0, 2).toUpperCase();
     if (user?.email) return user.email.slice(0, 2).toUpperCase();
     return '?';
   }
