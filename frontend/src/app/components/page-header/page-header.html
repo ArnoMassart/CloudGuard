@@ -1,0 +1,13 @@
+<div class="flex items-center justify-between">
+    <div>
+        <h1>{{title}}</h1>
+        <span class="text-black/50 text-[15px]">{{description}}</span>
+    </div>
+    @if (needAdminLink) {
+    <button (click)="openAdminPage()"
+        class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center"><span>Naar
+            Admin
+            Console</span> <lucide-icon [img]="externalLink" size="16" class=""></lucide-icon>
+    </button>
+    }
+</div>
