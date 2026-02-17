@@ -1,1 +1,111 @@
-<p>users-section works!</p>
+<div class="w-full flex flex-col gap-5">
+    <div class="w-full flex gap-4">
+        <app-users-section-top-card class="flex-1" Title="Totaal gebruikers" Value="10" />
+        <app-users-section-top-card class="flex-1" Title="Zonder 2FA" Value="3" BackgroundColor="#ffedd4"
+            IconColor="#f54a00" TextColor="#f54a00" [Icon]="triangleAlertIcon" />
+        <app-users-section-top-card class="flex-1" Title="Admin gebruikers" Value="6" BackgroundColor="#f3e8ff"
+            IconColor="#9810fa" />
+        <app-users-section-top-card class="flex-1" Title="Security Score" Value="68%" BackgroundColor="#fef9c2"
+            IconColor="#d69518" />
+    </div>
+
+    @if (hasWarnings()) {
+    <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
+        <div class="flex gap-3">
+            <i-lucide [img]="triangleAlertIcon" size="20" class="text-[#d69518]" />
+            <div class="flex flex-col gap-2"><span
+                    class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwingen</span>
+                <div class="flex gap-2 items-center text-center">
+                    <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                    <span class="text-xs text-[#b7610a]">3 actieve gebruikers hebben geen 2FA ingeschakeld</span>
+                </div>
+                <div class="flex gap-2 items-center text-center">
+                    <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                    <span class="text-xs text-[#b7610a]">1 gebruiker met verdachte activiteit gedetecteerd</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
+        <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center ">
+            <i-lucide [img]="searchIcon" size="20" class="text-[#99a1af]/70" />
+            <input type="text" [(ngModel)]="searchParam" class="focus:border-0  w-full"
+                placeholder="Zoek gebruikers op naam of email...">
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+        <span class="font-medium text-lg ml-5.5">Alle gebruikers</span>
+
+        <table class="w-full text-left border-collapse mt-6">
+            <thead>
+                <tr class="border-b border-t border-gray-200 bg-gray-50/50">
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Gebruiker</th>
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Rol</th>
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste Inlog</th>
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">2FA</th>
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Activiteit</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-gray-200">
+                @for (user of users; track user.email) {
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <span class="font-medium text-slate-900 text-sm">{{ user.name}}</span>
+                            <span class="text-xs text-gray-500">{{user.email}}</span>
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-md text-xs font-medium" [ngClass]="getRoleClass(user.role)">
+                            {{ user.role }}
+                        </span>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <div class="py-1 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg"
+                            [class.text-emerald-600]="user.status === 'Actief'"
+                            [class.bg-[#dbfce7]]="user.status === 'Actief'"
+                            [class.text-slate-500]="user.status === 'Suspended'"
+                            [class.bg-[#f3f4f6]]="user.status === 'Suspended'">
+                            <lucide-icon [img]="user.status === 'Actief' ? checkCircle : xCircle"
+                                size="14"></lucide-icon>
+                            {{ user.status }}
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        <div class="flex items-center gap-2">
+                            <lucide-icon [img]="clock" size="14"></lucide-icon>
+                            {{ user.lastLogin }}
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFA"
+                            [class.text-destructive]="!user.twoFA">
+                            <lucide-icon [img]="user.twoFA ? checkCircle : xCircle" size="14"></lucide-icon>
+                            {{ user.twoFA ? "Ingeschakeld" : "Uit" }}
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-1.5 text-xs font-medium"
+                            [class.text-emerald-400]="user.activity === 'Normaal'"
+                            [class.text-destructive]="user.activity === 'Verdacht'">
+                            <lucide-icon [img]="user.activity === 'Normaal' ? checkCircle : triangleAlert"
+                                size="14"></lucide-icon>
+                            {{ user.activity }}
+                        </div>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

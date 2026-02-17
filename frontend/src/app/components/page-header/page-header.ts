@@ -8,14 +8,14 @@ import { ExternalLink, LucideAngularModule } from 'lucide-angular';
   styleUrl: './page-header.css',
 })
 export class PageHeader {
-  @Input() title: string = '';
-  @Input() description: string = '';
-  @Input() needAdminLink: boolean = true;
-  @Input() adminLink: string = '';
+  @Input() Title: string = '';
+  @Input() Description: string = '';
+  @Input() NeedAdminLink: boolean = true;
+  @Input() AdminLink: string = '';
 
   readonly externalLink = ExternalLink;
 
   openAdminPage() {
-    window.open(`https://admin.google.com/ac/${this.adminLink}`);
+    window.open(`https://admin.google.com/ac/${this.AdminLink}`);
   }
 }
