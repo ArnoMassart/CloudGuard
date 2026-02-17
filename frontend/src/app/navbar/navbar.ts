@@ -15,10 +15,10 @@ import {
 } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
 import { MatDialog } from '@angular/material/dialog';
-import { LogOutDialog } from '../log-out-dialog/log-out-dialog';
 import { CookieService } from 'ngx-cookie-service';
 import { CustomAuthService } from '../core/auth/custom-auth-service';
 import { Router } from '@angular/router';
+import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 
 @Component({
   standalone: true,

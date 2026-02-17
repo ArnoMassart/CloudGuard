@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
-import { Shield, Code, LucideAngularModule } from 'lucide-angular';
+import { Shield, Code, LucideAngularModule, ShieldCheck } from 'lucide-angular';
 import { CustomAuthService } from '../../core/auth/custom-auth-service';
 
 @Component({
@@ -11,7 +11,7 @@ import { CustomAuthService } from '../../core/auth/custom-auth-service';
   styleUrl: './splash-screen.css',
 })
 export class SplashScreen {
-  readonly shieldIcon = Shield;
+  readonly shieldIcon = ShieldCheck;
   readonly codeIcon = Code;
 
   #authService: CustomAuthService = inject(CustomAuthService);

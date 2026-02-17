@@ -31,7 +31,8 @@ export class App {
 
   ngOnInit(): void {
     this.#router.events.subscribe(() => {
-      this.showNavbar = !this.#router.url.includes('/login');
+      this.showNavbar =
+        !this.#router.url.includes('/login') && !this.#router.url.includes('/forbidden');
     });
   }
 }

@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '@auth0/auth0-angular';
 import { LucideAngularModule, ShieldCheck } from 'lucide-angular';
-import { CustomAuthService } from '../core/auth/custom-auth-service';
+import { CustomAuthService } from '../../core/auth/custom-auth-service';
 import { Router } from '@angular/router';
 import { filter, switchMap, take } from 'rxjs';
 
@@ -23,6 +23,12 @@ export class Login implements OnInit {
   readonly ShieldCheck = ShieldCheck;
 
   ngOnInit(): void {
+    this.auth0.error$.subscribe((err) => {
+      console.log('Auth0 Error detected:', err.message);
+
+      this.#router.navigate(['/forbidden']);
+    });
+
     this.auth0.isLoading$
       .pipe(
         filter((isLoading) => !isLoading),
