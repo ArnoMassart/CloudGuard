@@ -54,6 +54,7 @@ export class Login implements OnInit {
   }
 
   loginWithGoogle() {
+    sessionStorage.setItem('auth0_redirect_pending', '1');
     this.auth0.loginWithRedirect({
       authorizationParams: {
         connection: 'google-oauth2',
@@ -69,7 +70,7 @@ export class Login implements OnInit {
 
     this.#authService.loginWithGoogle(idToken).subscribe({
       next: () => {
-        this.#router.navigate(['/']);
+        this.#router.navigate(['/home']);
       },
       error: (err) => {
         console.error('Backend error status:', err.status);

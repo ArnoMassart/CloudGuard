@@ -99,5 +99,19 @@ public class AuthService {
                 .build();
     }
 
+    public void validateSessionToken(String token) {
+        jwtService.validateInternalToken(token);
+    }
+
+    public java.util.Optional<UserDto> getCurrentUser(String token) {
+        try {
+            String email = jwtService.validateInternalToken(token);
+            return userService.findByEmail(email)
+                    .map(userService::convertToDto);
+        } catch (Exception e) {
+            return java.util.Optional.empty();
+        }
+    }
+
     public record LoginResult(ResponseCookie cookie, UserDto userDto) {}
 }

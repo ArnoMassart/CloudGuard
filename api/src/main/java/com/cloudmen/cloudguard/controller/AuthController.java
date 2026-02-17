@@ -38,6 +38,16 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getCurrentUser(@CookieValue(name = "AuthToken", required = false) String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return authService.getCurrentUser(token)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
+
     @PostMapping("/login")
     public ResponseEntity<UserDto> googleLogin(@RequestBody TokenRequestDto request) {
         AuthService.LoginResult result = authService.processLogin(request.getToken());

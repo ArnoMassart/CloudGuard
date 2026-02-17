@@ -1,5 +1,5 @@
 // proxy.conf.js
-const PROXY_TARGET = process.env.BACKEND_URL || 'http://localhost:8080';
+const PROXY_TARGET = 'http://localhost:8081';
 
 const PROXY_CONFIG = [
   {
