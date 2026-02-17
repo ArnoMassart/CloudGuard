@@ -126,6 +126,7 @@ export class CustomAuthService {
           this.currentUser.set(user);
           this.#loggedInStatus.next(true);
           this.#initializedStatus.next(true);
+          this.#fetchCurrentUser();
         })
       );
   }
