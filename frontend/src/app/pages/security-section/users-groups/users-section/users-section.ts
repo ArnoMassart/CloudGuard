@@ -1,5 +1,7 @@
 import { Component, signal } from '@angular/core';
 import {
+  ChevronLeft,
+  ChevronRight,
   CircleCheck,
   CircleX,
   Clock,
@@ -24,9 +26,29 @@ export class UsersSection {
   readonly xCircle = CircleX;
   readonly clock = Clock;
   readonly triangleAlert = TriangleAlert;
+  readonly chevronLeft = ChevronLeft;
+  readonly chevronRight = ChevronRight;
 
   hasWarnings = signal(true);
   searchParam: string = '';
+
+  currentPage: number = 1;
+  itemsPerPage: number = 10; // Adjust based on your design
+
+  get totalPages(): number {
+    return Math.ceil(this.users.length / this.itemsPerPage);
+  }
+
+  get paginatedUsers() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.users.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
 
   searchValueChanged(value: string) {
     this.searchParam = value;
