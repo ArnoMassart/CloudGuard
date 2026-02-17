@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { ApiTest } from './pages/api-test/api-test';
-import { Login } from './pages/login/login';
+import { Login } from './auth/login/login';
 import { Home } from './pages/home/home';
 import { UsersGroups } from './pages/security-section/users-groups/users-groups';
 import { OrganizationalUnits } from './pages/security-section/organizational-units/organizational-units';
