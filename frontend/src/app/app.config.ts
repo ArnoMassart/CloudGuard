@@ -12,10 +12,11 @@ export const appConfig: ApplicationConfig = {
       domain: 'dev-x2l40e775g2q2ot3.eu.auth0.com',
       clientId: '6RChZH73eEvLLEhwrk8DjTgDETGYTe4u',
       authorizationParams: {
-        redirect_uri: window.location.origin + '/login',
+        redirect_uri: window.location.origin + '/callback',
         audience: 'https://cloudguard-api',
       },
       cacheLocation: 'memory',
+      skipRedirectCallback: window.location.pathname.includes('/callback'),
     }),
   ],
 };

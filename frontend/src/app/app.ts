@@ -19,7 +19,10 @@ export class App {
   showNavbar: boolean = true;
   showSplash = true;
 
-  hasSeenSplash = signal(sessionStorage.getItem('has_seen_splash') === 'true');
+  hasSeenSplash = signal(
+    sessionStorage.getItem('has_seen_splash') === 'true' ||
+    window.location.pathname.includes('/callback')
+  );
 
   // Deze methode wordt aangeroepen als de Splash 'emit' doet
   onSplashEnded() {
@@ -32,7 +35,9 @@ export class App {
   ngOnInit(): void {
     this.#router.events.subscribe(() => {
       this.showNavbar =
-        !this.#router.url.includes('/login') && !this.#router.url.includes('/forbidden');
+        !this.#router.url.includes('/login') &&
+        !this.#router.url.includes('/forbidden') &&
+        !this.#router.url.includes('/callback');
     });
   }
 }

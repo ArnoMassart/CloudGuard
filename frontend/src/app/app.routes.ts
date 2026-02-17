@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { ApiTest } from './pages/api-test/api-test';
 import { Login } from './auth/login/login';
+import { Callback } from './auth/callback/callback';
 import { Home } from './pages/home/home';
 import { UsersGroups } from './pages/security-section/users-groups/users-groups';
 import { OrganizationalUnits } from './pages/security-section/organizational-units/organizational-units';
@@ -24,7 +25,16 @@ export const routes: Routes = [
     component: Forbidden,
   },
   {
+    path: 'callback',
+    component: Callback,
+  },
+  {
     path: '',
+    redirectTo: 'home',
+    pathMatch: 'full',
+  },
+  {
+    path: 'home',
     component: Home,
     canActivate: [authGuard],
   },
@@ -77,5 +87,5 @@ export const routes: Routes = [
     path: 'test',
     component: ApiTest,
   },
-  { path: '**', redirectTo: 'login' },
+  { path: '**', redirectTo: 'home' },
 ];

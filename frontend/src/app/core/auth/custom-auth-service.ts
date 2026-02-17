@@ -55,8 +55,13 @@ export class CustomAuthService {
             this.#router.navigate(['/']);
           }
         } else {
-          console.warn('No session found. Redirecting to login.');
-          this.#router.navigate(['/login']);
+          const onCallbackPage = window.location.pathname.includes('/callback');
+          const redirectPending = sessionStorage.getItem('auth0_redirect_pending') === '1';
+
+          if (!onCallbackPage && !redirectPending) {
+            console.warn('No session found. Redirecting to login.');
+            this.#router.navigate(['/login']);
+          }
         }
       });
   }

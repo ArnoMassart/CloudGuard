@@ -22,11 +22,16 @@ export class SplashScreen {
   #intervalId: any;
 
   ngOnInit() {
+    const startTime = Date.now();
+    const minDurationMs = 2000;
+
     this.startLoadingSimulation();
 
     this.#authService.isInitialized$.subscribe((isReady) => {
       if (isReady) {
-        this.finishLoading();
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, minDurationMs - elapsed);
+        setTimeout(()=> this.finishLoading(), remaining);
       }
     });
   }
