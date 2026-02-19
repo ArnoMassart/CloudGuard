@@ -12,6 +12,7 @@ import {
   TriangleAlert,
   ShieldAlert,
   Users,
+  ExternalLink,
 } from 'lucide-angular';
 import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
 import { GroupOrgDetail, GroupService } from '../../../../services/group-service';
@@ -47,6 +48,7 @@ export class GroupsSection implements OnInit{
   readonly chevronRight = ChevronRight;
   readonly shieldAlertIcon = ShieldAlert;
   readonly usersIcon = Users;
+  readonly externalLinkIcon = ExternalLink;
 
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);

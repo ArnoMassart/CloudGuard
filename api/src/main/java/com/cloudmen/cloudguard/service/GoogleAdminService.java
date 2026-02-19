@@ -14,6 +14,8 @@ import com.google.api.services.admin.directory.model.*;
 import com.google.api.services.groupssettings.Groupssettings;
 import com.google.api.services.groupssettings.GroupssettingsScopes;
 import com.google.api.services.groupssettings.model.Groups;
+import com.google.api.services.cloudidentity.v1.CloudIdentity;
+import com.google.api.services.cloudidentity.v1.model.LookupGroupNameResponse;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.slf4j.Logger;
@@ -44,6 +46,7 @@ public class GoogleAdminService {
     private String privateKey;
 
     private static final String GROUPS_SETTINGS_SCOPE = "https://www.googleapis.com/auth/apps.groups.settings";
+    private static final String CLOUD_IDENTITY_SCOPE = "https://www.googleapis.com/auth/cloud-identity.groups.readonly";
 
     private Directory getDirectoryService(String scope, String loggedInEmail) throws Exception {
         return getDirectoryService(Collections.singleton(scope), loggedInEmail);
@@ -284,7 +287,14 @@ public class GoogleAdminService {
             try {
                 settingsService = getGroupsSettingsService(loggedInEmail);
             } catch (Throwable t) {
-                log.warn("Groups Settings API unavailable", t);            
+                log.warn("Groups Settings API unavailable", t);
+            }
+
+            CloudIdentity cloudIdentity = null;
+            try {
+                cloudIdentity = getCloudIdentityService(loggedInEmail);
+            } catch (Throwable t) {
+                log.warn("Cloud Identity API unavailable", t);
             }
 
             String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
@@ -352,7 +362,32 @@ public class GoogleAdminService {
                             }
 
                             String risk = deriveRisk(external, total, externalAllowed);
-                            List<String> tags = deriveTags(risk, externalAllowed, groupEmail);
+                            List<String> tags = new ArrayList<>(deriveRiskTags(risk));
+
+                            // Enrich tags from Cloud Identity labels (Mailing / Security)
+                            if (cloudIdentity != null) {
+                                try {
+                                    LookupGroupNameResponse lookup =
+                                            cloudIdentity.groups().lookup()
+                                                    .setGroupKeyId(groupEmail)
+                                                    .execute();
+                                    if (lookup != null && lookup.getName() != null) {
+                                        com.google.api.services.cloudidentity.v1.model.Group ciGroup =
+                                                cloudIdentity.groups().get(lookup.getName()).execute();
+                                        if (ciGroup != null && ciGroup.getLabels() != null) {
+                                            var labels = ciGroup.getLabels();
+                                            if (labels.containsKey("cloudidentity.googleapis.com/groups.discussion_forum")) {
+                                                tags.add("Mailing");
+                                            }
+                                            if (labels.containsKey("cloudidentity.googleapis.com/groups.security")) {
+                                                tags.add("Security");
+                                            }
+                                        }
+                                    }
+                                } catch (Throwable t) {
+                                    log.warn("Could not fetch Cloud Identity labels for {}: {}", groupEmail, t.getMessage());
+                                }
+                            }
 
                             result.add(new GroupOrgDetail(
                                     groupEmail,
@@ -396,25 +431,37 @@ public class GoogleAdminService {
             .build();
     }
 
+    private CloudIdentity getCloudIdentityService(String loggedInEmail) throws Exception {
+        String pk = privateKey.replace("\\n", "\n");
+
+        ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
+                .setClientEmail(clientEmail)
+                .setPrivateKey(decodePrivateKey(pk))
+                .setServiceAccountUser(loggedInEmail)
+                .setScopes(Collections.singleton(CLOUD_IDENTITY_SCOPE))
+                .build();
+
+        return new CloudIdentity.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance(),
+                new HttpCredentialsAdapter(credentials))
+                .setApplicationName("CloudGuard")
+                .build();
+    }
+
     private String deriveRisk(int external, int total, boolean externalAllowed) {
         if(external>0) return "HIGH";
         if(external<0) return "MEDIUM";
         return "LOW";
     }
 
-    private List<String> deriveTags(String risk, boolean hasExternal, String groupEmail) {
-        List<String> tags = new   ArrayList<>();
-        tags.add(switch(risk){
-            case "HIGH" -> "Hoog Risico";
-            case "MEDIUM" -> "Middel Risico";
-            default -> "Laag Risico";
+    private List<String> deriveRiskTags(String risk) {
+        List<String> tags = new ArrayList<>();
+        tags.add(switch (risk) {
+            case "HIGH" -> "Hoog risico";
+            case "MEDIUM" -> "Middel risico";
+            default -> "Laag risico";
         });
-        if(hasExternal){
-            tags.add("Extern");
-        }
-        if(groupEmail!= null && groupEmail.toLowerCase().contains("mailing")){
-            tags.add("Mailing");
-        }
         return tags;
     }
 

@@ -107,6 +107,12 @@
             <version>v1-rev20220614-2.0.0</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-cloudidentity</artifactId>
+            <version>v1-rev20220620-1.32.1</version>
+        </dependency>
         
         <dependency>
             <groupId>com.google.auth</groupId>
