@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,6 +12,8 @@ import {
 import { UsersSectionTopCard } from './users-section-top-card/users-section-top-card';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { UserOrgDetail } from '../../../../models/UserOrgDetails';
+import { UserService } from '../../../../services/user-service';
 
 @Component({
   selector: 'app-users-section',
@@ -19,7 +21,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
 })
-export class UsersSection {
+export class UsersSection implements OnInit {
   readonly triangleAlertIcon = TriangleAlert;
   readonly searchIcon = Search;
   readonly checkCircle = CircleCheck;
@@ -29,19 +31,44 @@ export class UsersSection {
   readonly chevronLeft = ChevronLeft;
   readonly chevronRight = ChevronRight;
 
+  readonly #userService = inject(UserService);
+
   hasWarnings = signal(true);
   searchParam: string = '';
 
   currentPage: number = 1;
   itemsPerPage: number = 10; // Adjust based on your design
 
+  orgUsers = signal<UserOrgDetail[]>([]);
+
+  ngOnInit(): void {
+    this.getAllUsers();
+  }
+
+  getAllUsers() {
+    this.#userService.getOrgUsers().subscribe({
+      next: (data) => {
+        this.orgUsers.set(data);
+      },
+      error: (err) => {
+        console.error('Failed to load users', err);
+        this.orgUsers.set([]);
+      },
+    });
+  }
+
   get totalPages(): number {
-    return Math.ceil(this.users.length / this.itemsPerPage);
+    const pages = Math.ceil(this.orgUsers().length / this.itemsPerPage);
+    return pages;
   }
 
   get paginatedUsers() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    return this.users.slice(startIndex, startIndex + this.itemsPerPage);
+    if (this.orgUsers().length >= 0) {
+      return this.orgUsers().slice(startIndex, startIndex + this.itemsPerPage);
+    }
+
+    return [];
   }
 
   setPage(page: number) {
@@ -68,97 +95,4 @@ export class UsersSection {
         return 'bg-gray-100 text-gray-600';
     }
   }
-
-  users = [
-    {
-      name: 'Jan Janssen',
-      email: 'jan.janssen@bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: true,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Maria van der Berg',
-      email: 'jan.janssen@be5drijf.nl',
-      role: 'Security Admin',
-      status: 'Suspended',
-      lastLogin: '2 maanden geleden',
-      twoFA: false,
-      activity: 'Verdacht',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.jafdhden@bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: true,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.janssen@bedrijf.nl5',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: true,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.janssen@bedrij5f.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: true,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'ja5n.janssen@bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: false,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.jan5ssen@bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: true,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.j5anssen@bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: false,
-      activity: 'Verdacht',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.janssen@5bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: false,
-      activity: 'Normaal',
-    },
-    {
-      name: 'Jan Janssen',
-      email: 'jan.janssenf@bedrijf.nl',
-      role: 'Super Admin',
-      status: 'Actief',
-      lastLogin: '12 dagen geleden',
-      twoFA: true,
-      activity: 'Normaal',
-    },
-  ];
 }

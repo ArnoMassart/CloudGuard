@@ -42,7 +42,7 @@ export class Navbar {
   readonly LogOut = LogOut;
 
   readonly NavItemsSecurity = [
-    { Icon: Shield, Label: 'Dashboard', Route: '/' },
+    { Icon: Shield, Label: 'Dashboard', Route: '/home' },
     { Icon: Users, Label: 'Gebruikers & Groepen', Route: '/users-groups' },
     { Icon: Building2, Label: 'Organisatie-eenheden', Route: '/organizational-units' },
     { Icon: FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },

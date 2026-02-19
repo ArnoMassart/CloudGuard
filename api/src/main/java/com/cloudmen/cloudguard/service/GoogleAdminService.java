@@ -1,18 +1,17 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.UserOrgDetail;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
-import com.google.api.services.admin.directory.model.Role;
-import com.google.api.services.admin.directory.model.RoleAssignment;
-import com.google.api.services.admin.directory.model.RoleAssignments;
+import com.google.api.services.admin.directory.model.*;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,17 +25,14 @@ public class GoogleAdminService {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    @Value("${google.api.admin-email}")
-    private String adminEmail;
-
-    private Directory getDirectoryService() throws Exception {
+    private Directory getDirectoryService(String scope, String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
 
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
                 .setPrivateKey(decodePrivateKey(pk))
-                .setServiceAccountUser(adminEmail)
-                .setScopes(Collections.singleton(DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY))
+                .setServiceAccountUser(loggedInEmail)
+                .setScopes(Collections.singleton(scope))
                 .build();
 
         return new Directory.Builder(
@@ -60,7 +56,7 @@ public class GoogleAdminService {
 
     public List<String> getUserRoles(String email) {
         try {
-            Directory service = getDirectoryService();
+            Directory service = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, email);
 
             RoleAssignments assignments = service.roleAssignments().list("my_customer")
                     .setUserKey(email)
@@ -84,6 +80,41 @@ public class GoogleAdminService {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch roles from Google: " + e.getMessage());
+        }
+    }
+
+    public List<UserOrgDetail> getAllWorkspaceUsers(String loggedInEmail) {
+        try {
+            Directory service = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, loggedInEmail);
+            List<User> googleUsers = new ArrayList<>();
+            String pageToken = null;
+
+            do {
+                Users result = service.users().list()
+                        .setCustomer("my_customer")
+                        .setProjection("full")
+                        .setMaxResults(100)
+                        .setPageToken(pageToken)
+                        .setOrderBy("email")
+                        .execute();
+
+                if (result.getUsers() != null) {
+                    googleUsers.addAll(result.getUsers());
+                }
+
+                pageToken = result.getNextPageToken();
+            } while (pageToken != null);
+
+            return googleUsers.stream().map(user -> new UserOrgDetail(
+                    user.getName().getFullName(),
+                    user.getPrimaryEmail(),
+                    user.getIsAdmin() ? "Admin" : "User",
+                    !Boolean.TRUE.equals(user.getSuspended()),
+                    user.getLastLoginTime() != null ? user.getLastLoginTime().toString() : "Never",
+                    Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())
+            )).toList();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
         }
     }
 }

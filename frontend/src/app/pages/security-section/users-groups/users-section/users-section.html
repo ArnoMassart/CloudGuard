@@ -56,7 +56,7 @@
                 <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-6 py-4">
                         <div class="flex flex-col">
-                            <span class="font-medium text-slate-900 text-sm">{{ user.name}}</span>
+                            <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
                             <span class="text-xs text-gray-500">{{user.email}}</span>
                         </div>
                     </td>
@@ -69,13 +69,10 @@
 
                     <td class="px-6 py-4">
                         <div class="py-1 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg"
-                            [class.text-emerald-600]="user.status === 'Actief'"
-                            [class.bg-[#dbfce7]]="user.status === 'Actief'"
-                            [class.text-slate-500]="user.status === 'Suspended'"
-                            [class.bg-[#f3f4f6]]="user.status === 'Suspended'">
-                            <lucide-icon [img]="user.status === 'Actief' ? checkCircle : xCircle"
-                                size="14"></lucide-icon>
-                            {{ user.status }}
+                            [class.text-emerald-600]="user.isActive" [class.bg-[#dbfce7]]="user.isActive"
+                            [class.text-slate-500]="!user.isActive" [class.bg-[#f3f4f6]]="!user.isActive">
+                            <lucide-icon [img]="user.isActive ? checkCircle : xCircle" size="14"></lucide-icon>
+                            {{ user.isActive ? "Actief" : "Suspended" }}
                         </div>
                     </td>
 
@@ -87,14 +84,16 @@
                     </td>
 
                     <td class="px-6 py-4">
-                        <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFA"
-                            [class.text-destructive]="!user.twoFA">
-                            <lucide-icon [img]="user.twoFA ? checkCircle : xCircle" size="14"></lucide-icon>
-                            {{ user.twoFA ? "Ingeschakeld" : "Uit" }}
+                        <div class="flex items-center gap-1.5 text-xs font-medium"
+                            [class.text-emerald-400]="user.isTwoFactorEnabled"
+                            [class.text-destructive]="!user.isTwoFactorEnabled">
+                            <lucide-icon [img]="user.isTwoFactorEnabled ? checkCircle : xCircle"
+                                size="14"></lucide-icon>
+                            {{ user.isTwoFactorEnabled ? "Ingeschakeld" : "Uit" }}
                         </div>
                     </td>
 
-                    <td class="px-6 py-4">
+                    <!-- <td class="px-6 py-4">
                         <div class="flex items-center gap-1.5 text-xs font-medium"
                             [class.text-emerald-400]="user.activity === 'Normaal'"
                             [class.text-destructive]="user.activity === 'Verdacht'">
@@ -102,39 +101,43 @@
                                 size="14"></lucide-icon>
                             {{ user.activity }}
                         </div>
-                    </td>
+                    </td> -->
                 </tr>
                 }
             </tbody>
 
-            <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-                <span class="text-sm text-gray-500">
-                    Pagina <span class="font-semibold text-slate-900">{{ currentPage }}</span> van <span
-                        class="font-semibold text-slate-900">{{ totalPages }}</span>
-                </span>
 
-                <div class="flex items-center gap-2">
-                    <button (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"
-                        class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        <lucide-icon [img]="chevronLeft" size="18"></lucide-icon>
-                    </button>
+        </table>
 
-                    <div class="flex items-center gap-1">
-                        @for (p of [].constructor(totalPages); track $index) {
-                        <button (click)="setPage($index + 1)" [class]="$index + 1 === currentPage
+
+        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+            <span class="text-sm text-gray-500">
+                Pagina <span class="font-medium text-slate-900">{{ currentPage }}</span> van <span
+                    class="font-medium text-slate-900">{{ totalPages }}</span>
+            </span>
+
+            <div class="flex items-center gap-2">
+                <button (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"
+                    class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <lucide-icon [img]="chevronLeft" size="18"></lucide-icon>
+                </button>
+
+                <div class="flex items-center gap-1">
+                    @for (p of [].constructor(totalPages); track $index) {
+                    <button (click)="setPage($index + 1)" [class]="$index + 1 === currentPage
             ? 'px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-md font-medium'
             : 'px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-md transition-colors'">
-                            {{ $index + 1 }}
-                        </button>
-                        }
-                    </div>
-
-                    <button (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"
-                        class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        <lucide-icon [img]="chevronRight" size="18"></lucide-icon>
+                        {{ $index + 1 }}
                     </button>
+                    }
                 </div>
+
+                <button (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                    class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <lucide-icon [img]="chevronRight" size="18"></lucide-icon>
+                </button>
             </div>
-        </table>
+        </div>
+
     </div>
 </div>
