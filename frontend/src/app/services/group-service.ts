@@ -32,4 +32,16 @@ export class GroupService {
             params,
         });
     }
+
+    getGroupSettings(groupEmail: string): Observable<GroupSettingsDto> {
+        return this.#http.get<GroupSettingsDto>(`${this.#API_URL}/groups/settings`, {
+            withCredentials: true,
+            params: { groupEmail },
+        });
+    }
+}
+
+export interface GroupSettingsDto {
+    whoCanJoin: string;
+    whoCanView: string;
 }

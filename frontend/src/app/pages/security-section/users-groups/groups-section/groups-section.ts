@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   CircleCheck,
   CircleX,
   Clock,
@@ -18,7 +20,7 @@ import {
   ExternalLink,
 } from 'lucide-angular';
 import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
-import { GroupOrgDetail, GroupService } from '../../../../services/group-service';
+import { GroupOrgDetail, GroupService, GroupSettingsDto } from '../../../../services/group-service';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -54,12 +56,18 @@ export class GroupsSection implements OnInit{
   readonly usersIcon = Users;
   readonly externalLinkIcon = ExternalLink;
   readonly loaderIcon = Loader2;
+  readonly chevronDownIcon = ChevronDown;
+  readonly chevronUpIcon = ChevronUp;
 
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
   readonly searchQuery = signal('');
   private readonly searchSubject = new Subject<string>();
+
+  readonly expandedGroups = signal<Set<string>>(new Set());
+  readonly groupSettingsCache = signal<Record<string, GroupSettingsDto>>({});
+  readonly loadingSettingsFor = signal<Set<string>>(new Set());
 
   readonly totalGroups = computed(() => this.groups().length);
 
@@ -113,6 +121,7 @@ export class GroupsSection implements OnInit{
 
   private loadGroups(): void {
     this.loading.set(true);
+    this.expandedGroups.set(new Set());
     this.#groupService.getOrgGroups(this.searchQuery() || undefined).subscribe({
       next: (groups) => {
         this.groups.set(this.mapToGroupSummary(groups));
@@ -146,5 +155,54 @@ export class GroupsSection implements OnInit{
       return 'https://admin.google.com/u/1/ac/groups';
     }
     return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
+  }
+
+  isExpanded(groupName: string): boolean {
+    return this.expandedGroups().has(groupName);
+  }
+
+  getCachedSettings(groupName: string): GroupSettingsDto | undefined {
+    return this.groupSettingsCache()[groupName];
+  }
+
+  isSettingsLoading(groupName: string): boolean {
+    return this.loadingSettingsFor().has(groupName);
+  }
+
+  toggleGroupExpanded(group: GroupSummary): void {
+    const name = group.name;
+    const expanded = new Set(this.expandedGroups());
+    if (expanded.has(name)) {
+      expanded.delete(name);
+      this.expandedGroups.set(expanded);
+      return;
+    }
+    expanded.add(name);
+    this.expandedGroups.set(expanded);
+    const cache = this.groupSettingsCache();
+    if (cache[name]) {
+      return;
+    }
+    const loading = new Set(this.loadingSettingsFor());
+    loading.add(name);
+    this.loadingSettingsFor.set(loading);
+    this.#groupService.getGroupSettings(name).subscribe({
+      next: (settings) => {
+        this.groupSettingsCache.update((c) => ({ ...c, [name]: settings }));
+        this.loadingSettingsFor.update((s) => {
+          const next = new Set(s);
+          next.delete(name);
+          return next;
+        });
+      },
+      error: () => {
+        this.groupSettingsCache.update((c) => ({ ...c, [name]: { whoCanJoin: '—', whoCanView: '—' } }));
+        this.loadingSettingsFor.update((s) => {
+          const next = new Set(s);
+          next.delete(name);
+          return next;
+        });
+      },
+    });
   }
 }

@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.GroupOrgDetail;
+import com.cloudmen.cloudguard.dto.GroupSettingsDto;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
@@ -51,13 +52,6 @@ public class GoogleGroupsAdminService {
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY
             );
             Directory service = directoryFactory.getDirectoryService(scopes, loggedInEmail);
-
-            Groupssettings settingsService = null;
-            try {
-                settingsService = getGroupsSettingsService(loggedInEmail);
-            } catch (Throwable t) {
-                log.warn("Groups Settings API unavailable", t);
-            }
 
             CloudIdentity cloudIdentity = null;
             try {
@@ -127,19 +121,6 @@ public class GoogleGroupsAdminService {
                             }
 
                             boolean externalAllowed = external > 0;
-                            String whoCanJoin = "—";
-                            String whoCanView = "—";
-
-                            if (settingsService != null) {
-                                try {
-                                    Groups settings = settingsService.groups().get(groupEmail).execute();
-                                    whoCanJoin = mapWhoCanJoin(settings.getWhoCanJoin());
-                                    whoCanView = mapWhoCanViewMembership(settings.getWhoCanViewMembership());
-                                } catch (Throwable t) {
-                                    log.warn("Could not fetch Groups Settings for {}: {}", groupEmail, t.getMessage());
-                                }
-                            }
-
                             String risk = deriveRisk(external, total, externalAllowed);
                             List<String> tags = new ArrayList<>(deriveRiskTags(risk));
 
@@ -177,8 +158,8 @@ public class GoogleGroupsAdminService {
                                     total,
                                     external,
                                     externalAllowed,
-                                    whoCanJoin,
-                                    whoCanView
+                                    "—",
+                                    "—"
                             ));
                         } catch (Throwable t) {
                             log.warn("Failed to process group: {}", t.getMessage());
@@ -191,6 +172,22 @@ public class GoogleGroupsAdminService {
             return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch groups from Google: " + e.getMessage());
+        }
+    }
+
+    public GroupSettingsDto getGroupSettings(String loggedInEmail, String groupEmail) {
+        if (groupEmail == null || groupEmail.isBlank()) {
+            return new GroupSettingsDto("—", "—");
+        }
+        try {
+            Groupssettings settingsService = getGroupsSettingsService(loggedInEmail);
+            Groups settings = settingsService.groups().get(groupEmail).execute();
+            String whoCanJoin = mapWhoCanJoin(settings.getWhoCanJoin());
+            String whoCanView = mapWhoCanViewMembership(settings.getWhoCanViewMembership());
+            return new GroupSettingsDto(whoCanJoin, whoCanView);
+        } catch (Throwable t) {
+            log.warn("Could not fetch Groups Settings for {}: {}", groupEmail, t.getMessage());
+            return new GroupSettingsDto("—", "—");
         }
     }
 
