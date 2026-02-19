@@ -364,7 +364,6 @@ public class GoogleAdminService {
                             String risk = deriveRisk(external, total, externalAllowed);
                             List<String> tags = new ArrayList<>(deriveRiskTags(risk));
 
-                            // Enrich tags from Cloud Identity labels (Mailing / Security)
                             if (cloudIdentity != null) {
                                 try {
                                     LookupGroupNameResponse lookup =

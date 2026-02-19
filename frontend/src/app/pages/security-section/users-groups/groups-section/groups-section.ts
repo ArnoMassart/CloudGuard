@@ -72,8 +72,26 @@ export class GroupsSection implements OnInit{
     () => this.groups().filter((g) => g.risk === 'HIGH').length
   );
 
-  // Static example value – mirrors UsersSection "Security Score"
-  readonly securityScore = computed(() => 65);
+  readonly mediumRiskGroups = computed(
+    () => this.groups().filter((g) => g.risk === 'MEDIUM').length
+  );
+
+  readonly lowRiskGroups = computed(
+    () => this.groups().filter((g) => g.risk === 'LOW').length
+  );
+
+  readonly securityScore = computed(() => {
+    const total = this.totalGroups();
+    if (!total) return 0;
+
+    const high = this.highRiskGroups();
+    const medium = this.mediumRiskGroups();
+    const low = this.lowRiskGroups();
+
+    // Weighted score: LOW = 100, MEDIUM = 60, HIGH = 20
+    const weightedTotal = low * 100 + medium * 60 + high * 20;
+    return Math.round(weightedTotal / total);
+  });
 
   ngOnInit():void {
     this.#groupService.getOrgGroups().subscribe({
