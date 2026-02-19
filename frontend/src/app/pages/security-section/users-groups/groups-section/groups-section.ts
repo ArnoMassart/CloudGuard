@@ -69,6 +69,11 @@ export class GroupsSection implements OnInit{
   readonly groupSettingsCache = signal<Record<string, GroupSettingsDto>>({});
   readonly loadingSettingsFor = signal<Set<string>>(new Set());
 
+  readonly nextPageToken = signal<string | null>(null);
+  readonly currentPage = signal(1);
+  private tokenHistory: (string | null)[] = [null];
+  private readonly pageSize = 5;
+
   readonly totalGroups = computed(() => this.groups().length);
 
   readonly groupsWithExternal = computed(
@@ -107,7 +112,7 @@ export class GroupsSection implements OnInit{
       distinctUntilChanged()
     ).subscribe((value) => this.onSearch(value));
 
-    this.loadGroups();
+    this.loadGroups(null);
   }
 
   onKeyup(value: string): void {
@@ -116,23 +121,46 @@ export class GroupsSection implements OnInit{
   }
 
   onSearch(value: string): void {
-    this.loadGroups();
+    this.currentPage.set(1);
+    this.tokenHistory = [null];
+    this.loadGroups(null);
   }
 
-  private loadGroups(): void {
+  nextPage(): void {
+    const token = this.nextPageToken();
+    if (token) {
+      this.tokenHistory.push(token);
+      this.currentPage.update((p) => p + 1);
+      this.loadGroups(token);
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.tokenHistory.pop();
+      const prevToken = this.tokenHistory[this.tokenHistory.length - 1];
+      this.currentPage.update((p) => p - 1);
+      this.loadGroups(prevToken);
+    }
+  }
+
+  private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
     this.expandedGroups.set(new Set());
-    this.#groupService.getOrgGroups(this.searchQuery() || undefined).subscribe({
-      next: (groups) => {
-        this.groups.set(this.mapToGroupSummary(groups));
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error fetching groups:', error);
-        this.groups.set([]);
-        this.loading.set(false);
-      },
-    });
+    this.#groupService
+      .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)
+      .subscribe({
+        next: (res) => {
+          this.groups.set(this.mapToGroupSummary(res.groups));
+          this.nextPageToken.set(res.nextPageToken ?? null);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('Error fetching groups:', error);
+          this.groups.set([]);
+          this.loading.set(false);
+        },
+      });
   }
 
   private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {

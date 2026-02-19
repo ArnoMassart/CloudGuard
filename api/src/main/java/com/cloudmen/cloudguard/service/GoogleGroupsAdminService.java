@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.GroupOrgDetail;
+import com.cloudmen.cloudguard.dto.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.GroupSettingsDto;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -45,7 +46,7 @@ public class GoogleGroupsAdminService {
         this.directoryFactory = directoryFactory;
     }
 
-    public List<GroupOrgDetail> getAllWorkspaceGroups(String loggedInEmail, String query) {
+    public GroupPageResponse getGroupsPaged(String loggedInEmail, String query, String pageToken, int size) {
         try {
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,
@@ -62,32 +63,31 @@ public class GoogleGroupsAdminService {
 
             String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
             List<GroupOrgDetail> result = new ArrayList<>();
-            String pageToken = null;
 
-            do {
-                com.google.api.services.admin.directory.Directory.Groups.List listRequest =
-                        service.groups().list()
-                                .setCustomer("my_customer")
-                                .setMaxResults(200)
-                                .setPageToken(pageToken)
-                                .setOrderBy("email");
+            com.google.api.services.admin.directory.Directory.Groups.List listRequest =
+                    service.groups().list()
+                            .setCustomer("my_customer")
+                            .setMaxResults(size)
+                            .setOrderBy("email");
+            if (pageToken != null && !pageToken.isBlank()) {
+                listRequest.setPageToken(pageToken);
+            }
 
-                if (query != null && !query.trim().isEmpty()) {
-                    String cleanQuery = query.trim();
-                    if (cleanQuery.contains("@")) {
-                        listRequest.setQuery("email:" + cleanQuery + "*");
-                    } else {
-                        listRequest.setQuery("name:" + cleanQuery + "*");
-                    }
+            if (query != null && !query.trim().isEmpty()) {
+                String cleanQuery = query.trim();
+                if (cleanQuery.contains("@")) {
+                    listRequest.setQuery("email:" + cleanQuery + "*");
+                } else {
+                    listRequest.setQuery("name:" + cleanQuery + "*");
                 }
+            }
 
-                com.google.api.services.admin.directory.model.Groups groupsResult = listRequest.execute();
+            com.google.api.services.admin.directory.model.Groups groupsResult = listRequest.execute();
+            List<com.google.api.services.admin.directory.model.Group> googleGroups =
+                    groupsResult.getGroups();
 
-                List<com.google.api.services.admin.directory.model.Group> googleGroups =
-                        groupsResult.getGroups();
-
-                if (googleGroups != null) {
-                    for (com.google.api.services.admin.directory.model.Group group : googleGroups) {
+            if (googleGroups != null) {
+                for (com.google.api.services.admin.directory.model.Group group : googleGroups) {
                         try {
                             String groupEmail = group.getEmail();
                             if (groupEmail == null || groupEmail.isBlank()) continue;
@@ -166,10 +166,8 @@ public class GoogleGroupsAdminService {
                         }
                     }
                 }
-                pageToken = groupsResult.getNextPageToken();
-            } while (pageToken != null);
 
-            return result;
+            return new GroupPageResponse(result, groupsResult.getNextPageToken());
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch groups from Google: " + e.getMessage());
         }

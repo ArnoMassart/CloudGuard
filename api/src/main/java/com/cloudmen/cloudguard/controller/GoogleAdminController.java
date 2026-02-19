@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.GroupOrgDetail;
+import com.cloudmen.cloudguard.dto.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.GroupSettingsDto;
 import com.cloudmen.cloudguard.dto.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.UserPageResponse;
@@ -59,15 +59,17 @@ public class GoogleAdminController {
     }
 
     @GetMapping("/groups")
-    public ResponseEntity<List<GroupOrgDetail>> getOrgGroups(
+    public ResponseEntity<GroupPageResponse> getOrgGroups(
             @CookieValue(name = "AuthToken", required = false) String token,
-            @RequestParam(required = false) String query) {
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String pageToken,
+            @RequestParam(defaultValue = "5") int size) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsAdminService.getAllWorkspaceGroups(email, query));
+        return ResponseEntity.ok(googleGroupsAdminService.getGroupsPaged(email, query, pageToken, size));
     }
 
     @GetMapping("/groups/settings")

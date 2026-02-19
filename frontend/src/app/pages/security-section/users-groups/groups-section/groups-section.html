@@ -190,6 +190,30 @@
       } @empty {
         <p class="text-sm text-slate-500">Geen groepen gevonden voor deze zoekopdracht.</p>
       }
+
+      <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+        <span class="text-sm text-gray-500">
+          Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+        </span>
+        <div class="flex gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="currentPage() === 1"
+            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <i-lucide [img]="chevronLeft" size="16" />
+            Vorige
+          </button>
+          <button
+            (click)="nextPage()"
+            [disabled]="!nextPageToken()"
+            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Volgende
+            <i-lucide [img]="chevronRight" size="16" />
+          </button>
+        </div>
+      </div>
     }
   </div>
 </div>

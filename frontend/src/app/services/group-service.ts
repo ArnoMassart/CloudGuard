@@ -22,12 +22,15 @@ export class GroupService {
     readonly #API_URL = RouteService.getBackendUrl('/google');
     readonly #http = inject(HttpClient);
 
-    getOrgGroups(query?: string): Observable<GroupOrgDetail[]> {
-        let params = new HttpParams();
+    getOrgGroups(query?: string, pageToken?: string, size: number = 5): Observable<GroupPageResponse> {
+        let params = new HttpParams().set('size', size.toString());
         if (query?.trim()) {
             params = params.set('query', query.trim());
         }
-        return this.#http.get<GroupOrgDetail[]>(`${this.#API_URL}/groups`, {
+        if (pageToken) {
+            params = params.set('pageToken', pageToken);
+        }
+        return this.#http.get<GroupPageResponse>(`${this.#API_URL}/groups`, {
             withCredentials: true,
             params,
         });
@@ -39,6 +42,11 @@ export class GroupService {
             params: { groupEmail },
         });
     }
+}
+
+export interface GroupPageResponse {
+    groups: GroupOrgDetail[];
+    nextPageToken: string | null;
 }
 
 export interface GroupSettingsDto {
