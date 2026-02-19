@@ -2,7 +2,7 @@ export type UserOrgDetail = {
   fullName: string;
   email: string;
   role: string;
-  isActive: boolean;
+  active: boolean;
   lastLogin: string;
-  isTwoFactorEnabled: boolean;
+  twoFactorEnabled: boolean;
 };

@@ -11,9 +11,11 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -85,36 +87,93 @@ public class GoogleAdminService {
 
     public List<UserOrgDetail> getAllWorkspaceUsers(String loggedInEmail) {
         try {
-            Directory service = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, loggedInEmail);
-            List<User> googleUsers = new ArrayList<>();
-            String pageToken = null;
+            Directory userDirectory = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, loggedInEmail);
+            Directory roleDirectory = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, loggedInEmail);
 
-            do {
-                Users result = service.users().list()
-                        .setCustomer("my_customer")
-                        .setProjection("full")
-                        .setMaxResults(100)
-                        .setPageToken(pageToken)
-                        .setOrderBy("email")
-                        .execute();
+            Map<Long, String> roleDictionary = roleDirectory.roles().list("my_customer")
+                    .execute()
+                    .getItems()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Role::getRoleId,
+                            Role::getRoleName,
+                            (existing, replacement) -> existing
+                    ));
 
-                if (result.getUsers() != null) {
-                    googleUsers.addAll(result.getUsers());
-                }
+            List<User> googleUsers = fetchAllOrgUsers(userDirectory);
 
-                pageToken = result.getNextPageToken();
-            } while (pageToken != null);
+            return googleUsers.stream().map(user -> {
+                String firstRole = getFirstRoleForUser(roleDirectory, user.getPrimaryEmail(), roleDictionary);
 
-            return googleUsers.stream().map(user -> new UserOrgDetail(
-                    user.getName().getFullName(),
-                    user.getPrimaryEmail(),
-                    user.getIsAdmin() ? "Admin" : "User",
-                    !Boolean.TRUE.equals(user.getSuspended()),
-                    user.getLastLoginTime() != null ? user.getLastLoginTime().toString() : "Never",
-                    Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())
-            )).toList();
+                return new UserOrgDetail(
+                        user.getName().getFullName(),
+                        user.getPrimaryEmail(),
+                        translateRoleName(firstRole),
+                        !Boolean.TRUE.equals(user.getSuspended()),
+                        user.getLastLoginTime() != null ? user.getLastLoginTime().toString() : "Never",
+                        Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())
+                );
+            }).toList();
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
         }
+    }
+
+    private List<User> fetchAllOrgUsers(Directory service) throws IOException {
+        List<User> googleUsers = new ArrayList<>();
+        String pageToken = null;
+
+        do {
+            Users result = service.users().list()
+                    .setCustomer("my_customer")
+                    .setProjection("full")
+                    .setMaxResults(100)
+                    .setPageToken(pageToken)
+                    .setOrderBy("email")
+                    .execute();
+
+            if (result.getUsers() != null) {
+                googleUsers.addAll(result.getUsers());
+            }
+
+            pageToken = result.getNextPageToken();
+        } while (pageToken != null);
+
+        return googleUsers;
+    }
+
+    private String getFirstRoleForUser(Directory service, String email, Map<Long, String> roleDictionary) {
+        try {
+            // Haal de rol-koppelingen op voor deze specifieke gebruiker
+            RoleAssignments assignments = service.roleAssignments()
+                    .list("my_customer")
+                    .setUserKey(email)
+                    .execute();
+
+            if (assignments.getItems() == null || assignments.getItems().isEmpty()) {
+                return "Regular User";
+            }
+
+            // Pak de RoleId van de eerste assignment
+            Long firstRoleId = assignments.getItems().get(0).getRoleId();
+
+            // Zoek de naam op in ons woordenboek (geen API call nodig!)
+            String name = roleDictionary.getOrDefault(firstRoleId, "Unknown Role");
+
+            // Optioneel: vertaal systeemrollen naar mooie namen
+            return translateRoleName(name);
+
+        } catch (IOException e) {
+            return "Error fetching role";
+        }
+    }
+
+    private String translateRoleName(String role) {
+        if (role == null) return "User";
+        return switch (role) {
+            case "_SEED_ADMIN_ROLE" -> "Super Admin";
+            case "_READ_ONLY_ADMIN_ROLE" -> "Read Only Admin";
+            default -> role;
+        };
     }
 }

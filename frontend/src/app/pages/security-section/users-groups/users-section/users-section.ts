@@ -14,10 +14,17 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserOrgDetail } from '../../../../models/UserOrgDetails';
 import { UserService } from '../../../../services/user-service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-users-section',
-  imports: [LucideAngularModule, UsersSectionTopCard, FormsModule, CommonModule],
+  imports: [
+    LucideAngularModule,
+    UsersSectionTopCard,
+    FormsModule,
+    CommonModule,
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
 })
@@ -49,6 +56,7 @@ export class UsersSection implements OnInit {
     this.#userService.getOrgUsers().subscribe({
       next: (data) => {
         this.orgUsers.set(data);
+        console.log(this.orgUsers());
       },
       error: (err) => {
         console.error('Failed to load users', err);

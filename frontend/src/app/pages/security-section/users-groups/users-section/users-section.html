@@ -37,6 +37,7 @@
     </div>
 
     <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+        @if (paginatedUsers.length > 0) {
         <span class="font-medium text-lg ml-5.5">Alle gebruikers</span>
 
         <table class="w-full text-left border-collapse mt-6">
@@ -47,7 +48,7 @@
                     <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste Inlog</th>
                     <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">2FA</th>
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Activiteit</th>
+                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Security</th>
                 </tr>
             </thead>
 
@@ -69,10 +70,10 @@
 
                     <td class="px-6 py-4">
                         <div class="py-1 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg"
-                            [class.text-emerald-600]="user.isActive" [class.bg-[#dbfce7]]="user.isActive"
-                            [class.text-slate-500]="!user.isActive" [class.bg-[#f3f4f6]]="!user.isActive">
-                            <lucide-icon [img]="user.isActive ? checkCircle : xCircle" size="14"></lucide-icon>
-                            {{ user.isActive ? "Actief" : "Suspended" }}
+                            [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
+                            [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
+                            <lucide-icon [img]="user.active ? checkCircle : xCircle" size="14"></lucide-icon>
+                            {{ user.active ? "Actief" : "Suspended" }}
                         </div>
                     </td>
 
@@ -85,11 +86,10 @@
 
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-1.5 text-xs font-medium"
-                            [class.text-emerald-400]="user.isTwoFactorEnabled"
-                            [class.text-destructive]="!user.isTwoFactorEnabled">
-                            <lucide-icon [img]="user.isTwoFactorEnabled ? checkCircle : xCircle"
-                                size="14"></lucide-icon>
-                            {{ user.isTwoFactorEnabled ? "Ingeschakeld" : "Uit" }}
+                            [class.text-emerald-400]="user.twoFactorEnabled"
+                            [class.text-destructive]="!user.twoFactorEnabled">
+                            <lucide-icon [img]="user.twoFactorEnabled ? checkCircle : xCircle" size="14"></lucide-icon>
+                            {{ user.twoFactorEnabled ? "Ingeschakeld" : "Uit" }}
                         </div>
                     </td>
 
@@ -138,6 +138,28 @@
                 </button>
             </div>
         </div>
+        }
 
+        @else {
+        <div class="flex flex-col items-center p-3">
+
+            <div class="flex flex-col items-center space-y-4 p-8 ">
+
+                <!-- <mat-spinner [diameter]="48" class="spinner">
+            </mat-spinner> -->
+                <div class="relative flex items-center justify-center">
+                    <div class="h-12 w-12 rounded-full"></div>
+
+                    <div
+                        class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+                    </div>
+                </div>
+
+                <span class="text-sm font-medium text-slate-600 animate-pulse">
+                    Loading workspace users...
+                </span>
+            </div>
+        </div>
+        }
     </div>
 </div>
