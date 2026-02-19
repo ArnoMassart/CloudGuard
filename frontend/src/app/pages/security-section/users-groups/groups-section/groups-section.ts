@@ -1,11 +1,213 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  CircleCheck,
+  CircleX,
+  Clock,
+  Loader2,
+  LucideAngularModule,
+  Search,
+  TriangleAlert,
+  ShieldAlert,
+  Users,
+  ExternalLink,
+} from 'lucide-angular';
+import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
+import { GroupOrgDetail, GroupOverviewResponse, GroupService, GroupSettingsDto } from '../../../../services/group-service';
+
+type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
+
+interface GroupSummary {
+  name: string;
+  adminId: string;
+  risk: GroupRisk;
+  tags: string[];
+  totalMembers: number;
+  externalMembers: number;
+  externalAllowed: boolean;
+  whoCanJoin: string;
+  whoCanView: string;
+}
 
 @Component({
   selector: 'app-groups-section',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, LucideAngularModule, UsersSectionTopCard, FormsModule],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })
-export class GroupsSection {
+export class GroupsSection implements OnInit{
+  readonly triangleAlertIcon = TriangleAlert;
+  readonly searchIcon = Search;
+  readonly checkCircle = CircleCheck;
+  readonly xCircle = CircleX;
+  readonly clock = Clock;
+  readonly triangleAlert = TriangleAlert;
+  readonly chevronLeft = ChevronLeft;
+  readonly chevronRight = ChevronRight;
+  readonly shieldAlertIcon = ShieldAlert;
+  readonly usersIcon = Users;
+  readonly externalLinkIcon = ExternalLink;
+  readonly loaderIcon = Loader2;
+  readonly chevronDownIcon = ChevronDown;
+  readonly chevronUpIcon = ChevronUp;
 
+  readonly #groupService = inject(GroupService);
+  readonly groups = signal<GroupSummary[]>([]);
+  readonly loading = signal(true);
+  readonly pageOverview = signal<GroupOverviewResponse | null>(null);
+  readonly searchQuery = signal('');
+  private readonly searchSubject = new Subject<string>();
+
+  readonly expandedGroups = signal<Set<string>>(new Set());
+  readonly groupSettingsCache = signal<Record<string, GroupSettingsDto>>({});
+  readonly loadingSettingsFor = signal<Set<string>>(new Set());
+
+  readonly nextPageToken = signal<string | null>(null);
+  readonly currentPage = signal(1);
+  private tokenHistory: (string | null)[] = [null];
+  private readonly pageSize = 5;
+
+  ngOnInit(): void {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe((value) => this.onSearch(value));
+
+    this.loadGroupsOverview();
+    this.loadGroups(null);
+  }
+
+  private loadGroupsOverview(): void {
+    this.#groupService.getGroupsOverview().subscribe({
+      next: (res) => this.pageOverview.set(res),
+      error: (err) => console.error('Failed to load groups overview', err),
+    });
+  }
+
+  onKeyup(value: string): void {
+    this.searchQuery.set(value);
+    this.searchSubject.next(value);
+  }
+
+  onSearch(value: string): void {
+    this.currentPage.set(1);
+    this.tokenHistory = [null];
+    this.loadGroups(null);
+  }
+
+  nextPage(): void {
+    const token = this.nextPageToken();
+    if (token) {
+      this.tokenHistory.push(token);
+      this.currentPage.update((p) => p + 1);
+      this.loadGroups(token);
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.tokenHistory.pop();
+      const prevToken = this.tokenHistory[this.tokenHistory.length - 1];
+      this.currentPage.update((p) => p - 1);
+      this.loadGroups(prevToken);
+    }
+  }
+
+  private loadGroups(pageToken: string | null): void {
+    this.loading.set(true);
+    this.expandedGroups.set(new Set());
+    this.#groupService
+      .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)
+      .subscribe({
+        next: (res) => {
+          this.groups.set(this.mapToGroupSummary(res.groups));
+          this.nextPageToken.set(res.nextPageToken ?? null);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('Error fetching groups:', error);
+          this.groups.set([]);
+          this.loading.set(false);
+        },
+      });
+  }
+
+  private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {
+    return groups.map((g) => ({
+      name: g.name,
+      adminId: g.adminId ?? '',
+      risk: g.risk as GroupRisk,
+      tags: g.tags,
+      totalMembers: g.totalMembers,
+      externalMembers: g.externalMembers,
+      externalAllowed: g.externalAllowed,
+      whoCanJoin: g.whoCanJoin,
+      whoCanView: g.whoCanView,
+    }));
+  }
+
+  getGroupAdminUrl(group: GroupSummary): string {
+    const id = group.adminId?.trim();
+    if (!id) {
+      return 'https://admin.google.com/u/1/ac/groups';
+    }
+    return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
+  }
+
+  isExpanded(groupName: string): boolean {
+    return this.expandedGroups().has(groupName);
+  }
+
+  getCachedSettings(groupName: string): GroupSettingsDto | undefined {
+    return this.groupSettingsCache()[groupName];
+  }
+
+  isSettingsLoading(groupName: string): boolean {
+    return this.loadingSettingsFor().has(groupName);
+  }
+
+  toggleGroupExpanded(group: GroupSummary): void {
+    const name = group.name;
+    const expanded = new Set(this.expandedGroups());
+    if (expanded.has(name)) {
+      expanded.delete(name);
+      this.expandedGroups.set(expanded);
+      return;
+    }
+    expanded.add(name);
+    this.expandedGroups.set(expanded);
+    const cache = this.groupSettingsCache();
+    if (cache[name]) {
+      return;
+    }
+    const loading = new Set(this.loadingSettingsFor());
+    loading.add(name);
+    this.loadingSettingsFor.set(loading);
+    this.#groupService.getGroupSettings(name).subscribe({
+      next: (settings) => {
+        this.groupSettingsCache.update((c) => ({ ...c, [name]: settings }));
+        this.loadingSettingsFor.update((s) => {
+          const next = new Set(s);
+          next.delete(name);
+          return next;
+        });
+      },
+      error: () => {
+        this.groupSettingsCache.update((c) => ({ ...c, [name]: { whoCanJoin: '—', whoCanView: '—' } }));
+        this.loadingSettingsFor.update((s) => {
+          const next = new Set(s);
+          next.delete(name);
+          return next;
+        });
+      },
+    });
+  }
 }
