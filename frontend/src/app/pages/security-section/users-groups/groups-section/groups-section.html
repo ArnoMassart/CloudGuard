@@ -78,12 +78,10 @@
   </div>
 
   <!-- Groups list -->
-  <div class="space-y-4 min-h-[200px] flex flex-col">
-    @if (loading()) {
-      <div class="flex-1 flex items-center justify-center py-16">
-        <i-lucide [img]="loaderIcon" size="40" class="text-primary animate-spin" />
-      </div>
-    } @else {
+  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+    @if (!loading()) {
+
+    <div class="space-y-4 mt-1 px-6">
       @for (group of groups(); track group.name) {
       <article class="rounded-lg border-2 border-muted/50 bg-white p-5 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-3">
@@ -191,29 +189,44 @@
         <p class="text-sm text-slate-500">Geen groepen gevonden voor deze zoekopdracht.</p>
       }
 
-      <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-        <span class="text-sm text-gray-500">
-          Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
-        </span>
-        <div class="flex gap-2">
-          <button
-            (click)="prevPage()"
-            [disabled]="currentPage() === 1"
-            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <i-lucide [img]="chevronLeft" size="16" />
-            Vorige
-          </button>
-          <button
-            (click)="nextPage()"
-            [disabled]="!nextPageToken()"
-            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Volgende
-            <i-lucide [img]="chevronRight" size="16" />
-          </button>
-        </div>
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+      <span class="text-sm text-gray-500">
+        Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+      </span>
+      <div class="flex gap-2">
+        <button
+          (click)="prevPage()"
+          [disabled]="currentPage() === 1"
+          class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <i-lucide [img]="chevronLeft" size="16" />
+          Vorige
+        </button>
+        <button
+          (click)="nextPage()"
+          [disabled]="!nextPageToken()"
+          class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Volgende
+          <i-lucide [img]="chevronRight" size="16" />
+        </button>
       </div>
+    </div>
+    </div>
+    }
+
+    @else {
+    <div class="flex flex-col items-center p-3">
+      <div class="flex flex-col items-center space-y-4 p-8">
+        <div class="relative flex items-center justify-center">
+          <div class="h-12 w-12 rounded-full"></div>
+          <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        </div>
+        <span class="text-sm font-medium text-slate-600 animate-pulse">
+          Groepen worden geladen...
+        </span>
+      </div>
+    </div>
     }
   </div>
 </div>
