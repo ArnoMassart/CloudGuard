@@ -128,9 +128,12 @@
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN TOEGESTAAN</p>
-          <span
-            class="inline-flex items-center gap-1 font-medium"
+          <a
+            class="inline-flex items-center gap-1 font-medium underline hover:opacity-80"
             [ngClass]="group.externalAllowed ? 'text-rose-600' : 'text-emerald-600'"
+            [href]="getGroupAdminUrl(group)"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             <ng-container *ngIf="group.externalAllowed; else externalNo">
               Ja
@@ -141,7 +144,7 @@
               />
             </ng-container>
             <ng-template #externalNo>Nee</ng-template>
-          </span>
+          </a>
         </div>
       </div>
 

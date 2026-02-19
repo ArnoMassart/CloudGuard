@@ -11,6 +11,7 @@ import java.util.List;
 @Setter
 public class GroupOrgDetail {
     private String name;
+    private String adminId;
     private String risk;
     private List<String> tags;
     private int totalMembers;

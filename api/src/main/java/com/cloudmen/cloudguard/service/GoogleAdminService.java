@@ -388,8 +388,11 @@ public class GoogleAdminService {
                                 }
                             }
 
+                            String adminId = group.getId() != null ? group.getId() : "";
+
                             result.add(new GroupOrgDetail(
                                     groupEmail,
+                                    adminId,
                                     risk,
                                     tags,
                                     total,

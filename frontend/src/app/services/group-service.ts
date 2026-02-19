@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 
 export interface GroupOrgDetail {
     name: string;
+    adminId: string;
     risk: string;
     tags: string[];
     totalMembers: number;

@@ -21,6 +21,7 @@ type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
 interface GroupSummary {
   name: string;
+  adminId: string;
   risk: GroupRisk;
   tags: string[];
   totalMembers: number;
@@ -108,6 +109,7 @@ export class GroupsSection implements OnInit{
   private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {
     return groups.map((g) => ({
       name: g.name,
+      adminId: g.adminId ?? '',
       risk: g.risk as GroupRisk,
       tags: g.tags,
       totalMembers: g.totalMembers,
@@ -116,5 +118,13 @@ export class GroupsSection implements OnInit{
       whoCanJoin: g.whoCanJoin,
       whoCanView: g.whoCanView,
     }));
+  }
+
+  getGroupAdminUrl(group: GroupSummary): string {
+    const id = group.adminId?.trim();
+    if (!id) {
+      return 'https://admin.google.com/u/1/ac/groups';
+    }
+    return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
   }
 }
