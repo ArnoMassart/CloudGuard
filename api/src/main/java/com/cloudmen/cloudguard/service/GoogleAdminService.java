@@ -1,6 +1,10 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.UserOrgDetail;
+import com.cloudmen.cloudguard.dto.UserOverviewResponse;
+import com.cloudmen.cloudguard.dto.UserPageResponse;
+import com.cloudmen.cloudguard.utility.DateTimeConverter;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
@@ -12,11 +16,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class GoogleAdminService {
@@ -32,7 +39,7 @@ public class GoogleAdminService {
 
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
-                .setPrivateKey(decodePrivateKey(pk))
+                .setPrivateKey(GoogleServiceHelperMethods.decodePrivateKey(pk))
                 .setServiceAccountUser(loggedInEmail)
                 .setScopes(Collections.singleton(scope))
                 .build();
@@ -43,17 +50,6 @@ public class GoogleAdminService {
                 new HttpCredentialsAdapter(credentials))
                 .setApplicationName("CloudGuard")
                 .build();
-    }
-
-    private java.security.PrivateKey decodePrivateKey(String pem) throws Exception {
-        String privateKeyPEM = pem
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
-        byte[] encoded = java.util.Base64.getDecoder().decode(privateKeyPEM);
-        java.security.spec.PKCS8EncodedKeySpec keySpec = new java.security.spec.PKCS8EncodedKeySpec(encoded);
-        java.security.KeyFactory kf = java.security.KeyFactory.getInstance("RSA");
-        return kf.generatePrivate(keySpec);
     }
 
     public List<String> getUserRoles(String email) {
@@ -85,7 +81,7 @@ public class GoogleAdminService {
         }
     }
 
-    public List<UserOrgDetail> getAllWorkspaceUsers(String loggedInEmail) {
+    public UserPageResponse getWorkspaceUsersPaged(String loggedInEmail, String pageToken, int size, String query) {
         try {
             Directory userDirectory = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, loggedInEmail);
             Directory roleDirectory = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, loggedInEmail);
@@ -100,20 +96,51 @@ public class GoogleAdminService {
                             (existing, replacement) -> existing
                     ));
 
-            List<User> googleUsers = fetchAllOrgUsers(userDirectory);
+            Directory.Users.List request = userDirectory.users().list()
+                    .setCustomer("my_customer")
+                    .setProjection("full")
+                    .setMaxResults(size)
+                    .setPageToken(pageToken);
 
-            return googleUsers.stream().map(user -> {
+            if (query != null && !query.trim().isEmpty()) {
+                String cleanQuery = query.trim();
+
+                // Slim zoeken: als er een '@' in zit is het een email, anders een naam
+                if (cleanQuery.contains("@")) {
+                    request.setQuery("email:" + cleanQuery + "*");
+                } else {
+                    request.setQuery("givenName:" + cleanQuery + "*");
+                }
+            } else {
+                // Alleen sorteren op naam als we de standaard lijst ophalen
+                request.setOrderBy("given_name");
+            }
+
+            Users result = request.execute();
+            List<User> googleUsers = result.getUsers();
+
+            if (googleUsers == null) {
+                return new UserPageResponse(Collections.emptyList(), null);
+            }
+
+            List<UserOrgDetail> mappedUsers = googleUsers.stream().map(user -> {
                 String firstRole = getFirstRoleForUser(roleDirectory, user.getPrimaryEmail(), roleDictionary);
+
+                boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
+                boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
 
                 return new UserOrgDetail(
                         user.getName().getFullName(),
                         user.getPrimaryEmail(),
-                        translateRoleName(firstRole),
-                        !Boolean.TRUE.equals(user.getSuspended()),
-                        user.getLastLoginTime() != null ? user.getLastLoginTime().toString() : "Never",
-                        Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())
+                        GoogleServiceHelperMethods.translateRoleName(firstRole),
+                        isActive,
+                        user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
+                        twoFAEnabled,
+                        GoogleServiceHelperMethods.checkSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
                 );
             }).toList();
+
+            return new UserPageResponse(mappedUsers, result.getNextPageToken());
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
         }
@@ -129,7 +156,6 @@ public class GoogleAdminService {
                     .setProjection("full")
                     .setMaxResults(100)
                     .setPageToken(pageToken)
-                    .setOrderBy("email")
                     .execute();
 
             if (result.getUsers() != null) {
@@ -161,19 +187,73 @@ public class GoogleAdminService {
             String name = roleDictionary.getOrDefault(firstRoleId, "Unknown Role");
 
             // Optioneel: vertaal systeemrollen naar mooie namen
-            return translateRoleName(name);
+            return GoogleServiceHelperMethods.translateRoleName(name);
 
         } catch (IOException e) {
             return "Error fetching role";
         }
     }
 
-    private String translateRoleName(String role) {
-        if (role == null) return "User";
-        return switch (role) {
-            case "_SEED_ADMIN_ROLE" -> "Super Admin";
-            case "_READ_ONLY_ADMIN_ROLE" -> "Read Only Admin";
-            default -> role;
-        };
+    public UserOverviewResponse getUsersPageOverview(String loggedInEmail) {
+
+        try {
+            LocalDate now = LocalDate.now();
+
+            Directory userDirectory = getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, loggedInEmail);
+
+            List<User> googleUsers = fetchAllOrgUsers(userDirectory);
+
+            long totalUsers = googleUsers.size();
+
+            long withoutTwoFactor = googleUsers.stream().filter(user -> !user.getSuspended() && !user.getIsEnrolledIn2Sv()).count();
+
+            long adminUsers = googleUsers.stream().filter(User::getIsAdmin).count();
+
+            long securityScore = calculateSecurityScore(googleUsers);
+
+            long activeLongNoLoginCount = googleUsers.stream().filter(user -> {
+                LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
+
+                boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
+                long yearsSinceLogin = ChronoUnit.YEARS.between(loginDate, now);
+
+                return isActive && yearsSinceLogin >= 1;
+            }).count();
+
+            long inactiveRecentLoginCount = googleUsers.stream().filter(user -> {
+                LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
+
+                boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
+                long daysSinceLogin = ChronoUnit.DAYS.between(loginDate, now);
+
+                return !isActive && daysSinceLogin <= 7;
+            }).count();
+
+            return new UserOverviewResponse(
+                    totalUsers,
+                    withoutTwoFactor,
+                    adminUsers,
+                    securityScore,
+                    activeLongNoLoginCount,
+                    inactiveRecentLoginCount
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
+        }
+    }
+
+    private int calculateSecurityScore(List<User> googleUsers) {
+        int totalUsers = googleUsers.size();
+
+        // Total score is calculate the conformity of each user and check if they comply
+        long complyCount = googleUsers.stream().filter(user -> {
+            boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
+            boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
+            return GoogleServiceHelperMethods.checkSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled);
+        }).count();
+
+
+        return (int) Math.floor((double) complyCount / totalUsers * 100);
     }
 }

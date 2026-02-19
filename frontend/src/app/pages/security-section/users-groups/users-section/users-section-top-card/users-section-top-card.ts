@@ -11,9 +11,22 @@ export class UsersSectionTopCard {
   readonly shieldIcon = Shield;
 
   @Input() Title: string = '';
-  @Input() Value: string = '';
+  @Input() Value: number | undefined = 0;
   @Input() Icon: LucideIconData = Shield;
   @Input() BackgroundColor: string = '#dbeafe';
   @Input() IconColor: string = '#155dfc';
   @Input() TextColor: string = 'black';
+  @Input() IsPercentage: boolean = false;
+
+  getTextColor(): string {
+    if (!this.IsPercentage) return this.TextColor;
+
+    if (this.Value != undefined) {
+      if (this.Value < 50) return '#f54a00';
+      else if (this.Value < 75) return '#d38700';
+      else return '#3abfad';
+    }
+
+    return this.TextColor;
+  }
 }

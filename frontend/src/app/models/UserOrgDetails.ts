@@ -5,4 +5,5 @@ export type UserOrgDetail = {
   active: boolean;
   lastLogin: string;
   twoFactorEnabled: boolean;
+  securityConform: boolean;
 };

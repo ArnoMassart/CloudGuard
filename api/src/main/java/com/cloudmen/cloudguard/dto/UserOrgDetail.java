@@ -14,4 +14,5 @@ public class UserOrgDetail {
     private boolean isActive;
     private String lastLogin;
     private boolean isTwoFactorEnabled;
+    private boolean isSecurityConform;
 }
