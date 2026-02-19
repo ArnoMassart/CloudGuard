@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ChevronLeft,
@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-angular';
 import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
+import { GroupOrgDetail, GroupService } from '../../../../services/group-service';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -35,7 +36,7 @@ interface GroupSummary {
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })
-export class GroupsSection {
+export class GroupsSection implements OnInit{
   readonly triangleAlertIcon = TriangleAlert;
   readonly searchIcon = Search;
   readonly checkCircle = CircleCheck;
@@ -47,44 +48,10 @@ export class GroupsSection {
   readonly shieldAlertIcon = ShieldAlert;
   readonly usersIcon = Users;
 
-  // Demo data – replace with real backend data later
-  private readonly groups = signal<GroupSummary[]>([
-    {
-      name: 'alle-medewerkers@bedrijf.nl',
-      risk: 'LOW',
-      tags: ['Laag risico', 'Mailing'],
-      totalMembers: 75,
-      externalMembers: 0,
-      externalAllowed: false,
-      whoCanJoin: 'Alleen uitgenodigde gebruikers',
-      whoCanView: 'Alle leden',
-    },
-    {
-      name: 'project-alpha@bedrijf.nl',
-      risk: 'MEDIUM',
-      tags: ['Middel risico', 'Mailing', 'Security'],
-      totalMembers: 18,
-      externalMembers: 3,
-      externalAllowed: true,
-      whoCanJoin: 'Iedereen in de organisatie',
-      whoCanView: 'Alle leden',
-    },
-    {
-      name: 'extern-partners@bedrijf.nl',
-      risk: 'HIGH',
-      tags: ['Hoog risico', 'Extern', 'Security'],
-      totalMembers: 12,
-      externalMembers: 12,
-      externalAllowed: true,
-      whoCanJoin: 'Externen toegestaan',
-      whoCanView: 'Alle leden',
-    },
-  ]);
-
-  // Search term for the input field
+  readonly #groupService = inject(GroupService);
+  readonly groups = signal<GroupSummary[]>([]);
   readonly searchTerm = signal('');
-
-  // Derived values used in the UI
+  
   readonly filteredGroups = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
     if (!term) return this.groups();
@@ -105,4 +72,29 @@ export class GroupsSection {
 
   // Static example value – mirrors UsersSection "Security Score"
   readonly securityScore = computed(() => 65);
+
+  ngOnInit():void {
+    this.#groupService.getOrgGroups().subscribe({
+      next: (groups) => {
+        this.groups.set(this.mapToGroupSummary(groups));
+      },
+      error: (error) => {
+        console.error('Error fetching groups:', error);
+        this.groups.set([]);
+      }
+    });
+  }
+
+  private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {
+    return groups.map((g) => ({
+      name: g.name,
+      risk: g.risk as GroupRisk,
+      tags: g.tags,
+      totalMembers: g.totalMembers,
+      externalMembers: g.externalMembers,
+      externalAllowed: g.externalAllowed,
+      whoCanJoin: g.whoCanJoin,
+      whoCanView: g.whoCanView,
+    }));
+  }
 }

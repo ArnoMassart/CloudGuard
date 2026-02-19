@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.GroupOrgDetail;
 import com.cloudmen.cloudguard.dto.UserOrgDetail;
 import com.cloudmen.cloudguard.dto.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.UserPageResponse;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Set;
 
 @Service
 public class GoogleAdminService {
@@ -35,13 +37,17 @@ public class GoogleAdminService {
     private String privateKey;
 
     private Directory getDirectoryService(String scope, String loggedInEmail) throws Exception {
+        return getDirectoryService(Collections.singleton(scope), loggedInEmail);
+    }
+
+    private Directory getDirectoryService(Set<String> scopes, String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
 
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
                 .setPrivateKey(GoogleServiceHelperMethods.decodePrivateKey(pk))
                 .setServiceAccountUser(loggedInEmail)
-                .setScopes(Collections.singleton(scope))
+                .setScopes(scopes)
                 .build();
 
         return new Directory.Builder(
@@ -255,5 +261,108 @@ public class GoogleAdminService {
 
 
         return (int) Math.floor((double) complyCount / totalUsers * 100);
+    }
+
+    public List<GroupOrgDetail> getAllWorkspaceGroups(String loggedInEmail) {
+        try {
+            Set<String> scopes = Set.of(
+                DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,
+                DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY
+            );
+            Directory service = getDirectoryService(scopes, loggedInEmail);
+
+            String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@')+1);
+            List<GroupOrgDetail> result = new ArrayList<>();
+
+            String pageToken = null;
+
+            do{
+                com.google.api.services.admin.directory.model.Groups groupsResult =
+                        service.groups().list()
+                                .setCustomer("my_customer")
+                                .setMaxResults(200)
+                                .setPageToken(pageToken)
+                                .setOrderBy("email")
+                                .execute();
+
+
+                List<com.google.api.services.admin.directory.model.Group> googleGroups =
+                        groupsResult.getGroups();
+
+                if(googleGroups != null) {
+
+                    for(com.google.api.services.admin.directory.model.Group group : googleGroups) {
+                        String groupEmail = group.getEmail();
+                        if (groupEmail == null || groupEmail.isBlank()) continue;
+
+                        int total = 0;
+                        int external = 0;
+                        String memberPageToken = null;
+
+                        do{
+                            Members members = service.members().list(groupEmail)
+                                    .setMaxResults(200)
+                                    .setPageToken(memberPageToken)
+                                    .execute();
+
+                            if(members.getMembers() != null) {
+                                for(Member member: members.getMembers()){
+                                    if ("USER".equals(member.getType())){
+                                        total++;
+                                        String email = member.getEmail();
+                                        if(email!=null && !email.endsWith('@'+primaryDomain)){
+                                            external++;
+                                        }
+                                    }
+                                }
+                            }
+                            memberPageToken = members.getNextPageToken();
+                        }while(memberPageToken!=null);
+
+                        Boolean externalAllowed = external > 0;
+                        String risk = deriveRisk(external, total, externalAllowed);
+                        List<String> tags = deriveTags(risk, externalAllowed, groupEmail);
+
+                        result.add(new GroupOrgDetail(
+                                groupEmail,
+                                risk,
+                                tags,
+                                total,
+                                external,
+                                externalAllowed,
+                                "-",
+                                "-"
+                        ));
+                    }
+                }
+                pageToken = groupsResult.getNextPageToken();
+            }while(pageToken!=null);
+
+            return result;
+        }catch(Exception e){
+            throw new RuntimeException("Failed to fetch groups from Google: " + e.getMessage());
+        }
+    }
+
+    private String deriveRisk(int external, int total, boolean externalAllowed) {
+        if(external>0) return "HIGH";
+        if(external<0) return "MEDIUM";
+        return "LOW";
+    }
+
+    private List<String> deriveTags(String risk, boolean hasExternal, String groupEmail) {
+        List<String> tags = new   ArrayList<>();
+        tags.add(switch(risk){
+            case "HIGH" -> "Hoog Risico";
+            case "MEDIUM" -> "Middel Risico";
+            default -> "Laag Risico";
+        });
+        if(hasExternal){
+            tags.add("Extern");
+        }
+        if(groupEmail!= null && groupEmail.toLowerCase().contains("mailing")){
+            tags.add("Mailing");
+        }
+        return tags;
     }
 }
