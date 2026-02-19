@@ -4,14 +4,14 @@
     <app-users-section-top-card
       class="flex-1"
       Title="Totaal groepen"
-      [Value]="(totalGroups() | number : '1.0-0') ?? '0'"
+      [Value]="totalGroups()"
       [Icon] = "usersIcon"
     />
 
     <app-users-section-top-card
       class="flex-1"
       Title="Met externe leden"
-      [Value]="(groupsWithExternal() | number : '1.0-0') ?? '0'"
+      [Value]="groupsWithExternal()"
       BackgroundColor="#ffedd4"
       IconColor="#f54a00"
       TextColor="#f54a00"
@@ -21,7 +21,7 @@
     <app-users-section-top-card
       class="flex-1"
       Title="Groepen met hoog risico"
-      [Value]="(highRiskGroups() | number : '1.0-0') ?? '0'"
+      [Value]="highRiskGroups()"
       BackgroundColor="#fee2e2"
       [Icon]="triangleAlertIcon"
       IconColor="#dc2626"
@@ -30,7 +30,8 @@
     <app-users-section-top-card
       class="flex-1"
       Title="Security Score"
-      [Value]="((securityScore() | number : '1.0-0') ?? '0') + '%'"
+      [Value]="securityScore()"
+      [IsPercentage]="true"
       BackgroundColor="#fef9c2"
       IconColor="#d69518"
     />

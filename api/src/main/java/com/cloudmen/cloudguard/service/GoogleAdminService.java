@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.Set;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.decodePrivateKey;
+
 @Service
 public class GoogleAdminService {
 
@@ -57,7 +59,7 @@ public class GoogleAdminService {
 
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
-                .setPrivateKey(GoogleServiceHelperMethods.decodePrivateKey(pk))
+                .setPrivateKey(decodePrivateKey(pk))
                 .setServiceAccountUser(loggedInEmail)
                 .setScopes(scopes)
                 .build();
