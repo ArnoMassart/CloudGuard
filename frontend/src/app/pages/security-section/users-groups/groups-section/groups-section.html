@@ -37,28 +37,30 @@
   </div>
 
   <!-- Alert banner -->
-  <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
-    <div class="flex gap-3">
-      <i-lucide [img]="shieldAlertIcon" size="20" class="text-[#d69518]" />
-      <div class="flex flex-col gap-2">
-        <span class="text-[#b7610a] font-medium text-[16px]">
-          Beveiligingswaarschuwingen
-        </span>
-        <div class="flex gap-2 items-center text-center">
-          <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-          <span class="text-xs text-[#b7610a]">
-            {{ groupsWithExternal() }} groep(en) met externe leden gedetecteerd
+   @if(groupsWithExternal()>0){
+    <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
+      <div class="flex gap-3">
+        <i-lucide [img]="shieldAlertIcon" size="20" class="text-[#d69518]" />
+        <div class="flex flex-col gap-2">
+          <span class="text-[#b7610a] font-medium text-[16px]">
+            Beveiligingswaarschuwingen
           </span>
-        </div>
-        <div class="flex gap-2 items-center text-center" *ngIf="highRiskGroups() > 0">
-          <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-          <span class="text-xs text-[#b7610a]">
-            {{ highRiskGroups() }} groep(en) met hoog risico door open of externe instellingen
-          </span>
+          <div class="flex gap-2 items-center text-center">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">
+              {{ groupsWithExternal() }} groep(en) met externe leden gedetecteerd
+            </span>
+          </div>
+          <div class="flex gap-2 items-center text-center" *ngIf="highRiskGroups() > 0">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">
+              {{ highRiskGroups() }} groep(en) met hoog risico door open of externe instellingen
+            </span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+   }
 
   <!-- Search -->
   <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
