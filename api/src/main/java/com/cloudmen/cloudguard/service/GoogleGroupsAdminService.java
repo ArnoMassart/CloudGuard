@@ -44,7 +44,7 @@ public class GoogleGroupsAdminService {
         this.directoryFactory = directoryFactory;
     }
 
-    public List<GroupOrgDetail> getAllWorkspaceGroups(String loggedInEmail) {
+    public List<GroupOrgDetail> getAllWorkspaceGroups(String loggedInEmail, String query) {
         try {
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,
@@ -71,13 +71,23 @@ public class GoogleGroupsAdminService {
             String pageToken = null;
 
             do {
-                com.google.api.services.admin.directory.model.Groups groupsResult =
+                com.google.api.services.admin.directory.Directory.Groups.List listRequest =
                         service.groups().list()
                                 .setCustomer("my_customer")
                                 .setMaxResults(200)
                                 .setPageToken(pageToken)
-                                .setOrderBy("email")
-                                .execute();
+                                .setOrderBy("email");
+
+                if (query != null && !query.trim().isEmpty()) {
+                    String cleanQuery = query.trim();
+                    if (cleanQuery.contains("@")) {
+                        listRequest.setQuery("email:" + cleanQuery + "*");
+                    } else {
+                        listRequest.setQuery("name:" + cleanQuery + "*");
+                    }
+                }
+
+                com.google.api.services.admin.directory.model.Groups groupsResult = listRequest.execute();
 
                 List<com.google.api.services.admin.directory.model.Group> googleGroups =
                         groupsResult.getGroups();

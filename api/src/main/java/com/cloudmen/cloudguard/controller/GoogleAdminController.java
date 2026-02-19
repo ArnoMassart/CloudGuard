@@ -59,12 +59,13 @@ public class GoogleAdminController {
 
     @GetMapping("/groups")
     public ResponseEntity<List<GroupOrgDetail>> getOrgGroups(
-            @CookieValue(name = "AuthToken", required = false) String token) {
+            @CookieValue(name = "AuthToken", required = false) String token,
+            @RequestParam(required = false) String query) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsAdminService.getAllWorkspaceGroups(email));
+        return ResponseEntity.ok(googleGroupsAdminService.getAllWorkspaceGroups(email, query));
     }
 }

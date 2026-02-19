@@ -1,7 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { RouteService } from './route-service';
-import { UserOrgDetail } from '../models/UserOrgDetails';
 import { Observable } from 'rxjs';
 
 export interface GroupOrgDetail {
@@ -23,9 +22,14 @@ export class GroupService {
     readonly #API_URL = RouteService.getBackendUrl('/google');
     readonly #http = inject(HttpClient);
 
-    getOrgGroups(): Observable<GroupOrgDetail[]> {
-        return this.#http.get<GroupOrgDetail[]>(`${this.#API_URL}/groups`,{
+    getOrgGroups(query?: string): Observable<GroupOrgDetail[]> {
+        let params = new HttpParams();
+        if (query?.trim()) {
+            params = params.set('query', query.trim());
+        }
+        return this.#http.get<GroupOrgDetail[]>(`${this.#API_URL}/groups`, {
             withCredentials: true,
-        })
-    };
+            params,
+        });
+    }
 }

@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
   ChevronLeft,
   ChevronRight,
@@ -56,14 +58,8 @@ export class GroupsSection implements OnInit{
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
-  readonly searchTerm = signal('');
-  
-  readonly filteredGroups = computed(() => {
-    const term = this.searchTerm().toLowerCase().trim();
-    if (!term) return this.groups();
-
-    return this.groups().filter((g) => g.name.toLowerCase().includes(term));
-  });
+  readonly searchQuery = signal('');
+  private readonly searchSubject = new Subject<string>();
 
   readonly totalGroups = computed(() => this.groups().length);
 
@@ -97,9 +93,27 @@ export class GroupsSection implements OnInit{
     return Math.round(weightedTotal / total);
   });
 
-  ngOnInit():void {
+  ngOnInit(): void {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe((value) => this.onSearch(value));
+
+    this.loadGroups();
+  }
+
+  onKeyup(value: string): void {
+    this.searchQuery.set(value);
+    this.searchSubject.next(value);
+  }
+
+  onSearch(value: string): void {
+    this.loadGroups();
+  }
+
+  private loadGroups(): void {
     this.loading.set(true);
-    this.#groupService.getOrgGroups().subscribe({
+    this.#groupService.getOrgGroups(this.searchQuery() || undefined).subscribe({
       next: (groups) => {
         this.groups.set(this.mapToGroupSummary(groups));
         this.loading.set(false);
@@ -108,7 +122,7 @@ export class GroupsSection implements OnInit{
         console.error('Error fetching groups:', error);
         this.groups.set([]);
         this.loading.set(false);
-      }
+      },
     });
   }
 

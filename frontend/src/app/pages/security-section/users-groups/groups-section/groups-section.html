@@ -71,8 +71,8 @@
         type="text"
         class="focus:outline-none w-full"
         placeholder="Zoek groepen op naam..."
-        [value]="searchTerm()"
-        (input)="searchTerm.set(($any($event.target)).value)"
+        [value]="searchQuery()"
+        (input)="onKeyup(($any($event.target)).value)"
       />
     </div>
   </div>
@@ -84,7 +84,7 @@
         <i-lucide [img]="loaderIcon" size="40" class="text-primary animate-spin" />
       </div>
     } @else {
-      @for (group of filteredGroups(); track group.name) {
+      @for (group of groups(); track group.name) {
       <article class="rounded-lg border-2 border-muted/50 bg-white p-5 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
