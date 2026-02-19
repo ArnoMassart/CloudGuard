@@ -1,1 +1,137 @@
-<p>groups-section works!</p>
+<div class="space-y-6">
+  <!-- KPI cards -->
+  <div class="w-full flex gap-4">
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Totaal groepen"
+      [Value]="(totalGroups() | number : '1.0-0') ?? '0'"
+    />
+
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Met externe leden"
+      [Value]="(groupsWithExternal() | number : '1.0-0') ?? '0'"
+      BackgroundColor="#ffedd4"
+      IconColor="#f54a00"
+      TextColor="#f54a00"
+      [Icon]="shieldAlertIcon"
+    />
+
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Groepen met hoog risico"
+      [Value]="(highRiskGroups() | number : '1.0-0') ?? '0'"
+      BackgroundColor="#f3e8ff"
+      IconColor="#9810fa"
+    />
+
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Security Score"
+      [Value]="((securityScore() | number : '1.0-0') ?? '0') + '%'"
+      BackgroundColor="#fef9c2"
+      IconColor="#d69518"
+    />
+  </div>
+
+  <!-- Alert banner -->
+  <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
+    <div class="flex gap-3">
+      <i-lucide [img]="shieldAlertIcon" size="20" class="text-[#d69518]" />
+      <div class="flex flex-col gap-2">
+        <span class="text-[#b7610a] font-medium text-[16px]">
+          Beveiligingswaarschuwingen
+        </span>
+        <div class="flex gap-2 items-center text-center">
+          <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+          <span class="text-xs text-[#b7610a]">
+            {{ groupsWithExternal() }} groep(en) met externe leden gedetecteerd
+          </span>
+        </div>
+        <div class="flex gap-2 items-center text-center" *ngIf="highRiskGroups() > 0">
+          <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+          <span class="text-xs text-[#b7610a]">
+            {{ highRiskGroups() }} groep(en) met hoog risico door open of externe instellingen
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search -->
+    <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
+        <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center ">
+            <i-lucide [img]="searchIcon" size="20" class="text-[#99a1af]/70" />
+            <input type="text" [(ngModel)]="searchTerm" class="focus:outline-none  w-full"
+                placeholder="Zoek groepen op naam...">
+        </div>
+    </div>
+
+  <!-- Groups list -->
+  <div class="space-y-4">
+    @for (group of filteredGroups(); track group.name) {
+    <article class="rounded-xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <div
+            class="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg"
+          >
+            {{ group.name[0] | uppercase }}
+          </div>
+          <div class="min-w-0">
+            <p class="font-medium text-slate-900 truncate">
+              {{ group.name }}
+            </p>
+            <p class="text-xs text-slate-500">
+              TOTAAL LEDEN&nbsp;
+              <span class="font-semibold text-slate-800">{{ group.totalMembers }}</span>
+              &nbsp;&middot;&nbsp;
+              EXTERNE LEDEN&nbsp;
+              <span class="font-semibold text-slate-800">{{ group.externalMembers }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          @for (tag of group.tags; track tag) {
+          <span
+            class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+            [ngClass]="{
+              'border-emerald-200 bg-emerald-50 text-emerald-800': tag.toLowerCase().includes('laag'),
+              'border-amber-200 bg-amber-50 text-amber-800': tag.toLowerCase().includes('middel'),
+              'border-rose-200 bg-rose-50 text-rose-800': tag.toLowerCase().includes('hoog'),
+              'border-slate-200 bg-slate-50 text-slate-700': !(
+                tag.toLowerCase().includes('laag') ||
+                tag.toLowerCase().includes('middel') ||
+                tag.toLowerCase().includes('hoog')
+              )
+            }"
+          >
+            {{ tag }}
+          </span>
+          }
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-4 md:grid-cols-3 text-xs text-slate-600">
+        <div>
+          <p class="font-medium text-slate-800 mb-1">Wie kan lid worden</p>
+          <p>{{ group.whoCanJoin }}</p>
+        </div>
+        <div>
+          <p class="font-medium text-slate-800 mb-1">Externe leden toegestaan</p>
+          <p [ngClass]="group.externalAllowed ? 'text-emerald-700 font-semibold' : 'text-slate-700 font-semibold'">
+            {{ group.externalAllowed ? 'Ja' : 'Nee' }}
+          </p>
+        </div>
+        <div>
+          <p class="font-medium text-slate-800 mb-1">Wie kan leden bekijken</p>
+          <p>{{ group.whoCanView }}</p>
+        </div>
+      </div>
+    </article>
+    } @empty {
+    <p class="text-sm text-slate-500">Geen groepen gevonden voor deze zoekopdracht.</p>
+    }
+  </div>
+</div>
