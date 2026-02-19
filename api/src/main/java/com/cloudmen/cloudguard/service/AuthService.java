@@ -19,13 +19,13 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final GoogleAdminService googleAdminService;
+    private final GoogleUserAdminService googleUserAdminService;
 
-    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleAdminService googleAdminService) {
+    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleUserAdminService googleUserAdminService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-        this.googleAdminService = googleAdminService;
+        this.googleUserAdminService = googleUserAdminService;
     }
 
     public LoginResult processLogin(String externalIdToken) {
@@ -113,7 +113,7 @@ public class AuthService {
                     .map(userService::convertToDto);
 
             if (userDto.isPresent()) {
-                List<String> roles = googleAdminService.getUserRoles(email).stream().map(this::translateRoleName).toList();
+                List<String> roles = googleUserAdminService.getUserRoles(email).stream().map(this::translateRoleName).toList();
                 userDto.get().setRoles(roles);
             }
 
