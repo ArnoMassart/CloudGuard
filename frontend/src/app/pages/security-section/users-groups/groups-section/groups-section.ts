@@ -7,6 +7,7 @@ import {
   CircleCheck,
   CircleX,
   Clock,
+  Loader2,
   LucideAngularModule,
   Search,
   TriangleAlert,
@@ -50,9 +51,11 @@ export class GroupsSection implements OnInit{
   readonly shieldAlertIcon = ShieldAlert;
   readonly usersIcon = Users;
   readonly externalLinkIcon = ExternalLink;
+  readonly loaderIcon = Loader2;
 
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
+  readonly loading = signal(true);
   readonly searchTerm = signal('');
   
   readonly filteredGroups = computed(() => {
@@ -95,13 +98,16 @@ export class GroupsSection implements OnInit{
   });
 
   ngOnInit():void {
+    this.loading.set(true);
     this.#groupService.getOrgGroups().subscribe({
       next: (groups) => {
         this.groups.set(this.mapToGroupSummary(groups));
+        this.loading.set(false);
       },
       error: (error) => {
         console.error('Error fetching groups:', error);
         this.groups.set([]);
+        this.loading.set(false);
       }
     });
   }
