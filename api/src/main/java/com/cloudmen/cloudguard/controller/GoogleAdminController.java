@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.dto.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.GroupSettingsDto;
 import com.cloudmen.cloudguard.dto.UserOverviewResponse;
@@ -56,6 +57,17 @@ public class GoogleAdminController {
 
         String adminEmail = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(googleUserAdminService.getUsersPageOverview(adminEmail));
+    }
+
+    @GetMapping("/groups/overview")
+    public ResponseEntity<GroupOverviewResponse> getGroupsOverview(
+            @CookieValue(name = "AuthToken", required = false) String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleGroupsAdminService.getGroupsOverview(email));
     }
 
     @GetMapping("/groups")

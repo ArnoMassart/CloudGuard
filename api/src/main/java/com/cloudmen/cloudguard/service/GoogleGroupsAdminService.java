@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.GroupOrgDetail;
+import com.cloudmen.cloudguard.dto.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.GroupSettingsDto;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -92,34 +93,9 @@ public class GoogleGroupsAdminService {
                             String groupEmail = group.getEmail();
                             if (groupEmail == null || groupEmail.isBlank()) continue;
 
-                            int total = 0;
-                            int external = 0;
-
-                            try {
-                                String memberPageToken = null;
-                                do {
-                                    Members members = service.members().list(groupEmail)
-                                            .setMaxResults(200)
-                                            .setPageToken(memberPageToken)
-                                            .execute();
-
-                                    if (members.getMembers() != null) {
-                                        for (Member member : members.getMembers()) {
-                                            if ("USER".equals(member.getType())) {
-                                                total++;
-                                                String email = member.getEmail();
-                                                if (email != null && !email.endsWith("@" + primaryDomain)) {
-                                                    external++;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    memberPageToken = members.getNextPageToken();
-                                } while (memberPageToken != null);
-                            } catch (Exception e) {
-                                // Members listing may fail for restricted groups
-                            }
-
+                            int[] counts = countMembers(service, groupEmail, primaryDomain);
+                            int total = counts[0];
+                            int external = counts[1];
                             boolean externalAllowed = external > 0;
                             String risk = deriveRisk(external, total, externalAllowed);
                             List<String> tags = new ArrayList<>(deriveRiskTags(risk));
@@ -171,6 +147,112 @@ public class GoogleGroupsAdminService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch groups from Google: " + e.getMessage());
         }
+    }
+
+    public GroupOverviewResponse getGroupsOverview(String loggedInEmail) {
+        try {
+            Set<String> scopes = Set.of(
+                    DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,
+                    DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY
+            );
+            Directory service = directoryFactory.getDirectoryService(scopes, loggedInEmail);
+
+            String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
+
+            long totalGroups = 0;
+            long groupsWithExternal = 0;
+            long highRiskGroups = 0;
+            long mediumRiskGroups = 0;
+            long lowRiskGroups = 0;
+
+            String pageToken = null;
+            do {
+                com.google.api.services.admin.directory.Directory.Groups.List listRequest =
+                        service.groups().list()
+                                .setCustomer("my_customer")
+                                .setMaxResults(200)
+                                .setOrderBy("email");
+                if (pageToken != null && !pageToken.isBlank()) {
+                    listRequest.setPageToken(pageToken);
+                }
+
+                com.google.api.services.admin.directory.model.Groups groupsResult = listRequest.execute();
+                List<com.google.api.services.admin.directory.model.Group> googleGroups =
+                        groupsResult.getGroups();
+
+                if (googleGroups != null) {
+                    for (com.google.api.services.admin.directory.model.Group group : googleGroups) {
+                        try {
+                            String groupEmail = group.getEmail();
+                            if (groupEmail == null || groupEmail.isBlank()) continue;
+
+                            int[] counts = countMembers(service, groupEmail, primaryDomain);
+                            int total = counts[0];
+                            int external = counts[1];
+                            boolean externalAllowed = external > 0;
+                            String risk = deriveRisk(external, total, externalAllowed);
+
+                            totalGroups++;
+                            if (external > 0 || externalAllowed) {
+                                groupsWithExternal++;
+                            }
+                            switch (risk) {
+                                case "HIGH" -> highRiskGroups++;
+                                case "MEDIUM" -> mediumRiskGroups++;
+                                default -> lowRiskGroups++;
+                            }
+                        } catch (Throwable t) {
+                            log.warn("Failed to process group for overview: {}", t.getMessage());
+                        }
+                    }
+                }
+                pageToken = groupsResult.getNextPageToken();
+            } while (pageToken != null);
+
+            int securityScore = totalGroups == 0 ? 0
+                    : (int) Math.round((lowRiskGroups * 100.0 + mediumRiskGroups * 60.0 + highRiskGroups * 20.0) / totalGroups);
+
+            return new GroupOverviewResponse(
+                    totalGroups,
+                    groupsWithExternal,
+                    highRiskGroups,
+                    mediumRiskGroups,
+                    lowRiskGroups,
+                    securityScore
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch groups overview from Google: " + e.getMessage());
+        }
+    }
+
+    private int[] countMembers(Directory service, String groupEmail, String primaryDomain) {
+        int total = 0;
+        int external = 0;
+        try {
+            String memberPageToken = null;
+            do {
+                Members members = service.members().list(groupEmail)
+                        .setMaxResults(200)
+                        .setPageToken(memberPageToken)
+                        .execute();
+
+                if (members.getMembers() != null) {
+                    for (Member member : members.getMembers()) {
+                        if ("USER".equals(member.getType())) {
+                            total++;
+                            String email = member.getEmail();
+                            if (email != null && !email.endsWith("@" + primaryDomain)) {
+                                external++;
+                            }
+                        }
+                    }
+                }
+                memberPageToken = members.getNextPageToken();
+            } while (memberPageToken != null);
+        } catch (Exception e) {
+            // Members listing may fail for restricted groups
+        }
+        return new int[]{total, external};
     }
 
     public GroupSettingsDto getGroupSettings(String loggedInEmail, String groupEmail) {

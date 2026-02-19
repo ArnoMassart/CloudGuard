@@ -22,6 +22,12 @@ export class GroupService {
     readonly #API_URL = RouteService.getBackendUrl('/google');
     readonly #http = inject(HttpClient);
 
+    getGroupsOverview(): Observable<GroupOverviewResponse> {
+        return this.#http.get<GroupOverviewResponse>(`${this.#API_URL}/groups/overview`, {
+            withCredentials: true,
+        });
+    }
+
     getOrgGroups(query?: string, pageToken?: string, size: number = 5): Observable<GroupPageResponse> {
         let params = new HttpParams().set('size', size.toString());
         if (query?.trim()) {
@@ -47,6 +53,15 @@ export class GroupService {
 export interface GroupPageResponse {
     groups: GroupOrgDetail[];
     nextPageToken: string | null;
+}
+
+export interface GroupOverviewResponse {
+    totalGroups: number;
+    groupsWithExternal: number;
+    highRiskGroups: number;
+    mediumRiskGroups: number;
+    lowRiskGroups: number;
+    securityScore: number;
 }
 
 export interface GroupSettingsDto {

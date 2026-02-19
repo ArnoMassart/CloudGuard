@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -20,7 +20,7 @@ import {
   ExternalLink,
 } from 'lucide-angular';
 import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
-import { GroupOrgDetail, GroupService, GroupSettingsDto } from '../../../../services/group-service';
+import { GroupOrgDetail, GroupOverviewResponse, GroupService, GroupSettingsDto } from '../../../../services/group-service';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -62,6 +62,7 @@ export class GroupsSection implements OnInit{
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
+  readonly pageOverview = signal<GroupOverviewResponse | null>(null);
   readonly searchQuery = signal('');
   private readonly searchSubject = new Subject<string>();
 
@@ -74,45 +75,21 @@ export class GroupsSection implements OnInit{
   private tokenHistory: (string | null)[] = [null];
   private readonly pageSize = 5;
 
-  readonly totalGroups = computed(() => this.groups().length);
-
-  readonly groupsWithExternal = computed(
-    () =>
-      this.groups().filter((g) => g.externalMembers > 0 || g.externalAllowed).length
-  );
-
-  readonly highRiskGroups = computed(
-    () => this.groups().filter((g) => g.risk === 'HIGH').length
-  );
-
-  readonly mediumRiskGroups = computed(
-    () => this.groups().filter((g) => g.risk === 'MEDIUM').length
-  );
-
-  readonly lowRiskGroups = computed(
-    () => this.groups().filter((g) => g.risk === 'LOW').length
-  );
-
-  readonly securityScore = computed(() => {
-    const total = this.totalGroups();
-    if (!total) return 0;
-
-    const high = this.highRiskGroups();
-    const medium = this.mediumRiskGroups();
-    const low = this.lowRiskGroups();
-
-    // Weighted score: LOW = 100, MEDIUM = 60, HIGH = 20
-    const weightedTotal = low * 100 + medium * 60 + high * 20;
-    return Math.round(weightedTotal / total);
-  });
-
   ngOnInit(): void {
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe((value) => this.onSearch(value));
 
+    this.loadGroupsOverview();
     this.loadGroups(null);
+  }
+
+  private loadGroupsOverview(): void {
+    this.#groupService.getGroupsOverview().subscribe({
+      next: (res) => this.pageOverview.set(res),
+      error: (err) => console.error('Failed to load groups overview', err),
+    });
   }
 
   onKeyup(value: string): void {
