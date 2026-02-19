@@ -16,11 +16,9 @@ import java.util.List;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
-    private final GoogleAdminService googleAdminService;
 
     public AuthController(AuthService authService, GoogleAdminService googleAdminService) {
         this.authService = authService;
-        this.googleAdminService = googleAdminService;
     }
 
     @PostMapping("/logout")

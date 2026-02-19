@@ -1,9 +1,18 @@
-import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { RouteService } from './route-service';
+import { UserOrgDetail } from '../models/UserOrgDetails';
+import { Observable } from 'rxjs';
+import { UserPageResponse } from '../models/UserPageResponse';
+import { UserOverviewResponse } from '../models/UserOverviewResponse';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
+  readonly #API_URL = RouteService.getBackendUrl('/google');
+  readonly #http = inject(HttpClient);
+
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
     if (user?.firstName && user?.lastName)
       return (user.firstName[0] + user.lastName[0]).toUpperCase();
@@ -14,5 +23,23 @@ export class UserService {
 
   getRole(user: { roles: string[] }): string {
     return user.roles.length > 0 ? user.roles[0] : 'Admin';
+  }
+
+  getOrgUsers(pageToken?: string, query?: string, size: number = 10): Observable<UserPageResponse> {
+    let params = new HttpParams().set('size', size.toString());
+
+    if (pageToken) params = params.set('pageToken', pageToken);
+    if (query) params = params.set('query', query);
+
+    return this.#http.get<UserPageResponse>(`${this.#API_URL}/users`, {
+      withCredentials: true,
+      params: params,
+    });
+  }
+
+  getUsersPageOverview(): Observable<UserOverviewResponse> {
+    return this.#http.get<UserOverviewResponse>(`${this.#API_URL}/users/overview`, {
+      withCredentials: true,
+    });
   }
 }

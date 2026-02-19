@@ -1,1 +1,36 @@
-<p>users-groups works!</p>
+<div class="px-10 py-6">
+    @if (currentSection() === "USERS") {
+    <app-page-header Title="Gebruikers & Groepen"
+        Description="Volg gebruikersactiviteiten, inlogstatus, 2FA en admin rechten" AdminLink="users" />
+
+    } @else {
+    <app-page-header Title="Gebruikers & Groepen"
+        Description="Controleer instellingen en groepslidmaatschappen voor interne en externe accounts"
+        AdminLink="groups" />
+
+    }
+    <div class="flex items-center gap-12 pt-6 border-b border-gray-200">
+        <button (click)="togglePage('USERS')"
+            class="flex items-center gap-2 pb-3 transition-all duration-200 font-medium"
+            [ngClass]="getTabClass('USERS')">
+            <lucide-icon [img]="users" size="16"></lucide-icon>
+            <span class="text-sm">Gebruikers</span>
+        </button>
+
+        <button (click)="togglePage('GROUPS')"
+            class="flex items-center gap-2 pb-3 transition-all duration-200 font-medium"
+            [ngClass]="getTabClass('GROUPS')">
+            <lucide-icon [img]="users" size="16"></lucide-icon>
+            <span class="text-sm">Groepen</span>
+        </button>
+
+    </div>
+    <div class="pt-6">@if (currentSection() === "USERS") {
+        <app-users-section />
+
+        } @else {
+        <app-groups-section />
+
+        }
+    </div>
+</div>

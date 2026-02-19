@@ -28,3 +28,7 @@
 .logout-dialog-backdrop {
   background: rgba(0, 0, 0, 0.5) !important;
 }
+
+.mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: currentColor;
+}
