@@ -85,7 +85,6 @@ export class UsersSection implements OnInit {
         this.orgUsers.set(res.users);
         this.nextPageToken.set(res.nextPageToken);
         this.isLoading.set(false);
-        console.log(this.orgUsers());
       },
       error: (err) => {
         console.error('Failed to load users', err);

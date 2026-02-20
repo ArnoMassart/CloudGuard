@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 @Service
 public class GoogleUserAdminService {
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
 
-    public GoogleUserAdminService(GoogleDirectoryFactory directoryFactory) {
+    public GoogleUserAdminService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 
@@ -113,7 +113,7 @@ public class GoogleUserAdminService {
                         isActive,
                         user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
                         twoFAEnabled,
-                        GoogleServiceHelperMethods.checkSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
+                        GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
                 );
             }).toList();
 
@@ -213,7 +213,7 @@ public class GoogleUserAdminService {
         long complyCount = googleUsers.stream().filter(user -> {
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
             boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
-            return GoogleServiceHelperMethods.checkSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled);
+            return GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled);
         }).count();
         return (int) Math.floor((double) complyCount / totalUsers * 100);
     }

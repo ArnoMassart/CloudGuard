@@ -17,7 +17,6 @@ export class SharedDrivesTopCard {
   @Input() IconColor: string = '#155dfc';
   @Input() TextColor: string = 'black';
   @Input() IsPercentage: boolean = false;
-  @Input() IsDrive: boolean = false;
 
   getTextColor(): string {
     if (!this.IsPercentage) return this.TextColor;

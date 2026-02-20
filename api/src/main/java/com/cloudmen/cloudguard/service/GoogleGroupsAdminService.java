@@ -35,7 +35,7 @@ public class GoogleGroupsAdminService {
     private static final String GROUPS_SETTINGS_SCOPE = "https://www.googleapis.com/auth/apps.groups.settings";
     private static final String CLOUD_IDENTITY_SCOPE = "https://www.googleapis.com/auth/cloud-identity.groups.readonly";
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
 
     @Value("${google.api.client-email}")
     private String clientEmail;
@@ -43,7 +43,7 @@ public class GoogleGroupsAdminService {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    public GoogleGroupsAdminService(GoogleDirectoryFactory directoryFactory) {
+    public GoogleGroupsAdminService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 
