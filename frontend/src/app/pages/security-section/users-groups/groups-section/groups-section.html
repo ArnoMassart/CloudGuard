@@ -1,1 +1,232 @@
-<p>groups-section works!</p>
+<div class="space-y-6">
+  <!-- KPI cards -->
+  <div class="w-full flex gap-4">
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Totaal groepen"
+      [Value]="pageOverview()?.totalGroups"
+      [Icon] = "usersIcon"
+    />
+
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Met externe leden"
+      [Value]="pageOverview()?.groupsWithExternal"
+      BackgroundColor="#ffedd4"
+      IconColor="#f54a00"
+      TextColor="#f54a00"
+      [Icon]="shieldAlertIcon"
+    />
+
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Groepen met hoog risico"
+      [Value]="pageOverview()?.highRiskGroups"
+      BackgroundColor="#fee2e2"
+      [Icon]="triangleAlertIcon"
+      IconColor="#dc2626"
+    />
+
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Security Score"
+      [Value]="pageOverview()?.securityScore"
+      [IsPercentage]="true"
+      BackgroundColor="#fef9c2"
+      IconColor="#d69518"
+    />
+  </div>
+
+  <!-- Alert banner -->
+   @if((pageOverview()?.groupsWithExternal ?? 0) > 0){
+    <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
+      <div class="flex gap-3">
+        <i-lucide [img]="shieldAlertIcon" size="20" class="text-[#d69518]" />
+        <div class="flex flex-col gap-2">
+          <span class="text-[#b7610a] font-medium text-[16px]">
+            Beveiligingswaarschuwingen
+          </span>
+          <div class="flex gap-2 items-center text-center">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">
+              {{ pageOverview()?.groupsWithExternal }} groep(en) met externe leden gedetecteerd
+            </span>
+          </div>
+          <div class="flex gap-2 items-center text-center" *ngIf="(pageOverview()?.highRiskGroups ?? 0) > 0">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">
+              {{ pageOverview()?.highRiskGroups }} groep(en) met hoog risico door open of externe instellingen
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+   }
+
+  <!-- Search -->
+  <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
+    <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
+      <i-lucide [img]="searchIcon" size="20" class="text-[#99a1af]/70" />
+      <input
+        type="text"
+        class="focus:outline-none w-full"
+        placeholder="Zoek groepen op naam..."
+        [value]="searchQuery()"
+        (input)="onKeyup(($any($event.target)).value)"
+      />
+    </div>
+  </div>
+
+  <!-- Groups list -->
+  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+    @if (!loading()) {
+
+    <div class="space-y-4 mt-1 px-6">
+      @for (group of groups(); track group.name) {
+      <article class="rounded-lg border-2 border-muted/50 bg-white p-5 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0 cursor-pointer flex-1" (click)="toggleGroupExpanded(group)">
+          <div class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0">
+            <i-lucide [img]="usersIcon" size="24" class="text-[#155dfc]" />
+          </div>
+          <p class="font-medium text-slate-900 text-base truncate">
+            {{ group.name }}
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
+          @for (tag of group.tags; track tag) {
+          <span
+            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+            [class.bg-emerald-100]="tag.toLowerCase().includes('laag')"
+            [class.text-emerald-800]="tag.toLowerCase().includes('laag')"
+            [class.bg-amber-100]="tag.toLowerCase().includes('middel')"
+            [class.text-amber-800]="tag.toLowerCase().includes('middel')"
+            [class.bg-rose-100]="tag.toLowerCase().includes('hoog')"
+            [class.text-rose-800]="tag.toLowerCase().includes('hoog')"
+            [class.bg-sky-100]="tag.toLowerCase().includes('mailing')"
+            [class.text-sky-700]="tag.toLowerCase().includes('mailing')"
+            [class.bg-indigo-100]="tag.toLowerCase().includes('security')"
+            [class.text-indigo-700]="tag.toLowerCase().includes('security')"
+          >
+            {{ tag }}
+          </span>
+          }
+        </div>
+      </div>
+
+      <!-- Middle: 3 columns - TOTAAL LEDEN, EXTERNE LEDEN, EXTERNE LEDEN TOEGESTAAN -->
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">TOTAAL LEDEN</p>
+          <div class="flex items-center gap-2">
+            <i-lucide [img]="usersIcon" size="16" class="text-gray-600" />
+            <span class="font-medium text-slate-600">{{ group.totalMembers }}</span>
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN</p>
+          <span
+            class="font-medium"
+            [ngClass]="group.externalMembers > 0 ? 'text-rose-600' : 'text-emerald-600'"
+          >
+            {{ group.externalMembers }}
+          </span>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN TOEGESTAAN</p>
+          <a
+            class="inline-flex items-center gap-1 font-medium underline hover:opacity-80"
+            [ngClass]="group.externalAllowed ? 'text-rose-600' : 'text-emerald-600'"
+            [href]="getGroupAdminUrl(group)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ng-container *ngIf="group.externalAllowed; else externalNo">
+              Ja
+              <i-lucide
+                [img]="externalLinkIcon"
+                size="14"
+                class="inline-block align-middle"
+              />
+            </ng-container>
+            <ng-template #externalNo>Nee</ng-template>
+          </a>
+        </div>
+      </div>
+
+      <!-- Bottom: Collapsible group settings -->
+      @if (isExpanded(group.name)) {
+        <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @if (isSettingsLoading(group.name)) {
+            <div class="col-span-2 flex items-center justify-center py-6">
+              <i-lucide [img]="loaderIcon" size="24" class="text-primary animate-spin" />
+            </div>
+          } @else {
+            @let settings = getCachedSettings(group.name);
+            <div class="bg-slate-50 rounded-md px-3 py-3">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">WIE KAN LID WORDEN</p>
+              <p class="text-sm text-slate-900">{{ settings?.whoCanJoin ?? "—" }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-md px-3 py-3">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">WIE KAN LEDEN BEKIJKEN</p>
+              <p class="text-sm text-slate-900">{{ settings?.whoCanView ?? "—" }}</p>
+            </div>
+          }
+        </div>
+      }
+      <div class="mt-1 flex justify-end">
+        <button
+          type="button"
+          class="rounded p-0.5 hover:bg-slate-100 transition-colors"
+          (click)="toggleGroupExpanded(group)"
+          [attr.aria-expanded]="isExpanded(group.name)"
+        >
+          <i-lucide [img]="isExpanded(group.name) ? chevronUpIcon : chevronDownIcon" size="20" class="text-slate-600" />
+        </button>
+      </div>
+    </article>
+      } @empty {
+        <p class="text-sm text-slate-500">Geen groepen gevonden voor deze zoekopdracht.</p>
+      }
+
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+      <span class="text-sm text-gray-500">
+        Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+      </span>
+      <div class="flex gap-2">
+        <button
+          (click)="prevPage()"
+          [disabled]="currentPage() === 1"
+          class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <i-lucide [img]="chevronLeft" size="16" />
+          Vorige
+        </button>
+        <button
+          (click)="nextPage()"
+          [disabled]="!nextPageToken()"
+          class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Volgende
+          <i-lucide [img]="chevronRight" size="16" />
+        </button>
+      </div>
+    </div>
+    </div>
+    }
+
+    @else {
+    <div class="flex flex-col items-center p-3">
+      <div class="flex flex-col items-center space-y-4 p-8">
+        <div class="relative flex items-center justify-center">
+          <div class="h-12 w-12 rounded-full"></div>
+          <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        </div>
+        <span class="text-sm font-medium text-slate-600 animate-pulse">
+          Groepen worden geladen...
+        </span>
+      </div>
+    </div>
+    }
+  </div>
+</div>
