@@ -14,7 +14,8 @@
         <div class="flex gap-3">
             <i-lucide [img]="triangleAlertIcon" size="20" class="text-[#d69518]" />
             <div class="flex flex-col gap-2"><span
-                    class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwingen</span>
+                    class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{hasMultipleWarnings() ?
+                    "en": ""}}</span>
                 @if (userPageWarnings().twoFactorWarning) {
                 <div class="flex gap-2 items-center text-center">
                     <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
@@ -164,9 +165,6 @@
         <div class="flex flex-col items-center p-3">
 
             <div class="flex flex-col items-center space-y-4 p-8 ">
-
-                <!-- <mat-spinner [diameter]="48" class="spinner">
-            </mat-spinner> -->
                 <div class="relative flex items-center justify-center">
                     <div class="h-12 w-12 rounded-full"></div>
 
@@ -176,7 +174,7 @@
                 </div>
 
                 <span class="text-sm font-medium text-slate-600 animate-pulse">
-                    Loading workspace users...
+                    Workspace gebruikers ophalen...
                 </span>
             </div>
         </div>

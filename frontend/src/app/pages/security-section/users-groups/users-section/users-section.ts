@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import {
   ChevronLeft,
   ChevronRight,
@@ -166,4 +166,12 @@ export class UsersSection implements OnInit {
         return 'bg-gray-100 text-gray-600';
     }
   }
+
+  hasMultipleWarnings = computed(() => {
+    const warnings = this.userPageWarnings();
+
+    const activeCount = Object.values(warnings).filter((val) => val === true).length;
+
+    return activeCount > 1;
+  });
 }
