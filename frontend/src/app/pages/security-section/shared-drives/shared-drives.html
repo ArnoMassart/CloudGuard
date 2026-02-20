@@ -1,92 +1,204 @@
 <div class="px-10 py-6">
-    <app-page-header Title="Gedeelde Drives Controle"
-        Description="Controleer instellingen voor gedeelde Drives om de gegevensbeveiliging te garanderen"
-        AdminLink="drive/manageshareddrives" />
+  <app-page-header
+    Title="Gedeelde Drives Controle"
+    Description="Controleer instellingen voor gedeelde Drives om de gegevensbeveiliging te garanderen"
+    AdminLink="drive/manageshareddrives"
+  />
 
-    <div class="pt-6">
-        <div class="w-full flex flex-col gap-5">
-            <div class="w-full flex gap-4">
-                <app-shared-drives-top-card class="flex-1" Title="Totaal Drives" [Value]="3" [Icon]="FolderOpen" />
+  <div class="pt-6">
+    <div class="w-full flex flex-col gap-5">
+      <div class="w-full flex gap-4">
+        <app-shared-drives-top-card
+          class="flex-1"
+          Title="Totaal Drives"
+          [Value]="3"
+          [Icon]="FolderOpen"
+        />
 
-                <app-shared-drives-top-card class="flex-1" Title="Totaal opslag" [IsDrive]="true" [Value]="147.5"
-                    BackgroundColor="#f3e8ff" IconColor="#9810fa" [Icon]="HardDrive" />
+        <app-shared-drives-top-card
+          class="flex-1"
+          Title="Totaal opslag"
+          [IsDrive]="true"
+          [Value]="147.5"
+          BackgroundColor="#f3e8ff"
+          IconColor="#9810fa"
+          [Icon]="HardDrive"
+        />
 
-                <app-shared-drives-top-card class="flex-1" Title="Hoog risico" [Value]="1" BackgroundColor="#ffe2e2"
-                    IconColor="#e7000b" TextColor="#e7000b" [Icon]="TriangleAlert" />
+        <app-shared-drives-top-card
+          class="flex-1"
+          Title="Hoog risico"
+          [Value]="2"
+          BackgroundColor="#ffe2e2"
+          IconColor="#e7000b"
+          TextColor="#e7000b"
+          [Icon]="TriangleAlert"
+        />
 
-                <app-shared-drives-top-card class="flex-1" Title="Met externe leden" [Value]="2"
-                    BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="Users" />
+        <app-shared-drives-top-card
+          class="flex-1"
+          Title="Met externe leden"
+          [Value]="2"
+          BackgroundColor="#ffedd4"
+          IconColor="#f54a00"
+          TextColor="#f54a00"
+          [Icon]="Users"
+        />
 
-                <app-shared-drives-top-card class="flex-1" Title="Security Score" [Value]="70" [IsPercentage]="true"
-                    BackgroundColor="#fef9c2" IconColor="#d69518" />
+        <app-shared-drives-top-card
+          class="flex-1"
+          Title="Security Score"
+          [Value]="70"
+          [IsPercentage]="true"
+          BackgroundColor="#fef9c2"
+          IconColor="#d69518"
+        />
+      </div>
+
+      @if (hasWarnings() && !isLoading()) {
+        <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
+          <div class="flex gap-3">
+            <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
+            <div class="flex flex-col gap-2">
+              <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing</span>
+              <div class="flex gap-2 items-center text-center">
+                <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                <span class="text-xs text-[#b7610a]"
+                  >2 gedeelde Drive met hoog risico gedetecteerd vanwege externe leden en delen
+                  instellingen</span
+                >
+              </div>
             </div>
-
-            @if (hasWarnings() && !isLoading()) {
-            <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
-                <div class="flex gap-3">
-                    <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
-                    <div class="flex flex-col gap-2"><span
-                            class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing</span>
-                        <div class="flex gap-2 items-center text-center">
-                            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                            <span class="text-xs text-[#b7610a]">1 gedeelde Drive met hoog risico gedetecteerd vanwege
-                                externe leden en/of delen instellingen</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            }
-
-            <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
-                <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center ">
-                    <i-lucide [img]="Search" size="20" class="text-[#99a1af]/70" />
-                    <input type="text" [(ngModel)]="searchValue" class="focus:outline-none w-full"
-                        placeholder="Zoek naar een Drive...">
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 pb-3">
-                @if (!isLoading()) {
-                <span class="font-medium text-lg ml-5.5">Alle gedeelde drives</span>
-
-                @for (drive of drives; track drive.name ) {
-
-                <div class="rounded-lg p-5 border-2 border-muted/50 my-3 mx-3">
-                    <div class="flex gap-3">
-                        <div class="p-2.5 rounded-lg bg-[#dbeafe] text-[#155dfc]">
-                            <lucide-icon [img]="FolderOpen" size="24"></lucide-icon>
-                        </div>
-                        <span class="font-medium text-[16px]">{{drive.name}}</span>
-                        <div class="p-1 text-sm rounded" [class.text-emerald-600]="drive.risk === 'Laag'"
-                            [class.bg-[#dbfce7]]="drive.risk === 'Laag'"
-                            [class.text-[#d69518]]="drive.risk === 'Middel'"
-                            [class.bg-[#fef9c2]]="drive.risk === 'Middel'"
-                            [class.text-[#e7000b]]="drive.risk === 'Hoog'" [class.bg-[#ffe2e2]]="drive.risk === 'Hoog'">
-                            {{drive.risk}} risico</div>
-                    </div>
-                </div>
-                }
-                }
-
-                @else {
-                <div class="flex flex-col items-center p-3 pt-6">
-
-                    <div class="flex flex-col items-center space-y-4 p-8 ">
-                        <div class="relative flex items-center justify-center">
-                            <div class="h-12 w-12 rounded-full"></div>
-
-                            <div
-                                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-                            </div>
-                        </div>
-
-                        <span class="text-sm font-medium text-slate-600 animate-pulse">
-                            Gedeelde drives ophalen...
-                        </span>
-                    </div>
-                </div>
-                }
-            </div>
+          </div>
         </div>
+      }
+
+      <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
+        <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
+          <i-lucide [img]="Search" size="20" class="text-[#99a1af]/70" />
+          <input
+            type="text"
+            [(ngModel)]="searchValue"
+            class="focus:outline-none w-full"
+            placeholder="Zoek naar een Drive..."
+          />
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 pb-3">
+        @if (!isLoading()) {
+          <span class="font-medium text-lg ml-5.5">Alle gedeelde drives</span>
+
+          @for (drive of drives; track drive.name) {
+            <div class="rounded-lg p-5 border-2 border-muted/30 my-4 mx-3">
+              <div class="flex items-start gap-4 mb-8">
+                <div class="p-2.5 rounded-lg bg-[#dbeafe] text-[#155dfc]">
+                  <i-lucide [img]="FolderOpen" size="24"></i-lucide>
+                </div>
+                <div class="flex flex-col gap-4 w-full pr-2">
+                  <div class="flex items-center gap-3">
+                    <span class="font-medium text-lg">{{ drive.name }}</span>
+                    <span
+                      class="px-3 py-1 text-xs font-medium rounded-full"
+                      [class.text-emerald-600]="drive.risk === 'Laag'"
+                      [class.bg-[#dbfce7]]="drive.risk === 'Laag'"
+                      [class.text-[#d69518]]="drive.risk === 'Middel'"
+                      [class.bg-[#fef9c2]]="drive.risk === 'Middel'"
+                      [class.text-[#e7000b]]="drive.risk === 'Hoog'"
+                      [class.bg-[#ffe2e2]]="drive.risk === 'Hoog'"
+                    >
+                      {{ drive.risk }} risico
+                    </span>
+                  </div>
+                  <div class="flex justify-between pr-10">
+                    <div class="flex flex-col gap-2">
+                      <span class="text-xs text-muted-foreground uppercase">Totaal Leden</span>
+                      <div class="flex items-center gap-1">
+                        <i-lucide [img]="Users" size="16" />
+                        <span class="font-medium text-[16px]">{{ drive.totalMember }}</span>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                      <span class="text-xs text-muted-foreground uppercase">Externe Leden</span>
+                      <div class="flex items-center gap-1">
+                        <i-lucide
+                          [img]="drive.externalMembers > 0 ? TriangleAlert : CircleCheck"
+                          [class.text-[#f54a00]]="drive.externalMembers > 0"
+                          [class.text-emerald-400]="drive.externalMembers <= 0"
+                          size="16"
+                        />
+                        <span
+                          class="font-medium text-[16px]"
+                          [class.text-[#f54a00]]="drive.externalMembers > 0"
+                          [class.text-emerald-400]="drive.externalMembers <= 0"
+                          >{{ drive.externalMembers }}</span
+                        >
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                      <span class="text-xs text-muted-foreground uppercase">Opslag Gebruikt</span>
+                      <span class="font-medium text-[16px]">{{ drive.storageUsed }}</span>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                      <span class="text-xs text-muted-foreground uppercase"
+                        >Laatste activiteit</span
+                      >
+                      <div class="flex items-center gap-1">
+                        <i-lucide [img]="Clock" class="text-muted-foreground" size="16" />
+                        <span class="text-muted-foreground text-sm font-light">{{
+                          drive.lastActivity
+                        }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="p-3 mt-3 flex flex-col gap-1 bg-[#f9fafb] rounded-lg border-2 border-muted/10"
+                  >
+                    <span class="uppercase text-muted-foreground text-[13px] font-medium"
+                      >Delen instellingen</span
+                    >
+                    <div class="flex items-center gap-1">
+                      @if (drive.shareExternalAllowed) {
+                        <span class="text-[#f54a00] text-[13px] font-medium">{{
+                          drive.shareSettingsLabel
+                        }}</span>
+                        <div
+                          class="text-[#f54a00] hover:text-[#f54a00]/60 cursor-pointer"
+                          (click)="openAdminPage()"
+                        >
+                          <i-lucide [img]="ExternalLink" size="14" />
+                        </div>
+                      } @else {
+                        <span class="font-medium text-[13px]">{{ drive.shareSettingsLabel }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="flex flex-col items-center p-3 pt-6">
+            <div class="flex flex-col items-center space-y-4 p-8">
+              <div class="relative flex items-center justify-center">
+                <div class="h-12 w-12 rounded-full"></div>
+
+                <div
+                  class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                ></div>
+              </div>
+
+              <span class="text-sm font-medium text-slate-600 animate-pulse">
+                Gedeelde drives ophalen...
+              </span>
+            </div>
+          </div>
+        }
+      </div>
     </div>
+  </div>
 </div>

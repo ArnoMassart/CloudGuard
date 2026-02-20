@@ -2,6 +2,9 @@ import { Component, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SharedDrivesTopCard } from './shared-drives-top-card/shared-drives-top-card';
 import {
+  CircleCheck,
+  Clock,
+  ExternalLink,
   FolderOpen,
   HardDrive,
   LucideAngularModule,
@@ -25,6 +28,9 @@ export class SharedDrives {
   readonly TriangleAlert = TriangleAlert;
   readonly Users = Users;
   readonly Search = Search;
+  readonly Clock = Clock;
+  readonly ExternalLink = ExternalLink;
+  readonly CircleCheck = CircleCheck;
 
   hasWarnings = signal(true);
   isLoading = signal(false);
@@ -34,12 +40,13 @@ export class SharedDrives {
   drives = [
     {
       name: 'Projecten 2026',
-      risk: 'Middel',
+      risk: 'Hoog',
       totalMember: 15,
       externalMembers: 2,
       storageUsed: '45.2 GB',
       lastActivity: '14 dagen geleden',
-      shareSettings: 'Extern delen toegestaan',
+      shareSettingsLabel: 'Extern delen toegestaan',
+      shareExternalAllowed: true,
     },
     {
       name: 'HR Documenten',
@@ -48,7 +55,8 @@ export class SharedDrives {
       externalMembers: 0,
       storageUsed: '12.8 GB',
       lastActivity: '15 dagen geleden',
-      shareSettings: 'Alleen intern',
+      shareSettingsLabel: 'Alleen intern',
+      shareExternalAllowed: false,
     },
     {
       name: 'Client Deliverables',
@@ -57,7 +65,22 @@ export class SharedDrives {
       externalMembers: 8,
       storageUsed: '89.5 GB',
       lastActivity: '14 dagen geleden',
-      shareSettings: 'Extern delen toegestaan',
+      shareSettingsLabel: 'Extern delen toegestaan',
+      shareExternalAllowed: true,
+    },
+    {
+      name: 'Client Deliverables',
+      risk: 'Middel',
+      totalMember: 22,
+      externalMembers: 0,
+      storageUsed: '89.5 GB',
+      lastActivity: '14 dagen geleden',
+      shareSettingsLabel: 'Extern delen toegestaan',
+      shareExternalAllowed: true,
     },
   ];
+
+  openAdminPage() {
+    window.open(`https://admin.google.com/ac/drive/manageshareddrives`);
+  }
 }
