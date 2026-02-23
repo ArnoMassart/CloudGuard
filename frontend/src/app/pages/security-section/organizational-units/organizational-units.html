@@ -102,57 +102,63 @@
 
         <!-- Beleidsregels -->
         <h3 class="font-medium text-slate-900 mb-3">Beleidsregels</h3>
-        <ul class="space-y-3">
-          @for (policy of policies; track policy.title) {
-            <li class="rounded-lg border border-slate-200/80 overflow-hidden">
-              <button
-                type="button"
-                (click)="togglePolicyExpanded(policy.title)"
-                class="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50/80 transition-colors"
-              >
-                <i-lucide
-                  [img]="isPolicyExpanded(policy.title) ? chevronDownIcon : chevronRightIcon"
-                  size="18"
-                  class="text-slate-400 mt-0.5 shrink-0"
-                />
-                <div class="flex-1 min-w-0">
-                  <p class="font-medium text-slate-900 text-sm">{{ policy.title }}</p>
-                  <p class="text-xs text-slate-500 mt-0.5">{{ policy.description }}</p>
-                </div>
-                <span
-                  class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full {{ policy.statusClass }}"
+        @if (policiesLoading()) {
+          <p class="text-sm text-slate-500">Beleidsregels laden...</p>
+        } @else if (policiesError()) {
+          <p class="text-sm text-red-600">{{ policiesError() }}</p>
+        } @else {
+          <ul class="space-y-3">
+            @for (policy of policies(); track policy.key) {
+              <li class="rounded-lg border border-slate-200/80 overflow-hidden">
+                <button
+                  type="button"
+                  (click)="togglePolicyExpanded(policy.key)"
+                  class="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50/80 transition-colors"
                 >
-                  {{ policy.status }}
-                </span>
-              </button>
-              @if (isPolicyExpanded(policy.title)) {
-                <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
-                  @if (policy.explanation) {
-                    <p class="text-sm text-slate-600 mb-3">{{ policy.explanation }}</p>
-                  }
-                  @if (policy.settingsLinkText) {
-                    <button
-                      type="button"
-                      class="text-sm text-primary font-medium hover:underline mb-3 block"
-                    >
-                      {{ policy.settingsLinkText }}
-                    </button>
-                  }
-                  @if (policy.adminLink) {
-                    <button
-                      type="button"
-                      (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
-                      class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center inline-flex"
-                    >
-                      <span>Naar Admin Console</span>
-                      <i-lucide [img]="externalLinkIcon" size="16" />
-                    </button>
-                  }
-                </div>
-              }
-            </li>
-          }
-        </ul>
+                  <i-lucide
+                    [img]="isPolicyExpanded(policy.key) ? chevronDownIcon : chevronRightIcon"
+                    size="18"
+                    class="text-slate-400 mt-0.5 shrink-0"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-slate-900 text-sm">{{ policy.title }}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ policy.description }}</p>
+                  </div>
+                  <span
+                    class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full {{ policy.statusClass }}"
+                  >
+                    {{ policy.status }}
+                  </span>
+                </button>
+                @if (isPolicyExpanded(policy.key)) {
+                  <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
+                    @if (policy.explanation) {
+                      <p class="text-sm text-slate-600 mb-3">{{ policy.explanation }}</p>
+                    }
+                    @if (policy.settingsLinkText) {
+                      <button
+                        type="button"
+                        class="text-sm text-primary font-medium hover:underline mb-3 block"
+                      >
+                        {{ policy.settingsLinkText }}
+                      </button>
+                    }
+                    @if (policy.adminLink) {
+                      <button
+                        type="button"
+                        (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
+                        class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center inline-flex"
+                      >
+                        <span>Naar Admin Console</span>
+                        <i-lucide [img]="externalLinkIcon" size="16" />
+                      </button>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
       }
     </div>
   </div>

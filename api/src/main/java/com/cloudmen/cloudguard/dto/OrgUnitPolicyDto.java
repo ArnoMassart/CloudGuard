@@ -18,4 +18,6 @@ public class OrgUnitPolicyDto {
     private String explanation;
     private boolean inherited;
     private String source;
+    private String settingsLinkText;
+    private String adminLink;
 }

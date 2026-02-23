@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, effect, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -11,25 +11,19 @@ import {
   ExternalLink,
 } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
-import { OrgUnitNodeDto, OrgUnitService } from '../../../services/org-unit-service';
+import {
+  OrgUnitNodeDto,
+  OrgUnitPolicyDto,
+  OrgUnitService,
+} from '../../../services/org-unit-service';
 
 export interface OrgUnitNode {
   id: string;
   name: string;
+  orgUnitPath?: string;
   userCount: number;
   children?: OrgUnitNode[];
   isRoot?: boolean;
-}
-
-export interface Policy {
-  title: string;
-  description: string;
-  status: string;
-  statusClass: string;
-  /** Shown when expanded */
-  explanation?: string;
-  settingsLinkText?: string;
-  adminLink?: string;
 }
 
 @Component({
@@ -55,8 +49,35 @@ export class OrganizationalUnits implements OnInit {
   readonly tree = signal<OrgUnitNode | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly selectedOrgUnit = signal<OrgUnitNodeDto | null>(null);
 
-  readonly  selectedOrgUnit = signal<OrgUnitNodeDto | null>(null); 
+  readonly policies = signal<OrgUnitPolicyDto[]>([]);
+  readonly policiesLoading = signal(false);
+  readonly policiesError = signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      const unit = this.selectedOrgUnit();
+      if (!unit) {
+        this.policies.set([]);
+        return;
+      }
+      const path = unit.orgUnitPath ?? unit.id ?? '/';
+      this.policiesLoading.set(true);
+      this.policiesError.set(null);
+      this.#orgUnitService.getPoliciesForOrgUnit(path).subscribe({
+        next: (list) => {
+          this.policies.set(list);
+          this.policiesLoading.set(false);
+        },
+        error: (err) => {
+          this.policiesError.set(err?.message ?? 'Beleidsregels laden mislukt');
+          this.policies.set([]);
+          this.policiesLoading.set(false);
+        },
+      });
+    });
+  }
 
   ngOnInit(): void {
     this.#orgUnitService.getOrgUnitTree().subscribe({
@@ -66,49 +87,15 @@ export class OrganizationalUnits implements OnInit {
         if (data?.id) this.expandedOuIds.set(new Set([data.id]));
         this.loading.set(false);
       },
-      error: (err)=>{
+      error: (err) => {
         this.error.set(err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.');
         this.loading.set(false);
       },
-    })
+    });
   }
 
-
-  readonly policies: Policy[] = [
-    {
-      title: 'Tweestapsverificatie (2SV)',
-      description: 'Verplicht voor alle gebruikers in deze eenheid',
-      status: 'Verplicht',
-      statusClass: 'bg-primary/15 text-primary',
-      explanation:
-        'Het is een goede manier om de veiligheid van je account te garanderen, dat is waarom we verplichten om deze instellingen aan te zetten.',
-      settingsLinkText: 'Klik hier om deze instellingen aan te passen',
-      adminLink: '2sv',
-    },
-    {
-      title: 'Mobiel apparaatbeheer',
-      description: 'Beheerde apparaten vereist voor toegang',
-      status: 'Ingeschakeld',
-      statusClass: 'bg-blue-100 text-blue-800',
-      explanation:
-        'Alleen beheerde apparaten kunnen toegang krijgen tot bedrijfsgegevens. Dit verhoogt de beveiliging van mobiele toegang.',
-      settingsLinkText: 'Klik hier om deze instellingen aan te passen',
-      adminLink: 'devicemanagement',
-    },
-    {
-      title: 'Drive delen',
-      description: 'Toegestane deelmogelijkheden voor bestanden',
-      status: 'Intern',
-      statusClass: 'bg-fuchsia-100 text-fuchsia-800',
-      explanation:
-        'Bepaal wie bestanden mag delen en met wie. Interne instellingen beperken delen tot binnen de organisatie.',
-      settingsLinkText: 'Klik hier om deze instellingen aan te passen',
-      adminLink: 'drive',
-    },
-  ];
-
-  selectUnit(node: OrgUnitNode): void {
-    this.selectedOrgUnit.set(node);
+  selectUnit(node: OrgUnitNode | OrgUnitNodeDto): void {
+    this.selectedOrgUnit.set(node as OrgUnitNodeDto);
   }
 
   toggleExpanded(nodeId: string): void {
@@ -132,17 +119,17 @@ export class OrganizationalUnits implements OnInit {
     return node.children?.length ?? 0;
   }
 
-  togglePolicyExpanded(title: string): void {
+  togglePolicyExpanded(policyKey: string): void {
     this.expandedPolicies.update((set) => {
       const next = new Set(set);
-      if (next.has(title)) next.delete(title);
-      else next.add(title);
+      if (next.has(policyKey)) next.delete(policyKey);
+      else next.add(policyKey);
       return next;
     });
   }
 
-  isPolicyExpanded(title: string): boolean {
-    return this.expandedPolicies().has(title);
+  isPolicyExpanded(policyKey: string): boolean {
+    return this.expandedPolicies().has(policyKey);
   }
 
   openPolicyAdmin(adminLink: string | undefined): void {

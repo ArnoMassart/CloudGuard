@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.service.GoogleGroupsAdminService;
 import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
 import com.cloudmen.cloudguard.service.GoogleUserAdminService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.policy.OrgUnitPolicyAggregator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -21,17 +22,19 @@ public class GoogleAdminController {
     private final GoogleUserAdminService googleUserAdminService;
     private final GoogleGroupsAdminService googleGroupsAdminService;
     private final GoogleOrgUnitService googleOrgUnitService;
-
+    private final OrgUnitPolicyAggregator orgUnitPolicyAggregator;
     private final JwtService jwtService;
 
     public GoogleAdminController(
             GoogleUserAdminService googleUserAdminService,
             GoogleGroupsAdminService googleGroupsAdminService,
             GoogleOrgUnitService googleOrgUnitService,
+            OrgUnitPolicyAggregator orgUnitPolicyAggregator,
             JwtService jwtService) {
         this.googleUserAdminService = googleUserAdminService;
         this.googleGroupsAdminService = googleGroupsAdminService;
         this.googleOrgUnitService = googleOrgUnitService;
+        this.orgUnitPolicyAggregator = orgUnitPolicyAggregator;
         this.jwtService = jwtService;
     }
 
@@ -81,5 +84,17 @@ public class GoogleAdminController {
 
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(googleOrgUnitService.getOrgUnitTree(email));
+    }
+
+    @GetMapping("/org-units/policies")
+    public ResponseEntity<List<OrgUnitPolicyDto>> getOrgUnitPolicies(
+            @CookieValue(name = "AuthToken", required = false) String token,
+            @RequestParam(defaultValue = "/") String orgUnitPath) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(orgUnitPolicyAggregator.getPolicies(email, orgUnitPath));
     }
 }

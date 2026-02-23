@@ -5,6 +5,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.drive.Drive;
 import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,17 @@ public class GoogleApiFactory {
 
     public Directory getDirectoryService(String scope, String loggedInEmail) throws Exception {
         return getDirectoryService(Collections.singleton(scope), loggedInEmail);
+    }
+
+    /** Returns credentials for arbitrary scopes (e.g. cloud-platform for ACM API). */
+    public GoogleCredentials getCredentials(Set<String> scopes, String impersonatedUser) throws Exception {
+        String pk = privateKey.replace("\\n", "\n");
+        return ServiceAccountCredentials.newBuilder()
+                .setClientEmail(clientEmail)
+                .setPrivateKey(decodePrivateKey(pk))
+                .setServiceAccountUser(impersonatedUser)
+                .setScopes(scopes)
+                .build();
     }
 
     public Directory getDirectoryService(Set<String> scopes, String loggedInEmail) throws Exception {
