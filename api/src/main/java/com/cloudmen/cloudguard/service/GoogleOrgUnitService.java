@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class GoogleOrgUnitService {
+public class GoogleOrgUnitService { 
 
     private static final Logger log = LoggerFactory.getLogger(GoogleOrgUnitService.class);
 
@@ -27,68 +27,62 @@ public class GoogleOrgUnitService {
         this.directoryFactory = directoryFactory;
     }
 
-    public OrgUnitNodeDto getOrgUnitTree(String loggedInEmail){
+    public OrgUnitNodeDto getOrgUnitTree(String loggedInEmail) {
         try {
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_ORGUNIT_READONLY,
                     DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
             );
-            Directory directory = directoryFactory.getDirectoryService(scopes,loggedInEmail);
+            Directory directory = directoryFactory.getDirectoryService(scopes, loggedInEmail);
 
             List<OrgUnit> allOrgUnits = fetchAllOrgUnits(directory);
 
-            if(allOrgUnits==null || allOrgUnits.isEmpty()){
+            if (allOrgUnits == null || allOrgUnits.isEmpty()) {
                 return buildEmptyRoot();
             }
 
-            OrgUnitNodeDto root = buildTree(directory, allOrgUnits);
-            return root;
-
+            String domain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
+            return buildTree(directory, allOrgUnits, domain);
         } catch (Exception e) {
-            log.error("Failed to fetch org unit tree: {}", e.getMessage());
-            throw new RuntimeException("Failed to fetch org units from Google: " + e.getMessage());
+            log.error("Failed to fetch org unit tree: {}", e.getMessage(), e);
+            return buildEmptyRoot();
         }
     }
 
     private List<OrgUnit> fetchAllOrgUnits(Directory directory) throws IOException {
         OrgUnits response = directory.orgunits()
                 .list("my_customer")
-                .setType("ALL")
+                .setType("all")
                 .execute();
 
-        if (response.getOrganizationUnits() == null) {
+        if (response == null || response.getOrganizationUnits() == null) {
             return new ArrayList<>();
         }
         return response.getOrganizationUnits();
     }
 
-    private OrgUnitNodeDto buildTree(Directory directory, List<OrgUnit> allOrgUnits) throws IOException {
-        OrgUnit rootOu = allOrgUnits.stream()
-                .filter(ou -> {
-                    String parent = ou.getParentOrgUnitPath();
-                    return parent == null || parent.isBlank() || "/".equals(parent);
-                })
-                .findFirst()
-                .orElse(allOrgUnits.get(0));
-
-        OrgUnitNodeDto rootDto = toDto(rootOu, true);
-        rootDto.setUserCount(countUsersInOrgUnit(directory, rootDto.getOrgUnitPath()));
-
-        List<OrgUnitNodeDto> children = buildChildren(directory, rootDto.getOrgUnitPath(), allOrgUnits);
-        rootDto.setChildren(children);
-
-        return rootDto;
+    private OrgUnitNodeDto buildTree(Directory directory, List<OrgUnit> allOrgUnits, String domain) throws IOException {
+        OrgUnitNodeDto root = new OrgUnitNodeDto();
+        root.setId("/");
+        root.setName(domain);
+        root.setOrgUnitPath("/");
+        root.setRoot(true);
+        root.setUserCount(countUsersInOrgUnit(directory, "/"));
+        root.setChildren(buildChildren(directory, "/", allOrgUnits));
+        return root;
     }
 
     private List<OrgUnitNodeDto> buildChildren(Directory directory, String parentPath, List<OrgUnit> allOrgUnits) throws IOException {
         List<OrgUnitNodeDto> children = new ArrayList<>();
+        String normParent = normalizePath(parentPath);
 
         for (OrgUnit ou : allOrgUnits) {
             String ouPath = ou.getOrgUnitPath();
             String parent = ou.getParentOrgUnitPath();
             if (ouPath == null || ouPath.isBlank()) continue;
 
-            if (parent == null || !parent.equals(parentPath)) continue;
+            if (normalizePath(ouPath).equals(normParent)) continue;
+            if (!isChildOf(parent, normParent)) continue;
 
             OrgUnitNodeDto dto = toDto(ou, false);
             dto.setUserCount(countUsersInOrgUnit(directory, dto.getOrgUnitPath()));
@@ -143,6 +137,17 @@ public class GoogleOrgUnitService {
             log.warn("Could not count users for org unit {}: {}", orgUnitPath, e.getMessage());
             return 0;
         }
+    }
+
+    private static String normalizePath(String path) {
+        if (path == null || path.isBlank()) return "/";
+        return path.trim();
+    }
+
+    private static boolean isChildOf(String parent, String expectedParent) {
+        if (parent == null) return "/".equals(expectedParent);
+        String norm = parent.trim();
+        return norm.equals(expectedParent) || (norm.isEmpty() && "/".equals(expectedParent));
     }
 
     private static OrgUnitNodeDto buildEmptyRoot() {

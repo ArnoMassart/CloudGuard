@@ -7,7 +7,16 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
     <!-- Left card: Structuur -->
-    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
+     @if (loading()) {
+      <div class="flex flex-col items-center justify-center py-12">
+        <span class="text-sm text-slate-600">Structuur laden...</span>
+      </div>
+    } @else if (error()) {
+      <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+        {{ error() }}
+      </div>
+    } @else if (tree(); as root) {
+      <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
       <div class="flex items-center gap-2 mb-4">
         <i-lucide [img]="folderTreeIcon" size="20" class="text-slate-600" />
         <h2 class="font-semibold text-slate-900">Structuur</h2>
@@ -18,9 +27,9 @@
         <li>
           <button
             type="button"
-            (click)="selectUnit(tree); toggleRoot()"
+            (click)="selectUnit(root); toggleRoot()"
             class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
-            [class.bg-primary/10]="isSelected(tree)"
+            [class.bg-primary/10]="isSelected(root)"
           >
             <i-lucide
               [img]="rootExpanded() ? chevronDownIcon : chevronRightIcon"
@@ -28,16 +37,16 @@
               class="text-slate-500 shrink-0"
             />
             <i-lucide [img]="archiveIcon" size="18" class="text-slate-600 shrink-0" />
-            <span class="font-medium text-slate-900 flex-1 truncate">{{ tree.name }}</span>
+            <span class="font-medium text-slate-900 flex-1 truncate">{{ root.name }}</span>
             <span
               class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5"
             >
-              {{ tree.userCount }}
+              {{ root.userCount }}
             </span>
           </button>
         </li>
-        @if (rootExpanded() && tree.children?.length) {
-          @for (child of tree.children; track child.id) {
+        @if (rootExpanded() && root.children?.length) {
+          @for (child of root.children; track child.id) {
             <li class="pl-8">
               <button
                 type="button"
@@ -58,10 +67,11 @@
         }
       </ul>
     </div>
-
+    }
+    
     <!-- Right card: Selected unit details -->
     <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
-      @if (selectedUnit(); as unit) {
+      @if (selectedOrgUnit(); as unit) {
         <div class="flex items-center gap-2 mb-5">
           <i-lucide [img]="archiveIcon" size="20" class="text-slate-600" />
           <h2 class="font-semibold text-slate-900">{{ unit.name }}</h2>

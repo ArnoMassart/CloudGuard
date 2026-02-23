@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
+import { OrgUnitNodeDto, OrgUnitService } from '../../../services/org-unit-service';
 
 export interface OrgUnitNode {
   id: string;
@@ -39,7 +40,7 @@ export interface Policy {
   templateUrl: './organizational-units.html',
   styleUrl: './organizational-units.css',
 })
-export class OrganizationalUnits {
+export class OrganizationalUnits implements OnInit {
   readonly folderTreeIcon = FolderTree;
   readonly archiveIcon = Archive;
   readonly buildingIcon = Building2;
@@ -52,22 +53,27 @@ export class OrganizationalUnits {
   readonly rootExpanded = signal(true);
   readonly expandedPolicies = signal<Set<string>>(new Set());
 
-  readonly tree: OrgUnitNode = {
-    id: 'root',
-    name: 'Bedrijf.com',
-    userCount: 247,
-    isRoot: true,
-    children: [
-      { id: 'ou1', name: 'Management', userCount: 12, children: [] },
-      { id: 'ou2', name: 'IT', userCount: 35, children: [] },
-      { id: 'ou3', name: 'Sales', userCount: 45, children: [] },
-      { id: 'ou4', name: 'Marketing', userCount: 28, children: [] },
-      { id: 'ou5', name: 'Finance', userCount: 18, children: [] },
-      { id: 'ou6', name: 'HR', userCount: 8, children: [] },
-    ],
-  };
+  readonly #orgUnitService = inject(OrgUnitService);
+  readonly tree = signal<OrgUnitNode | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
 
-  readonly selectedUnit = signal<OrgUnitNode | null>(this.tree);
+  readonly  selectedOrgUnit = signal<OrgUnitNodeDto | null>(null); 
+
+  ngOnInit():void {
+    this.#orgUnitService.getOrgUnitTree().subscribe({
+      next: (data) => {
+        this.tree.set(data);
+        this.selectedOrgUnit.set(data);
+        this.loading.set(false);
+      },
+      error: (err)=>{
+        this.error.set(err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.');
+        this.loading.set(false);
+      },
+    })
+  }
+
 
   readonly policies: Policy[] = [
     {
@@ -103,7 +109,7 @@ export class OrganizationalUnits {
   ];
 
   selectUnit(node: OrgUnitNode): void {
-    this.selectedUnit.set(node);
+    this.selectedOrgUnit.set(node);
   }
 
   toggleRoot(): void {
@@ -111,7 +117,7 @@ export class OrganizationalUnits {
   }
 
   isSelected(node: OrgUnitNode): boolean {
-    return this.selectedUnit()?.id === node.id;
+    return this.selectedOrgUnit()?.id === node.id;
   }
 
   getSubUnitCount(node: OrgUnitNode): number {
