@@ -10,7 +10,7 @@ import { UserOverviewResponse } from '../models/UserOverviewResponse';
   providedIn: 'root',
 })
 export class UserService {
-  readonly #API_URL = RouteService.getBackendUrl('/google');
+  readonly #API_URL = RouteService.getBackendUrl('/google/users');
   readonly #http = inject(HttpClient);
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
@@ -31,14 +31,14 @@ export class UserService {
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
 
-    return this.#http.get<UserPageResponse>(`${this.#API_URL}/users`, {
+    return this.#http.get<UserPageResponse>(`${this.#API_URL}`, {
       withCredentials: true,
       params: params,
     });
   }
 
   getUsersPageOverview(): Observable<UserOverviewResponse> {
-    return this.#http.get<UserOverviewResponse>(`${this.#API_URL}/users/overview`, {
+    return this.#http.get<UserOverviewResponse>(`${this.#API_URL}/overview`, {
       withCredentials: true,
     });
   }

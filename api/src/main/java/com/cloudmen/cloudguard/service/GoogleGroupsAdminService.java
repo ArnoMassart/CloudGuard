@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.GroupOrgDetail;
 import com.cloudmen.cloudguard.dto.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.GroupSettingsDto;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
@@ -35,7 +36,7 @@ public class GoogleGroupsAdminService {
     private static final String GROUPS_SETTINGS_SCOPE = "https://www.googleapis.com/auth/apps.groups.settings";
     private static final String CLOUD_IDENTITY_SCOPE = "https://www.googleapis.com/auth/cloud-identity.groups.readonly";
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
 
     @Value("${google.api.client-email}")
     private String clientEmail;
@@ -43,7 +44,7 @@ public class GoogleGroupsAdminService {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    public GoogleGroupsAdminService(GoogleDirectoryFactory directoryFactory) {
+    public GoogleGroupsAdminService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 

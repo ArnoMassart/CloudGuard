@@ -13,38 +13,36 @@
     <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
         <div class="flex gap-3">
             <i-lucide [img]="triangleAlertIcon" size="20" class="text-[#d69518]" />
-            <div class="flex flex-col gap-2"><span
-                    class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{hasMultipleWarnings() ?
-                    "en": ""}}</span>
+            <div class="flex flex-col gap-2">
+                <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{ hasMultipleWarnings() ?
+                    'en' : '' }}</span>
                 @if (userPageWarnings().twoFactorWarning) {
                 <div class="flex gap-2 items-center text-center">
                     <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                    <span class="text-xs text-[#b7610a]">{{pageOverview()?.withoutTwoFactor}} actieve
-                        {{pageOverview()?.withoutTwoFactor === 1 ? "gebruiker heeft" : "gebruikers hebben"}}
+                    <span class="text-xs text-[#b7610a]">{{ pageOverview()?.withoutTwoFactor }} actieve
+                        {{
+                        pageOverview()?.withoutTwoFactor === 1 ? 'gebruiker heeft' : 'gebruikers hebben'
+                        }}
                         geen 2FA ingeschakeld</span>
                 </div>
-
                 }
                 @if (userPageWarnings().activeWithLongNoLogin) {
-
                 <div class="flex gap-2 items-center text-center">
                     <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                    <span class="text-xs text-[#b7610a]">{{pageOverview()?.activeLongNoLoginCount}} actieve
-                        {{pageOverview()?.activeLongNoLoginCount === 1 ? "gebruiker": "gebruikers"}}
-                        met een laatste login van meer dan 1 jaar geleden
-                        gedetecteerd</span>
+                    <span class="text-xs text-[#b7610a]">{{ pageOverview()?.activeLongNoLoginCount }} actieve
+                        {{ pageOverview()?.activeLongNoLoginCount === 1 ? 'gebruiker' : 'gebruikers' }}
+                        met een laatste login van meer dan 1 jaar geleden gedetecteerd</span>
                 </div>
                 }
 
                 @if (userPageWarnings().notActiveWithRecentLogin) {
-
                 <div class="flex gap-2 items-center text-center">
                     <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                    <span class="text-xs text-[#b7610a]">{{pageOverview()?.inactiveRecentLoginCount}} inactieve
-                        {{pageOverview()?.inactiveRecentLoginCount === 1 ? "gebruiker": "gebruikers"}} met een laatste
-                        login van minder dan 1
-                        week
-                        geleden gedetecteerd</span>
+                    <span class="text-xs text-[#b7610a]">{{ pageOverview()?.inactiveRecentLoginCount }} inactieve
+                        {{
+                        pageOverview()?.inactiveRecentLoginCount === 1 ? 'gebruiker' : 'gebruikers'
+                        }}
+                        met een laatste login van minder dan 1 week geleden gedetecteerd</span>
                 </div>
                 }
             </div>
@@ -53,10 +51,10 @@
     }
 
     <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
-        <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center ">
+        <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
             <i-lucide [img]="searchIcon" size="20" class="text-[#99a1af]/70" />
-            <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none  w-full"
-                placeholder="Zoek gebruikers op naam...">
+            <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
+                placeholder="Zoek gebruikers op naam..." />
         </div>
     </div>
 
@@ -82,7 +80,7 @@
                     <td class="px-6 py-4">
                         <div class="flex flex-col">
                             <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
-                            <span class="text-xs text-gray-500">{{user.email}}</span>
+                            <span class="text-xs text-gray-500">{{ user.email }}</span>
                         </div>
                     </td>
 
@@ -90,11 +88,10 @@
                         <span
                             class="px-3 py-1 inline-flex items-center text-center gap-2 rounded-md text-xs font-medium"
                             [ngClass]="getRoleClass(user.role)">
-                            @if (user.role === "Super Admin") {
+                            @if (user.role === 'Super Admin') {
                             <i-lucide [img]="shield" size="14" />
                             }
                             {{ user.role }}
-
                         </span>
                     </td>
 
@@ -103,7 +100,7 @@
                             [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
                             [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
                             <lucide-icon [img]="user.active ? checkCircle : xCircle" size="14"></lucide-icon>
-                            {{ user.active ? "Actief" : "Suspended" }}
+                            {{ user.active ? 'Actief' : 'Suspended' }}
                         </div>
                     </td>
 
@@ -119,7 +116,7 @@
                             [class.text-emerald-400]="user.twoFactorEnabled"
                             [class.text-destructive]="!user.twoFactorEnabled">
                             <lucide-icon [img]="user.twoFactorEnabled ? checkCircle : xCircle" size="14"></lucide-icon>
-                            {{ user.twoFactorEnabled ? "Ingeschakeld" : "Uit" }}
+                            {{ user.twoFactorEnabled ? 'Ingeschakeld' : 'Uit' }}
                         </div>
                     </td>
 
@@ -129,16 +126,13 @@
                             [class.text-destructive]="!user.securityConform">
                             <lucide-icon [img]="user.securityConform ? checkCircle : triangleAlert"
                                 size="14"></lucide-icon>
-                            {{ user.securityConform ? "Conform" : "Niet conform" }}
+                            {{ user.securityConform ? 'Conform' : 'Niet conform' }}
                         </div>
                     </td>
                 </tr>
                 }
             </tbody>
-
-
         </table>
-
 
         <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
             <span class="text-sm text-gray-500">
@@ -159,12 +153,10 @@
                 </button>
             </div>
         </div>
-        }
 
-        @else {
+        } @else {
         <div class="flex flex-col items-center p-3">
-
-            <div class="flex flex-col items-center space-y-4 p-8 ">
+            <div class="flex flex-col items-center space-y-4 p-8">
                 <div class="relative flex items-center justify-center">
                     <div class="h-12 w-12 rounded-full"></div>
 
