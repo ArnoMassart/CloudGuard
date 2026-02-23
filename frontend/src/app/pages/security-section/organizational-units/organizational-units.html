@@ -19,7 +19,7 @@
       <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
       <div class="flex items-center gap-2 mb-4">
         <i-lucide [img]="folderTreeIcon" size="20" class="text-slate-600" />
-        <h2 class="font-semibold text-slate-900">Structuur</h2>
+        <h2 class="font-medium text-slate-900">Structuur</h2>
       </div>
 
       <div class="space-y-0.5 max-h-[60vh] overflow-y-auto min-h-0">
@@ -78,7 +78,7 @@
       @if (selectedOrgUnit(); as unit) {
         <div class="flex items-center gap-2 mb-5">
           <i-lucide [img]="buildingIcon" size="20" class="text-slate-600" />
-          <h2 class="font-semibold text-slate-900">{{ unit.name }}</h2>
+          <h2 class="font-medium text-slate-900">{{ unit.name }}</h2>
         </div>
 
         <!-- KPI boxes -->
@@ -101,7 +101,7 @@
         </div>
 
         <!-- Beleidsregels -->
-        <h3 class="font-semibold text-slate-900 mb-3">Beleidsregels</h3>
+        <h3 class="font-medium text-slate-900 mb-3">Beleidsregels</h3>
         <ul class="space-y-3">
           @for (policy of policies; track policy.title) {
             <li class="rounded-lg border border-slate-200/80 overflow-hidden">
