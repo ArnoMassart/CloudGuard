@@ -22,58 +22,62 @@
         <h2 class="font-semibold text-slate-900">Structuur</h2>
       </div>
 
-      <ul class="space-y-0.5">
-        <!-- Root unit -->
-        <li>
+      <div class="space-y-0.5 max-h-[60vh] overflow-y-auto min-h-0">
+        <ul class="space-y-0.5 list-none p-0 m-0">
+          <ng-container
+            *ngTemplateOutlet="ouNode; context: { $implicit: root, depth: 0 }"
+          />
+        </ul>
+      </div>
+
+      <ng-template #ouNode let-node let-depth="depth">
+        <li [style.padding-left.rem]="0.5 + depth * 1.25">
           <button
             type="button"
-            (click)="selectUnit(root); toggleRoot()"
+            (click)="selectUnit(node); toggleExpanded(node.id)"
             class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
-            [class.bg-primary/10]="isSelected(root)"
+            [class.bg-primary/10]="isSelected(node)"
           >
-            <i-lucide
-              [img]="rootExpanded() ? chevronDownIcon : chevronRightIcon"
-              size="16"
-              class="text-slate-500 shrink-0"
-            />
-            <i-lucide [img]="archiveIcon" size="18" class="text-slate-600 shrink-0" />
-            <span class="font-medium text-slate-900 flex-1 truncate">{{ root.name }}</span>
+            @if (node.children?.length) {
+              <i-lucide
+                [img]="isExpanded(node.id) ? chevronDownIcon : chevronRightIcon"
+                size="16"
+                class="text-slate-500 shrink-0"
+              />
+            } @else {
+              <span class="w-4 shrink-0" aria-hidden="true"></span>
+            }
+            @if (depth === 0) {
+              <i-lucide [img]="buildingIcon" size="18" class="text-slate-600 shrink-0" />
+            } @else {
+              <i-lucide [img]="buildingIcon" size="18" class="text-slate-600 shrink-0" />
+            }
+            <span class="font-medium text-slate-900 flex-1 truncate">{{ node.name }}</span>
             <span
               class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5"
             >
-              {{ root.userCount }}
+              {{ node.userCount }}
             </span>
           </button>
-        </li>
-        @if (rootExpanded() && root.children?.length) {
-          @for (child of root.children; track child.id) {
-            <li class="pl-8">
-              <button
-                type="button"
-                (click)="selectUnit(child)"
-                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
-                [class.bg-primary/10]="isSelected(child)"
-              >
-                <i-lucide [img]="buildingIcon" size="18" class="text-slate-600 shrink-0" />
-                <span class="font-medium text-slate-900 flex-1 truncate">{{ child.name }}</span>
-                <span
-                  class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5"
-                >
-                  {{ child.userCount }}
-                </span>
-              </button>
-            </li>
+          @if (isExpanded(node.id) && node.children?.length) {
+            <ul class="space-y-0.5 list-none p-0 m-0 mt-0.5">
+              @for (child of node.children; track child.id) {
+                <ng-container
+                  *ngTemplateOutlet="ouNode; context: { $implicit: child, depth: depth + 1 }"
+                />
+              }
+            </ul>
           }
-        }
-      </ul>
+        </li>
+      </ng-template>
     </div>
-    }
-    
+  }
+
     <!-- Right card: Selected unit details -->
     <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
       @if (selectedOrgUnit(); as unit) {
         <div class="flex items-center gap-2 mb-5">
-          <i-lucide [img]="archiveIcon" size="20" class="text-slate-600" />
+          <i-lucide [img]="buildingIcon" size="20" class="text-slate-600" />
           <h2 class="font-semibold text-slate-900">{{ unit.name }}</h2>
         </div>
 

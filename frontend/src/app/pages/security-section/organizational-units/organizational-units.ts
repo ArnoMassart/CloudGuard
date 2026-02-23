@@ -5,7 +5,6 @@ import {
   Building2,
   Users,
   FolderTree,
-  Archive,
   ChevronDown,
   ChevronRight,
   CheckCircle,
@@ -42,7 +41,6 @@ export interface Policy {
 })
 export class OrganizationalUnits implements OnInit {
   readonly folderTreeIcon = FolderTree;
-  readonly archiveIcon = Archive;
   readonly buildingIcon = Building2;
   readonly usersIcon = Users;
   readonly checkCircleIcon = CheckCircle;
@@ -50,7 +48,7 @@ export class OrganizationalUnits implements OnInit {
   readonly chevronRightIcon = ChevronRight;
   readonly externalLinkIcon = ExternalLink;
 
-  readonly rootExpanded = signal(true);
+  readonly expandedOuIds = signal<Set<string>>(new Set());
   readonly expandedPolicies = signal<Set<string>>(new Set());
 
   readonly #orgUnitService = inject(OrgUnitService);
@@ -60,11 +58,12 @@ export class OrganizationalUnits implements OnInit {
 
   readonly  selectedOrgUnit = signal<OrgUnitNodeDto | null>(null); 
 
-  ngOnInit():void {
+  ngOnInit(): void {
     this.#orgUnitService.getOrgUnitTree().subscribe({
       next: (data) => {
         this.tree.set(data);
         this.selectedOrgUnit.set(data);
+        if (data?.id) this.expandedOuIds.set(new Set([data.id]));
         this.loading.set(false);
       },
       error: (err)=>{
@@ -112,8 +111,17 @@ export class OrganizationalUnits implements OnInit {
     this.selectedOrgUnit.set(node);
   }
 
-  toggleRoot(): void {
-    this.rootExpanded.update((v) => !v);
+  toggleExpanded(nodeId: string): void {
+    this.expandedOuIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      return next;
+    });
+  }
+
+  isExpanded(nodeId: string): boolean {
+    return this.expandedOuIds().has(nodeId);
   }
 
   isSelected(node: OrgUnitNode): boolean {
