@@ -51,7 +51,7 @@ export class UsersSection implements OnInit {
     activeWithLongNoLogin: false,
     notActiveWithRecentLogin: false,
   });
-  itemsPerPage: number = 10; // Adjust based on your design
+  itemsPerPage: number = 5; // Adjust based on your design
 
   orgUsers = signal<UserOrgDetail[]>([]);
   pageOverview = signal<UserOverviewResponse | null>(null);

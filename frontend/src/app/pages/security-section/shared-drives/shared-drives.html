@@ -83,8 +83,11 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 flex gap-4 flex-col">
-        @if (!isLoading()) {
+      @if (!isLoading()) {
+      @if (drives().length > 0) {
+
+
+      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
         @for (drive of drives(); track drive.name) {
         <div class="rounded-lg p-5 border-2 border-muted/30 mx-3">
           <div class="flex items-start gap-4">
@@ -180,7 +183,7 @@
         </div>
         }
 
-        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-xl">
           <span class="text-sm text-gray-500">
             Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
           </span>
@@ -199,7 +202,22 @@
             </button>
           </div>
         </div>
-        } @else {
+      </div>
+
+      } @else {
+      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+
+        <div class="flex items-center justify-center p-5">
+          <span class="text-lg font-medium text-slate-600">
+            Geen drives gevonden!
+          </span>
+
+        </div>
+      </div>
+      }
+      } @else {
+      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
+
         <div class="flex flex-col items-center p-3 pt-6">
           <div class="flex flex-col items-center space-y-4 p-8">
             <div class="relative flex items-center justify-center">
@@ -214,8 +232,8 @@
             </span>
           </div>
         </div>
-        }
       </div>
+      }
     </div>
   </div>
 </div>

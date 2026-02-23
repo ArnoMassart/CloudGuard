@@ -15,13 +15,16 @@ export class DriveService {
   getDrives(
     pageToken?: string,
     query?: string,
-    size: number = 3,
+    size: number = 3
   ): Observable<SharedDrivePageResponse> {
     let params = new HttpParams().set('size', size.toString());
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
 
-    return this.#http.get<SharedDrivePageResponse>(this.#API_URL, { params });
+    return this.#http.get<SharedDrivePageResponse>(this.#API_URL, {
+      params,
+      withCredentials: true,
+    });
   }
 
   getDrivesPageOverview(): Observable<SharedDriveOverviewResponse> {
