@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.UserOrgDetail;
 import com.cloudmen.cloudguard.dto.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.UserPageResponse;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
@@ -204,7 +205,7 @@ public class GoogleUserAdminService {
                     inactiveRecentLoginCount
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch users overview from Google: " + e.getMessage());
         }
     }
 

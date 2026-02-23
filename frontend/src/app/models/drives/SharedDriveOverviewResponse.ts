@@ -6,6 +6,5 @@ export type SharedDriveOverviewResponse = {
   securityScore: number;
   notOnlyDomainUsersAllowedCount: number;
   notOnlyMembersCanAccessCount: number;
-  externalMembersCount: number;
-  orphanDrivesCount: number;
+  externalMembersDriveCount: number;
 };

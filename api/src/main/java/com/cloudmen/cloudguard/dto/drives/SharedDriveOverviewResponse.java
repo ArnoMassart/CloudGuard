@@ -6,8 +6,8 @@ public record SharedDriveOverviewResponse(
         long totalHighRisk,
         long totalExternalMembersCount,
         long securityScore,
-        long externallySharedCount,
-        long noMemberRestrictionsCount,
-        long orphanDrivesCount
+        long notOnlyDomainUsersAllowedCount,
+        long notOnlyMembersCanAccessCount,
+        long externalMembersDriveCount
 )
 { }

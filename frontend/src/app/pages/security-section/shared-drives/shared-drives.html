@@ -1,264 +1,219 @@
 <div class="px-10 py-6">
-  <app-page-header
-    Title="Gedeelde Drives Controle"
+  <app-page-header Title="Gedeelde Drives Controle"
     Description="Controleer instellingen voor gedeelde Drives om de gegevensbeveiliging te garanderen"
-    AdminLink="drive/manageshareddrives"
-  />
+    AdminLink="drive/manageshareddrives" />
 
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
       <div class="w-full flex gap-4">
-        <app-shared-drives-top-card
-          class="flex-1"
-          Title="Totaal Drives"
-          [Value]="3"
-          [Icon]="FolderOpen"
-        />
+        <app-shared-drives-top-card class="flex-1" Title="Totaal Drives" [Value]="pageOverview()?.totalDrives"
+          [Icon]="FolderOpen" />
 
-        <app-shared-drives-top-card
-          class="flex-1"
-          Title="Drives zonder beheerders"
-          [Value]="1"
-          BackgroundColor="#f3e8ff"
-          IconColor="#9810fa"
-          TextColor="#9810fa"
-          [Icon]="HardDrive"
-        />
+        <app-shared-drives-top-card class="flex-1" Title="Drives zonder beheerders"
+          [Value]="pageOverview()?.orphanDrives" BackgroundColor="#f3e8ff" IconColor="#9810fa" TextColor="#9810fa"
+          [Icon]="HardDrive" />
 
-        <app-shared-drives-top-card
-          class="flex-1"
-          Title="Hoog risico"
-          [Value]="2"
-          BackgroundColor="#ffe2e2"
-          IconColor="#e7000b"
-          TextColor="#e7000b"
-          [Icon]="TriangleAlert"
-        />
+        <app-shared-drives-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRisk"
+          BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="TriangleAlert" />
 
-        <app-shared-drives-top-card
-          class="flex-1"
-          Title="Met externe leden"
-          [Value]="2"
-          BackgroundColor="#ffedd4"
-          IconColor="#f54a00"
-          TextColor="#f54a00"
-          [Icon]="Users"
-        />
+        <app-shared-drives-top-card class="flex-1" Title="Met externe leden"
+          [Value]="pageOverview()?.externalMembersDriveCount" BackgroundColor="#ffedd4" IconColor="#f54a00"
+          TextColor="#f54a00" [Icon]="Users" />
 
-        <app-shared-drives-top-card
-          class="flex-1"
-          Title="Security Score"
-          [Value]="70"
-          [IsPercentage]="true"
-          BackgroundColor="#fef9c2"
-          IconColor="#d69518"
-        />
+        <app-shared-drives-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
+          [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
 
       @if (hasWarnings() && !isLoading()) {
-        <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
-          <div class="flex gap-3">
-            <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
-            <div class="flex flex-col gap-2">
-              <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing</span>
-              @if (drivePageWarnings().externallySharedWarning) {
-                <div class="flex gap-2 items-center text-center">
-                  <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                  <span class="text-xs text-[#b7610a]"
-                    >{{ pageOverview()?.externallySharedCount }}
-                    gedeelde
-                    {{ pageOverview()?.externallySharedCount === 1 ? 'drive' : 'drives' }}
-                  </span>
-                </div>
-              }
+      <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
+        <div class="flex gap-3">
+          <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
+          <div class="flex flex-col gap-2">
+            <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing</span>
+            @if (drivePageWarnings().orphanDrivesWarning) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.orphanDrives }}
+                wees
+                {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
+                zonder beheerder gevonden
+              </span>
             </div>
+            }
+
+            @if (drivePageWarnings().externalMembersWarning) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.externalMembersDriveCount }}
+                {{ pageOverview()?.externalMembersDriveCount === 1 ? 'drive heeft' : 'drives hebben' }}
+                externe leden buiten uw domein
+              </span>
+            </div>
+            }
+
+            @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
+                {{ pageOverview()?.notOnlyDomainUsersAllowedCount === 1 ? 'drive staat' : 'drives staan' }}
+                delen met gebruikers buiten uw domein toe
+              </span>
+            </div>
+            }
+
+            @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyMembersCanAccessCount }}
+                {{ pageOverview()?.notOnlyMembersCanAccessCount === 1 ? 'drive kan' : 'drives kunnen' }}
+                toegang verlenen aan niet-leden
+              </span>
+            </div>
+            }
           </div>
         </div>
+      </div>
       }
 
       <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
         <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
           <i-lucide [img]="Search" size="20" class="text-[#99a1af]/70" />
-          <input
-            type="text"
-            #searchInput
-            (input)="onKeyup(searchInput.value)"
-            class="focus:outline-none w-full"
-            placeholder="Zoek naar een Drive met volledige woorden..."
-          />
+          <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
+            placeholder="Zoek naar een Drive met volledige woorden..." />
         </div>
       </div>
 
       <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 flex gap-4 flex-col">
         @if (!isLoading()) {
-          @for (drive of drives(); track drive.name) {
-            <div class="rounded-lg p-5 border-2 border-muted/30 mx-3">
-              <div class="flex items-start gap-4">
-                <div class="p-2.5 rounded-lg bg-[#dbeafe] text-[#155dfc]">
-                  <i-lucide [img]="FolderOpen" size="24"></i-lucide>
+        @for (drive of drives(); track drive.name) {
+        <div class="rounded-lg p-5 border-2 border-muted/30 mx-3">
+          <div class="flex items-start gap-4">
+            <div class="p-2.5 rounded-lg bg-[#dbeafe] text-[#155dfc]">
+              <i-lucide [img]="FolderOpen" size="24"></i-lucide>
+            </div>
+            <div class="flex flex-col gap-4 w-full pr-2">
+              <div class="flex items-center gap-3 justify-between">
+                <span class="font-medium text-lg">{{ drive.name }}</span>
+                <span class="px-3 py-1 text-xs font-medium rounded-full"
+                  [class.text-emerald-600]="drive.risk === 'Laag'" [class.bg-[#dbfce7]]="drive.risk === 'Laag'"
+                  [class.text-[#d69518]]="drive.risk === 'Middel'" [class.bg-[#fef9c2]]="drive.risk === 'Middel'"
+                  [class.text-[#e7000b]]="drive.risk === 'Hoog'" [class.bg-[#ffe2e2]]="drive.risk === 'Hoog'">
+                  {{ drive.risk }} risico
+                </span>
+              </div>
+              <div class="flex justify-between pr-10">
+                <div class="flex flex-col gap-2">
+                  <span class="text-xs text-muted-foreground uppercase">Totaal Leden</span>
+                  <div class="flex items-center gap-1">
+                    <i-lucide [img]="Users" size="16" />
+                    <span class="font-medium text-[16px]">{{ drive.totalMembers }}</span>
+                  </div>
                 </div>
-                <div class="flex flex-col gap-4 w-full pr-2">
-                  <div class="flex items-center gap-3 justify-between">
-                    <span class="font-medium text-lg">{{ drive.name }}</span>
-                    <span
-                      class="px-3 py-1 text-xs font-medium rounded-full"
-                      [class.text-emerald-600]="drive.risk === 'Laag'"
-                      [class.bg-[#dbfce7]]="drive.risk === 'Laag'"
-                      [class.text-[#d69518]]="drive.risk === 'Middel'"
-                      [class.bg-[#fef9c2]]="drive.risk === 'Middel'"
-                      [class.text-[#e7000b]]="drive.risk === 'Hoog'"
-                      [class.bg-[#ffe2e2]]="drive.risk === 'Hoog'"
-                    >
-                      {{ drive.risk }} risico
-                    </span>
+
+                <div class="flex flex-col gap-2">
+                  <span class="text-xs text-muted-foreground uppercase">Externe Leden</span>
+                  <div class="flex items-center gap-1">
+                    <i-lucide [img]="drive.externalMembers > 0 ? TriangleAlert : CircleCheck"
+                      [class.text-[#f54a00]]="drive.externalMembers > 0"
+                      [class.text-emerald-400]="drive.externalMembers <= 0" size="16" />
+                    <span class="font-medium text-[16px]" [class.text-[#f54a00]]="drive.externalMembers > 0"
+                      [class.text-emerald-400]="drive.externalMembers <= 0">{{ drive.externalMembers }}</span>
                   </div>
-                  <div class="flex justify-between pr-10">
-                    <div class="flex flex-col gap-2">
-                      <span class="text-xs text-muted-foreground uppercase">Totaal Leden</span>
-                      <div class="flex items-center gap-1">
-                        <i-lucide [img]="Users" size="16" />
-                        <span class="font-medium text-[16px]">{{ drive.totalMembers }}</span>
-                      </div>
-                    </div>
+                </div>
 
-                    <div class="flex flex-col gap-2">
-                      <span class="text-xs text-muted-foreground uppercase">Externe Leden</span>
-                      <div class="flex items-center gap-1">
-                        <i-lucide
-                          [img]="drive.externalMembers > 0 ? TriangleAlert : CircleCheck"
-                          [class.text-[#f54a00]]="drive.externalMembers > 0"
-                          [class.text-emerald-400]="drive.externalMembers <= 0"
-                          size="16"
-                        />
-                        <span
-                          class="font-medium text-[16px]"
-                          [class.text-[#f54a00]]="drive.externalMembers > 0"
-                          [class.text-emerald-400]="drive.externalMembers <= 0"
-                          >{{ drive.externalMembers }}</span
-                        >
-                      </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                      <span class="text-xs text-muted-foreground uppercase">Aantal Beheerders</span>
-                      <div class="flex items-center gap-1">
-                        <i-lucide
-                          [img]="drive.totalOrganizers > 0 ? UserCog : TriangleAlert"
-                          [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                          [class.text-black]="drive.totalOrganizers > 0"
-                          size="16"
-                        />
-                        <span
-                          [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                          [class.text-black]="drive.totalOrganizers > 0"
-                          class="text-sm font-light"
-                          >{{ drive.totalOrganizers }}</span
-                        >
-                      </div>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                      <span class="text-xs text-muted-foreground uppercase">Opgericht</span>
-                      <div class="flex items-center gap-1">
-                        <i-lucide [img]="Clock" class="text-muted-foreground" size="16" />
-                        <span class="text-muted-foreground text-sm font-light">{{
-                          drive.createdTime
-                        }}</span>
-                      </div>
-                    </div>
+                <div class="flex flex-col gap-2">
+                  <span class="text-xs text-muted-foreground uppercase">Aantal Beheerders</span>
+                  <div class="flex items-center gap-1">
+                    <i-lucide [img]="drive.totalOrganizers > 0 ? UserCog : TriangleAlert"
+                      [class.text-[#f54a00]]="drive.totalOrganizers <= 0" [class.text-black]="drive.totalOrganizers > 0"
+                      size="16" />
+                    <span [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
+                      [class.text-black]="drive.totalOrganizers > 0" class="text-sm font-light">{{ drive.totalOrganizers
+                      }}</span>
                   </div>
+                </div>
 
-                  <div class="flex gap-4 items-center pt-2">
-                    <div
-                      class="p-3 mt-3 flex flex-col gap-1 bg-[#f9fafb] rounded-lg border-2 border-muted/10 w-full"
-                    >
-                      <span>Alleen domeingebruikers toegestaan</span>
-                      <div class="flex items-center gap-1">
-                        @if (!drive.onlyDomainUsersAllowed) {
-                          <i-lucide [img]="TriangleAlert" class="text-[#f54a00]" size="13" />
-                          <span class="text-[#f54a00] text-[13px] font-medium">Nee</span>
-                          <i-lucide
-                            [img]="ExternalLink"
-                            class="text-[#f54a00] cursor-pointer"
-                            size="13"
-                            (click)="openAdminPage()"
-                          />
-                        } @else {
-                          <i-lucide [img]="CircleCheck" class="text-emerald-400" size="13" />
-                          <span class="text-emerald-400 text-xs font-medium">Ja</span>
-                        }
-                      </div>
-                    </div>
+                <div class="flex flex-col gap-2">
+                  <span class="text-xs text-muted-foreground uppercase">Opgericht</span>
+                  <div class="flex items-center gap-1">
+                    <i-lucide [img]="Clock" class="text-muted-foreground" size="16" />
+                    <span class="text-muted-foreground text-sm font-light">{{
+                      drive.createdTime
+                      }}</span>
+                  </div>
+                </div>
+              </div>
 
-                    <div
-                      class="p-3 mt-3 flex flex-col gap-1 bg-[#f9fafb] rounded-lg border-2 border-muted/10 w-full"
-                    >
-                      <span>Alleen leden kunnen toegang krijgen</span>
-                      <div class="flex items-center gap-1">
-                        @if (!drive.onlyMembersCanAccess) {
-                          <i-lucide [img]="TriangleAlert" class="text-[#f54a00]" size="13" />
-                          <span class="text-[#f54a00] text-[13px] font-medium">Nee</span>
-                          <i-lucide
-                            [img]="ExternalLink"
-                            class="text-[#f54a00] cursor-pointer"
-                            size="13"
-                            (click)="openAdminPage()"
-                          />
-                        } @else {
-                          <i-lucide [img]="CircleCheck" class="text-emerald-400" size="13" />
-                          <span class="text-emerald-400 text-xs font-medium">Ja</span>
-                        }
-                      </div>
-                    </div>
+              <div class="flex gap-4 items-center pt-2">
+                <div class="p-3 mt-3 flex flex-col gap-1 bg-[#f9fafb] rounded-lg border-2 border-muted/10 w-full">
+                  <span>Alleen domeingebruikers toegestaan</span>
+                  <div class="flex items-center gap-1">
+                    @if (!drive.onlyDomainUsersAllowed) {
+                    <i-lucide [img]="TriangleAlert" class="text-[#f54a00]" size="13" />
+                    <span class="text-[#f54a00] text-[13px] font-medium">Nee</span>
+                    <i-lucide [img]="ExternalLink" class="text-[#f54a00] cursor-pointer" size="13"
+                      (click)="openAdminPage()" />
+                    } @else {
+                    <i-lucide [img]="CircleCheck" class="text-emerald-400" size="13" />
+                    <span class="text-emerald-400 text-xs font-medium">Ja</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="p-3 mt-3 flex flex-col gap-1 bg-[#f9fafb] rounded-lg border-2 border-muted/10 w-full">
+                  <span>Alleen leden kunnen toegang krijgen</span>
+                  <div class="flex items-center gap-1">
+                    @if (!drive.onlyMembersCanAccess) {
+                    <i-lucide [img]="TriangleAlert" class="text-[#f54a00]" size="13" />
+                    <span class="text-[#f54a00] text-[13px] font-medium">Nee</span>
+                    <i-lucide [img]="ExternalLink" class="text-[#f54a00] cursor-pointer" size="13"
+                      (click)="openAdminPage()" />
+                    } @else {
+                    <i-lucide [img]="CircleCheck" class="text-emerald-400" size="13" />
+                    <span class="text-emerald-400 text-xs font-medium">Ja</span>
+                    }
                   </div>
                 </div>
               </div>
             </div>
-          }
-
-          <div
-            class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
-          >
-            <span class="text-sm text-gray-500">
-              Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
-            </span>
-
-            <div class="flex gap-2">
-              <button
-                (click)="prevPage()"
-                [disabled]="currentPage() === 1"
-                class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50"
-              >
-                <lucide-icon [img]="ChevronLeft" size="16"></lucide-icon>
-                Vorige
-              </button>
-
-              <button
-                (click)="nextPage()"
-                [disabled]="!nextPageToken()"
-                class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50"
-              >
-                Volgende
-                <lucide-icon [img]="ChevronRight" size="16"></lucide-icon>
-              </button>
-            </div>
           </div>
+        </div>
+        }
+
+        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+          <span class="text-sm text-gray-500">
+            Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
+          </span>
+
+          <div class="flex gap-2">
+            <button (click)="prevPage()" [disabled]="currentPage() === 1"
+              class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
+              <lucide-icon [img]="ChevronLeft" size="16"></lucide-icon>
+              Vorige
+            </button>
+
+            <button (click)="nextPage()" [disabled]="!nextPageToken()"
+              class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
+              Volgende
+              <lucide-icon [img]="ChevronRight" size="16"></lucide-icon>
+            </button>
+          </div>
+        </div>
         } @else {
-          <div class="flex flex-col items-center p-3 pt-6">
-            <div class="flex flex-col items-center space-y-4 p-8">
-              <div class="relative flex items-center justify-center">
-                <div class="h-12 w-12 rounded-full"></div>
+        <div class="flex flex-col items-center p-3 pt-6">
+          <div class="flex flex-col items-center space-y-4 p-8">
+            <div class="relative flex items-center justify-center">
+              <div class="h-12 w-12 rounded-full"></div>
 
-                <div
-                  class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
-                ></div>
+              <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
               </div>
-
-              <span class="text-sm font-medium text-slate-600 animate-pulse">
-                Gedeelde drives ophalen...
-              </span>
             </div>
+
+            <span class="text-sm font-medium text-slate-600 animate-pulse">
+              Gedeelde drives ophalen...
+            </span>
           </div>
+        </div>
         }
       </div>
     </div>

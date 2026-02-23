@@ -5,12 +5,10 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveSecurityData;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
-import com.google.api.client.util.DateTime;
-import com.google.api.services.admin.directory.Directory;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.DriveList;
-import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
 import com.google.api.services.drive.model.PermissionList;
 import org.springframework.stereotype.Service;
@@ -116,10 +114,22 @@ public class GoogleSharedDriveService {
             long totalHighRisk = drives.stream().filter(d -> d.risk().equals("Hoog")).count();
             long totalExternalMembersCount = drives.stream().filter(d -> d.externalMemberCount() > 0).count();
             long securityScore = totalDrives == 0 ? 0 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
-            long externallySharedCount
+            long notOnlyDomainUsersAllowedCount = drives.stream().filter(d -> !d.domainUsersOnly()).count();
+            long notOnlyMembersCanAccessCount = drives.stream().filter(d -> !d.driveMembersOnly()).count();
+            long externalMembersDriveCount = drives.stream().filter(d -> d.externalMemberCount() > 0).count();
 
+            return new SharedDriveOverviewResponse(
+                    totalDrives,
+                    orphanDrives,
+                    totalHighRisk,
+                    totalExternalMembersCount,
+                    securityScore,
+                    notOnlyDomainUsersAllowedCount,
+                    notOnlyMembersCanAccessCount,
+                    externalMembersDriveCount
+            );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch drives overview from Google: " + e.getMessage());
         }
     }
 

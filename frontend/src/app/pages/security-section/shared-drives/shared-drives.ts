@@ -122,12 +122,12 @@ export class SharedDrives implements OnInit {
       this.drivePageWarnings().notOnlyMembersCanAccessWarning = true;
     }
 
-    if (this.pageOverview()?.externalMembersCount! > 0) {
+    if (this.pageOverview()?.externalMembersDriveCount! > 0) {
       this.hasWarnings.set(true);
       this.drivePageWarnings().externalMembersWarning = true;
     }
 
-    if (this.pageOverview()?.orphanDrivesCount! > 0) {
+    if (this.pageOverview()?.orphanDrives! > 0) {
       this.hasWarnings.set(true);
       this.drivePageWarnings().orphanDrivesWarning = true;
     }

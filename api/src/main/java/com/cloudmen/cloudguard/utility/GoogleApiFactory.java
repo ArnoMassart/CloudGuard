@@ -1,6 +1,5 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.utility;
 
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;

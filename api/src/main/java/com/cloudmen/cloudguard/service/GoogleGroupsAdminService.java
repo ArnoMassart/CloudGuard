@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.GroupOrgDetail;
 import com.cloudmen.cloudguard.dto.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.GroupSettingsDto;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
