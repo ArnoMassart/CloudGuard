@@ -1,11 +1,8 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.GroupOverviewResponse;
-import com.cloudmen.cloudguard.dto.GroupPageResponse;
-import com.cloudmen.cloudguard.dto.GroupSettingsDto;
-import com.cloudmen.cloudguard.dto.UserOverviewResponse;
-import com.cloudmen.cloudguard.dto.UserPageResponse;
+import com.cloudmen.cloudguard.dto.*;
 import com.cloudmen.cloudguard.service.GoogleGroupsAdminService;
+import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
 import com.cloudmen.cloudguard.service.GoogleUserAdminService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
@@ -23,14 +20,18 @@ import java.util.List;
 public class GoogleAdminController {
     private final GoogleUserAdminService googleUserAdminService;
     private final GoogleGroupsAdminService googleGroupsAdminService;
+    private final GoogleOrgUnitService googleOrgUnitService;
+
     private final JwtService jwtService;
 
     public GoogleAdminController(
             GoogleUserAdminService googleUserAdminService,
             GoogleGroupsAdminService googleGroupsAdminService,
+            GoogleOrgUnitService googleOrgUnitService,
             JwtService jwtService) {
         this.googleUserAdminService = googleUserAdminService;
         this.googleGroupsAdminService = googleGroupsAdminService;
+        this.googleOrgUnitService = googleOrgUnitService;
         this.jwtService = jwtService;
     }
 
@@ -69,5 +70,16 @@ public class GoogleAdminController {
 
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(googleGroupsAdminService.getGroupSettings(email, groupEmail));
+    }
+
+    @GetMapping("/org-units")
+    public ResponseEntity<OrgUnitNodeDto> getOrgUnits(
+            @CookieValue(name = "AuthToken", required = false) String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleOrgUnitService.getOrgUnitTree(email));
     }
 }
