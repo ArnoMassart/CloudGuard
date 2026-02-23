@@ -34,31 +34,6 @@ public class GoogleAdminController {
         this.jwtService = jwtService;
     }
 
-    @GetMapping("/users")
-    public ResponseEntity<UserPageResponse> getOrgUsers(
-            @CookieValue(name = "AuthToken", required = false) String token,
-            @RequestParam(required = false) String pageToken,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String query) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserAdminService.getWorkspaceUsersPaged(adminEmail, pageToken, size, query));
-    }
-
-    @GetMapping("/users/overview")
-    public ResponseEntity<UserOverviewResponse> getUsersPageOverview(
-            @CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserAdminService.getUsersPageOverview(adminEmail));
-    }
-
     @GetMapping("/groups/overview")
     public ResponseEntity<GroupOverviewResponse> getGroupsOverview(
             @CookieValue(name = "AuthToken", required = false) String token) {

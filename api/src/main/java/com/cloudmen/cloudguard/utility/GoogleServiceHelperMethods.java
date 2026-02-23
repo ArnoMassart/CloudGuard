@@ -27,7 +27,7 @@ public class GoogleServiceHelperMethods {
         };
     }
 
-    public static boolean checkSecurityStatus(boolean isActive, DateTime lastLogin, boolean isTwoFactorEnabled) {
+    public static boolean checkUserSecurityStatus(boolean isActive, DateTime lastLogin, boolean isTwoFactorEnabled) {
         LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
         LocalDate now = LocalDate.now();
 

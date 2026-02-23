@@ -1,185 +1,231 @@
 <div class="w-full flex flex-col gap-5">
-    <div class="w-full flex gap-4">
-        <app-users-section-top-card class="flex-1" Title="Totaal gebruikers" [Value]="pageOverview()?.totalUsers" />
-        <app-users-section-top-card class="flex-1" Title="Zonder 2FA" [Value]="pageOverview()?.withoutTwoFactor"
-            BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="triangleAlertIcon" />
-        <app-users-section-top-card class="flex-1" Title="Admin gebruikers" [Value]="pageOverview()?.adminUsers"
-            BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-        <app-users-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
-            [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
-    </div>
+  <div class="w-full flex gap-4">
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Totaal gebruikers"
+      [Value]="pageOverview()?.totalUsers"
+    />
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Zonder 2FA"
+      [Value]="pageOverview()?.withoutTwoFactor"
+      BackgroundColor="#ffedd4"
+      IconColor="#f54a00"
+      TextColor="#f54a00"
+      [Icon]="triangleAlertIcon"
+    />
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Admin gebruikers"
+      [Value]="pageOverview()?.adminUsers"
+      BackgroundColor="#f3e8ff"
+      IconColor="#9810fa"
+    />
+    <app-users-section-top-card
+      class="flex-1"
+      Title="Security Score"
+      [Value]="pageOverview()?.securityScore"
+      [IsPercentage]="true"
+      BackgroundColor="#fef9c2"
+      IconColor="#d69518"
+    />
+  </div>
 
-    @if (hasWarnings() && !isLoading()) {
+  @if (hasWarnings() && !isLoading()) {
     <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
-        <div class="flex gap-3">
-            <i-lucide [img]="triangleAlertIcon" size="20" class="text-[#d69518]" />
-            <div class="flex flex-col gap-2"><span
-                    class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwingen</span>
-                @if (userPageWarnings().twoFactorWarning) {
-                <div class="flex gap-2 items-center text-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                    <span class="text-xs text-[#b7610a]">{{pageOverview()?.withoutTwoFactor}} actieve
-                        {{pageOverview()?.withoutTwoFactor === 1 ? "gebruiker heeft" : "gebruikers hebben"}}
-                        geen 2FA ingeschakeld</span>
-                </div>
-
-                }
-                @if (userPageWarnings().activeWithLongNoLogin) {
-
-                <div class="flex gap-2 items-center text-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                    <span class="text-xs text-[#b7610a]">{{pageOverview()?.activeLongNoLoginCount}} actieve
-                        {{pageOverview()?.activeLongNoLoginCount === 1 ? "gebruiker": "gebruikers"}}
-                        met een laatste login van meer dan 1 jaar geleden
-                        gedetecteerd</span>
-                </div>
-                }
-
-                @if (userPageWarnings().notActiveWithRecentLogin) {
-
-                <div class="flex gap-2 items-center text-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                    <span class="text-xs text-[#b7610a]">{{pageOverview()?.inactiveRecentLoginCount}} inactieve
-                        {{pageOverview()?.inactiveRecentLoginCount === 1 ? "gebruiker": "gebruikers"}} met een laatste
-                        login van minder dan 1
-                        week
-                        geleden gedetecteerd</span>
-                </div>
-                }
+      <div class="flex gap-3">
+        <i-lucide [img]="triangleAlertIcon" size="20" class="text-[#d69518]" />
+        <div class="flex flex-col gap-2">
+          <span class="text-[#b7610a] font-medium text-[16px]"
+            >Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' : '' }}</span
+          >
+          @if (userPageWarnings().twoFactorWarning) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]"
+                >{{ pageOverview()?.withoutTwoFactor }} actieve
+                {{
+                  pageOverview()?.withoutTwoFactor === 1 ? 'gebruiker heeft' : 'gebruikers hebben'
+                }}
+                geen 2FA ingeschakeld</span
+              >
             </div>
-        </div>
-    </div>
-    }
-
-    <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
-        <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center ">
-            <i-lucide [img]="searchIcon" size="20" class="text-[#99a1af]/70" />
-            <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none  w-full"
-                placeholder="Zoek gebruikers op naam...">
-        </div>
-    </div>
-
-    <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-        @if (!isLoading()) {
-        <span class="font-medium text-lg ml-5.5">Alle gebruikers</span>
-
-        <table class="w-full text-left border-collapse mt-6">
-            <thead>
-                <tr class="border-b border-t border-gray-200 bg-gray-50/50">
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Gebruiker</th>
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Rol</th>
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste Inlog</th>
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">2FA</th>
-                    <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Security</th>
-                </tr>
-            </thead>
-
-            <tbody class="divide-y divide-gray-200">
-                @for (user of orgUsers(); track user.email) {
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4">
-                        <div class="flex flex-col">
-                            <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
-                            <span class="text-xs text-gray-500">{{user.email}}</span>
-                        </div>
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <span
-                            class="px-3 py-1 inline-flex items-center text-center gap-2 rounded-md text-xs font-medium"
-                            [ngClass]="getRoleClass(user.role)">
-                            @if (user.role === "Super Admin") {
-                            <i-lucide [img]="shield" size="14" />
-                            }
-                            {{ user.role }}
-
-                        </span>
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <div class="py-1 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg"
-                            [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
-                            [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
-                            <lucide-icon [img]="user.active ? checkCircle : xCircle" size="14"></lucide-icon>
-                            {{ user.active ? "Actief" : "Suspended" }}
-                        </div>
-                    </td>
-
-                    <td class="px-6 py-4 text-sm text-gray-500">
-                        <div class="flex items-center gap-2">
-                            <lucide-icon [img]="clock" size="14"></lucide-icon>
-                            {{ user.lastLogin }}
-                        </div>
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-1.5 text-xs font-medium"
-                            [class.text-emerald-400]="user.twoFactorEnabled"
-                            [class.text-destructive]="!user.twoFactorEnabled">
-                            <lucide-icon [img]="user.twoFactorEnabled ? checkCircle : xCircle" size="14"></lucide-icon>
-                            {{ user.twoFactorEnabled ? "Ingeschakeld" : "Uit" }}
-                        </div>
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-1.5 text-xs font-medium"
-                            [class.text-emerald-400]="user.securityConform"
-                            [class.text-destructive]="!user.securityConform">
-                            <lucide-icon [img]="user.securityConform ? checkCircle : triangleAlert"
-                                size="14"></lucide-icon>
-                            {{ user.securityConform ? "Conform" : "Niet conform" }}
-                        </div>
-                    </td>
-                </tr>
-                }
-            </tbody>
-
-
-        </table>
-
-
-        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-            <span class="text-sm text-gray-500">
-                Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
-            </span>
-
-            <div class="flex gap-2">
-                <button (click)="prevPage()" [disabled]="currentPage() === 1"
-                    class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
-                    <lucide-icon [img]="chevronLeft" size="16"></lucide-icon>
-                    Vorige
-                </button>
-
-                <button (click)="nextPage()" [disabled]="!nextPageToken()"
-                    class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
-                    Volgende
-                    <lucide-icon [img]="chevronRight" size="16"></lucide-icon>
-                </button>
+          }
+          @if (userPageWarnings().activeWithLongNoLogin) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]"
+                >{{ pageOverview()?.activeLongNoLoginCount }} actieve
+                {{ pageOverview()?.activeLongNoLoginCount === 1 ? 'gebruiker' : 'gebruikers' }}
+                met een laatste login van meer dan 1 jaar geleden gedetecteerd</span
+              >
             </div>
+          }
+
+          @if (userPageWarnings().notActiveWithRecentLogin) {
+            <div class="flex gap-2 items-center text-center">
+              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+              <span class="text-xs text-[#b7610a]"
+                >{{ pageOverview()?.inactiveRecentLoginCount }} inactieve
+                {{
+                  pageOverview()?.inactiveRecentLoginCount === 1 ? 'gebruiker' : 'gebruikers'
+                }}
+                met een laatste login van minder dan 1 week geleden gedetecteerd</span
+              >
+            </div>
+          }
         </div>
-        }
+      </div>
+    </div>
+  }
 
-        @else {
-        <div class="flex flex-col items-center p-3">
+  <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
+    <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
+      <i-lucide [img]="searchIcon" size="20" class="text-[#99a1af]/70" />
+      <input
+        type="text"
+        #searchInput
+        (input)="onKeyup(searchInput.value)"
+        class="focus:outline-none w-full"
+        placeholder="Zoek gebruikers op naam..."
+      />
+    </div>
+  </div>
 
-            <div class="flex flex-col items-center space-y-4 p-8 ">
+  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+    @if (!isLoading()) {
+      <span class="font-medium text-lg ml-5.5">Alle gebruikers</span>
 
-                <!-- <mat-spinner [diameter]="48" class="spinner">
-            </mat-spinner> -->
-                <div class="relative flex items-center justify-center">
-                    <div class="h-12 w-12 rounded-full"></div>
+      <table class="w-full text-left border-collapse mt-6">
+        <thead>
+          <tr class="border-b border-t border-gray-200 bg-gray-50/50">
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Gebruiker</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Rol</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste Inlog</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">2FA</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Security</th>
+          </tr>
+        </thead>
 
-                    <div
-                        class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-                    </div>
+        <tbody class="divide-y divide-gray-200">
+          @for (user of orgUsers(); track user.email) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex flex-col">
+                  <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
+                  <span class="text-xs text-gray-500">{{ user.email }}</span>
                 </div>
+              </td>
 
-                <span class="text-sm font-medium text-slate-600 animate-pulse">
-                    Gebruikers worden geladen...
+              <td class="px-6 py-4">
+                <span
+                  class="px-3 py-1 inline-flex items-center text-center gap-2 rounded-md text-xs font-medium"
+                  [ngClass]="getRoleClass(user.role)"
+                >
+                  @if (user.role === 'Super Admin') {
+                    <i-lucide [img]="shield" size="14" />
+                  }
+                  {{ user.role }}
                 </span>
-            </div>
+              </td>
+
+              <td class="px-6 py-4">
+                <div
+                  class="py-1 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg"
+                  [class.text-emerald-600]="user.active"
+                  [class.bg-[#dbfce7]]="user.active"
+                  [class.text-slate-500]="!user.active"
+                  [class.bg-[#f3f4f6]]="!user.active"
+                >
+                  <lucide-icon [img]="user.active ? checkCircle : xCircle" size="14"></lucide-icon>
+                  {{ user.active ? 'Actief' : 'Suspended' }}
+                </div>
+              </td>
+
+              <td class="px-6 py-4 text-sm text-gray-500">
+                <div class="flex items-center gap-2">
+                  <lucide-icon [img]="clock" size="14"></lucide-icon>
+                  {{ user.lastLogin }}
+                </div>
+              </td>
+
+              <td class="px-6 py-4">
+                <div
+                  class="flex items-center gap-1.5 text-xs font-medium"
+                  [class.text-emerald-400]="user.twoFactorEnabled"
+                  [class.text-destructive]="!user.twoFactorEnabled"
+                >
+                  <lucide-icon
+                    [img]="user.twoFactorEnabled ? checkCircle : xCircle"
+                    size="14"
+                  ></lucide-icon>
+                  {{ user.twoFactorEnabled ? 'Ingeschakeld' : 'Uit' }}
+                </div>
+              </td>
+
+              <td class="px-6 py-4">
+                <div
+                  class="flex items-center gap-1.5 text-xs font-medium"
+                  [class.text-emerald-400]="user.securityConform"
+                  [class.text-destructive]="!user.securityConform"
+                >
+                  <lucide-icon
+                    [img]="user.securityConform ? checkCircle : triangleAlert"
+                    size="14"
+                  ></lucide-icon>
+                  {{ user.securityConform ? 'Conform' : 'Niet conform' }}
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div
+        class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
+      >
+        <span class="text-sm text-gray-500">
+          Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
+        </span>
+
+        <div class="flex gap-2">
+          <button
+            (click)="prevPage()"
+            [disabled]="currentPage() === 1"
+            class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50"
+          >
+            <lucide-icon [img]="chevronLeft" size="16"></lucide-icon>
+            Vorige
+          </button>
+
+          <button
+            (click)="nextPage()"
+            [disabled]="!nextPageToken()"
+            class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50"
+          >
+            Volgende
+            <lucide-icon [img]="chevronRight" size="16"></lucide-icon>
+          </button>
         </div>
-        }
-    </div>
+      </div>
+
+    } @else {
+      <div class="flex flex-col items-center p-3">
+        <div class="flex flex-col items-center space-y-4 p-8">
+          <div class="relative flex items-center justify-center">
+            <div class="h-12 w-12 rounded-full"></div>
+
+            <div
+              class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
+            ></div>
+          </div>
+
+          <span class="text-sm font-medium text-slate-600 animate-pulse">
+            Gebruikers worden geladen...
+          </span>
+        </div>
+      </div>
+    }
+  </div>
 </div>

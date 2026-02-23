@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.UserOrgDetail;
 import com.cloudmen.cloudguard.dto.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.UserPageResponse;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
@@ -22,9 +23,9 @@ import java.util.stream.Collectors;
 @Service
 public class GoogleUserAdminService {
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
 
-    public GoogleUserAdminService(GoogleDirectoryFactory directoryFactory) {
+    public GoogleUserAdminService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 
@@ -113,7 +114,7 @@ public class GoogleUserAdminService {
                         isActive,
                         user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
                         twoFAEnabled,
-                        GoogleServiceHelperMethods.checkSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
+                        GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
                 );
             }).toList();
 
@@ -204,7 +205,7 @@ public class GoogleUserAdminService {
                     inactiveRecentLoginCount
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch users from Google: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch users overview from Google: " + e.getMessage());
         }
     }
 
@@ -213,7 +214,7 @@ public class GoogleUserAdminService {
         long complyCount = googleUsers.stream().filter(user -> {
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
             boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
-            return GoogleServiceHelperMethods.checkSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled);
+            return GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled);
         }).count();
         return (int) Math.floor((double) complyCount / totalUsers * 100);
     }
