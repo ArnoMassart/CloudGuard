@@ -1,6 +1,5 @@
 package com.cloudmen.cloudguard.service.policy;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +11,15 @@ import lombok.Setter;
 @Setter
 public class ServiceStatusDto {
     private String serviceKey;
-    private boolean enabled;
+    private ServiceStatus status; 
     private boolean inherited;
     private String fromOrgUnit;
+
+    public boolean isEnabled() {
+        return status == ServiceStatus.ENABLED;
+    }
+
+    public boolean isUnknown() {
+        return status == ServiceStatus.UNKNOWN;
+    }
 }

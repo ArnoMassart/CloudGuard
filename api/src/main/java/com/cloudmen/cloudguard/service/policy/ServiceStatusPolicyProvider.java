@@ -41,9 +41,9 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
         }
 
         String status = formatCombinedStatus(results);
-        boolean anyUnknown = results.values().stream()
-                .anyMatch(r -> "(geen policy gevonden)".equals(r.getFromOrgUnit()));
-        boolean anyOff = results.values().stream().anyMatch(r -> !r.isEnabled());
+        boolean anyUnknown = results.values().stream().anyMatch(ServiceStatusDto::isUnknown);
+        boolean anyOff = results.values().stream()
+                .anyMatch(r -> r.getStatus() == ServiceStatus.DISABLED);
         boolean anyInherited = results.values().stream().anyMatch(ServiceStatusDto::isInherited);
         String statusClass = anyUnknown
                 ? "bg-slate-100 text-slate-700"
@@ -113,14 +113,21 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
         }
 
         if (best == null) {
-            return new ServiceStatusDto(service, false, true, "(geen policy gevonden)");
+            return new ServiceStatusDto(service, ServiceStatus.UNKNOWN, true, "(geen policy gevonden)");
         }
 
         JsonNode valueNode = best.path("setting").path("value");
-        boolean enabled = !valueNode.isMissingNode() && valueNode.path("enabled").asBoolean(false);
+        JsonNode enabledNode = valueNode.isMissingNode() ? null : valueNode.get("enabled");
         boolean inherited = !orgUnitPath.equals(bestOuPath);
 
-        return new ServiceStatusDto(service, enabled, inherited, bestOuPath);
+        ServiceStatus st;
+        if (enabledNode == null || enabledNode.isMissingNode() || enabledNode.isNull()) {
+            st = ServiceStatus.UNKNOWN;
+        } else {
+            st = enabledNode.asBoolean() ? ServiceStatus.ENABLED : ServiceStatus.DISABLED;
+        }
+
+        return new ServiceStatusDto(service, st, inherited, bestOuPath);
     }
 
     /** Returns true if {@code policyOuPath} is an ancestor of (or equal to) {@code target}. */
@@ -144,9 +151,11 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
     }
 
     private String formatStatus(ServiceStatusDto dto) {
-        if (dto != null && "(geen policy gevonden)".equals(dto.getFromOrgUnit())) {
-            return "Onbekend";
-        }
-        return dto != null && dto.isEnabled() ? "Aan" : "Uit";
+        if (dto == null) return "Onbekend";
+        return switch (dto.getStatus()) {
+            case ENABLED -> "Aan";
+            case DISABLED -> "Uit";
+            case UNKNOWN -> "Onbekend";
+        };
     }
 }

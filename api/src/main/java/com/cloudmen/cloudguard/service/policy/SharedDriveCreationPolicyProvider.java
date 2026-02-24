@@ -38,22 +38,30 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         JsonNode best = null;
         String bestOuPath = null;
         int bestDepth = -1;
+        double bestSort = Double.NEGATIVE_INFINITY;
 
         for (JsonNode p : allPolicies) {
             JsonNode setting = p.get("setting");
             if (setting == null) continue;
+
+            if (SETTING_TYPE.equals(setting.path("type").asText(""))) {
+                System.out.println("SharedDrive policy raw: " + p.toPrettyString());
+            }
+
             if (!SETTING_TYPE.equals(setting.path("type").asText(""))) continue;
 
             String ouRef = p.path("policyQuery").path("orgUnit").asText("");
             String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouMap);
-
             if (!isAncestorOrSelf(path, policyOuPath)) continue;
 
             int depth = depthOf(policyOuPath);
-            if (depth > bestDepth) {
+            double sortOrder = p.path("policyQuery").path("sortOrder").asDouble(0.0);
+
+            if (depth > bestDepth || (depth == bestDepth && sortOrder > bestSort)) {
                 best = p;
                 bestOuPath = policyOuPath;
                 bestDepth = depth;
+                bestSort = sortOrder;
             }
         }
 
@@ -73,10 +81,25 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         }
 
         JsonNode value = best.path("setting").path("value");
-        boolean allowed = value.path("allow_shared_drive_creation").asBoolean(true);
+        JsonNode allowedNode = value.path("allowSharedDriveCreation");
         boolean inherited = !path.equals(bestOuPath);
-        String status = allowed ? "Toegestaan" : "Niet toegestaan";
-        String statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
+
+        String status;
+        String statusClass;
+        String explanation;
+
+        if (allowedNode.isMissingNode() || allowedNode.isNull()) {
+            status = "Kon niet bepalen";
+            statusClass = "bg-slate-100 text-slate-700";
+            explanation = "Beleid gevonden maar waarde ontbreekt in API-response.";
+        } else {
+            boolean allowed = allowedNode.asBoolean();
+            status = allowed ? "Toegestaan" : "Niet toegestaan";
+            statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
+            explanation = inherited
+                    ? "Overgenomen van bovenliggende OU (" + bestOuPath + ")."
+                    : "Rechtstreeks ingesteld op deze OU.";
+        }
 
         return new OrgUnitPolicyDto(
                 key(),
@@ -84,9 +107,7 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
                 "Wie mag nieuwe gedeelde drives aanmaken",
                 status,
                 statusClass,
-                inherited
-                        ? "Overgenomen van bovenliggende OU (" + bestOuPath + ")."
-                        : "Rechtstreeks ingesteld op deze OU.",
+                explanation,
                 inherited,
                 "Cloud Identity Policy API",
                 "Klik hier om deze instellingen aan te passen",
