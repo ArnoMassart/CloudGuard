@@ -1,8 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '@auth0/auth0-angular';
-import { LucideAngularModule, ShieldCheck } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import { Router } from '@angular/router';
+import { AppIcons } from '../../shared/app-icons';
 
 @Component({
   selector: 'app-login',
@@ -12,10 +13,10 @@ import { Router } from '@angular/router';
   styleUrl: './login.css',
 })
 export class Login {
+  readonly Icons = AppIcons;
+
   private auth0 = inject(AuthService);
   readonly #router = inject(Router);
-
-  readonly ShieldCheck = ShieldCheck;
 
   loginWithGoogle() {
     sessionStorage.setItem('auth0_redirect_pending', '1');

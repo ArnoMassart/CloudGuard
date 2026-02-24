@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { ExternalLink, LucideAngularModule } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
+import { AppIcons } from '../../shared/app-icons';
 
 @Component({
   selector: 'app-page-header',
@@ -8,13 +9,12 @@ import { ExternalLink, LucideAngularModule } from 'lucide-angular';
   styleUrl: './page-header.css',
 })
 export class PageHeader {
+  readonly Icons = AppIcons;
+
   @Input() Title: string = '';
   @Input() Description: string = '';
   @Input() NeedAdminLink: boolean = true;
   @Input() AdminLink: string = '';
-
-  readonly externalLink = ExternalLink;
-
   openAdminPage() {
     window.open(`https://admin.google.com/ac/${this.AdminLink}`);
   }
