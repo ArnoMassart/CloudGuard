@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
 import { CircleX, LucideAngularModule, ShieldCheck } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
+import { AppIcons } from '../../shared/app-icons';
 
 @Component({
   selector: 'app-forbidden',
@@ -10,8 +11,7 @@ import { CustomAuthService } from '../../auth/custom-auth-service';
   styleUrl: './forbidden.css',
 })
 export class Forbidden {
-  readonly shieldIcon = ShieldCheck;
-  readonly xIcon = CircleX;
+  readonly Icons = AppIcons;
 
   readonly #authService = inject(CustomAuthService);
 

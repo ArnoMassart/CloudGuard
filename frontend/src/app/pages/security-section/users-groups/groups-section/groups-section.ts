@@ -3,22 +3,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  CircleCheck,
-  CircleX,
-  Clock,
-  Loader2,
-  LucideAngularModule,
-  Search,
-  TriangleAlert,
-  ShieldAlert,
-  Users,
-  ExternalLink,
-} from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import {
   GroupOrgDetail,
   GroupOverviewResponse,
@@ -26,6 +11,7 @@ import {
   GroupSettingsDto,
 } from '../../../../services/group-service';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
+import { AppIcons } from '../../../../shared/app-icons';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -49,20 +35,7 @@ interface GroupSummary {
   styleUrl: './groups-section.css',
 })
 export class GroupsSection implements OnInit {
-  readonly triangleAlertIcon = TriangleAlert;
-  readonly searchIcon = Search;
-  readonly checkCircle = CircleCheck;
-  readonly xCircle = CircleX;
-  readonly clock = Clock;
-  readonly triangleAlert = TriangleAlert;
-  readonly chevronLeft = ChevronLeft;
-  readonly chevronRight = ChevronRight;
-  readonly shieldAlertIcon = ShieldAlert;
-  readonly usersIcon = Users;
-  readonly externalLinkIcon = ExternalLink;
-  readonly loaderIcon = Loader2;
-  readonly chevronDownIcon = ChevronDown;
-  readonly chevronUpIcon = ChevronUp;
+  readonly Icons = AppIcons;
 
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);

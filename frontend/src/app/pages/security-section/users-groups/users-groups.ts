@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { LucideAngularModule, Users } from 'lucide-angular';
 import { UsersSection } from './users-section/users-section';
 import { GroupsSection } from './groups-section/groups-section';
 import { SectionType } from '../../../models/SectionType';
 import { CommonModule } from '@angular/common';
+import { AppIcons } from '../../../shared/app-icons';
 
 @Component({
   selector: 'app-users-groups',
@@ -12,14 +13,25 @@ import { CommonModule } from '@angular/common';
   templateUrl: './users-groups.html',
   styleUrl: './users-groups.css',
 })
-export class UsersGroups {
-  readonly users = Users;
+export class UsersGroups implements OnInit {
+  readonly Icons = AppIcons;
 
   currentSection = signal<SectionType>('USERS');
+
+  ngOnInit(): void {
+    const section = sessionStorage.getItem('user-group-section');
+
+    if (section === 'USERS' || section === 'GROUPS') {
+      this.currentSection.set(section);
+    } else {
+      this.currentSection.set('USERS');
+    }
+  }
 
   togglePage(section: SectionType) {
     if (this.currentSection() !== section) {
       this.currentSection.set(section);
+      sessionStorage.setItem('user-group-section', section);
     }
   }
 

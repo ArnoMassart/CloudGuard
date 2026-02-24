@@ -21,6 +21,7 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { UserOverviewResponse } from '../../../../models/UserOverviewResponse';
 import { UsersPageWarnings } from '../../../../models/UsersPageWarnings';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
+import { AppIcons } from '../../../../shared/app-icons';
 
 @Component({
   selector: 'app-users-section',
@@ -35,17 +36,7 @@ import { SectionTopCard } from '../../../../components/section-top-card/section-
   styleUrl: './users-section.css',
 })
 export class UsersSection implements OnInit {
-  readonly triangleAlertIcon = TriangleAlert;
-  readonly searchIcon = Search;
-  readonly checkCircle = CircleCheck;
-  readonly xCircle = CircleX;
-  readonly clock = Clock;
-  readonly triangleAlert = TriangleAlert;
-  readonly chevronLeft = ChevronLeft;
-  readonly chevronRight = ChevronRight;
-  readonly ChevronDown = ChevronDown;
-  readonly ChevronUp = ChevronUp;
-  readonly shield = Shield;
+  readonly Icons = AppIcons;
 
   readonly #userService = inject(UserService);
 
@@ -98,8 +89,6 @@ export class UsersSection implements OnInit {
           this.orgUsers.set(res.users);
           this.nextPageToken.set(res.nextPageToken);
           this.isLoading.set(false);
-
-          console.log(this.nextPageToken());
         },
         error: (err) => {
           console.error('Failed to load users', err);

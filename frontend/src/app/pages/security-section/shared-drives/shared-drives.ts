@@ -1,23 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  CircleCheck,
-  Clock,
-  ExternalLink,
-  FolderOpen,
-  HardDrive,
-  LucideAngularModule,
-  Search,
-  TriangleAlert,
-  UserCog,
-  Users,
-  Users2,
-} from 'lucide-angular';
-import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { DriveService } from '../../../services/drive-service';
@@ -25,6 +8,7 @@ import { SharedDrive } from '../../../models/drives/SharedDrive';
 import { SharedDrivesPageWarnings } from '../../../models/drives/SharedDrivesPageWarnings';
 import { SharedDriveOverviewResponse } from '../../../models/drives/SharedDriveOverviewResponse';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { AppIcons } from '../../../shared/app-icons';
 
 @Component({
   selector: 'app-shared-drives',
@@ -33,19 +17,7 @@ import { SectionTopCard } from '../../../components/section-top-card/section-top
   styleUrl: './shared-drives.css',
 })
 export class SharedDrives implements OnInit {
-  readonly FolderOpen = FolderOpen;
-  readonly HardDrive = HardDrive;
-  readonly TriangleAlert = TriangleAlert;
-  readonly Users = Users;
-  readonly Search = Search;
-  readonly Clock = Clock;
-  readonly ExternalLink = ExternalLink;
-  readonly CircleCheck = CircleCheck;
-  readonly ChevronLeft = ChevronLeft;
-  readonly ChevronRight = ChevronRight;
-  readonly UserCog = UserCog;
-  readonly ChevronDown = ChevronDown;
-  readonly ChevronUp = ChevronUp;
+  readonly Icons = AppIcons;
 
   readonly #driveService = inject(DriveService);
 
