@@ -12,7 +12,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 
 // ==========================================
-// 1. CONSTANTS
+// CONSTANTS
 // ==========================================
 const ITEMS_PER_PAGE = 2;
 
@@ -24,14 +24,14 @@ const ITEMS_PER_PAGE = 2;
 })
 export class SharedDrives implements OnInit {
   // ==========================================
-  // 1. INJECTIONS
+  // INJECTIONS
   // ==========================================
-  readonly #driveService = inject(DriveService);
   readonly Icons = AppIcons;
   readonly UtilityMethods = UtilityMethods;
+  readonly #driveService = inject(DriveService);
 
   // ==========================================
-  // 2. PUBLIC PROPERTIES & SIGNALS
+  // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
 
@@ -59,25 +59,25 @@ export class SharedDrives implements OnInit {
   });
 
   // ==========================================
-  // 3. PRIVATE PROPERTIES
+  // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
   #searchSubject = new Subject<string>();
 
   // ==========================================
-  // 4. LIFECYCLE HOOKS
+  // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
     this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
       this.onSearch(value);
     });
 
-    this.loadPageOverview();
-    this.loadDrives();
+    this.#loadPageOverview();
+    this.#loadDrives();
   }
 
   // ==========================================
-  // 5. PUBLIC METHODS (UI Actions & Events)
+  // PUBLIC METHODS
   // ==========================================
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
@@ -91,7 +91,7 @@ export class SharedDrives implements OnInit {
     this.searchQuery.set(value);
     this.currentPage.set(1);
     this.#tokenHistory = [null]; // Reset historie bij nieuwe zoekopdracht
-    this.loadDrives(null);
+    this.#loadDrives(null);
   }
 
   nextPage() {
@@ -99,7 +99,7 @@ export class SharedDrives implements OnInit {
     if (token) {
       this.#tokenHistory.push(token); // Onthoud dit token om terug te kunnen
       this.currentPage.update((p) => p + 1);
-      this.loadDrives(token);
+      this.#loadDrives(token);
     }
   }
 
@@ -108,14 +108,14 @@ export class SharedDrives implements OnInit {
       this.#tokenHistory.pop(); // Verwijder huidige token
       const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1]; // Pak de vorige
       this.currentPage.update((p) => p - 1);
-      this.loadDrives(prevToken);
+      this.#loadDrives(prevToken);
     }
   }
 
   // ==========================================
-  // 6. DATA LOADING & LOGIC METHODS
+  // PRIVATE METHODS
   // ==========================================
-  loadDrives(token: string | null = null) {
+  #loadDrives(token: string | null = null) {
     this.isLoading.set(true);
 
     this.#driveService.getDrives(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
@@ -133,11 +133,11 @@ export class SharedDrives implements OnInit {
     });
   }
 
-  loadPageOverview() {
+  #loadPageOverview() {
     this.#driveService.getDrivesPageOverview().subscribe({
       next: (res) => {
         this.pageOverview.set(res);
-        this.loadWarnings();
+        this.#loadWarnings();
       },
       error: (err) => {
         console.error('Failed to load page overview', err);
@@ -145,7 +145,7 @@ export class SharedDrives implements OnInit {
     });
   }
 
-  loadWarnings() {
+  #loadWarnings() {
     if (this.pageOverview()?.notOnlyDomainUsersAllowedCount! > 0) {
       this.hasWarnings.set(true);
       this.drivePageWarnings().notOnlyDomainUsersAllowedWarning = true;
