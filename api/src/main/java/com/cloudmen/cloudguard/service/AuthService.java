@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.sun.jdi.event.ExceptionEvent;
@@ -102,10 +103,6 @@ public class AuthService {
                 .build();
     }
 
-    public void validateSessionToken(String token) {
-        jwtService.validateInternalToken(token);
-    }
-
     public java.util.Optional<UserDto> getCurrentUser(String token) {
         try {
             String email = jwtService.validateInternalToken(token);
@@ -131,5 +128,5 @@ public class AuthService {
         };
     }
 
-    public record LoginResult(ResponseCookie cookie, UserDto userDto) {}
+
 }

@@ -12,6 +12,7 @@ import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
+import { delay } from 'rxjs';
 
 // ==========================================
 // CONSTANTS
@@ -143,6 +144,7 @@ export class MobileDevices {
         this.selectedDeviceType(),
         ITEMS_PER_PAGE
       )
+      .pipe(delay(2000))
       .subscribe({
         next: (res) => {
           this.devices.set(res.devices);

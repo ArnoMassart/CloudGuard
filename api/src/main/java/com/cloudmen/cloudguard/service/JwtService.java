@@ -21,7 +21,7 @@ public class JwtService {
     private final JwtDecoder googleJwtDecoder;
 
     // 2. Configuration for Internal Session Token
-    @Value("${application.security.jwt.secret-key}") // Add this to application.properties!
+    @Value("${application.security.jwt.secret-key}")
     private String secretKey;
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
@@ -42,10 +42,6 @@ public class JwtService {
         } catch (Exception e) {
             throw new RuntimeException("Invalid External Token: " + e.getMessage());
         }
-    }
-
-    public String extractUsername(String externalIdToken) {
-        return decodeGoogleToken(externalIdToken).getClaimAsString("email");
     }
 
     public String generateToken(User user) {
