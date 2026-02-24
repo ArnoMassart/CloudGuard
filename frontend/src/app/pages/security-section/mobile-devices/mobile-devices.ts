@@ -27,6 +27,7 @@ import { UsersSectionTopCard } from '../users-groups/users-section/users-section
 import { MobileDeviceService } from '../../../services/mobile-device-service';
 import { MobileDevice } from '../../../models/devices/MobileDevice';
 import { MobileDevicesOverviewResponse } from '../../../models/devices/MobileDevicesOverviewResponse';
+import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevicesPageWarnings';
 
 @Component({
   selector: 'app-mobile-devices',
@@ -49,6 +50,7 @@ export class MobileDevices {
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
   readonly ChevronDown = ChevronDown;
+  readonly ChevronUp = ChevronUp;
   readonly SmartPhone = Smartphone;
   readonly Shield = Shield;
   readonly ShieldAlert = ShieldAlert;
@@ -61,10 +63,22 @@ export class MobileDevices {
   readonly #mobileDeviceService = inject(MobileDeviceService);
 
   hasWarnings = signal(false);
+  devicePageWarnings = signal<MobileDevicesPageWarnings>({
+    lockScreenWarning: false,
+    encryptionWarning: false,
+    osVersionWarning: false,
+    integrityWarning: false,
+  });
+
+  readonly isExpanded = signal(true);
+
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
+  }
 
   devices = signal<MobileDevice[]>([]);
 
-  itemsPerPage: number = 5;
+  itemsPerPage: number = 4;
 
   pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
 
@@ -77,7 +91,7 @@ export class MobileDevices {
 
   expandedDevice = signal<string | null>(null);
 
-  uniqueDeviceTypes = signal<string[]>(['Alle device typen']);
+  uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
 
   toggleExpand(deviceId: string) {
     if (this.expandedDevice() === deviceId) {
@@ -106,9 +120,9 @@ export class MobileDevices {
       .subscribe({
         next: (res) => {
           this.devices.set(res.devices);
-          this.nextPageToken.set(res.pageToken);
+          this.nextPageToken.set(res.nextPageToken);
           this.isLoading.set(false);
-          console.log(this.devices());
+          console.log(this.nextPageToken());
         },
         error: (err) => {
           console.error('Failed to load mobile devices', err);
@@ -130,8 +144,24 @@ export class MobileDevices {
   }
 
   loadWarnings() {
-    if (this.pageOverview()?.totalNonCompliant! > 0) {
+    if (this.pageOverview()?.lockScreenCount! > 0) {
       this.hasWarnings.set(true);
+      this.devicePageWarnings().lockScreenWarning = true;
+    }
+
+    if (this.pageOverview()?.encryptionCount! > 0) {
+      this.hasWarnings.set(true);
+      this.devicePageWarnings().encryptionWarning = true;
+    }
+
+    if (this.pageOverview()?.osVersionCount! > 0) {
+      this.hasWarnings.set(true);
+      this.devicePageWarnings().osVersionWarning = true;
+    }
+
+    if (this.pageOverview()?.integrityCount! > 0) {
+      this.hasWarnings.set(true);
+      this.devicePageWarnings().integrityWarning = true;
     }
   }
 
@@ -139,16 +169,16 @@ export class MobileDevices {
     this.#mobileDeviceService.getUniqueDeviceTypes().subscribe({
       next: (types) => {
         // Voeg de unieke types uit de backend toe achter de standaard 'Alle' optie
-        this.uniqueDeviceTypes.set(['Alle device typen', ...types]);
+        this.uniqueDeviceTypes.set(['Alle apparaat typen', ...types]);
       },
       error: (err) => {
-        console.error('Kon device typen niet laden', err);
+        console.error('Kon apparaat typen niet laden', err);
       },
     });
   }
 
   selectedStatus = signal<string>('Alle statussen');
-  selectedDeviceType = signal<string>('Alle device typen');
+  selectedDeviceType = signal<string>('Alle apparaat typen');
 
   // Opties voor de status dropdown
   statusOptions = ['Alle statussen', 'Approved', 'Pending', 'Blocked'];
@@ -193,7 +223,7 @@ export class MobileDevices {
   }
 
   hasMultipleWarnings = computed(() => {
-    const warnings = this.hasWarnings;
+    const warnings = this.devicePageWarnings();
 
     const activeCount = Object.values(warnings).filter((val) => val === true).length;
 

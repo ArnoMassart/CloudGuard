@@ -2,8 +2,10 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SharedDrivesTopCard } from './shared-drives-top-card/shared-drives-top-card';
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   CircleCheck,
   Clock,
   ExternalLink,
@@ -42,6 +44,8 @@ export class SharedDrives implements OnInit {
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
   readonly UserCog = UserCog;
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronUp = ChevronUp;
 
   readonly #driveService = inject(DriveService);
 
@@ -53,13 +57,19 @@ export class SharedDrives implements OnInit {
     orphanDrivesWarning: false,
   });
 
+  readonly isExpanded = signal(true);
+
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
+  }
+
   drives = signal<SharedDrive[]>([]);
 
   isLoading = signal(false);
 
   searchValue = signal('');
 
-  itemsPerPage: number = 3;
+  itemsPerPage: number = 2;
 
   pageOverview = signal<SharedDriveOverviewResponse | null>(null);
 
@@ -84,19 +94,21 @@ export class SharedDrives implements OnInit {
   loadDrives(token: string | null = null) {
     this.isLoading.set(true);
 
-    this.#driveService.getDrives(token || undefined, this.searchQuery()).subscribe({
-      next: (res) => {
-        const mappedDrives = (res.drives || []).map((d) => ({ ...d, isLoadingDetails: true }));
+    this.#driveService
+      .getDrives(this.itemsPerPage, token || undefined, this.searchQuery())
+      .subscribe({
+        next: (res) => {
+          const mappedDrives = (res.drives || []).map((d) => ({ ...d, isLoadingDetails: true }));
 
-        this.drives.set(mappedDrives);
-        this.nextPageToken.set(res.nextPageToken);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load shared drives', err);
-        this.isLoading.set(false);
-      },
-    });
+          this.drives.set(mappedDrives);
+          this.nextPageToken.set(res.nextPageToken);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load shared drives', err);
+          this.isLoading.set(false);
+        },
+      });
   }
 
   loadPageOverview() {

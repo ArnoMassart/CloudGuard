@@ -16,23 +16,64 @@
         </div>
 
         @if (hasWarnings() && !isLoading()) {
-        <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
-            <div class="flex gap-3">
-                <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
-                <div class="flex flex-col gap-2">
-                    <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{
-                        hasMultipleWarnings() ?
-                        'en' : '' }}</span>
-                    <div class="flex gap-2 items-center text-center">
-                        <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-                        <span class="text-xs text-[#b7610a]">{{pageOverview()?.totalNonCompliant}}
-                            {{pageOverview()?.totalNonCompliant === 1 ? "apparaat voldoet" : "apparaten voldoen"}} niet
-                            aan de
-                            beveiligingsvereisten. Dit
-                            kan leiden tot datalekken.</span>
-                    </div>
+        <div class="bg-[#fefce8] border border-[#fff086]/50 rounded-lg p-4 transition-all duration-200">
+            <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
+                <div class="flex gap-3 items-center">
+                    <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
+                    <span class="text-[#b7610a] font-medium text-[16px]">
+                        Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' : '' }}
+                    </span>
                 </div>
+
+                <i-lucide [img]="isExpanded() ? ChevronUp : ChevronDown" size="20"
+                    class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
             </div>
+
+            @if (isExpanded()) {
+            <div class="flex flex-col gap-2 mt-3 ml-8">
+
+                @if (this.devicePageWarnings().lockScreenWarning) {
+                <div class="flex gap-2 items-center">
+                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
+                    <span class="text-[13px] text-[#b7610a]">
+                        {{pageOverview()?.lockScreenCount}} {{pageOverview()?.lockScreenCount === 1 ? "apparaat" :
+                        "apparaten"}} zonder vergrendelscherm beveiliging
+                    </span>
+                </div>
+                }
+
+                @if (this.devicePageWarnings().encryptionWarning) {
+                <div class="flex gap-2 items-center">
+                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
+                    <span class="text-[13px] text-[#b7610a]">
+                        {{pageOverview()?.encryptionCount}} {{pageOverview()?.encryptionCount === 1 ? "apparaat" :
+                        "apparaten"}} zonder encryptie geactiveerd
+                    </span>
+                </div>
+                }
+
+                @if (this.devicePageWarnings().osVersionWarning) {
+                <div class="flex gap-2 items-center">
+                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
+                    <span class="text-[13px] text-[#b7610a]">
+                        {{pageOverview()?.osVersionCount}} {{pageOverview()?.osVersionCount === 1 ? "apparaat" :
+                        "apparaten"}} met verouderde OS versie
+                    </span>
+                </div>
+                }
+
+                @if (this.devicePageWarnings().integrityWarning) {
+                <div class="flex gap-2 items-center">
+                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
+                    <span class="text-[13px] text-[#b7610a]">
+                        {{pageOverview()?.integrityCount}} {{pageOverview()?.integrityCount === 1 ? "apparaat" :
+                        "apparaten"}} met integriteits problemen (root/jailbreak)
+                    </span>
+                </div>
+                }
+
+            </div>
+            }
         </div>
         }
 
@@ -55,9 +96,9 @@
             <div class="relative flex-1">
                 <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
                     class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
-                    [class.border-primary]="selectedDeviceType() !== 'Alle device typen'"
-                    [class.ring-1]="selectedDeviceType() !== 'Alle device typen'"
-                    [class.ring-primary]="selectedDeviceType() !== 'Alle device typen'">
+                    [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
+                    [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
+                    [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">
 
                     @for (type of uniqueDeviceTypes(); track type) {
                     <option [value]="type">{{ type }}</option>
@@ -281,7 +322,7 @@
 
             <div class="flex items-center justify-center p-5">
                 <span class="text-lg font-medium text-slate-600">
-                    Geen devices gevonden!
+                    Geen mobiele apparaten gevonden!
                 </span>
 
             </div>

@@ -25,53 +25,68 @@
       </div>
 
       @if (hasWarnings() && !isLoading()) {
-      <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded p-3">
-        <div class="flex gap-3">
-          <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
-          <div class="flex flex-col gap-2">
-            <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing</span>
-            @if (drivePageWarnings().orphanDrivesWarning) {
-            <div class="flex gap-2 items-center text-center">
-              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.orphanDrives }}
-                wees
-                {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
-                zonder beheerder gevonden
-              </span>
-            </div>
-            }
+      <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded-lg p-4 transition-all duration-200">
+        <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
 
-            @if (drivePageWarnings().externalMembersWarning) {
-            <div class="flex gap-2 items-center text-center">
-              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.externalMembersDriveCount }}
-                {{ pageOverview()?.externalMembersDriveCount === 1 ? 'drive heeft' : 'drives hebben' }}
-                externe leden buiten uw domein
-              </span>
-            </div>
-            }
-
-            @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
-            <div class="flex gap-2 items-center text-center">
-              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
-                {{ pageOverview()?.notOnlyDomainUsersAllowedCount === 1 ? 'drive staat' : 'drives staan' }}
-                delen met gebruikers buiten uw domein toe
-              </span>
-            </div>
-            }
-
-            @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
-            <div class="flex gap-2 items-center text-center">
-              <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-              <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyMembersCanAccessCount }}
-                {{ pageOverview()?.notOnlyMembersCanAccessCount === 1 ? 'drive kan' : 'drives kunnen' }}
-                toegang verlenen aan niet-leden
-              </span>
-            </div>
-            }
+          <div class="flex gap-3 items-center">
+            <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
+            <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{
+              hasMultipleWarnings() ?
+              'en' : '' }}
+            </span>
           </div>
+
+          <i-lucide [img]="isExpanded() ? ChevronUp : ChevronDown" size="20"
+            class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
         </div>
+
+        @if (isExpanded()) {
+
+
+        <div class="flex flex-col gap-2 mt-3 ml-8">
+
+          @if (drivePageWarnings().orphanDrivesWarning) {
+          <div class="flex gap-2 items-center text-center">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.orphanDrives }}
+              wees
+              {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
+              zonder beheerder gevonden
+            </span>
+          </div>
+          }
+
+          @if (drivePageWarnings().externalMembersWarning) {
+          <div class="flex gap-2 items-center text-center">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.externalMembersDriveCount }}
+              {{ pageOverview()?.externalMembersDriveCount === 1 ? 'drive heeft' : 'drives hebben' }}
+              externe leden buiten uw domein
+            </span>
+          </div>
+          }
+
+          @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
+          <div class="flex gap-2 items-center text-center">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
+              {{ pageOverview()?.notOnlyDomainUsersAllowedCount === 1 ? 'drive staat' : 'drives staan' }}
+              delen met gebruikers buiten uw domein toe
+            </span>
+          </div>
+          }
+
+          @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
+          <div class="flex gap-2 items-center text-center">
+            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyMembersCanAccessCount }}
+              {{ pageOverview()?.notOnlyMembersCanAccessCount === 1 ? 'drive kan' : 'drives kunnen' }}
+              toegang verlenen aan niet-leden
+            </span>
+          </div>
+          }
+        </div>
+        }
       </div>
       }
 

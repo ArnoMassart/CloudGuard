@@ -1,7 +1,9 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   CircleCheck,
   CircleX,
   Clock,
@@ -41,6 +43,8 @@ export class UsersSection implements OnInit {
   readonly triangleAlert = TriangleAlert;
   readonly chevronLeft = ChevronLeft;
   readonly chevronRight = ChevronRight;
+  readonly ChevronDown = ChevronDown;
+  readonly ChevronUp = ChevronUp;
   readonly shield = Shield;
 
   readonly #userService = inject(UserService);
@@ -51,7 +55,14 @@ export class UsersSection implements OnInit {
     activeWithLongNoLogin: false,
     notActiveWithRecentLogin: false,
   });
-  itemsPerPage: number = 5; // Adjust based on your design
+
+  readonly isExpanded = signal(true);
+
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
+  }
+
+  itemsPerPage: number = 4;
 
   orgUsers = signal<UserOrgDetail[]>([]);
   pageOverview = signal<UserOverviewResponse | null>(null);
@@ -80,17 +91,21 @@ export class UsersSection implements OnInit {
   loadUsers(token: string | null = null) {
     this.isLoading.set(true);
 
-    this.#userService.getOrgUsers(token || undefined, this.searchQuery()).subscribe({
-      next: (res) => {
-        this.orgUsers.set(res.users);
-        this.nextPageToken.set(res.nextPageToken);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load users', err);
-        this.isLoading.set(false);
-      },
-    });
+    this.#userService
+      .getOrgUsers(this.itemsPerPage, token || undefined, this.searchQuery())
+      .subscribe({
+        next: (res) => {
+          this.orgUsers.set(res.users);
+          this.nextPageToken.set(res.nextPageToken);
+          this.isLoading.set(false);
+
+          console.log(this.nextPageToken());
+        },
+        error: (err) => {
+          console.error('Failed to load users', err);
+          this.isLoading.set(false);
+        },
+      });
   }
 
   loadPageOverview() {

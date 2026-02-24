@@ -27,7 +27,7 @@ public class MobileDeviceController {
     public ResponseEntity<MobileDevicePageResponse> getMobileDevices(
             @CookieValue(name = "AuthToken", required = false) String token,
             @RequestParam(required = false) String pageToken,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String deviceType
             ) {

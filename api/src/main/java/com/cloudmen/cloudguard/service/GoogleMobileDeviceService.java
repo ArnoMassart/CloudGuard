@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.dto.devices.MobileDeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.MobileDevicePageResponse;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
@@ -35,7 +36,7 @@ public class GoogleMobileDeviceService {
             List<MobileDevice> googleDevices;
             String nextTokenToReturn;
 
-            if (true) {
+            if (isTestMode) {
                 // --- MOCK LOGICA ---
                 List<MobileDevice> allMockDevices = createMockGoogleDevices();
 
@@ -46,7 +47,7 @@ public class GoogleMobileDeviceService {
                             .filter(d -> d.getStatus() != null && d.getStatus().equalsIgnoreCase(filterStatus))
                             .toList();
                 }
-                if (filterType != null && !filterType.equals("Alle device typen")) {
+                if (filterType != null && !filterType.equals("Alle apparaat typen")) {
                     allMockDevices = allMockDevices.stream()
                             .filter(d -> d.getOs() != null && d.getOs().toLowerCase().startsWith(filterType.toLowerCase()))
                             .toList();
@@ -86,7 +87,7 @@ public class GoogleMobileDeviceService {
                 if (filterStatus != null && !filterStatus.equals("Alle statussen")) {
                     queryParts.add("status:" + filterStatus);
                 }
-                if (filterType != null && !filterType.equals("Alle device typen")) {
+                if (filterType != null && !filterType.equals("Alle apparaat typen")) {
                     queryParts.add("os:" + filterType + "*");
                 }
 
@@ -136,13 +137,13 @@ public class GoogleMobileDeviceService {
 
                 return new MobileDeviceDetail(
                         device.getResourceId(),
-                        capitalizeWords(userName),
+                        UtilityFunctions.capitalizeWords(userName),
                         email,
                         deviceName,
                         device.getModel(),
                         os,
                         syncTime,
-                        capitalizeWords(device.getStatus()),
+                        UtilityFunctions.capitalizeWords(device.getStatus()),
                         compliance,
                         lockSecure, lockText,
                         encSecure, encText,
@@ -152,7 +153,6 @@ public class GoogleMobileDeviceService {
             }).toList();
 
             return new MobileDevicePageResponse(mappedDevices, nextTokenToReturn);
-
         } catch (Exception e) {
             throw new RuntimeException("Fout bij ophalen Mobile Devices: " + e.getMessage());
         }
@@ -220,7 +220,7 @@ public class GoogleMobileDeviceService {
         } else {
             try {
                 Directory directoryService = googleApiFactory.getDirectoryService(
-                        "https://www.googleapis.com/auth/admin.directory.device.mobile.readonly",
+                        DirectoryScopes.ADMIN_DIRECTORY_DEVICE_MOBILE_READONLY,
                         loggedInEmail
                 );
 
@@ -248,6 +248,11 @@ public class GoogleMobileDeviceService {
         long approvedDevices = 0;
         long nonCompliantDevices = 0;
         long totalScoreSum = 0;
+        long totalLockScreenCount = 0;
+        long totalEncryptionCount = 0;
+        long totalOsVersionCount = 0;
+        long totalIntegrityCount = 0;
+
 
         for (MobileDevice device : allDevices) {
             totalDevices++;
@@ -263,10 +268,18 @@ public class GoogleMobileDeviceService {
             boolean osSecure = checkOsVersion(device.getOs());
 
             int deviceScore = 0;
+
             if (lockSecure) deviceScore += 25;
+            else totalLockScreenCount++;
+
             if (encSecure) deviceScore += 25;
+            else totalEncryptionCount++;
+
             if (intSecure) deviceScore += 25;
+            else totalIntegrityCount++;
+
             if (osSecure) deviceScore += 25;
+            else totalOsVersionCount++;
 
             totalScoreSum += deviceScore;
 
@@ -279,7 +292,11 @@ public class GoogleMobileDeviceService {
                 totalDevices,
                 nonCompliantDevices,
                 approvedDevices,
-                securityScore
+                securityScore,
+                totalLockScreenCount,
+                totalEncryptionCount,
+                totalOsVersionCount,
+                totalIntegrityCount
         );
 
     }
@@ -288,18 +305,6 @@ public class GoogleMobileDeviceService {
         if (os == null) return false;
         return os.contains("Android 14") || os.contains("Android 13") ||
                 os.contains("iOS 17") || os.contains("iOS 16");
-    }
-
-    private String capitalizeWords(String str) {
-        if (str == null || str.isEmpty()) return str;
-        String[] words = str.split(" ");
-        StringBuilder sb = new StringBuilder();
-        for (String word : words) {
-            if (word.length() > 0) {
-                sb.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase()).append(" ");
-            }
-        }
-        return sb.toString().trim();
     }
 
     private List<MobileDevice> createMockGoogleDevices() {
@@ -377,6 +382,14 @@ public class GoogleMobileDeviceService {
         d6.setStatus("APPROVED");
         d6.setLastSync(null); // Paar seconden geleden
         list.add(d6);
+        // Paar seconden geleden
+        list.add(d5);
+        list.add(d2);
+        list.add(d4);
+        list.add(d6);
+        list.add(d3);
+        list.add(d4);
+        list.add(d1);
 
         return list;
     }

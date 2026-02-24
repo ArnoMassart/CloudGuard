@@ -12,11 +12,7 @@ export class DriveService {
   readonly #API_URL = RouteService.getBackendUrl('/google/drives');
   readonly #http = inject(HttpClient);
 
-  getDrives(
-    pageToken?: string,
-    query?: string,
-    size: number = 3
-  ): Observable<SharedDrivePageResponse> {
+  getDrives(size: number, pageToken?: string, query?: string): Observable<SharedDrivePageResponse> {
     let params = new HttpParams().set('size', size.toString());
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
