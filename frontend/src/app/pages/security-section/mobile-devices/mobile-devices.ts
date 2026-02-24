@@ -10,7 +10,7 @@ import { MobileDevicesOverviewResponse } from '../../../models/devices/MobileDev
 import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevicesPageWarnings';
 import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
-import { AppIcons } from '../../../shared/app-icons';
+import { AppIcons } from '../../../shared/AppIcons';
 
 @Component({
   selector: 'app-mobile-devices',

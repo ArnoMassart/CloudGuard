@@ -21,7 +21,7 @@ import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { UserOverviewResponse } from '../../../../models/UserOverviewResponse';
 import { UsersPageWarnings } from '../../../../models/UsersPageWarnings';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
-import { AppIcons } from '../../../../shared/app-icons';
+import { AppIcons } from '../../../../shared/AppIcons';
 
 @Component({
   selector: 'app-users-section',

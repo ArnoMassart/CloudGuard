@@ -11,7 +11,7 @@ import {
   GroupSettingsDto,
 } from '../../../../services/group-service';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
-import { AppIcons } from '../../../../shared/app-icons';
+import { AppIcons } from '../../../../shared/AppIcons';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 

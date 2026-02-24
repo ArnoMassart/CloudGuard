@@ -5,7 +5,7 @@ import { UsersSection } from './users-section/users-section';
 import { GroupsSection } from './groups-section/groups-section';
 import { SectionType } from '../../../models/SectionType';
 import { CommonModule } from '@angular/common';
-import { AppIcons } from '../../../shared/app-icons';
+import { AppIcons } from '../../../shared/AppIcons';
 
 @Component({
   selector: 'app-users-groups',

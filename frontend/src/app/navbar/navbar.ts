@@ -9,7 +9,7 @@ import { CustomAuthService } from '../auth/custom-auth-service';
 import { Router } from '@angular/router';
 import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 import { UserService } from '../services/user-service';
-import { AppIcons } from '../shared/app-icons';
+import { AppIcons } from '../shared/AppIcons';
 
 @Component({
   standalone: true,

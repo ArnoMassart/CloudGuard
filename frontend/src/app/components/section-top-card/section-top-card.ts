@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { LucideIconData, LucideAngularModule } from 'lucide-angular';
-import { AppIcons } from '../../shared/app-icons';
+import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
   selector: 'app-section-top-card',

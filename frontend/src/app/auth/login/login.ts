@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '@auth0/auth0-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router } from '@angular/router';
-import { AppIcons } from '../../shared/app-icons';
+import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
   selector: 'app-login',

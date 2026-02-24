@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { AppIcons } from '../../shared/app-icons';
+import { AppIcons } from '../../shared/AppIcons';
+import { UtilityMethods } from '../../shared/UtilityMethods';
 
 @Component({
   selector: 'app-page-header',
@@ -10,12 +11,10 @@ import { AppIcons } from '../../shared/app-icons';
 })
 export class PageHeader {
   readonly Icons = AppIcons;
+  readonly UtilityMethods = UtilityMethods;
 
   @Input() Title: string = '';
   @Input() Description: string = '';
   @Input() NeedAdminLink: boolean = true;
   @Input() AdminLink: string = '';
-  openAdminPage() {
-    window.open(`https://admin.google.com/ac/${this.AdminLink}`);
-  }
 }

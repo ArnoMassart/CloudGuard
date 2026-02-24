@@ -4,7 +4,7 @@
         <span class="text-black/50 text-[15px]">{{Description}}</span>
     </div>
     @if (NeedAdminLink) {
-    <button (click)="openAdminPage()"
+    <button (click)="UtilityMethods.openAdminPage(`https://admin.google.com/ac/${this.AdminLink}`)"
         class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center"><span>Naar
             Admin
             Console</span> <lucide-icon [img]="Icons.ExternalLink" size="16" class=""></lucide-icon>

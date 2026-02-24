@@ -8,7 +8,13 @@ import { SharedDrive } from '../../../models/drives/SharedDrive';
 import { SharedDrivesPageWarnings } from '../../../models/drives/SharedDrivesPageWarnings';
 import { SharedDriveOverviewResponse } from '../../../models/drives/SharedDriveOverviewResponse';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
-import { AppIcons } from '../../../shared/app-icons';
+import { AppIcons } from '../../../shared/AppIcons';
+import { UtilityMethods } from '../../../shared/UtilityMethods';
+
+// ==========================================
+// 1. CONSTANTS
+// ==========================================
+const ITEMS_PER_PAGE = 2;
 
 @Component({
   selector: 'app-shared-drives',
@@ -17,9 +23,26 @@ import { AppIcons } from '../../../shared/app-icons';
   styleUrl: './shared-drives.css',
 })
 export class SharedDrives implements OnInit {
-  readonly Icons = AppIcons;
-
+  // ==========================================
+  // 1. INJECTIONS
+  // ==========================================
   readonly #driveService = inject(DriveService);
+  readonly Icons = AppIcons;
+  readonly UtilityMethods = UtilityMethods;
+
+  // ==========================================
+  // 2. PUBLIC PROPERTIES & SIGNALS
+  // ==========================================
+  readonly isExpanded = signal(true);
+
+  drives = signal<SharedDrive[]>([]);
+  isLoading = signal(false);
+  searchValue = signal('');
+  pageOverview = signal<SharedDriveOverviewResponse | null>(null);
+
+  searchQuery = signal('');
+  currentPage = signal(1);
+  nextPageToken = signal<string | null>(null);
 
   hasWarnings = signal(false);
   drivePageWarnings = signal<SharedDrivesPageWarnings>({
@@ -29,33 +52,23 @@ export class SharedDrives implements OnInit {
     orphanDrivesWarning: false,
   });
 
-  readonly isExpanded = signal(true);
+  hasMultipleWarnings = computed(() => {
+    const warnings = this.drivePageWarnings();
+    const activeCount = Object.values(warnings).filter((val) => val === true).length;
+    return activeCount > 1;
+  });
 
-  toggleExpanded() {
-    this.isExpanded.update((v) => !v);
-  }
+  // ==========================================
+  // 3. PRIVATE PROPERTIES
+  // ==========================================
+  #tokenHistory: (string | null)[] = [null];
+  #searchSubject = new Subject<string>();
 
-  drives = signal<SharedDrive[]>([]);
-
-  isLoading = signal(false);
-
-  searchValue = signal('');
-
-  itemsPerPage: number = 2;
-
-  pageOverview = signal<SharedDriveOverviewResponse | null>(null);
-
-  // Paging state
-  searchQuery = signal('');
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
-
-  private tokenHistory: (string | null)[] = [null];
-
-  private searchSubject = new Subject<string>();
-
+  // ==========================================
+  // 4. LIFECYCLE HOOKS
+  // ==========================================
   ngOnInit(): void {
-    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
+    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
       this.onSearch(value);
     });
 
@@ -63,24 +76,61 @@ export class SharedDrives implements OnInit {
     this.loadDrives();
   }
 
+  // ==========================================
+  // 5. PUBLIC METHODS (UI Actions & Events)
+  // ==========================================
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
+  }
+
+  onKeyup(value: string) {
+    this.#searchSubject.next(value);
+  }
+
+  onSearch(value: string) {
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+    this.#tokenHistory = [null]; // Reset historie bij nieuwe zoekopdracht
+    this.loadDrives(null);
+  }
+
+  nextPage() {
+    const token = this.nextPageToken();
+    if (token) {
+      this.#tokenHistory.push(token); // Onthoud dit token om terug te kunnen
+      this.currentPage.update((p) => p + 1);
+      this.loadDrives(token);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.#tokenHistory.pop(); // Verwijder huidige token
+      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1]; // Pak de vorige
+      this.currentPage.update((p) => p - 1);
+      this.loadDrives(prevToken);
+    }
+  }
+
+  // ==========================================
+  // 6. DATA LOADING & LOGIC METHODS
+  // ==========================================
   loadDrives(token: string | null = null) {
     this.isLoading.set(true);
 
-    this.#driveService
-      .getDrives(this.itemsPerPage, token || undefined, this.searchQuery())
-      .subscribe({
-        next: (res) => {
-          const mappedDrives = (res.drives || []).map((d) => ({ ...d, isLoadingDetails: true }));
+    this.#driveService.getDrives(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
+      next: (res) => {
+        const mappedDrives = (res.drives || []).map((d) => ({ ...d, isLoadingDetails: true }));
 
-          this.drives.set(mappedDrives);
-          this.nextPageToken.set(res.nextPageToken);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load shared drives', err);
-          this.isLoading.set(false);
-        },
-      });
+        this.drives.set(mappedDrives);
+        this.nextPageToken.set(res.nextPageToken);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load shared drives', err);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   loadPageOverview() {
@@ -116,43 +166,4 @@ export class SharedDrives implements OnInit {
       this.drivePageWarnings().orphanDrivesWarning = true;
     }
   }
-
-  onKeyup(value: string) {
-    this.searchSubject.next(value);
-  }
-
-  onSearch(value: string) {
-    this.searchQuery.set(value);
-    this.currentPage.set(1);
-    this.tokenHistory = [null]; // Reset historie bij nieuwe zoekopdracht
-    this.loadDrives(null);
-  }
-
-  nextPage() {
-    const token = this.nextPageToken();
-    if (token) {
-      this.tokenHistory.push(token); // Onthoud dit token om terug te kunnen
-      this.currentPage.update((p) => p + 1);
-      this.loadDrives(token);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.tokenHistory.pop(); // Verwijder huidige token
-      const prevToken = this.tokenHistory[this.tokenHistory.length - 1]; // Pak de vorige
-      this.currentPage.update((p) => p - 1);
-      this.loadDrives(prevToken);
-    }
-  }
-
-  openAdminPage() {
-    window.open(`https://admin.google.com/ac/drive/manageshareddrives`);
-  }
-
-  hasMultipleWarnings = computed(() => {
-    const warnings = this.drivePageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
-  });
 }
