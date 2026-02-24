@@ -12,6 +12,11 @@ import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 
+// ==========================================
+// CONSTANTS
+// ==========================================
+const ITEMS_PER_PAGE = 4;
+
 @Component({
   selector: 'app-mobile-devices',
   imports: [
@@ -26,39 +31,25 @@ import { AppIcons } from '../../../shared/AppIcons';
   styleUrl: './mobile-devices.css',
 })
 export class MobileDevices {
+  // ==========================================
+  // INJECTIONS
+  // ==========================================
   readonly Icons = AppIcons;
-
+  readonly statusEnum = MobileDeviceStatus;
   readonly #mobileDeviceService = inject(MobileDeviceService);
 
-  readonly statusEnum = MobileDeviceStatus;
-
-  hasWarnings = signal(false);
-  devicePageWarnings = signal<MobileDevicesPageWarnings>({
-    lockScreenWarning: false,
-    encryptionWarning: false,
-    osVersionWarning: false,
-    integrityWarning: false,
-  });
-
+  // ==========================================
+  // PUBLIC PROPERTIES & SIGNALS
+  // ==========================================
   readonly isExpanded = signal(true);
-  MobileDeviceStatus: any;
-
-  toggleExpanded() {
-    this.isExpanded.update((v) => !v);
-  }
 
   devices = signal<MobileDevice[]>([]);
-
-  itemsPerPage: number = 4;
-
   pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
 
   // Paging state
   currentPage = signal(1);
   nextPageToken = signal<string | null>(null);
   isLoading = signal(false);
-
-  private tokenHistory: (string | null)[] = [null];
 
   expandedDevice = signal<string | null>(null);
 
@@ -68,6 +59,42 @@ export class MobileDevices {
 
   selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
   statusOptions = Object.values(MobileDeviceStatus);
+
+  hasWarnings = signal(false);
+  devicePageWarnings = signal<MobileDevicesPageWarnings>({
+    lockScreenWarning: false,
+    encryptionWarning: false,
+    osVersionWarning: false,
+    integrityWarning: false,
+  });
+
+  hasMultipleWarnings = computed(() => {
+    const warnings = this.devicePageWarnings();
+
+    const activeCount = Object.values(warnings).filter((val) => val === true).length;
+
+    return activeCount > 1;
+  });
+
+  // ==========================================
+  // PRIVATE PROPERTIES
+  // ==========================================
+  #tokenHistory: (string | null)[] = [null];
+
+  // ==========================================
+  // LIFECYCLE HOOKS
+  // ==========================================
+
+  // ==========================================
+  // PUBLIC METHODS
+  // ==========================================
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
+  }
+
+  // ==========================================
+  // PRIVATE METHODS
+  // ==========================================
 
   toggleExpand(deviceId: string) {
     if (this.expandedDevice() === deviceId) {
@@ -91,7 +118,7 @@ export class MobileDevices {
         token || undefined,
         this.selectedStatus(),
         this.selectedDeviceType(),
-        this.itemsPerPage
+        ITEMS_PER_PAGE
       )
       .subscribe({
         next: (res) => {
@@ -165,7 +192,7 @@ export class MobileDevices {
   nextPage() {
     const token = this.nextPageToken();
     if (token) {
-      this.tokenHistory.push(token); // Onthoud dit token om terug te kunnen
+      this.#tokenHistory.push(token); // Onthoud dit token om terug te kunnen
       this.currentPage.update((p) => p + 1);
       this.loadMobileDevices(token);
     }
@@ -173,8 +200,8 @@ export class MobileDevices {
 
   prevPage() {
     if (this.currentPage() > 1) {
-      this.tokenHistory.pop(); // Verwijder huidige token
-      const prevToken = this.tokenHistory[this.tokenHistory.length - 1]; // Pak de vorige
+      this.#tokenHistory.pop(); // Verwijder huidige token
+      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1]; // Pak de vorige
       this.currentPage.update((p) => p - 1);
       this.loadMobileDevices(prevToken);
     }
@@ -182,7 +209,7 @@ export class MobileDevices {
 
   #resetAndLoad() {
     this.currentPage.set(1);
-    this.tokenHistory = [null]; // Reset de paginatie-historie
+    this.#tokenHistory = [null]; // Reset de paginatie-historie
     this.expandedDevice.set(null); // Sluit eventueel opengeklapte rijen
     this.loadMobileDevices(null);
   }
@@ -190,12 +217,4 @@ export class MobileDevices {
   openAdminPage() {
     window.open(`https://admin.google.com/ac/devices/list?default=true&category=mobile`);
   }
-
-  hasMultipleWarnings = computed(() => {
-    const warnings = this.devicePageWarnings();
-
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-
-    return activeCount > 1;
-  });
 }
