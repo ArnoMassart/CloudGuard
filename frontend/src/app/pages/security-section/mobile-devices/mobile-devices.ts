@@ -26,9 +26,9 @@ import { AppIcons } from '../../../shared/app-icons';
   styleUrl: './mobile-devices.css',
 })
 export class MobileDevices {
-  readonly #mobileDeviceService = inject(MobileDeviceService);
-
   readonly Icons = AppIcons;
+
+  readonly #mobileDeviceService = inject(MobileDeviceService);
 
   readonly statusEnum = MobileDeviceStatus;
 

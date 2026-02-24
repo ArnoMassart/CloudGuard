@@ -103,6 +103,7 @@ export class CustomAuthService {
     this.currentUser.set(null);
     localStorage.clear();
     sessionStorage.removeItem('auth0_redirect_pending');
+    sessionStorage.removeItem('user-group-section');
   }
 
   get isLoggedIn$(): Observable<boolean> {
