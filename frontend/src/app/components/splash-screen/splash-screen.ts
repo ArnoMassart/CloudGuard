@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
-import { Shield, Code, LucideAngularModule, ShieldCheck } from 'lucide-angular';
-import { CustomAuthService } from '../../core/auth/custom-auth-service';
+import { LucideAngularModule } from 'lucide-angular';
+import { CustomAuthService } from '../../auth/custom-auth-service';
+import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
   selector: 'app-splash-screen',
@@ -11,8 +12,7 @@ import { CustomAuthService } from '../../core/auth/custom-auth-service';
   styleUrl: './splash-screen.css',
 })
 export class SplashScreen {
-  readonly shieldIcon = ShieldCheck;
-  readonly codeIcon = Code;
+  readonly Icons = AppIcons;
 
   #authService: CustomAuthService = inject(CustomAuthService);
 
@@ -31,7 +31,7 @@ export class SplashScreen {
       if (isReady) {
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, minDurationMs - elapsed);
-        setTimeout(()=> this.finishLoading(), remaining);
+        setTimeout(() => this.finishLoading(), remaining);
       }
     });
   }
@@ -50,7 +50,7 @@ export class SplashScreen {
   finishLoading() {
     setTimeout(() => {
       this.animationFinished.emit();
-    }, 1300);
+    }, 1200);
   }
 
   ngOnDestroy() {

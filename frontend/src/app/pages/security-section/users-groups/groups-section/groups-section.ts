@@ -3,24 +3,15 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { LucideAngularModule } from 'lucide-angular';
 import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  CircleCheck,
-  CircleX,
-  Clock,
-  Loader2,
-  LucideAngularModule,
-  Search,
-  TriangleAlert,
-  ShieldAlert,
-  Users,
-  ExternalLink,
-} from 'lucide-angular';
-import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
-import { GroupOrgDetail, GroupOverviewResponse, GroupService, GroupSettingsDto } from '../../../../services/group-service';
+  GroupOrgDetail,
+  GroupOverviewResponse,
+  GroupService,
+  GroupSettingsDto,
+} from '../../../../services/group-service';
+import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
+import { AppIcons } from '../../../../shared/AppIcons';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -39,25 +30,12 @@ interface GroupSummary {
 @Component({
   selector: 'app-groups-section',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, UsersSectionTopCard, FormsModule],
+  imports: [CommonModule, LucideAngularModule, SectionTopCard, FormsModule],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })
-export class GroupsSection implements OnInit{
-  readonly triangleAlertIcon = TriangleAlert;
-  readonly searchIcon = Search;
-  readonly checkCircle = CircleCheck;
-  readonly xCircle = CircleX;
-  readonly clock = Clock;
-  readonly triangleAlert = TriangleAlert;
-  readonly chevronLeft = ChevronLeft;
-  readonly chevronRight = ChevronRight;
-  readonly shieldAlertIcon = ShieldAlert;
-  readonly usersIcon = Users;
-  readonly externalLinkIcon = ExternalLink;
-  readonly loaderIcon = Loader2;
-  readonly chevronDownIcon = ChevronDown;
-  readonly chevronUpIcon = ChevronUp;
+export class GroupsSection implements OnInit {
+  readonly Icons = AppIcons;
 
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
@@ -76,10 +54,9 @@ export class GroupsSection implements OnInit{
   private readonly pageSize = 5;
 
   ngOnInit(): void {
-    this.searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe((value) => this.onSearch(value));
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((value) => this.onSearch(value));
 
     this.loadGroupsOverview();
     this.loadGroups(null);
@@ -201,7 +178,10 @@ export class GroupsSection implements OnInit{
         });
       },
       error: () => {
-        this.groupSettingsCache.update((c) => ({ ...c, [name]: { whoCanJoin: '—', whoCanView: '—' } }));
+        this.groupSettingsCache.update((c) => ({
+          ...c,
+          [name]: { whoCanJoin: '—', whoCanView: '—' },
+        }));
         this.loadingSettingsFor.update((s) => {
           const next = new Set(s);
           next.delete(name);

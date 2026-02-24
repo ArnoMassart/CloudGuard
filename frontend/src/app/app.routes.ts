@@ -12,7 +12,7 @@ import { AppPasswords } from './pages/security-section/app-passwords/app-passwor
 import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
 import { LicensesBilling } from './pages/control-section/licenses-billing/licenses-billing';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
-import { authGuard } from './core/auth/auth.guard';
+import { authGuard } from './auth/auth.guard';
 import { Forbidden } from './pages/forbidden/forbidden';
 
 export const routes: Routes = [

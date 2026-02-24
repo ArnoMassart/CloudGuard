@@ -1,18 +1,19 @@
 import { Component, Input } from '@angular/core';
-import { LucideAngularModule, LucideIconData, Shield } from 'lucide-angular';
+import { LucideIconData, LucideAngularModule } from 'lucide-angular';
+import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
-  selector: 'app-users-section-top-card',
+  selector: 'app-section-top-card',
   imports: [LucideAngularModule],
-  templateUrl: './users-section-top-card.html',
-  styleUrl: './users-section-top-card.css',
+  templateUrl: './section-top-card.html',
+  styleUrl: './section-top-card.css',
 })
-export class UsersSectionTopCard {
-  readonly shieldIcon = Shield;
+export class SectionTopCard {
+  readonly Icons = AppIcons;
 
   @Input() Title: string = '';
   @Input() Value: number | undefined = 0;
-  @Input() Icon: LucideIconData = Shield;
+  @Input() Icon: LucideIconData = this.Icons.Shield;
   @Input() BackgroundColor: string = '#dbeafe';
   @Input() IconColor: string = '#155dfc';
   @Input() TextColor: string = 'black';

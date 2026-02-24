@@ -1,21 +1,13 @@
 import { Component, OnInit, effect, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  LucideAngularModule,
-  Building2,
-  Users,
-  FolderTree,
-  ChevronDown,
-  ChevronRight,
-  CheckCircle,
-  ExternalLink,
-} from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import {
   OrgUnitNodeDto,
   OrgUnitPolicyDto,
   OrgUnitService,
 } from '../../../services/org-unit-service';
+import { AppIcons } from '../../../shared/AppIcons';
 
 export interface OrgUnitNode {
   id: string;
@@ -34,13 +26,7 @@ export interface OrgUnitNode {
   styleUrl: './organizational-units.css',
 })
 export class OrganizationalUnits implements OnInit {
-  readonly folderTreeIcon = FolderTree;
-  readonly buildingIcon = Building2;
-  readonly usersIcon = Users;
-  readonly checkCircleIcon = CheckCircle;
-  readonly chevronDownIcon = ChevronDown;
-  readonly chevronRightIcon = ChevronRight;
-  readonly externalLinkIcon = ExternalLink;
+  readonly Icons = AppIcons;
 
   readonly expandedOuIds = signal<Set<string>>(new Set());
   readonly expandedPolicies = signal<Set<string>>(new Set());
@@ -88,7 +74,9 @@ export class OrganizationalUnits implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.');
+        this.error.set(
+          err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.'
+        );
         this.loading.set(false);
       },
     });
@@ -150,7 +138,8 @@ export class OrganizationalUnits implements OnInit {
   readonly getStatusExplanation = (statusClass: string | undefined): string => {
     if (!statusClass) return '';
     if (statusClass.includes('green')) return 'Deze beleidsregel is conform.';
-    if (statusClass.includes('amber')) return 'Let op: er zijn aandachtspunten bij deze beleidsregel.';
+    if (statusClass.includes('amber'))
+      return 'Let op: er zijn aandachtspunten bij deze beleidsregel.';
     return 'De status van deze beleidsregel kon niet worden vastgesteld.';
   };
 }

@@ -3,66 +3,62 @@ import { PageHeader } from '../../../components/page-header/page-header';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {
-  LucideAngularModule,
-  TriangleAlert,
-  CircleCheck,
-  CircleX,
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  Shield,
-  Smartphone,
-  ChevronDown,
-  ChevronUp,
-  ShieldAlert,
-  HardDrive,
-  Cpu,
-  ShieldCheck,
-  Lock,
-  ExternalLink,
-} from 'lucide-angular';
-import { UsersSectionTopCard } from '../users-groups/users-section/users-section-top-card/users-section-top-card';
+import { LucideAngularModule } from 'lucide-angular';
 import { MobileDeviceService } from '../../../services/mobile-device-service';
 import { MobileDevice } from '../../../models/devices/MobileDevice';
 import { MobileDevicesOverviewResponse } from '../../../models/devices/MobileDevicesOverviewResponse';
 import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevicesPageWarnings';
 import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
+import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { AppIcons } from '../../../shared/AppIcons';
+import { UtilityMethods } from '../../../shared/UtilityMethods';
+import { delay } from 'rxjs';
+
+// ==========================================
+// CONSTANTS
+// ==========================================
+const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-mobile-devices',
   imports: [
     PageHeader,
     LucideAngularModule,
-    UsersSectionTopCard,
     FormsModule,
     CommonModule,
     MatProgressSpinnerModule,
+    SectionTopCard,
   ],
   templateUrl: './mobile-devices.html',
   styleUrl: './mobile-devices.css',
 })
 export class MobileDevices {
-  readonly CheckCircle = CircleCheck;
-  readonly XCircle = CircleX;
-  readonly Clock = Clock;
-  readonly TriangleAlert = TriangleAlert;
-  readonly ChevronLeft = ChevronLeft;
-  readonly ChevronRight = ChevronRight;
-  readonly ChevronDown = ChevronDown;
-  readonly ChevronUp = ChevronUp;
-  readonly SmartPhone = Smartphone;
-  readonly Shield = Shield;
-  readonly ShieldAlert = ShieldAlert;
-  readonly Lock = Lock;
-  readonly HardDrive = HardDrive;
-  readonly Cpu = Cpu;
-  readonly ShieldCheck = ShieldCheck;
-  readonly ExternalLink = ExternalLink;
-
+  // ==========================================
+  // INJECTIONS
+  // ==========================================
+  readonly Icons = AppIcons;
+  readonly statusEnum = MobileDeviceStatus;
+  readonly UtilityMethods = UtilityMethods;
   readonly #mobileDeviceService = inject(MobileDeviceService);
 
-  readonly statusEnum = MobileDeviceStatus;
+  // ==========================================
+  // PUBLIC PROPERTIES & SIGNALS
+  // ==========================================
+  readonly isExpanded = signal(true);
+
+  devices = signal<MobileDevice[]>([]);
+  pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
+  expandedDevice = signal<string | null>(null);
+
+  uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
+  selectedDeviceType = signal<string>('Alle apparaat typen');
+
+  selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
+  statusOptions = Object.values(MobileDeviceStatus);
+
+  currentPage = signal(1);
+  nextPageToken = signal<string | null>(null);
+  isLoading = signal(false);
 
   hasWarnings = signal(false);
   devicePageWarnings = signal<MobileDevicesPageWarnings>({
@@ -72,34 +68,32 @@ export class MobileDevices {
     integrityWarning: false,
   });
 
-  readonly isExpanded = signal(true);
-  MobileDeviceStatus: any;
+  hasMultipleWarnings = computed(() => {
+    const warnings = this.devicePageWarnings();
+    const activeCount = Object.values(warnings).filter((val) => val === true).length;
+    return activeCount > 1;
+  });
 
+  // ==========================================
+  // PRIVATE PROPERTIES
+  // ==========================================
+  #tokenHistory: (string | null)[] = [null];
+
+  // ==========================================
+  // LIFECYCLE HOOKS
+  // ==========================================
+  ngOnInit(): void {
+    this.#loadDeviceTypes();
+    this.#loadPageOverview();
+    this.#loadMobileDevices();
+  }
+
+  // ==========================================
+  // PUBLIC METHODS
+  // ==========================================
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
   }
-
-  devices = signal<MobileDevice[]>([]);
-
-  itemsPerPage: number = 4;
-
-  pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
-
-  // Paging state
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
-  isLoading = signal(false);
-
-  private tokenHistory: (string | null)[] = [null];
-
-  expandedDevice = signal<string | null>(null);
-
-  uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
-
-  selectedDeviceType = signal<string>('Alle apparaat typen');
-
-  selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
-  statusOptions = Object.values(MobileDeviceStatus);
 
   toggleExpand(deviceId: string) {
     if (this.expandedDevice() === deviceId) {
@@ -109,13 +103,38 @@ export class MobileDevices {
     }
   }
 
-  ngOnInit(): void {
-    this.loadDeviceTypes();
-    this.loadPageOverview();
-    this.loadMobileDevices();
+  onStatusChange(newStatus: MobileDeviceStatus) {
+    this.selectedStatus.set(newStatus);
+    this.#resetAndLoad();
   }
 
-  loadMobileDevices(token: string | null = null) {
+  onDeviceTypeChange(newType: string) {
+    this.selectedDeviceType.set(newType);
+    this.#resetAndLoad();
+  }
+
+  nextPage() {
+    const token = this.nextPageToken();
+    if (token) {
+      this.#tokenHistory.push(token);
+      this.currentPage.update((p) => p + 1);
+      this.#loadMobileDevices(token);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.#tokenHistory.pop();
+      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      this.currentPage.update((p) => p - 1);
+      this.#loadMobileDevices(prevToken);
+    }
+  }
+
+  // ==========================================
+  // PRIVATE METHODS
+  // ==========================================
+  #loadMobileDevices(token: string | null = null) {
     this.isLoading.set(true);
 
     this.#mobileDeviceService
@@ -123,8 +142,9 @@ export class MobileDevices {
         token || undefined,
         this.selectedStatus(),
         this.selectedDeviceType(),
-        this.itemsPerPage
+        ITEMS_PER_PAGE
       )
+      .pipe(delay(2000))
       .subscribe({
         next: (res) => {
           this.devices.set(res.devices);
@@ -138,11 +158,11 @@ export class MobileDevices {
       });
   }
 
-  loadPageOverview() {
+  #loadPageOverview() {
     this.#mobileDeviceService.getMobileDevicesPageOverview().subscribe({
       next: (res) => {
         this.pageOverview.set(res);
-        this.loadWarnings();
+        this.#loadWarnings();
       },
       error: (err) => {
         console.error('Failed to load page overview', err);
@@ -150,7 +170,7 @@ export class MobileDevices {
     });
   }
 
-  loadWarnings() {
+  #loadWarnings() {
     if (this.pageOverview()?.lockScreenCount! > 0) {
       this.hasWarnings.set(true);
       this.devicePageWarnings().lockScreenWarning = true;
@@ -172,10 +192,9 @@ export class MobileDevices {
     }
   }
 
-  loadDeviceTypes() {
+  #loadDeviceTypes() {
     this.#mobileDeviceService.getUniqueDeviceTypes().subscribe({
       next: (types) => {
-        // Voeg de unieke types uit de backend toe achter de standaard 'Alle' optie
         this.uniqueDeviceTypes.set(['Alle apparaat typen', ...types]);
       },
       error: (err) => {
@@ -184,50 +203,10 @@ export class MobileDevices {
     });
   }
 
-  onStatusChange(newStatus: MobileDeviceStatus) {
-    this.selectedStatus.set(newStatus);
-    this.#resetAndLoad();
-  }
-
-  onDeviceTypeChange(newType: string) {
-    this.selectedDeviceType.set(newType);
-    this.#resetAndLoad();
-  }
-
-  nextPage() {
-    const token = this.nextPageToken();
-    if (token) {
-      this.tokenHistory.push(token); // Onthoud dit token om terug te kunnen
-      this.currentPage.update((p) => p + 1);
-      this.loadMobileDevices(token);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.tokenHistory.pop(); // Verwijder huidige token
-      const prevToken = this.tokenHistory[this.tokenHistory.length - 1]; // Pak de vorige
-      this.currentPage.update((p) => p - 1);
-      this.loadMobileDevices(prevToken);
-    }
-  }
-
   #resetAndLoad() {
     this.currentPage.set(1);
-    this.tokenHistory = [null]; // Reset de paginatie-historie
-    this.expandedDevice.set(null); // Sluit eventueel opengeklapte rijen
-    this.loadMobileDevices(null);
+    this.#tokenHistory = [null];
+    this.expandedDevice.set(null);
+    this.#loadMobileDevices(null);
   }
-
-  openAdminPage() {
-    window.open(`https://admin.google.com/ac/devices/list?default=true&category=mobile`);
-  }
-
-  hasMultipleWarnings = computed(() => {
-    const warnings = this.devicePageWarnings();
-
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-
-    return activeCount > 1;
-  });
 }

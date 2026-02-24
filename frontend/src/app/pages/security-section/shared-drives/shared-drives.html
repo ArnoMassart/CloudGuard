@@ -6,21 +6,20 @@
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
       <div class="w-full flex gap-4">
-        <app-shared-drives-top-card class="flex-1" Title="Totaal Drives" [Value]="pageOverview()?.totalDrives"
-          [Icon]="FolderOpen" />
+        <app-section-top-card class="flex-1" Title="Totaal Drives" [Value]="pageOverview()?.totalDrives"
+          [Icon]="Icons.FolderOpen" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Drives zonder beheerders"
-          [Value]="pageOverview()?.orphanDrives" BackgroundColor="#f3e8ff" IconColor="#9810fa" TextColor="#9810fa"
-          [Icon]="HardDrive" />
+        <app-section-top-card class="flex-1" Title="Drives zonder beheerders" [Value]="pageOverview()?.orphanDrives"
+          BackgroundColor="#f3e8ff" IconColor="#9810fa" TextColor="#9810fa" [Icon]="Icons.HardDrive" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRisk"
-          BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="TriangleAlert" />
+        <app-section-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRisk"
+          BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Met externe leden"
+        <app-section-top-card class="flex-1" Title="Met externe leden"
           [Value]="pageOverview()?.externalMembersDriveCount" BackgroundColor="#ffedd4" IconColor="#f54a00"
-          TextColor="#f54a00" [Icon]="Users" />
+          TextColor="#f54a00" [Icon]="Icons.Users" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
+        <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
           [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
 
@@ -29,14 +28,14 @@
         <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
 
           <div class="flex gap-3 items-center">
-            <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
+            <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
             <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{
               hasMultipleWarnings() ?
               'en' : '' }}
             </span>
           </div>
 
-          <i-lucide [img]="isExpanded() ? ChevronUp : ChevronDown" size="20"
+          <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
             class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
         </div>
 
@@ -92,7 +91,7 @@
 
       <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
         <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
-          <i-lucide [img]="Search" size="20" class="text-[#99a1af]/70" />
+          <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
           <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
             placeholder="Zoek naar een Drive met volledige woorden..." />
         </div>
@@ -107,7 +106,7 @@
         <div class="rounded-lg p-5 border-2 border-muted/30 mx-3">
           <div class="flex items-start gap-4">
             <div class="p-2.5 rounded-lg bg-[#dbeafe] text-[#155dfc]">
-              <i-lucide [img]="FolderOpen" size="24"></i-lucide>
+              <i-lucide [img]="Icons.FolderOpen" size="24"></i-lucide>
             </div>
             <div class="flex flex-col gap-4 w-full pr-2">
               <div class="flex items-center gap-3 justify-between">
@@ -123,7 +122,7 @@
                 <div class="flex flex-col gap-2">
                   <span class="text-xs text-muted-foreground uppercase">Totaal Leden</span>
                   <div class="flex items-center gap-1">
-                    <i-lucide [img]="Users" size="16" />
+                    <i-lucide [img]="Icons.Users" size="16" />
                     <span class="font-medium text-[16px]">{{ drive.totalMembers }}</span>
                   </div>
                 </div>
@@ -131,7 +130,7 @@
                 <div class="flex flex-col gap-2">
                   <span class="text-xs text-muted-foreground uppercase">Externe Leden</span>
                   <div class="flex items-center gap-1">
-                    <i-lucide [img]="drive.externalMembers > 0 ? TriangleAlert : CircleCheck"
+                    <i-lucide [img]="drive.externalMembers > 0 ? Icons.TriangleAlert : Icons.CircleCheck"
                       [class.text-[#f54a00]]="drive.externalMembers > 0"
                       [class.text-emerald-400]="drive.externalMembers <= 0" size="16" />
                     <span class="font-medium text-[16px]" [class.text-[#f54a00]]="drive.externalMembers > 0"
@@ -142,7 +141,7 @@
                 <div class="flex flex-col gap-2">
                   <span class="text-xs text-muted-foreground uppercase">Aantal Beheerders</span>
                   <div class="flex items-center gap-1">
-                    <i-lucide [img]="drive.totalOrganizers > 0 ? UserCog : TriangleAlert"
+                    <i-lucide [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert"
                       [class.text-[#f54a00]]="drive.totalOrganizers <= 0" [class.text-black]="drive.totalOrganizers > 0"
                       size="16" />
                     <span [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
@@ -154,7 +153,7 @@
                 <div class="flex flex-col gap-2">
                   <span class="text-xs text-muted-foreground uppercase">Opgericht</span>
                   <div class="flex items-center gap-1">
-                    <i-lucide [img]="Clock" class="text-muted-foreground" size="16" />
+                    <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
                     <span class="text-muted-foreground text-sm font-light">{{
                       drive.createdTime
                       }}</span>
@@ -167,12 +166,12 @@
                   <span>Alleen domeingebruikers toegestaan</span>
                   <div class="flex items-center gap-1">
                     @if (!drive.onlyDomainUsersAllowed) {
-                    <i-lucide [img]="TriangleAlert" class="text-[#f54a00]" size="13" />
+                    <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
                     <span class="text-[#f54a00] text-[13px] font-medium">Nee</span>
-                    <i-lucide [img]="ExternalLink" class="text-[#f54a00] cursor-pointer" size="13"
-                      (click)="openAdminPage()" />
+                    <i-lucide [img]="Icons.ExternalLink" class="text-[#f54a00] cursor-pointer" size="13"
+                      (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives')" />
                     } @else {
-                    <i-lucide [img]="CircleCheck" class="text-emerald-400" size="13" />
+                    <i-lucide [img]="Icons.CircleCheck" class="text-emerald-400" size="13" />
                     <span class="text-emerald-400 text-xs font-medium">Ja</span>
                     }
                   </div>
@@ -182,12 +181,12 @@
                   <span>Alleen leden kunnen toegang krijgen</span>
                   <div class="flex items-center gap-1">
                     @if (!drive.onlyMembersCanAccess) {
-                    <i-lucide [img]="TriangleAlert" class="text-[#f54a00]" size="13" />
+                    <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
                     <span class="text-[#f54a00] text-[13px] font-medium">Nee</span>
-                    <i-lucide [img]="ExternalLink" class="text-[#f54a00] cursor-pointer" size="13"
-                      (click)="openAdminPage()" />
+                    <i-lucide [img]="Icons.ExternalLink" class="text-[#f54a00] cursor-pointer" size="13"
+                      (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives')" />
                     } @else {
-                    <i-lucide [img]="CircleCheck" class="text-emerald-400" size="13" />
+                    <i-lucide [img]="Icons.CircleCheck" class="text-emerald-400" size="13" />
                     <span class="text-emerald-400 text-xs font-medium">Ja</span>
                     }
                   </div>
@@ -206,14 +205,14 @@
           <div class="flex gap-2">
             <button (click)="prevPage()" [disabled]="currentPage() === 1"
               class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
-              <lucide-icon [img]="ChevronLeft" size="16"></lucide-icon>
+              <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
               Vorige
             </button>
 
             <button (click)="nextPage()" [disabled]="!nextPageToken()"
               class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
               Volgende
-              <lucide-icon [img]="ChevronRight" size="16"></lucide-icon>
+              <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
             </button>
           </div>
         </div>

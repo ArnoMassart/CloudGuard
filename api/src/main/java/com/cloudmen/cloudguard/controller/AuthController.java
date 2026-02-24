@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.TokenRequestDto;
 import com.cloudmen.cloudguard.dto.UserDto;
 import com.cloudmen.cloudguard.service.AuthService;
@@ -54,7 +55,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<UserDto> googleLogin(@RequestBody TokenRequestDto request) {
-        AuthService.LoginResult result = authService.processLogin(request.getToken());
+        LoginResult result = authService.processLogin(request.getToken());
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, result.cookie().toString())
                 .body(result.userDto());
