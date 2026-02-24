@@ -68,15 +68,18 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         }
 
         if (best == null) {
+            String baseExplanation = "Deze beleidsregel bepaalt wie nieuwe gedeelde drives mag aanmaken binnen deze organisatie-eenheid.";
+            String inheritanceExplanation = "Geen beleid voor gedeelde drive-aanmaak gevonden voor deze OU of bovenliggende OUs.";
+
             return new OrgUnitPolicyDto(
                     key(),
                     "Gedeelde drives aanmaken",
                     "Wie mag nieuwe gedeelde drives aanmaken",
                     "Niet geconfigureerd",
                     "bg-slate-100 text-slate-700",
-                    "Geen beleid voor gedeelde drive-aanmaak gevonden voor deze OU.",
+                    baseExplanation,
+                    inheritanceExplanation,
                     false,
-                    "Cloud Identity Policy API",
                     "Klik hier om deze instellingen aan te passen",
                     "apps"
             );
@@ -88,32 +91,32 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
 
         String status;
         String statusClass;
-        String explanation;
+
+        String baseExplanation = "Shared Drives zorgen dat bestanden eigendom blijven van de organisatie i.p.v. individuele gebruikers.";
+        String inheritanceExplanation;
 
         if (allowedNode.isMissingNode() || allowedNode.isNull()) {
             status = "Kon niet bepalen";
             statusClass = "bg-slate-100 text-slate-700";
-            explanation = "Beleid gevonden maar waarde ontbreekt in API-response.";
+            inheritanceExplanation = "Beleid gevonden maar waarde ontbreekt in API-response.";
         } else {
             boolean allowed = allowedNode.asBoolean();
             status = allowed ? "Toegestaan" : "Niet toegestaan";
             statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
-            if (inherited) {
-                explanation = "Overgenomen van bovenliggende OU (" + bestOuPath + ").";
-            } else {
-                explanation = "Rechtstreeks ingesteld op deze OU.";
-            }
+            inheritanceExplanation = inherited
+                    ? "Overgenomen van bovenliggende OU."
+                    : "Rechtstreeks ingesteld op deze OU.";
         }
 
         return new OrgUnitPolicyDto(
                 key(),
-                "Gedeelde drives aanmaken",
+                "Shared Drives",
                 "Wie mag nieuwe gedeelde drives aanmaken",
                 status,
                 statusClass,
-                explanation,
+                baseExplanation,
+                inheritanceExplanation,
                 inherited,
-                "Cloud Identity Policy API",
                 "Klik hier om deze instellingen aan te passen",
                 "apps"
         );

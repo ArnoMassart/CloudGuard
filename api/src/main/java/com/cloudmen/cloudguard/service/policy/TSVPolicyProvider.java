@@ -66,15 +66,17 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
             css = "bg-amber-100 text-amber-800";
         }
 
+        String baseExplanation = "Deze beleidsregel toont de adoptie van tweestapsverificatie (2SV) onder gebruikers in deze organisatie-eenheid. Het gaat om compliance op basis van user-data.";
+
         return new OrgUnitPolicyDto(
                 key(),
                 "Tweestapsverificatie (2SV) adoptie",
                 "Aantal gebruikers met 2SV in deze OU",
                 status,
                 css,
-                "Dit is adoptie/compliance op basis van user-data (niet per se 'enforced policy').",
+                baseExplanation,
+                null,
                 false,
-                "Directory API",
                 SETTINGS_LINK_TEXT,
                 "2sv"
         );

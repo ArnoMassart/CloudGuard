@@ -55,19 +55,20 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
                 ? "bg-slate-100 text-slate-700"
                 : anyOff ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800";
 
-        String explanation = anyInherited
+        String baseExplanation = "Deze beleidsregel toont de service-status van Gmail, Drive en Meet voor deze organisatie-eenheid. Services kunnen aan of uit staan per OU.";
+        String inheritanceExplanation = anyInherited
                 ? "Sommige services erven hun status van een bovenliggende OU."
                 : "Alle services zijn rechtstreeks ingesteld op deze OU.";
 
         return new OrgUnitPolicyDto(
                 key(),
-                "Services voor deze OU",
+                "Google Workspace Services",
                 "Gmail / Drive / Meet service status",
                 status,
                 statusClass,
-                explanation,
+                baseExplanation,
+                inheritanceExplanation,
                 anyInherited,
-                "Cloud Identity Policy API",
                 "Klik hier om deze instellingen aan te passen",
                 "apps"
         );
@@ -108,8 +109,8 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
             String ouRef = p.path("policyQuery").path("orgUnit").asText("");
             String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouMap);
 
-            // 🔍 DEBUG LOG
-            log.info("Matched type={}, ouRef={}, resolvedOuPath={}", wantedType, ouRef, policyOuPath);
+            //DEBUG LOG
+            //log.info("Matched type={}, ouRef={}, resolvedOuPath={}", wantedType, ouRef, policyOuPath);
 
             if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
 
@@ -128,12 +129,12 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
 
         JsonNode valueNode = best.path("setting").path("value");
 
-        // 🔍 DEBUG LOG
-
+        /* DEBUG LOG
         log.info("Selected best policy for {} → OU={} value={}",
                 service,
                 bestOuPath,
                 valueNode.toPrettyString());
+         */
 
         boolean inherited = !orgUnitPath.equals(bestOuPath);
 

@@ -20,7 +20,8 @@ export interface OrgUnitPolicyDto {
     description: string;
     status: string;
     statusClass: string;
-    explanation: string;
+    baseExplanation?: string;
+    inheritanceExplanation?: string;
     inherited: boolean;
     source: string;
     settingsLinkText?: string;

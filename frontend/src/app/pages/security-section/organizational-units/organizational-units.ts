@@ -135,4 +135,11 @@ export class OrganizationalUnits implements OnInit {
   openPolicyAdmin(adminLink: string | undefined): void {
     if (adminLink) window.open(`https://admin.google.com/ac/${adminLink}`);
   }
+
+  readonly getStatusExplanation = (statusClass: string | undefined): string => {
+    if (!statusClass) return '';
+    if (statusClass.includes('green')) return 'Deze beleidsregel is conform.';
+    if (statusClass.includes('amber')) return 'Let op: er zijn aandachtspunten bij deze beleidsregel.';
+    return 'De status van deze beleidsregel kon niet worden vastgesteld.';
+  };
 }

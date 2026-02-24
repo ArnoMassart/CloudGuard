@@ -15,9 +15,9 @@ public class OrgUnitPolicyDto {
     private String description;
     private String status;
     private String statusClass;
-    private String explanation;
+    private String baseExplanation;
+    private String inheritanceExplanation;
     private boolean inherited;
-    private String source;
     private String settingsLinkText;
     private String adminLink;
 }

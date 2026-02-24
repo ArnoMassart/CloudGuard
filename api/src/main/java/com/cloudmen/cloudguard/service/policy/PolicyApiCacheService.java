@@ -59,8 +59,7 @@ public class PolicyApiCacheService {
     }
 
     /**
-     * Returns a cached mapping from OU ID (e.g. "03ph8a2z2rzxpai") to OU path (e.g. "/Sales/TeamA").
-     * Root OU "/" is always present.
+     * Returns a cached mapping from OU ID
      */
     public Map<String, String> getOuIdToPathMap(String adminEmail) throws Exception {
         long now = System.currentTimeMillis();
@@ -75,7 +74,6 @@ public class PolicyApiCacheService {
 
     /**
      * Resolves "orgUnits/xxxx" (as returned by Policy API) to an OU path like "/Sales".
-     * Returns "/" if the ID is empty, absent, or cannot be resolved.
      */
     public String resolveOuIdToPath(String policyOuRef, Map<String, String> ouMap) {
         if (policyOuRef == null || policyOuRef.isBlank()) return "/";

@@ -40,9 +40,9 @@ public class OrgUnitPolicyAggregator {
                         "Beschrijving kon niet opgehaald worden",
                         "Kon niet ophalen",
                         "bg-amber-100 text-amber-800",
-                        "Beleidsregel kon niet opgehaald worden.",
+                        "De beleidsregelgegevens zijn tijdelijk niet beschikbaar.",
+                        "Er is een fout opgetreden bij het ophalen. Probeer later opnieuw.",
                         false,
-                        "N/A",
                         SETTINGS_LINK_TEXT,
                         null
                 ));

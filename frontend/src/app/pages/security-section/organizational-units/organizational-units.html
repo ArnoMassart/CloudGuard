@@ -132,27 +132,34 @@
                 </button>
                 @if (isPolicyExpanded(policy.key)) {
                   <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
-                    @if (policy.explanation) {
-                      <p class="text-sm text-slate-600 mb-3">{{ policy.explanation }}</p>
-                    }
-                    @if (policy.settingsLinkText) {
-                      <button
-                        type="button"
-                        class="text-sm text-primary font-medium hover:underline mb-3 block"
-                      >
-                        {{ policy.settingsLinkText }}
-                      </button>
-                    }
-                    @if (policy.adminLink) {
-                      <button
-                        type="button"
-                        (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
-                        class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center inline-flex"
-                      >
-                        <span>Naar Admin Console</span>
-                        <i-lucide [img]="externalLinkIcon" size="16" />
-                      </button>
-                    }
+                    <div class="text-sm text-slate-600 mb-3 space-y-2">
+                      @if (policy.baseExplanation) {
+                        <p>{{ policy.baseExplanation }}</p>
+                      }
+                      @if (policy.inheritanceExplanation) {
+                        <p>{{ policy.inheritanceExplanation }}</p>
+                      }
+                    </div>
+                    <div class="border-t border-slate-200/80 mt-3 pt-3 flex flex-col items-center">
+                      @if (policy.settingsLinkText) {
+                        <button
+                          type="button"
+                          class="text-sm text-primary font-medium hover:underline mb-3"
+                        >
+                          {{ policy.settingsLinkText }}
+                        </button>
+                      }
+                      @if (policy.adminLink) {
+                        <button
+                          type="button"
+                          (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
+                          class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center inline-flex"
+                        >
+                          <span>Naar Admin Console</span>
+                          <i-lucide [img]="externalLinkIcon" size="16" />
+                        </button>
+                      }
+                    </div>
                   </div>
                 }
               </li>
