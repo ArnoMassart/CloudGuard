@@ -6,7 +6,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   LucideAngularModule,
   TriangleAlert,
-  Search,
   CircleCheck,
   CircleX,
   Clock,
@@ -28,6 +27,7 @@ import { MobileDeviceService } from '../../../services/mobile-device-service';
 import { MobileDevice } from '../../../models/devices/MobileDevice';
 import { MobileDevicesOverviewResponse } from '../../../models/devices/MobileDevicesOverviewResponse';
 import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevicesPageWarnings';
+import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 
 @Component({
   selector: 'app-mobile-devices',
@@ -62,6 +62,8 @@ export class MobileDevices {
 
   readonly #mobileDeviceService = inject(MobileDeviceService);
 
+  readonly statusEnum = MobileDeviceStatus;
+
   hasWarnings = signal(false);
   devicePageWarnings = signal<MobileDevicesPageWarnings>({
     lockScreenWarning: false,
@@ -71,6 +73,7 @@ export class MobileDevices {
   });
 
   readonly isExpanded = signal(true);
+  MobileDeviceStatus: any;
 
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
@@ -92,6 +95,11 @@ export class MobileDevices {
   expandedDevice = signal<string | null>(null);
 
   uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
+
+  selectedDeviceType = signal<string>('Alle apparaat typen');
+
+  selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
+  statusOptions = Object.values(MobileDeviceStatus);
 
   toggleExpand(deviceId: string) {
     if (this.expandedDevice() === deviceId) {
@@ -122,7 +130,6 @@ export class MobileDevices {
           this.devices.set(res.devices);
           this.nextPageToken.set(res.nextPageToken);
           this.isLoading.set(false);
-          console.log(this.nextPageToken());
         },
         error: (err) => {
           console.error('Failed to load mobile devices', err);
@@ -177,13 +184,7 @@ export class MobileDevices {
     });
   }
 
-  selectedStatus = signal<string>('Alle statussen');
-  selectedDeviceType = signal<string>('Alle apparaat typen');
-
-  // Opties voor de status dropdown
-  statusOptions = ['Alle statussen', 'Approved', 'Pending', 'Blocked'];
-
-  onStatusChange(newStatus: string) {
+  onStatusChange(newStatus: MobileDeviceStatus) {
     this.selectedStatus.set(newStatus);
     this.#resetAndLoad();
   }

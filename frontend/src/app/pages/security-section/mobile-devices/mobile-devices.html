@@ -81,9 +81,9 @@
             <div class="relative flex-1">
                 <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
                     class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
-                    [class.border-primary]="selectedStatus() !== 'Alle statussen'"
-                    [class.ring-1]="selectedStatus() !== 'Alle statussen'"
-                    [class.ring-primary]="selectedStatus() !== 'Alle statussen'">
+                    [class.border-primary]="selectedStatus() !== statusEnum.All"
+                    [class.ring-1]="selectedStatus() !== statusEnum.All"
+                    [class.ring-primary]="selectedStatus() !== statusEnum.All">
 
                     @for (status of statusOptions; track status) {
                     <option [value]="status">{{ status }}</option>
@@ -304,13 +304,13 @@
 
                 <div class="flex gap-2">
                     <button (click)="prevPage()" [disabled]="currentPage() === 1"
-                        class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
+                        class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
                         <lucide-icon [img]="ChevronLeft" size="16"></lucide-icon>
                         Vorige
                     </button>
 
                     <button (click)="nextPage()" [disabled]="!nextPageToken()"
-                        class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
+                        class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
                         Volgende
                         <lucide-icon [img]="ChevronRight" size="16"></lucide-icon>
                     </button>

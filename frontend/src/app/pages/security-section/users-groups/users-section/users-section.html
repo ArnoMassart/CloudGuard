@@ -154,13 +154,13 @@
 
             <div class="flex gap-2">
                 <button (click)="prevPage()" [disabled]="currentPage() === 1"
-                    class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
+                    class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
                     <lucide-icon [img]="chevronLeft" size="16"></lucide-icon>
                     Vorige
                 </button>
 
                 <button (click)="nextPage()" [disabled]="!nextPageToken()"
-                    class="flex items-center gap-1 px-3 py-1 border rounded-md hover:bg-white disabled:opacity-50">
+                    class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
                     Volgende
                     <lucide-icon [img]="chevronRight" size="16"></lucide-icon>
                 </button>

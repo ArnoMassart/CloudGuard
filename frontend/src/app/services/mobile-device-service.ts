@@ -23,8 +23,6 @@ export class MobileDeviceService {
     if (status) params = params.set('status', status);
     if (type) params = params.set('deviceType', type);
 
-    console.log(params);
-
     return this.#http.get<MobileDevicePageResponse>(this.#API_URL, {
       params: params,
       withCredentials: true,

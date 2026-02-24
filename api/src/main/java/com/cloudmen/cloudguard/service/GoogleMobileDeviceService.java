@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.devices.MobileDeviceDetail;
 import com.cloudmen.cloudguard.dto.devices.MobileDeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.MobileDevicePageResponse;
+import com.cloudmen.cloudguard.dto.devices.MobileDeviceStatus;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.UtilityFunctions;
@@ -25,7 +26,9 @@ public class GoogleMobileDeviceService {
 
     public MobileDevicePageResponse getMobileDevicesPaged(
             String loggedInEmail, String pageToken, int size,
-            String filterStatus, String filterType, boolean isTestMode) {
+            String filterStatusStr, String filterType, boolean isTestMode) {
+
+        MobileDeviceStatus filterStatus = MobileDeviceStatus.fromString(filterStatusStr);
 
         try {
             Directory directoryService = googleApiFactory.getDirectoryService(
@@ -42,9 +45,9 @@ public class GoogleMobileDeviceService {
 
                 // Filters toepassen op de testdata
 
-                if (filterStatus != null && !filterStatus.equals("Alle statussen")) {
+                if (filterStatus != null && filterStatus != MobileDeviceStatus.ALL) {
                     allMockDevices = allMockDevices.stream()
-                            .filter(d -> d.getStatus() != null && d.getStatus().equalsIgnoreCase(filterStatus))
+                            .filter(d -> d.getStatus() != null && d.getStatus().equalsIgnoreCase(filterStatus.getValue()))
                             .toList();
                 }
                 if (filterType != null && !filterType.equals("Alle apparaat typen")) {
@@ -84,8 +87,8 @@ public class GoogleMobileDeviceService {
                 // Google Query Builder voor echte filters
                 List<String> queryParts = new ArrayList<>();
 
-                if (filterStatus != null && !filterStatus.equals("Alle statussen")) {
-                    queryParts.add("status:" + filterStatus);
+                if (filterStatus != null && filterStatus != MobileDeviceStatus.ALL) {
+                    queryParts.add("status:" + filterStatus.getValue());
                 }
                 if (filterType != null && !filterType.equals("Alle apparaat typen")) {
                     queryParts.add("os:" + filterType + "*");
@@ -106,7 +109,6 @@ public class GoogleMobileDeviceService {
             }
 
             List<MobileDeviceDetail> mappedDevices = googleDevices.stream().map(device -> {
-
                 String email = (device.getName() != null && !device.getName().isEmpty()) ? device.getName().get(0) : "Onbekend";
                 String userName = email.split("@")[0].replace(".", " ");
                 String deviceName = userName.split(" ")[0].toLowerCase() + "'s " + (device.getOs() != null && device.getOs().contains("iOS") ? "iPhone" : "Android");
@@ -313,84 +315,99 @@ public class GoogleMobileDeviceService {
 
         MobileDevice d1 = new MobileDevice();
         d1.setResourceId("dev-test-1");
-        d1.setName(Arrays.asList("jan.jansen@bedrijf.nl"));
+        d1.setName(List.of("jan.jansen@bedrijf.nl"));
         d1.setModel("Samsung Galaxy S24");
         d1.setOs("Android 14");
-        d1.setDevicePasswordStatus("PASSWORD_SET"); // Veilige PIN
-        d1.setEncryptionStatus("ENCRYPTED");        // Encryptie aan
-        d1.setDeviceCompromisedStatus("UNCOMPROMISED"); // Geen Root
+        d1.setDevicePasswordStatus("PASSWORD_SET");
+        d1.setEncryptionStatus("ENCRYPTED");
+        d1.setDeviceCompromisedStatus("UNCOMPROMISED");
         d1.setStatus("APPROVED");
-        d1.setLastSync(new DateTime(now - 86400000L)); // 1 dag geleden
+        d1.setLastSync(new DateTime(now - 86400000L));
         list.add(d1);
 
         MobileDevice d2 = new MobileDevice();
         d2.setResourceId("dev-test-2");
-        d2.setName(Arrays.asList("pieter.devries@bedrijf.nl"));
+        d2.setName(List.of("pieter.devries@bedrijf.nl"));
         d2.setModel("Google Pixel 5");
-        d2.setOs("Android 11");                     // Verouderd (Geeft 0%)
-        d2.setDevicePasswordStatus("NO_PASSWORD");  // Geen PIN (Geeft 0%)
-        d2.setEncryptionStatus("UNENCRYPTED");      // Geen encryptie (Geeft 0%)
-        d2.setDeviceCompromisedStatus("UNCOMPROMISED"); // Wél veilig (Geeft 25%)
+        d2.setOs("Android 11");
+        d2.setDevicePasswordStatus("NO_PASSWORD");
+        d2.setEncryptionStatus("UNENCRYPTED");
+        d2.setDeviceCompromisedStatus("UNCOMPROMISED");
         d2.setStatus("BLOCKED");
-        d2.setLastSync(new DateTime(now - (86400000L * 30))); // 30 dagen geleden
+        d2.setLastSync(new DateTime(now - (86400000L * 30)));
         list.add(d2);
 
         MobileDevice d3 = new MobileDevice();
         d3.setResourceId("dev-test-3");
-        d3.setName(Arrays.asList("lisa.smit@bedrijf.nl"));
+        d3.setName(List.of("lisa.smit@bedrijf.nl"));
         d3.setModel("iPhone 15 Pro");
         d3.setOs("iOS 17.2");
         d3.setDevicePasswordStatus("NO_PASSWORD");
         d3.setEncryptionStatus("ENCRYPTED");
         d3.setDeviceCompromisedStatus("COMPROMISED");
         d3.setStatus("APPROVED");
-        d3.setLastSync(new DateTime(now - 3600000L)); // 1 uur geleden
+        d3.setLastSync(new DateTime(now - 3600000L));
         list.add(d3);
 
         MobileDevice d4 = new MobileDevice();
         d4.setResourceId("dev-test-4");
-        d4.setName(Arrays.asList("mark.rutte@bedrijf.nl"));
+        d4.setName(List.of("mark.rutte@bedrijf.nl"));
         d4.setModel("iPhone 8");
-        d4.setOs("iOS 15.0");                       // Verouderd (Geeft 0%)
-        d4.setDevicePasswordStatus("PASSWORD_SET"); // Wel veilig
-        d4.setEncryptionStatus("ENCRYPTED");        // Wel veilig
-        d4.setDeviceCompromisedStatus("UNCOMPROMISED"); // Wel veilig
-        d4.setStatus("PENDING");                    // In afwachting van goedkeuring
-        d4.setLastSync(null); // 3 dagen geleden
+        d4.setOs("iOS 15.0");
+        d4.setDevicePasswordStatus("PASSWORD_SET");
+        d4.setEncryptionStatus("ENCRYPTED");
+        d4.setDeviceCompromisedStatus("UNCOMPROMISED");
+        d4.setStatus("PENDING");
+        d4.setLastSync(null);
         list.add(d4);
 
         MobileDevice d5 = new MobileDevice();
         d5.setResourceId("dev-test-5");
-        d5.setName(Arrays.asList("emma.devries@bedrijf.nl"));
+        d5.setName(List.of("emma.devries@bedrijf.nl"));
         d5.setModel("iPad Pro 11-inch");
         d5.setOs("iOS 16.5");
         d5.setDevicePasswordStatus("PASSWORD_SET");
         d5.setEncryptionStatus("ENCRYPTED");
-        d5.setDeviceCompromisedStatus("COMPROMISED"); // Jailbreak! (Geeft 0%)
+        d5.setDeviceCompromisedStatus("COMPROMISED");
         d5.setStatus("BLOCKED");
-        d5.setLastSync(new DateTime(now - 600000L)); // 10 min geleden
+        d5.setLastSync(new DateTime(now - 600000L));
         list.add(d5);
 
         MobileDevice d6 = new MobileDevice();
         d6.setResourceId("dev-test-6");
-        d6.setName(Arrays.asList("tom.klaassen@bedrijf.nl"));
+        d6.setName(List.of("tom.klaassen@bedrijf.nl"));
         d6.setModel("Motorola Edge");
         d6.setOs("Android 14");
         d6.setDevicePasswordStatus("PASSWORD_SET");
-        d6.setEncryptionStatus("ENCRYPTING");       // Jouw code vangt dit netjes op als Encrypted!
+        d6.setEncryptionStatus("ENCRYPTING");
         d6.setDeviceCompromisedStatus("UNCOMPROMISED");
         d6.setStatus("APPROVED");
-        d6.setLastSync(null); // Paar seconden geleden
+        d6.setLastSync(null);
         list.add(d6);
-        // Paar seconden geleden
-        list.add(d5);
-        list.add(d2);
-        list.add(d4);
-        list.add(d6);
-        list.add(d3);
-        list.add(d4);
-        list.add(d1);
+
+        // Copy all previous to have more mock data
+        list.add(copyDevice(d5, "dev-test-7"));
+        list.add(copyDevice(d2, "dev-test-8"));
+        list.add(copyDevice(d4, "dev-test-9"));
+        list.add(copyDevice(d6, "dev-test-10"));
+        list.add(copyDevice(d3, "dev-test-11"));
+        list.add(copyDevice(d4, "dev-test-12"));
+        list.add(copyDevice(d1, "dev-test-13"));
 
         return list;
+    }
+
+    private MobileDevice copyDevice(MobileDevice original, String newId) {
+        MobileDevice copy = new MobileDevice();
+        copy.setResourceId(newId);
+        copy.setName(original.getName());
+        copy.setModel(original.getModel());
+        copy.setOs(original.getOs());
+        copy.setDevicePasswordStatus(original.getDevicePasswordStatus());
+        copy.setEncryptionStatus(original.getEncryptionStatus());
+        copy.setDeviceCompromisedStatus(original.getDeviceCompromisedStatus());
+        copy.setStatus(original.getStatus());
+        copy.setLastSync(original.getLastSync());
+        return copy;
     }
 }
