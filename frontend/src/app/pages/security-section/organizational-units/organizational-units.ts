@@ -133,7 +133,11 @@ export class OrganizationalUnits implements OnInit {
   }
 
   openPolicyAdmin(adminLink: string | undefined): void {
-    if (adminLink) window.open(`https://admin.google.com/ac/${adminLink}`);
+    if (!adminLink) return;
+    const url = adminLink.startsWith('http')
+      ? adminLink
+      : `https://admin.google.com/u/1/ac/${adminLink}`;
+    window.open(url, '_blank', 'noopener');
   }
 
   readonly isStatusGreen = (statusClass: string | undefined): boolean =>

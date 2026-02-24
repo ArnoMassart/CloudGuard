@@ -79,9 +79,6 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
                     "bg-slate-100 text-slate-700",
                     baseExplanation,
                     inheritanceExplanation,
-                    null,
-                    null,
-                    null,
                     false,
                     "Klik hier om deze instellingen aan te passen",
                     "apps"
@@ -119,12 +116,9 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
                 statusClass,
                 baseExplanation,
                 inheritanceExplanation,
-                null,
-                null,
-                null,
                 inherited,
                 "Klik hier om deze instellingen aan te passen",
-                "apps"
+                "https://admin.google.com/u/1/ac/managedsettings/55656082996"
         );
     }
 

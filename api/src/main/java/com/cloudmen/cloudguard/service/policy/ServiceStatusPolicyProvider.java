@@ -70,7 +70,7 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
                 inheritanceExplanation,
                 anyInherited,
                 "Klik hier om deze instellingen aan te passen",
-                "apps"
+                "https://admin.google.com/u/1/ac/appslist/core"
         );
     }
 
