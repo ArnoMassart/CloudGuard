@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.decodePrivateKey;
+
 @Component
 public class GoogleApiFactory {
 
@@ -22,12 +24,12 @@ public class GoogleApiFactory {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    private ServiceAccountCredentials getCredentials(Set<String> scopes, String loggedInEmail) throws Exception {
+    public ServiceAccountCredentials getCredentials(Set<String> scopes, String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
 
         return ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
-                .setPrivateKey(GoogleServiceHelperMethods.decodePrivateKey(pk))
+                .setPrivateKey(decodePrivateKey(pk))
                 .setServiceAccountUser(loggedInEmail)
                 .setScopes(scopes)
                 .build();
@@ -35,17 +37,6 @@ public class GoogleApiFactory {
 
     public Directory getDirectoryService(String scope, String loggedInEmail) throws Exception {
         return getDirectoryService(Collections.singleton(scope), loggedInEmail);
-    }
-
-    /** Returns credentials for arbitrary scopes (e.g. cloud-platform for ACM API). */
-    public GoogleCredentials getCredentials(Set<String> scopes, String impersonatedUser) throws Exception {
-        String pk = privateKey.replace("\\n", "\n");
-        return ServiceAccountCredentials.newBuilder()
-                .setClientEmail(clientEmail)
-                .setPrivateKey(decodePrivateKey(pk))
-                .setServiceAccountUser(impersonatedUser)
-                .setScopes(scopes)
-                .build();
     }
 
     public Directory getDirectoryService(Set<String> scopes, String loggedInEmail) throws Exception {

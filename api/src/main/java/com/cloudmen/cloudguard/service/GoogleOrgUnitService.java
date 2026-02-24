@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.dto.OrgUnitNodeDto;
+import com.cloudmen.cloudguard.dto.organization.OrgUnitNodeDto;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.OrgUnit;
@@ -21,9 +22,9 @@ public class GoogleOrgUnitService {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleOrgUnitService.class);
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
 
-    public GoogleOrgUnitService(GoogleDirectoryFactory directoryFactory) {
+    public GoogleOrgUnitService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 

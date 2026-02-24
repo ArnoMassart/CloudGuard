@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.policy;
 
-import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
+import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;

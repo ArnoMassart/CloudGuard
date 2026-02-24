@@ -1,7 +1,8 @@
 package com.cloudmen.cloudguard.service.policy;
 
-import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
-import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
+import com.cloudmen.cloudguard.domain.model.ServiceStatus;
+import com.cloudmen.cloudguard.dto.ServiceStatusDto;
+import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,8 +90,6 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
     /**
      * For a given service (e.g. "gmail"), finds all policies with matching setting.type,
      * resolves each policy's OU ID to a path, and picks the most specific ancestor
-     * of {@code orgUnitPath}. If the winning policy came from a parent OU, it's
-     * marked as inherited.
      */
     private ServiceStatusDto resolveServiceForOu(
             List<JsonNode> policies, String service, String orgUnitPath, Map<String, String> ouMap) {

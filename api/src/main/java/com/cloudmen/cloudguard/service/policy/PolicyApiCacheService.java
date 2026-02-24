@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.policy;
 
-import com.cloudmen.cloudguard.service.GoogleDirectoryFactory;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.admin.directory.Directory;
@@ -32,7 +32,7 @@ public class PolicyApiCacheService {
     private static final String POLICY_API_BASE = "https://cloudidentity.googleapis.com/v1/policies";
     private static final long CACHE_TTL_MS = 5 * 60 * 1000;
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -42,7 +42,7 @@ public class PolicyApiCacheService {
     private volatile Map<String, String> cachedOuIdToPath;
     private volatile long ouCacheTimestamp;
 
-    public PolicyApiCacheService(GoogleDirectoryFactory directoryFactory) {
+    public PolicyApiCacheService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 

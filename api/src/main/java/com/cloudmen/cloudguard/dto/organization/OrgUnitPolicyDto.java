@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto;
+package com.cloudmen.cloudguard.dto.organization;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

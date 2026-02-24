@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.service.policy;
 
-import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
-import com.cloudmen.cloudguard.service.GoogleDirectoryFactory;
+import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
@@ -17,9 +17,9 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
     private static final String DIRECTORY_USER_READONLY_SCOPE = "https://www.googleapis.com/auth/admin.directory.user.readonly";
     private static final String SETTINGS_LINK_TEXT = "Klik hier om deze instellingen aan te passen";
 
-    private final GoogleDirectoryFactory directoryFactory;
+    private final GoogleApiFactory directoryFactory;
 
-    public TSVPolicyProvider(GoogleDirectoryFactory directoryFactory) {
+    public TSVPolicyProvider(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 

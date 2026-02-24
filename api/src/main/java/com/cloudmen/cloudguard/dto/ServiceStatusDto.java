@@ -1,5 +1,6 @@
-package com.cloudmen.cloudguard.service.policy;
+package com.cloudmen.cloudguard.dto;
 
+import com.cloudmen.cloudguard.domain.model.ServiceStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,7 @@ import lombok.Setter;
 @Setter
 public class ServiceStatusDto {
     private String serviceKey;
-    private ServiceStatus status; 
+    private ServiceStatus status;
     private boolean inherited;
     private String fromOrgUnit;
 
