@@ -5,10 +5,12 @@ import com.cloudmen.cloudguard.service.GoogleDirectoryFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
+@Order(1)
 @Component
 public class TSVPolicyProvider implements OrgUnitPolicyProvider {
     private static final String DIRECTORY_USER_SECURITY_SCOPE = "https://www.googleapis.com/auth/admin.directory.user.security";

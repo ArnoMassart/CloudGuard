@@ -3,10 +3,12 @@ package com.cloudmen.cloudguard.service.policy;
 import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
 import com.cloudmen.cloudguard.service.GoogleDirectoryFactory;
 import com.google.api.services.admin.directory.Directory;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+@Order(3)
 @Component
 public class ExternalGroupMembersProvider implements OrgUnitPolicyProvider {
     private static final String GROUP_READONLY_SCOPE = "https://www.googleapis.com/auth/admin.directory.group.readonly";
@@ -28,7 +30,16 @@ public class ExternalGroupMembersProvider implements OrgUnitPolicyProvider {
 
         String customerDomain = directory.customers().get("my_customer").execute().getCustomerDomain();
         if (customerDomain == null || customerDomain.isBlank()) {
-            customerDomain = "";
+            return new OrgUnitPolicyDto(key(),
+                    "Externe leden in groepen",
+                    "Detectie van externe members",
+                    "Kon niet ophalen",
+                    "bg-amber-100 text-amber-800",
+                    "Kon klantdomein niet ophalen (Directory API).",
+                    false,
+                    "Directory API",
+                    SETTINGS_LINK_TEXT,
+                    "groups");
         }
         final String domainSuffix = "@" + customerDomain.toLowerCase();
 
