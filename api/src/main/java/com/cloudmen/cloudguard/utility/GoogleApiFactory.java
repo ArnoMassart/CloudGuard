@@ -5,12 +5,15 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.drive.Drive;
 import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Set;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.decodePrivateKey;
 
 @Component
 public class GoogleApiFactory {
@@ -21,12 +24,12 @@ public class GoogleApiFactory {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    private ServiceAccountCredentials getCredentials(Set<String> scopes, String loggedInEmail) throws Exception {
+    public ServiceAccountCredentials getCredentials(Set<String> scopes, String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
 
         return ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
-                .setPrivateKey(GoogleServiceHelperMethods.decodePrivateKey(pk))
+                .setPrivateKey(decodePrivateKey(pk))
                 .setServiceAccountUser(loggedInEmail)
                 .setScopes(scopes)
                 .build();

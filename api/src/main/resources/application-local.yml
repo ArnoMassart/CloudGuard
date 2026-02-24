@@ -11,3 +11,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
+google:
+  gcp:
+    project-id: cloudguard-487215
