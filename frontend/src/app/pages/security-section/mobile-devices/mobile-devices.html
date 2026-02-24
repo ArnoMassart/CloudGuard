@@ -208,7 +208,7 @@
                                             @if (!device.isScreenLockSecure) {
                                             <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
-                                                (click)="openAdminPage()"></i-lucide>
+                                                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list?default=true&category=mobile')"></i-lucide>
                                             }
                                             <i-lucide
                                                 [img]="device.isScreenLockSecure ? Icons.CircleCheck : Icons.TriangleAlert"
@@ -232,7 +232,7 @@
                                             @if (!device.isEncryptionSecure) {
                                             <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
-                                                (click)="openAdminPage()"></i-lucide>
+                                                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list?default=true&category=mobile')"></i-lucide>
                                             }
                                             <lucide-icon
                                                 [img]="device.isEncryptionSecure ? Icons.CircleCheck : Icons.TriangleAlert"
@@ -257,7 +257,7 @@
                                             @if (!device.isOsSecure) {
                                             <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
-                                                (click)="openAdminPage()"></i-lucide>
+                                                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list?default=true&category=mobile')"></i-lucide>
                                             }
 
                                             <lucide-icon
@@ -282,7 +282,7 @@
                                             @if (!device.isIntegritySecure) {
                                             <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
-                                                (click)="openAdminPage()"></i-lucide>
+                                                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list?default=true&category=mobile')"></i-lucide>
 
                                             }
                                             <lucide-icon

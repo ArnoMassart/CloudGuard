@@ -11,6 +11,7 @@ import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevices
 import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
+import { UtilityMethods } from '../../../shared/UtilityMethods';
 
 // ==========================================
 // CONSTANTS
@@ -36,6 +37,7 @@ export class MobileDevices {
   // ==========================================
   readonly Icons = AppIcons;
   readonly statusEnum = MobileDeviceStatus;
+  readonly UtilityMethods = UtilityMethods;
   readonly #mobileDeviceService = inject(MobileDeviceService);
 
   // ==========================================
@@ -45,20 +47,17 @@ export class MobileDevices {
 
   devices = signal<MobileDevice[]>([]);
   pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
-
-  // Paging state
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
-  isLoading = signal(false);
-
   expandedDevice = signal<string | null>(null);
 
   uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
-
   selectedDeviceType = signal<string>('Alle apparaat typen');
 
   selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
   statusOptions = Object.values(MobileDeviceStatus);
+
+  currentPage = signal(1);
+  nextPageToken = signal<string | null>(null);
+  isLoading = signal(false);
 
   hasWarnings = signal(false);
   devicePageWarnings = signal<MobileDevicesPageWarnings>({
@@ -70,9 +69,7 @@ export class MobileDevices {
 
   hasMultipleWarnings = computed(() => {
     const warnings = this.devicePageWarnings();
-
     const activeCount = Object.values(warnings).filter((val) => val === true).length;
-
     return activeCount > 1;
   });
 
@@ -84,6 +81,11 @@ export class MobileDevices {
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
+  ngOnInit(): void {
+    this.#loadDeviceTypes();
+    this.#loadPageOverview();
+    this.#loadMobileDevices();
+  }
 
   // ==========================================
   // PUBLIC METHODS
@@ -91,10 +93,6 @@ export class MobileDevices {
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
   }
-
-  // ==========================================
-  // PRIVATE METHODS
-  // ==========================================
 
   toggleExpand(deviceId: string) {
     if (this.expandedDevice() === deviceId) {
@@ -104,13 +102,38 @@ export class MobileDevices {
     }
   }
 
-  ngOnInit(): void {
-    this.loadDeviceTypes();
-    this.loadPageOverview();
-    this.loadMobileDevices();
+  onStatusChange(newStatus: MobileDeviceStatus) {
+    this.selectedStatus.set(newStatus);
+    this.#resetAndLoad();
   }
 
-  loadMobileDevices(token: string | null = null) {
+  onDeviceTypeChange(newType: string) {
+    this.selectedDeviceType.set(newType);
+    this.#resetAndLoad();
+  }
+
+  nextPage() {
+    const token = this.nextPageToken();
+    if (token) {
+      this.#tokenHistory.push(token);
+      this.currentPage.update((p) => p + 1);
+      this.#loadMobileDevices(token);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.#tokenHistory.pop();
+      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      this.currentPage.update((p) => p - 1);
+      this.#loadMobileDevices(prevToken);
+    }
+  }
+
+  // ==========================================
+  // PRIVATE METHODS
+  // ==========================================
+  #loadMobileDevices(token: string | null = null) {
     this.isLoading.set(true);
 
     this.#mobileDeviceService
@@ -133,11 +156,11 @@ export class MobileDevices {
       });
   }
 
-  loadPageOverview() {
+  #loadPageOverview() {
     this.#mobileDeviceService.getMobileDevicesPageOverview().subscribe({
       next: (res) => {
         this.pageOverview.set(res);
-        this.loadWarnings();
+        this.#loadWarnings();
       },
       error: (err) => {
         console.error('Failed to load page overview', err);
@@ -145,7 +168,7 @@ export class MobileDevices {
     });
   }
 
-  loadWarnings() {
+  #loadWarnings() {
     if (this.pageOverview()?.lockScreenCount! > 0) {
       this.hasWarnings.set(true);
       this.devicePageWarnings().lockScreenWarning = true;
@@ -167,10 +190,9 @@ export class MobileDevices {
     }
   }
 
-  loadDeviceTypes() {
+  #loadDeviceTypes() {
     this.#mobileDeviceService.getUniqueDeviceTypes().subscribe({
       next: (types) => {
-        // Voeg de unieke types uit de backend toe achter de standaard 'Alle' optie
         this.uniqueDeviceTypes.set(['Alle apparaat typen', ...types]);
       },
       error: (err) => {
@@ -179,42 +201,10 @@ export class MobileDevices {
     });
   }
 
-  onStatusChange(newStatus: MobileDeviceStatus) {
-    this.selectedStatus.set(newStatus);
-    this.#resetAndLoad();
-  }
-
-  onDeviceTypeChange(newType: string) {
-    this.selectedDeviceType.set(newType);
-    this.#resetAndLoad();
-  }
-
-  nextPage() {
-    const token = this.nextPageToken();
-    if (token) {
-      this.#tokenHistory.push(token); // Onthoud dit token om terug te kunnen
-      this.currentPage.update((p) => p + 1);
-      this.loadMobileDevices(token);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.#tokenHistory.pop(); // Verwijder huidige token
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1]; // Pak de vorige
-      this.currentPage.update((p) => p - 1);
-      this.loadMobileDevices(prevToken);
-    }
-  }
-
   #resetAndLoad() {
     this.currentPage.set(1);
-    this.#tokenHistory = [null]; // Reset de paginatie-historie
-    this.expandedDevice.set(null); // Sluit eventueel opengeklapte rijen
-    this.loadMobileDevices(null);
-  }
-
-  openAdminPage() {
-    window.open(`https://admin.google.com/ac/devices/list?default=true&category=mobile`);
+    this.#tokenHistory = [null];
+    this.expandedDevice.set(null);
+    this.#loadMobileDevices(null);
   }
 }

@@ -14,10 +14,19 @@ import { AppIcons } from '../../../shared/AppIcons';
   styleUrl: './users-groups.css',
 })
 export class UsersGroups implements OnInit {
+  // ==========================================
+  // INJECTIONS
+  // ==========================================
   readonly Icons = AppIcons;
 
+  // ==========================================
+  // PUBLIC PROPERTIES & SIGNALS
+  // ==========================================
   currentSection = signal<SectionType>('USERS');
 
+  // ==========================================
+  // LIFECYCLE HOOKS
+  // ==========================================
   ngOnInit(): void {
     const section = sessionStorage.getItem('user-group-section');
 
@@ -28,6 +37,9 @@ export class UsersGroups implements OnInit {
     }
   }
 
+  // ==========================================
+  // PUBLIC METHODS
+  // ==========================================
   togglePage(section: SectionType) {
     if (this.currentSection() !== section) {
       this.currentSection.set(section);

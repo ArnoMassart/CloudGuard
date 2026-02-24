@@ -37,10 +37,9 @@ export class SharedDrives implements OnInit {
 
   drives = signal<SharedDrive[]>([]);
   isLoading = signal(false);
-  searchValue = signal('');
+  searchQuery = signal('');
   pageOverview = signal<SharedDriveOverviewResponse | null>(null);
 
-  searchQuery = signal('');
   currentPage = signal(1);
   nextPageToken = signal<string | null>(null);
 
@@ -90,14 +89,14 @@ export class SharedDrives implements OnInit {
   onSearch(value: string) {
     this.searchQuery.set(value);
     this.currentPage.set(1);
-    this.#tokenHistory = [null]; // Reset historie bij nieuwe zoekopdracht
+    this.#tokenHistory = [null];
     this.#loadDrives(null);
   }
 
   nextPage() {
     const token = this.nextPageToken();
     if (token) {
-      this.#tokenHistory.push(token); // Onthoud dit token om terug te kunnen
+      this.#tokenHistory.push(token);
       this.currentPage.update((p) => p + 1);
       this.#loadDrives(token);
     }
@@ -105,8 +104,8 @@ export class SharedDrives implements OnInit {
 
   prevPage() {
     if (this.currentPage() > 1) {
-      this.#tokenHistory.pop(); // Verwijder huidige token
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1]; // Pak de vorige
+      this.#tokenHistory.pop();
+      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
       this.currentPage.update((p) => p - 1);
       this.#loadDrives(prevToken);
     }
