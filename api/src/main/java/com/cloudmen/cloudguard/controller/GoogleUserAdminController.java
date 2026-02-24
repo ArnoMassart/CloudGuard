@@ -23,7 +23,7 @@ public class GoogleUserAdminController {
     public ResponseEntity<UserPageResponse> getOrgUsers(
             @CookieValue(name = "AuthToken", required = false) String token,
             @RequestParam(required = false) String pageToken,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "3") int size,
             @RequestParam(required = false) String query) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

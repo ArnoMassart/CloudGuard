@@ -25,7 +25,7 @@ export class UserService {
     return user.roles.length > 0 ? user.roles[0] : 'Admin';
   }
 
-  getOrgUsers(pageToken?: string, query?: string, size: number = 10): Observable<UserPageResponse> {
+  getOrgUsers(size: number, pageToken?: string, query?: string): Observable<UserPageResponse> {
     let params = new HttpParams().set('size', size.toString());
 
     if (pageToken) params = params.set('pageToken', pageToken);
