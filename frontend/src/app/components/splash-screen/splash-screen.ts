@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
-import { AppIcons } from '../../shared/app-icons';
+import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
   selector: 'app-splash-screen',

@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { AuthService } from '@auth0/auth0-angular';
 import { CircleX, LucideAngularModule, ShieldCheck } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
-import { AppIcons } from '../../shared/app-icons';
+import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
   selector: 'app-forbidden',
