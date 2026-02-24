@@ -17,6 +17,10 @@ public class OrgUnitPolicyDto {
     private String statusClass;
     private String baseExplanation;
     private String inheritanceExplanation;
+    // Optional per-service statuses for the services policy
+    private String gmailStatus;
+    private String driveStatus;
+    private String meetStatus;
     private boolean inherited;
     private String settingsLinkText;
     private String adminLink;

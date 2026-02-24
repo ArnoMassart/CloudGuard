@@ -136,6 +136,13 @@ export class OrganizationalUnits implements OnInit {
     if (adminLink) window.open(`https://admin.google.com/ac/${adminLink}`);
   }
 
+  readonly isStatusGreen = (statusClass: string | undefined): boolean =>
+    !!statusClass?.toLowerCase().includes('green');
+  readonly isStatusAmber = (statusClass: string | undefined): boolean =>
+    !!statusClass?.toLowerCase().includes('amber');
+  readonly isStatusSlate = (statusClass: string | undefined): boolean =>
+    !this.isStatusGreen(statusClass) && !this.isStatusAmber(statusClass);
+
   readonly getStatusExplanation = (statusClass: string | undefined): string => {
     if (!statusClass) return '';
     if (statusClass.includes('green')) return 'Deze beleidsregel is conform.';

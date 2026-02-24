@@ -16,13 +16,13 @@
         {{ error() }}
       </div>
     } @else if (tree(); as root) {
-      <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
+      <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5 h-[80vh] flex flex-col">
       <div class="flex items-center gap-2 mb-4">
         <i-lucide [img]="folderTreeIcon" size="20" class="text-slate-600" />
         <h2 class="font-medium text-slate-900">Structuur</h2>
       </div>
 
-      <div class="space-y-0.5 max-h-[60vh] overflow-y-auto min-h-0">
+      <div class="space-y-0.5 min-h-0 flex-1 overflow-y-auto">
         <ul class="space-y-0.5 list-none p-0 m-0">
           <ng-container
             *ngTemplateOutlet="ouNode; context: { $implicit: root, depth: 0 }"
@@ -125,7 +125,13 @@
                     <p class="text-xs text-slate-500 mt-0.5">{{ policy.description }}</p>
                   </div>
                   <span
-                    class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full {{ policy.statusClass }}"
+                    class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center"
+                    [class.bg-green-100]="isStatusGreen(policy.statusClass)"
+                    [class.text-green-800]="isStatusGreen(policy.statusClass)"
+                    [class.bg-amber-100]="isStatusAmber(policy.statusClass)"
+                    [class.text-amber-800]="isStatusAmber(policy.statusClass)"
+                    [class.bg-slate-100]="isStatusSlate(policy.statusClass)"
+                    [class.text-slate-700]="isStatusSlate(policy.statusClass)"
                   >
                     {{ policy.status }}
                   </span>
