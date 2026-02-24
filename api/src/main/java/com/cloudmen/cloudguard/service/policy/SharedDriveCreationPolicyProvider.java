@@ -1,0 +1,109 @@
+package com.cloudmen.cloudguard.service.policy;
+
+import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+
+/**
+ * Policy card for Shared drive creation: Allowed / Not allowed.
+ * Uses Cloud Identity Policy API setting: drive_and_docs.shared_drive_creation.
+ * Note: the API returns the *opposite* of the Admin Console UI for allow_shared_drive_creation.
+ */
+@Order(3)
+@Component
+public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider {
+
+    private static final String SETTING_TYPE = "settings/drive_and_docs.shared_drive_creation";
+
+    private final PolicyApiCacheService policyCache;
+
+    public SharedDriveCreationPolicyProvider(PolicyApiCacheService policyCache) {
+        this.policyCache = policyCache;
+    }
+
+    @Override
+    public String key() {
+        return "ou_shared_drive_creation";
+    }
+
+    @Override
+    public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
+        String path = (orgUnitPath == null || orgUnitPath.isBlank()) ? "/" : orgUnitPath.trim();
+        var allPolicies = policyCache.getAllPolicies(adminEmail);
+        Map<String, String> ouMap = policyCache.getOuIdToPathMap(adminEmail);
+
+        JsonNode best = null;
+        String bestOuPath = null;
+        int bestDepth = -1;
+
+        for (JsonNode p : allPolicies) {
+            JsonNode setting = p.get("setting");
+            if (setting == null) continue;
+            if (!SETTING_TYPE.equals(setting.path("type").asText(""))) continue;
+
+            String ouRef = p.path("policyQuery").path("orgUnit").asText("");
+            String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouMap);
+
+            if (!isAncestorOrSelf(path, policyOuPath)) continue;
+
+            int depth = depthOf(policyOuPath);
+            if (depth > bestDepth) {
+                best = p;
+                bestOuPath = policyOuPath;
+                bestDepth = depth;
+            }
+        }
+
+        if (best == null) {
+            return new OrgUnitPolicyDto(
+                    key(),
+                    "Gedeelde drives aanmaken",
+                    "Wie mag nieuwe gedeelde drives aanmaken",
+                    "Niet geconfigureerd",
+                    "bg-slate-100 text-slate-700",
+                    "Geen beleid voor gedeelde drive-aanmaak gevonden voor deze OU.",
+                    false,
+                    "Cloud Identity Policy API",
+                    "Klik hier om deze instellingen aan te passen",
+                    "apps"
+            );
+        }
+
+        JsonNode value = best.path("setting").path("value");
+        boolean allowed = value.path("allow_shared_drive_creation").asBoolean(true);
+        boolean inherited = !path.equals(bestOuPath);
+        String status = allowed ? "Toegestaan" : "Niet toegestaan";
+        String statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
+
+        return new OrgUnitPolicyDto(
+                key(),
+                "Gedeelde drives aanmaken",
+                "Wie mag nieuwe gedeelde drives aanmaken",
+                status,
+                statusClass,
+                inherited
+                        ? "Overgenomen van bovenliggende OU (" + bestOuPath + ")."
+                        : "Rechtstreeks ingesteld op deze OU.",
+                inherited,
+                "Cloud Identity Policy API",
+                "Klik hier om deze instellingen aan te passen",
+                "apps"
+        );
+    }
+
+    private static boolean isAncestorOrSelf(String target, String policyOuPath) {
+        if ("/".equals(policyOuPath)) return true;
+        if (target.equals(policyOuPath)) return true;
+        return target.startsWith(policyOuPath + "/");
+    }
+
+    private static int depthOf(String ouPath) {
+        if (ouPath == null || "/".equals(ouPath)) return 0;
+        int count = 0;
+        for (char c : ouPath.toCharArray()) if (c == '/') count++;
+        return count;
+    }
+}

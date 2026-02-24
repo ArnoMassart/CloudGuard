@@ -1,43 +1,21 @@
 package com.cloudmen.cloudguard.service.policy;
 
 import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
-import com.cloudmen.cloudguard.service.GoogleDirectoryFactory;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.URI;
 import java.util.*;
 
 @Order(2)
 @Component
 public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
-    private static final Logger log = LoggerFactory.getLogger(ServiceStatusPolicyProvider.class);
-    private static final String POLICY_API_SCOPE = "https://www.googleapis.com/auth/cloud-identity.policies.readonly";
-    private static final String POLICY_API_BASE = "https://cloudidentity.googleapis.com/v1/policies";
-    private static final long CACHE_TTL_MS = 5 * 60 * 1000;
     private static final Set<String> TARGET_SERVICES = Set.of("gmail", "drive_and_docs", "meet");
 
-    private final GoogleDirectoryFactory directoryFactory;
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final PolicyApiCacheService policyCache;
 
-    private volatile List<JsonNode> cachedPolicies;
-    private volatile long cacheTimestamp;
-
-    public ServiceStatusPolicyProvider(GoogleDirectoryFactory directoryFactory) {
-        this.directoryFactory = directoryFactory;
+    public ServiceStatusPolicyProvider(PolicyApiCacheService policyCache) {
+        this.policyCache = policyCache;
     }
 
     @Override
@@ -49,25 +27,31 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
     public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
         String path = normalizeOrgUnitPath(orgUnitPath);
 
-        // 1) Fetch all service_status policies once (single list call).
-        List<JsonNode> policies = listServiceStatusPolicies(adminEmail);
+        List<JsonNode> allPolicies = policyCache.getAllPolicies(adminEmail);
+        Map<String, String> ouMap = policyCache.getOuIdToPathMap(adminEmail);
 
-        // 2) For each service, find the best matching policy for this OU:
-        //    exact OU match first, otherwise nearest parent (inheritance), otherwise none.
+        List<JsonNode> policies = allPolicies.stream()
+                .filter(this::isServiceStatusPolicy)
+                .toList();
+
         Map<String, ServiceStatusDto> results = new LinkedHashMap<>();
         for (String service : TARGET_SERVICES) {
-            ServiceStatusDto r = resolveServiceForOu(policies, service, path);
+            ServiceStatusDto r = resolveServiceForOu(policies, service, path, ouMap);
             results.put(service, r);
         }
 
-        // 3) Build a single card with combined status
         String status = formatCombinedStatus(results);
         boolean anyUnknown = results.values().stream()
                 .anyMatch(r -> "(geen policy gevonden)".equals(r.getFromOrgUnit()));
         boolean anyOff = results.values().stream().anyMatch(r -> !r.isEnabled());
+        boolean anyInherited = results.values().stream().anyMatch(ServiceStatusDto::isInherited);
         String statusClass = anyUnknown
                 ? "bg-slate-100 text-slate-700"
                 : anyOff ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800";
+
+        String explanation = anyInherited
+                ? "Sommige services erven hun status van een bovenliggende OU."
+                : "Alle services zijn rechtstreeks ingesteld op deze OU.";
 
         return new OrgUnitPolicyDto(
                 key(),
@@ -75,8 +59,8 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
                 "Gmail / Drive / Meet service status",
                 status,
                 statusClass,
-                "Deze status komt uit Cloud Identity Policy API (service_status) en is OU-gebonden.",
-                false,
+                explanation,
+                anyInherited,
                 "Cloud Identity Policy API",
                 "Klik hier om deze instellingen aan te passen",
                 "apps"
@@ -87,59 +71,6 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
         return (orgUnitPath == null || orgUnitPath.isBlank()) ? "/" : orgUnitPath.trim();
     }
 
-    private List<JsonNode> listServiceStatusPolicies(String adminEmail) throws Exception {
-        long now = System.currentTimeMillis();
-        if (cachedPolicies != null && (now - cacheTimestamp) < CACHE_TTL_MS) {
-            log.debug("Returning {} cached service_status policies", cachedPolicies.size());
-            return cachedPolicies;
-        }
-        List<JsonNode> fresh = fetchAllServiceStatusPolicies(adminEmail);
-        cachedPolicies = fresh;
-        cacheTimestamp = now;
-        return fresh;
-    }
-
-    private List<JsonNode> fetchAllServiceStatusPolicies(String adminEmail) throws Exception {
-        String token = getPolicyApiToken(adminEmail);
-
-        List<JsonNode> out = new ArrayList<>();
-        String pageToken = null;
-
-        try {
-            do {
-                UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(POLICY_API_BASE)
-                        .queryParam("pageSize", 100);
-                if (pageToken != null) builder.queryParam("pageToken", pageToken);
-                URI uri = builder.build().encode().toUri();
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setBearerAuth(token);
-
-                ResponseEntity<String> resp = restTemplate.exchange(
-                        uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-
-                if (resp.getBody() == null) break;
-                JsonNode root = mapper.readTree(resp.getBody());
-                JsonNode policiesNode = root.get("policies");
-                if (policiesNode != null && policiesNode.isArray()) {
-                    for (JsonNode p : policiesNode) {
-                        if (isServiceStatusPolicy(p)) out.add(p);
-                    }
-                }
-
-                JsonNode next = root.get("nextPageToken");
-                pageToken = (next != null && !next.isNull() && !next.asText().isBlank()) ? next.asText() : null;
-
-            } while (pageToken != null);
-        } catch (HttpStatusCodeException e) {
-            throw new RuntimeException("Policy API fetch failed: HTTP " +
-                    e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
-        }
-
-        log.info("Fetched {} service_status policies from API (cached for {}s)", out.size(), CACHE_TTL_MS / 1000);
-        return out;
-    }
-
     private boolean isServiceStatusPolicy(JsonNode policy) {
         JsonNode setting = policy.get("setting");
         if (setting == null) return false;
@@ -148,35 +79,62 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
         return type.asText().endsWith("service_status");
     }
 
-    private String getPolicyApiToken(String adminEmail) throws Exception {
-        var creds = directoryFactory.getCredentials(Set.of(POLICY_API_SCOPE), adminEmail);
-        creds.refreshIfExpired();
-        return creds.getAccessToken().getTokenValue();
-    }
-
     /**
-     * Picks the first policy whose setting.type matches "settings/{service}.service_status".
-     * The Policy API returns OU references as IDs (orgUnits/xxx), not paths, so we
-     * simply pick the first match per service for now.
+     * For a given service (e.g. "gmail"), finds all policies with matching setting.type,
+     * resolves each policy's OU ID to a path, and picks the most specific ancestor
+     * of {@code orgUnitPath}. If the winning policy came from a parent OU, it's
+     * marked as inherited.
      */
-    private ServiceStatusDto resolveServiceForOu(List<JsonNode> policies, String service, String orgUnitPath) {
+    private ServiceStatusDto resolveServiceForOu(
+            List<JsonNode> policies, String service, String orgUnitPath, Map<String, String> ouMap) {
+
         String wantedType = "settings/" + service + ".service_status";
+
+        JsonNode best = null;
+        String bestOuPath = null;
+        int bestDepth = -1;
 
         for (JsonNode p : policies) {
             JsonNode setting = p.get("setting");
             if (setting == null) continue;
-            String type = setting.path("type").asText("");
-            if (!wantedType.equals(type)) continue;
+            if (!wantedType.equals(setting.path("type").asText(""))) continue;
 
-            String policyOu = p.path("policyQuery").path("orgUnit").asText("(root)");
-            JsonNode valueNode = setting.path("value");
-            boolean enabled = !valueNode.isMissingNode() && valueNode.path("enabled").asBoolean(false);
-            boolean inherited = !"/".equals(orgUnitPath);
+            String ouRef = p.path("policyQuery").path("orgUnit").asText("");
+            String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouMap);
 
-            return new ServiceStatusDto(service, enabled, inherited, policyOu);
+            if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
+
+            int depth = depthOf(policyOuPath);
+            if (depth > bestDepth) {
+                best = p;
+                bestOuPath = policyOuPath;
+                bestDepth = depth;
+            }
         }
 
-        return new ServiceStatusDto(service, false, true, "(geen policy gevonden)");
+        if (best == null) {
+            return new ServiceStatusDto(service, false, true, "(geen policy gevonden)");
+        }
+
+        JsonNode valueNode = best.path("setting").path("value");
+        boolean enabled = !valueNode.isMissingNode() && valueNode.path("enabled").asBoolean(false);
+        boolean inherited = !orgUnitPath.equals(bestOuPath);
+
+        return new ServiceStatusDto(service, enabled, inherited, bestOuPath);
+    }
+
+    /** Returns true if {@code policyOuPath} is an ancestor of (or equal to) {@code target}. */
+    private static boolean isAncestorOrSelf(String target, String policyOuPath) {
+        if ("/".equals(policyOuPath)) return true;
+        if (target.equals(policyOuPath)) return true;
+        return target.startsWith(policyOuPath + "/");
+    }
+
+    private static int depthOf(String ouPath) {
+        if (ouPath == null || "/".equals(ouPath)) return 0;
+        int count = 0;
+        for (char c : ouPath.toCharArray()) if (c == '/') count++;
+        return count;
     }
 
     private String formatCombinedStatus(Map<String, ServiceStatusDto> results) {
