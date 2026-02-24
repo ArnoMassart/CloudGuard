@@ -1,7 +1,10 @@
 package com.cloudmen.cloudguard.service.policy;
 
 import com.cloudmen.cloudguard.dto.OrgUnitPolicyDto;
+import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +13,9 @@ import java.util.*;
 @Order(2)
 @Component
 public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceStatusPolicyProvider.class);
+
     private static final Set<String> TARGET_SERVICES = Set.of("gmail", "drive_and_docs", "meet");
 
     private final PolicyApiCacheService policyCache;
@@ -102,6 +108,9 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
             String ouRef = p.path("policyQuery").path("orgUnit").asText("");
             String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouMap);
 
+            // 🔍 DEBUG LOG
+            log.info("Matched type={}, ouRef={}, resolvedOuPath={}", wantedType, ouRef, policyOuPath);
+
             if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
 
             int depth = depthOf(policyOuPath);
@@ -113,24 +122,49 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
         }
 
         if (best == null) {
+            log.warn("No service_status policy found for service={} and OU={}", service, orgUnitPath);
             return new ServiceStatusDto(service, ServiceStatus.UNKNOWN, true, "(geen policy gevonden)");
         }
 
         JsonNode valueNode = best.path("setting").path("value");
-        JsonNode enabledNode = valueNode.isMissingNode() ? null : valueNode.get("enabled");
+
+        // 🔍 DEBUG LOG
+
+        log.info("Selected best policy for {} → OU={} value={}",
+                service,
+                bestOuPath,
+                valueNode.toPrettyString());
+
         boolean inherited = !orgUnitPath.equals(bestOuPath);
 
-        ServiceStatus st;
-        if (enabledNode == null || enabledNode.isMissingNode() || enabledNode.isNull()) {
-            st = ServiceStatus.UNKNOWN;
-        } else {
-            st = enabledNode.asBoolean() ? ServiceStatus.ENABLED : ServiceStatus.DISABLED;
+        ServiceStatus st = ServiceStatus.UNKNOWN;
+        if (valueNode != null && !valueNode.isMissingNode() && !valueNode.isNull()) {
+
+            // Variant A: {"enabled": true/false}
+            JsonNode enabledNode = valueNode.get("enabled");
+            if (enabledNode != null && !enabledNode.isNull() && enabledNode.isBoolean()) {
+                st = enabledNode.asBoolean() ? ServiceStatus.ENABLED : ServiceStatus.DISABLED;
+            }
+
+            // Variant B: {"serviceState": "ENABLED" | "DISABLED"}
+            if (st == ServiceStatus.UNKNOWN) {
+                JsonNode stateNode = valueNode.get("serviceState");
+                if (stateNode != null && !stateNode.isNull()) {
+                    String state = stateNode.asText("").toUpperCase();
+                    if (state.contains("ENABLED")) st = ServiceStatus.ENABLED;
+                    else if (state.contains("DISABLED")) st = ServiceStatus.DISABLED;
+                }
+            }
+
+            // Variant C: value itself is boolean
+            if (st == ServiceStatus.UNKNOWN && valueNode.isBoolean()) {
+                st = valueNode.asBoolean() ? ServiceStatus.ENABLED : ServiceStatus.DISABLED;
+            }
         }
 
         return new ServiceStatusDto(service, st, inherited, bestOuPath);
     }
 
-    /** Returns true if {@code policyOuPath} is an ancestor of (or equal to) {@code target}. */
     private static boolean isAncestorOrSelf(String target, String policyOuPath) {
         if ("/".equals(policyOuPath)) return true;
         if (target.equals(policyOuPath)) return true;

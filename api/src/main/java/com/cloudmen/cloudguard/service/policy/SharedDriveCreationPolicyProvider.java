@@ -44,9 +44,11 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
             JsonNode setting = p.get("setting");
             if (setting == null) continue;
 
+            /* log raw policy json
             if (SETTING_TYPE.equals(setting.path("type").asText(""))) {
                 System.out.println("SharedDrive policy raw: " + p.toPrettyString());
             }
+            */
 
             if (!SETTING_TYPE.equals(setting.path("type").asText(""))) continue;
 
@@ -96,9 +98,11 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
             boolean allowed = allowedNode.asBoolean();
             status = allowed ? "Toegestaan" : "Niet toegestaan";
             statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
-            explanation = inherited
-                    ? "Overgenomen van bovenliggende OU (" + bestOuPath + ")."
-                    : "Rechtstreeks ingesteld op deze OU.";
+            if (inherited) {
+                explanation = "Overgenomen van bovenliggende OU (" + bestOuPath + ").";
+            } else {
+                explanation = "Rechtstreeks ingesteld op deze OU.";
+            }
         }
 
         return new OrgUnitPolicyDto(
