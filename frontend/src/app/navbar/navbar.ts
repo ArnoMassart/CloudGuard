@@ -18,7 +18,7 @@ import { NavItem } from './nav-item/nav-item';
 import { Profile } from '../pages/profile/profile';
 import { MatDialog } from '@angular/material/dialog';
 import { CookieService } from 'ngx-cookie-service';
-import { CustomAuthService } from '../core/auth/custom-auth-service';
+import { CustomAuthService } from '../auth/custom-auth-service';
 import { Router } from '@angular/router';
 import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 import { UserService } from '../services/user-service';

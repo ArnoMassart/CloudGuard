@@ -5,13 +5,13 @@
 
     <div class="w-full flex flex-col gap-5 pt-6">
         <div class="w-full flex gap-4">
-            <app-users-section-top-card class="flex-1" Title="Totaal apparaten" [Value]="pageOverview()?.totalDevices"
-                [Icon]="SmartPhone" />
-            <app-users-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
-                BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="TriangleAlert" />
-            <app-users-section-top-card class="flex-1" Title="Goedgekeurde apparaten"
+            <app-section-top-card class="flex-1" Title="Totaal apparaten" [Value]="pageOverview()?.totalDevices"
+                [Icon]="Icons.SmartPhone" />
+            <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
+                BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+            <app-section-top-card class="flex-1" Title="Goedgekeurde apparaten"
                 [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f" />
-            <app-users-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
+            <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
                 [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
         </div>
 
@@ -19,13 +19,13 @@
         <div class="bg-[#fefce8] border border-[#fff086]/50 rounded-lg p-4 transition-all duration-200">
             <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
                 <div class="flex gap-3 items-center">
-                    <i-lucide [img]="TriangleAlert" size="20" class="text-[#d69518]" />
+                    <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
                     <span class="text-[#b7610a] font-medium text-[16px]">
                         Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' : '' }}
                     </span>
                 </div>
 
-                <i-lucide [img]="isExpanded() ? ChevronUp : ChevronDown" size="20"
+                <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
                     class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
             </div>
 
@@ -89,7 +89,7 @@
                     <option [value]="status">{{ status }}</option>
                     }
                 </select>
-                <i-lucide [img]="ChevronDown" size="20"
+                <i-lucide [img]="Icons.ChevronDown" size="20"
                     class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i-lucide>
             </div>
 
@@ -104,7 +104,7 @@
                     <option [value]="type">{{ type }}</option>
                     }
                 </select>
-                <i-lucide [img]="ChevronDown" size="20"
+                <i-lucide [img]="Icons.ChevronDown" size="20"
                     class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i-lucide>
             </div>
         </div>
@@ -133,7 +133,8 @@
                     <tr class="hover:bg-gray-50 transition-colors cursor-pointer"
                         (click)="toggleExpand(device.resourceId)">
                         <td class="px-6 py-4">
-                            <i-lucide [img]="expandedDevice() === device.resourceId ? ChevronDown : ChevronRight"
+                            <i-lucide
+                                [img]="expandedDevice() === device.resourceId ? Icons.ChevronDown : Icons.ChevronRight"
                                 class="text-gray-500 transition-transform" size="20" />
                         </td>
 
@@ -146,7 +147,7 @@
                         <td class="px-6 py-4"><span class="text-[13px]">{{device.deviceName}}</span></td>
                         <td class="px-6 py-4">
                             <div class="flex gap-2">
-                                <i-lucide [img]="SmartPhone" class="text-primary" size="20" />
+                                <i-lucide [img]="Icons.SmartPhone" class="text-primary" size="20" />
                                 <div class="flex flex-col">
                                     <span class="text-[13px] font-medium">{{device.os}}</span>
                                     <span class="text-[13px] text-muted-foreground">{{device.model}}</span>
@@ -155,7 +156,7 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex gap-1 items-center">
-                                <i-lucide [img]="Clock" class="text-muted-foreground" size="16" />
+                                <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
                                 <span class="text-[13px] text-muted-foreground font-light">{{device.lastSync}}</span>
                             </div>
                         </td>
@@ -167,7 +168,7 @@
                                 [class.bg-[#fef9c2]]="device.complianceScore < 75 && device.complianceScore >= 50"
                                 [class.text-[#e7000b]]="device.complianceScore < 50"
                                 [class.bg-[#ffe2e2]]="device.complianceScore < 50">
-                                <lucide-icon [img]="device.complianceScore >= 75 ? CheckCircle : XCircle"
+                                <lucide-icon [img]="device.complianceScore >= 75 ? Icons.CheckCircle : Icons.XCircle"
                                     size="14"></lucide-icon>
                                 <span>{{ device.complianceScore }}%</span>
                             </div>
@@ -181,7 +182,7 @@
                                 [class.text-[#e7000b]]="device.status === 'Blocked'"
                                 [class.bg-[#ffe2e2]]="device.status === 'Blocked'">
                                 <lucide-icon
-                                    [img]="device.status === 'Approved' ? Shield : device.status === 'Pending' ? Clock : ShieldAlert"
+                                    [img]="device.status === 'Approved' ? Icons.Shield : device.status === 'Pending' ? Icons.Clock : Icons.ShieldAlert"
                                     size="14"></lucide-icon>
                                 {{ device.status === 'Approved' ? "Approved" : device.status === 'Pending' ? "Pending" :
                                 "Blocked"}}
@@ -198,18 +199,19 @@
                                     class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
                                     <div class="p-2.5 rounded-lg"
                                         [ngClass]="device.isScreenLockSecure ? 'bg-[#dbfce7] text-emerald-600' : 'bg-[#ffe2e2] text-[#e7000b]'">
-                                        <lucide-icon [img]="Lock" size="22"></lucide-icon>
+                                        <lucide-icon [img]="Icons.Lock" size="22"></lucide-icon>
                                     </div>
                                     <div class="flex flex-col">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium text-sm"
                                                 [ngClass]="device.isScreenLockSecure ? 'text-emerald-700' : 'text-[#e7000b]'">Vergrendelscherm</span>
                                             @if (!device.isScreenLockSecure) {
-                                            <i-lucide [img]="ExternalLink" size="14"
+                                            <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
                                                 (click)="openAdminPage()"></i-lucide>
                                             }
-                                            <i-lucide [img]="device.isScreenLockSecure ? CheckCircle : TriangleAlert"
+                                            <i-lucide
+                                                [img]="device.isScreenLockSecure ? Icons.CheckCircle : Icons.TriangleAlert"
                                                 size="14"
                                                 [class]="device.isScreenLockSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></i-lucide>
                                         </div>
@@ -221,18 +223,19 @@
                                     class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
                                     <div class="p-2.5 rounded-lg"
                                         [ngClass]="device.isEncryptionSecure ? 'bg-[#dbfce7] text-emerald-600' : 'bg-[#ffe2e2] text-[#e7000b]'">
-                                        <lucide-icon [img]="HardDrive" size="22"></lucide-icon>
+                                        <lucide-icon [img]="Icons.HardDrive" size="22"></lucide-icon>
                                     </div>
                                     <div class="flex flex-col">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium text-sm"
                                                 [ngClass]="device.isEncryptionSecure ? 'text-emerald-700' : 'text-[#e7000b]'">Encryptie</span>
                                             @if (!device.isEncryptionSecure) {
-                                            <i-lucide [img]="ExternalLink" size="14"
+                                            <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
                                                 (click)="openAdminPage()"></i-lucide>
                                             }
-                                            <lucide-icon [img]="device.isEncryptionSecure ? CheckCircle : TriangleAlert"
+                                            <lucide-icon
+                                                [img]="device.isEncryptionSecure ? Icons.CheckCircle : Icons.TriangleAlert"
                                                 size="14"
                                                 [class]="device.isEncryptionSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
                                         </div>
@@ -244,7 +247,7 @@
                                     class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
                                     <div class="p-2.5 rounded-lg"
                                         [ngClass]="device.isOsSecure ? 'bg-[#dbfce7] text-emerald-600' : 'bg-[#ffe2e2] text-[#e7000b]'">
-                                        <lucide-icon [img]="Cpu" size="22"></lucide-icon>
+                                        <lucide-icon [img]="Icons.Cpu" size="22"></lucide-icon>
                                     </div>
                                     <div class="flex flex-col">
                                         <div class="flex items-center gap-2">
@@ -252,12 +255,13 @@
                                                 [ngClass]="device.isOsSecure ? 'text-emerald-700' : 'text-[#e7000b]'">OS
                                                 Versie</span>
                                             @if (!device.isOsSecure) {
-                                            <i-lucide [img]="ExternalLink" size="14"
+                                            <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
                                                 (click)="openAdminPage()"></i-lucide>
                                             }
 
-                                            <lucide-icon [img]="device.isOsSecure ? CheckCircle : TriangleAlert"
+                                            <lucide-icon
+                                                [img]="device.isOsSecure ? Icons.CheckCircle : Icons.TriangleAlert"
                                                 size="14"
                                                 [class]="device.isOsSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
                                         </div>
@@ -269,19 +273,20 @@
                                     class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
                                     <div class="p-2.5 rounded-lg"
                                         [ngClass]="device.isIntegritySecure ? 'bg-[#dbfce7] text-emerald-600' : 'bg-[#ffe2e2] text-[#e7000b]'">
-                                        <lucide-icon [img]="ShieldCheck" size="22"></lucide-icon>
+                                        <lucide-icon [img]="Icons.ShieldCheck" size="22"></lucide-icon>
                                     </div>
                                     <div class="flex flex-col">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium text-sm"
                                                 [ngClass]="device.isIntegritySecure ? 'text-emerald-700' : 'text-[#e7000b]'">Integriteit</span>
                                             @if (!device.isIntegritySecure) {
-                                            <i-lucide [img]="ExternalLink" size="14"
+                                            <i-lucide [img]="Icons.ExternalLink" size="14"
                                                 class="text-[#e7000b] cursor-pointer "
                                                 (click)="openAdminPage()"></i-lucide>
 
                                             }
-                                            <lucide-icon [img]="device.isIntegritySecure ? CheckCircle : TriangleAlert"
+                                            <lucide-icon
+                                                [img]="device.isIntegritySecure ? Icons.CheckCircle : Icons.TriangleAlert"
                                                 size="14"
                                                 [class]="device.isIntegritySecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
                                         </div>
@@ -305,14 +310,14 @@
                 <div class="flex gap-2">
                     <button (click)="prevPage()" [disabled]="currentPage() === 1"
                         class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
-                        <lucide-icon [img]="ChevronLeft" size="16"></lucide-icon>
+                        <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
                         Vorige
                     </button>
 
                     <button (click)="nextPage()" [disabled]="!nextPageToken()"
                         class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
                         Volgende
-                        <lucide-icon [img]="ChevronRight" size="16"></lucide-icon>
+                        <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
                     </button>
                 </div>
             </div>

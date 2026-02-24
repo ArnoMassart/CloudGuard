@@ -3,7 +3,7 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SplashScreen } from '../../components/splash-screen/splash-screen';
 import { AuthService } from '@auth0/auth0-angular';
-import { CustomAuthService } from '../../core/auth/custom-auth-service';
+import { CustomAuthService } from '../custom-auth-service';
 import { Router } from '@angular/router';
 import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
 
@@ -19,7 +19,7 @@ export class Callback implements OnInit {
   private customAuth = inject(CustomAuthService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-  
+
   ngOnInit(): void {
     const returningFromAuth0 = sessionStorage.getItem('auth0_redirect_pending') === '1';
 

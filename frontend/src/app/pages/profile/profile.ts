@@ -1,6 +1,6 @@
 import { Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CustomAuthService } from '../../core/auth/custom-auth-service';
+import { CustomAuthService } from '../../auth/custom-auth-service';
 import { UserService } from '../../services/user-service';
 
 @Component({

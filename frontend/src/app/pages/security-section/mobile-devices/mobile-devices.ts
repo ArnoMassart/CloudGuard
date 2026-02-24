@@ -3,64 +3,32 @@ import { PageHeader } from '../../../components/page-header/page-header';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {
-  LucideAngularModule,
-  TriangleAlert,
-  CircleCheck,
-  CircleX,
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  Shield,
-  Smartphone,
-  ChevronDown,
-  ChevronUp,
-  ShieldAlert,
-  HardDrive,
-  Cpu,
-  ShieldCheck,
-  Lock,
-  ExternalLink,
-} from 'lucide-angular';
-import { UsersSectionTopCard } from '../users-groups/users-section/users-section-top-card/users-section-top-card';
+import { LucideAngularModule } from 'lucide-angular';
 import { MobileDeviceService } from '../../../services/mobile-device-service';
 import { MobileDevice } from '../../../models/devices/MobileDevice';
 import { MobileDevicesOverviewResponse } from '../../../models/devices/MobileDevicesOverviewResponse';
 import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevicesPageWarnings';
 import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
+import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { AppIcons } from '../../../shared/app-icons';
 
 @Component({
   selector: 'app-mobile-devices',
   imports: [
     PageHeader,
     LucideAngularModule,
-    UsersSectionTopCard,
     FormsModule,
     CommonModule,
     MatProgressSpinnerModule,
+    SectionTopCard,
   ],
   templateUrl: './mobile-devices.html',
   styleUrl: './mobile-devices.css',
 })
 export class MobileDevices {
-  readonly CheckCircle = CircleCheck;
-  readonly XCircle = CircleX;
-  readonly Clock = Clock;
-  readonly TriangleAlert = TriangleAlert;
-  readonly ChevronLeft = ChevronLeft;
-  readonly ChevronRight = ChevronRight;
-  readonly ChevronDown = ChevronDown;
-  readonly ChevronUp = ChevronUp;
-  readonly SmartPhone = Smartphone;
-  readonly Shield = Shield;
-  readonly ShieldAlert = ShieldAlert;
-  readonly Lock = Lock;
-  readonly HardDrive = HardDrive;
-  readonly Cpu = Cpu;
-  readonly ShieldCheck = ShieldCheck;
-  readonly ExternalLink = ExternalLink;
-
   readonly #mobileDeviceService = inject(MobileDeviceService);
+
+  readonly Icons = AppIcons;
 
   readonly statusEnum = MobileDeviceStatus;
 

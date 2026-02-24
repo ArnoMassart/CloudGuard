@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
-import { SharedDrivesTopCard } from './shared-drives-top-card/shared-drives-top-card';
 import {
   ChevronDown,
   ChevronLeft,
@@ -25,10 +24,11 @@ import { DriveService } from '../../../services/drive-service';
 import { SharedDrive } from '../../../models/drives/SharedDrive';
 import { SharedDrivesPageWarnings } from '../../../models/drives/SharedDrivesPageWarnings';
 import { SharedDriveOverviewResponse } from '../../../models/drives/SharedDriveOverviewResponse';
+import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 
 @Component({
   selector: 'app-shared-drives',
-  imports: [PageHeader, SharedDrivesTopCard, LucideAngularModule, FormsModule],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule],
   templateUrl: './shared-drives.html',
   styleUrl: './shared-drives.css',
 })
