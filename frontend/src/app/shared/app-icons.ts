@@ -20,6 +20,12 @@ import {
   Users,
   Loader,
   CircleX,
+  Building2,
+  Key,
+  Globe,
+  CreditCard,
+  Bell,
+  LogOut,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -44,4 +50,10 @@ export class AppIcons {
   static readonly UserCog = UserCog;
   static readonly Search = Search;
   static readonly Loader = Loader;
+  static readonly Building2 = Building2;
+  static readonly Key = Key;
+  static readonly Globe = Globe;
+  static readonly CreditCard = CreditCard;
+  static readonly Bell = Bell;
+  static readonly LogOut = LogOut;
 }

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Shield, LucideIconData, LucideAngularModule } from 'lucide-angular';
+import { LucideIconData, LucideAngularModule } from 'lucide-angular';
+import { AppIcons } from '../../shared/app-icons';
 
 @Component({
   selector: 'app-section-top-card',
@@ -8,11 +9,11 @@ import { Shield, LucideIconData, LucideAngularModule } from 'lucide-angular';
   styleUrl: './section-top-card.css',
 })
 export class SectionTopCard {
-  readonly shieldIcon = Shield;
+  readonly Icons = AppIcons;
 
   @Input() Title: string = '';
   @Input() Value: number | undefined = 0;
-  @Input() Icon: LucideIconData = Shield;
+  @Input() Icon: LucideIconData = this.Icons.Shield;
   @Input() BackgroundColor: string = '#dbeafe';
   @Input() IconColor: string = '#155dfc';
   @Input() TextColor: string = 'black';
