@@ -26,6 +26,7 @@ import {
   TriangleAlert,
   UserCog,
   Users,
+  FolderTree,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -42,6 +43,7 @@ export class AppIcons {
   static readonly CreditCard = CreditCard;
   static readonly ExternalLink = ExternalLink;
   static readonly FolderOpen = FolderOpen;
+  static readonly FolderTree = FolderTree;
   static readonly Globe = Globe;
   static readonly HardDrive = HardDrive;
   static readonly Key = Key;
