@@ -19,8 +19,13 @@ import {
   Users,
   ExternalLink,
 } from 'lucide-angular';
-import { UsersSectionTopCard } from '../users-section/users-section-top-card/users-section-top-card';
-import { GroupOrgDetail, GroupOverviewResponse, GroupService, GroupSettingsDto } from '../../../../services/group-service';
+import {
+  GroupOrgDetail,
+  GroupOverviewResponse,
+  GroupService,
+  GroupSettingsDto,
+} from '../../../../services/group-service';
+import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -39,11 +44,11 @@ interface GroupSummary {
 @Component({
   selector: 'app-groups-section',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, UsersSectionTopCard, FormsModule],
+  imports: [CommonModule, LucideAngularModule, SectionTopCard, FormsModule],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })
-export class GroupsSection implements OnInit{
+export class GroupsSection implements OnInit {
   readonly triangleAlertIcon = TriangleAlert;
   readonly searchIcon = Search;
   readonly checkCircle = CircleCheck;
@@ -76,10 +81,9 @@ export class GroupsSection implements OnInit{
   private readonly pageSize = 5;
 
   ngOnInit(): void {
-    this.searchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged()
-    ).subscribe((value) => this.onSearch(value));
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((value) => this.onSearch(value));
 
     this.loadGroupsOverview();
     this.loadGroups(null);
@@ -201,7 +205,10 @@ export class GroupsSection implements OnInit{
         });
       },
       error: () => {
-        this.groupSettingsCache.update((c) => ({ ...c, [name]: { whoCanJoin: '—', whoCanView: '—' } }));
+        this.groupSettingsCache.update((c) => ({
+          ...c,
+          [name]: { whoCanJoin: '—', whoCanView: '—' },
+        }));
         this.loadingSettingsFor.update((s) => {
           const next = new Set(s);
           next.delete(name);

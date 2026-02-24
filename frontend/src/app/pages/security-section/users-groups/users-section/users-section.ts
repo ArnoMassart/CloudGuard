@@ -12,7 +12,6 @@ import {
   Shield,
   TriangleAlert,
 } from 'lucide-angular';
-import { UsersSectionTopCard } from './users-section-top-card/users-section-top-card';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserOrgDetail } from '../../../../models/UserOrgDetails';
@@ -21,12 +20,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { UserOverviewResponse } from '../../../../models/UserOverviewResponse';
 import { UsersPageWarnings } from '../../../../models/UsersPageWarnings';
+import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 
 @Component({
   selector: 'app-users-section',
   imports: [
     LucideAngularModule,
-    UsersSectionTopCard,
+    SectionTopCard,
     FormsModule,
     CommonModule,
     MatProgressSpinnerModule,

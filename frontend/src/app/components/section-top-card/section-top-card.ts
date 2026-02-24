@@ -1,13 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { LucideAngularModule, LucideIconData, Shield } from 'lucide-angular';
+import { Shield, LucideIconData, LucideAngularModule } from 'lucide-angular';
 
 @Component({
-  selector: 'app-users-section-top-card',
+  selector: 'app-section-top-card',
   imports: [LucideAngularModule],
-  templateUrl: './users-section-top-card.html',
-  styleUrl: './users-section-top-card.css',
+  templateUrl: './section-top-card.html',
+  styleUrl: './section-top-card.css',
 })
-export class UsersSectionTopCard {
+export class SectionTopCard {
   readonly shieldIcon = Shield;
 
   @Input() Title: string = '';

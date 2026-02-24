@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { RouteService } from '../../services/route-service';
+import { RouteService } from '../services/route-service';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, tap, timeout } from 'rxjs/operators';
-import { User } from '../../models/User';
+import { User } from '../models/User';
 import { AuthService } from '@auth0/auth0-angular';
 
 @Injectable({

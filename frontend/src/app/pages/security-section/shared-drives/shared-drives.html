@@ -6,21 +6,20 @@
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
       <div class="w-full flex gap-4">
-        <app-shared-drives-top-card class="flex-1" Title="Totaal Drives" [Value]="pageOverview()?.totalDrives"
+        <app-section-top-card class="flex-1" Title="Totaal Drives" [Value]="pageOverview()?.totalDrives"
           [Icon]="FolderOpen" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Drives zonder beheerders"
-          [Value]="pageOverview()?.orphanDrives" BackgroundColor="#f3e8ff" IconColor="#9810fa" TextColor="#9810fa"
-          [Icon]="HardDrive" />
+        <app-section-top-card class="flex-1" Title="Drives zonder beheerders" [Value]="pageOverview()?.orphanDrives"
+          BackgroundColor="#f3e8ff" IconColor="#9810fa" TextColor="#9810fa" [Icon]="HardDrive" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRisk"
+        <app-section-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRisk"
           BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="TriangleAlert" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Met externe leden"
+        <app-section-top-card class="flex-1" Title="Met externe leden"
           [Value]="pageOverview()?.externalMembersDriveCount" BackgroundColor="#ffedd4" IconColor="#f54a00"
           TextColor="#f54a00" [Icon]="Users" />
 
-        <app-shared-drives-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
+        <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
           [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
 
