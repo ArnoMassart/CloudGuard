@@ -117,8 +117,13 @@
         @if (isExpanded(group.name)) {
         <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
           @if (isSettingsLoading(group.name)) {
-          <div class="col-span-2 flex items-center justify-center py-6">
-            <i-lucide [img]="Icons.Loader" size="24" class="text-primary animate-spin" />
+          <div class="col-span-2 flex items-center justify-center">
+            <div class="relative flex items-center justify-center">
+              <div class="h-8 w-8 rounded-full"></div>
+              <div
+                class="absolute h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent">
+              </div>
+            </div>
           </div>
           } @else {
           @let settings = getCachedSettings(group.name);
