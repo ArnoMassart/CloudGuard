@@ -1,63 +1,72 @@
 <div class="px-10 py-6">
   <app-page-header Title="Organisatie-eenheden" Description="Monitor de structuur en beleidsregels van je organisatie"
     AdminLink="orgunits" />
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
     <!-- Left card: Structuur -->
     @if (loading()) {
-    <div class="flex flex-col items-center justify-center py-12">
-      <span class="text-sm text-slate-600">Structuur laden...</span>
+    <div class="flex flex-col items-center p-3">
+      <div class="flex flex-col items-center space-y-4 p-8">
+        <div class="relative flex items-center justify-center">
+          <div class="h-12 w-12 rounded-full"></div>
+          <div
+            class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+          </div>
+        </div>
+        <span class="text-sm font-medium text-slate-600 animate-pulse">
+          Organisatie-eenheden worden geladen...
+        </span>
+      </div>
     </div>
     } @else if (error()) {
     <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
       {{ error() }}
     </div>
     } @else if (tree(); as root) {
-    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5 h-[80vh] flex flex-col">
-      <div class="flex items-center gap-2 mb-4">
-        <i-lucide [img]="Icons.FolderTree" size="20" class="text-slate-600" />
-        <h2 class="font-medium text-slate-900">Structuur</h2>
-      </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
+      <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5 h-[80vh] flex flex-col">
+        <div class="flex items-center gap-2 mb-4">
+          <i-lucide [img]="Icons.FolderTree" size="20" class="text-slate-600" />
+          <h2 class="font-medium text-slate-900">Structuur</h2>
+        </div>
 
-      <div class="space-y-0.5 min-h-0 flex-1 overflow-y-auto">
-        <ul class="space-y-0.5 list-none p-0 m-0">
-          <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: root, depth: 0 }" />
-        </ul>
-      </div>
-
-      <ng-template #ouNode let-node let-depth="depth">
-        <li [style.padding-left.rem]="0.5 + depth * 1.25">
-          <button type="button" (click)="selectUnit(node); toggleExpanded(node.id)"
-            class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
-            [class.bg-primary/10]="isSelected(node)">
-            @if (node.children?.length) {
-            <i-lucide [img]="isExpanded(node.id) ? Icons.ChevronDown : Icons.ChevronRight" size="16"
-              class="text-slate-500 shrink-0" />
-            } @else {
-            <span class="w-4 shrink-0" aria-hidden="true"></span>
-            }
-            @if (depth === 0) {
-            <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
-            } @else {
-            <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
-            }
-            <span class="font-medium text-slate-900 flex-1 truncate">{{ node.name }}</span>
-            <span
-              class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5">
-              {{ node.userCount }}
-            </span>
-          </button>
-          @if (isExpanded(node.id) && node.children?.length) {
-          <ul class="space-y-0.5 list-none p-0 m-0 mt-0.5">
-            @for (child of node.children; track child.id) {
-            <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: child, depth: depth + 1 }" />
-            }
+        <div class="space-y-0.5 min-h-0 flex-1 overflow-y-auto">
+          <ul class="space-y-0.5 list-none p-0 m-0">
+            <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: root, depth: 0 }" />
           </ul>
-          }
-        </li>
-      </ng-template>
-    </div>
-    }
+        </div>
+
+        <ng-template #ouNode let-node let-depth="depth">
+          <li [style.padding-left.rem]="0.5 + depth * 1.25">
+            <button type="button" (click)="selectUnit(node); toggleExpanded(node.id)"
+              class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
+              [class.bg-primary/10]="isSelected(node)">
+              @if (node.children?.length) {
+              <i-lucide [img]="isExpanded(node.id) ? Icons.ChevronDown : Icons.ChevronRight" size="16"
+                class="text-slate-500 shrink-0" />
+              } @else {
+              <span class="w-4 shrink-0" aria-hidden="true"></span>
+              }
+              @if (depth === 0) {
+              <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
+              } @else {
+              <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
+              }
+              <span class="font-medium text-slate-900 flex-1 truncate">{{ node.name }}</span>
+              <span
+                class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5">
+                {{ node.userCount }}
+              </span>
+            </button>
+            @if (isExpanded(node.id) && node.children?.length) {
+            <ul class="space-y-0.5 list-none p-0 m-0 mt-0.5">
+              @for (child of node.children; track child.id) {
+              <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: child, depth: depth + 1 }" />
+              }
+            </ul>
+            }
+          </li>
+        </ng-template>
+      </div>
+    
 
     <!-- Right card: Selected unit details -->
     <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
@@ -89,7 +98,19 @@
       <!-- Beleidsregels -->
       <h3 class="font-medium text-slate-900 mb-3">Beleidsregels</h3>
       @if (policiesLoading()) {
-      <p class="text-sm text-slate-500">Beleidsregels laden...</p>
+      <div class="flex flex-col items-center p-3">
+        <div class="flex flex-col items-center space-y-4 p-8">
+          <div class="relative flex items-center justify-center">
+            <div class="h-12 w-12 rounded-full"></div>
+            <div
+              class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+            </div>
+          </div>
+          <span class="text-sm font-medium text-slate-600 animate-pulse">
+            Beleidsregels worden geladen...
+          </span>
+        </div>
+      </div>
       } @else if (policiesError()) {
       <p class="text-sm text-red-600">{{ policiesError() }}</p>
       } @else {
@@ -147,4 +168,4 @@
       }
     </div>
   </div>
-</div>
+}
