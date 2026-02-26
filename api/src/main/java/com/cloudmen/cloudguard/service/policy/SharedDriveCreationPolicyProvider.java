@@ -68,7 +68,8 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         }
 
         if (best == null) {
-            String baseExplanation = "Deze beleidsregel bepaalt wie nieuwe gedeelde drives mag aanmaken binnen deze organisatie-eenheid.";
+            String baseExplanation = "Deze beleidsregel bepaalt of gebruikers in deze organisatie-eenheid nieuwe gedeelde drives mogen aanmaken.";
+            String dynamicExplanation = "Er is geen beleid ingesteld voor deze OU.";
             String inheritanceExplanation = "Geen beleid voor gedeelde drive-aanmaak gevonden voor deze OU of bovenliggende OUs.";
 
             return new OrgUnitPolicyDto(
@@ -77,7 +78,7 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
                     "Wie mag nieuwe gedeelde drives aanmaken",
                     "Niet geconfigureerd",
                     "bg-slate-100 text-slate-700",
-                    baseExplanation,
+                    baseExplanation + " " + dynamicExplanation,
                     inheritanceExplanation,
                     false,
                     "Klik hier om deze instellingen aan te passen",
@@ -92,18 +93,23 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
 
         String status;
         String statusClass;
+        String description;
 
-        String baseExplanation = "Shared Drives zorgen dat bestanden eigendom blijven van de organisatie i.p.v. individuele gebruikers.";
+        String baseExplanation = "Deze instelling bepaalt wie nieuwe gedeelde drives mag aanmaken. Gedeelde drives maken samenwerking eenvoudiger, maar zonder beperking kunnen ze zorgen voor ongecontroleerde verspreiding van data.";
         String inheritanceExplanation;
 
         if (allowedNode.isMissingNode() || allowedNode.isNull()) {
             status = "Kon niet bepalen";
             statusClass = "bg-slate-100 text-slate-700";
+            description = "Het beleid kon niet correct worden uitgelezen";
             inheritanceExplanation = "Beleid gevonden maar waarde ontbreekt in API-response.";
         } else {
             boolean allowed = allowedNode.asBoolean();
             status = allowed ? "Toegestaan" : "Niet toegestaan";
             statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
+            description = allowed
+                    ? "Gebruikers mogen nieuwe gedeelde drives aanmaken"
+                    : "Gebruikers mogen geen nieuwe gedeelde drives aanmaken";
             inheritanceExplanation = inherited
                     ? "Overgenomen van bovenliggende OU."
                     : "Rechtstreeks ingesteld op deze OU.";
@@ -112,7 +118,7 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         return new OrgUnitPolicyDto(
                 key(),
                 "Shared Drives",
-                "Wie mag nieuwe gedeelde drives aanmaken",
+                description,
                 status,
                 statusClass,
                 baseExplanation,

@@ -72,27 +72,27 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
 
         String status;
         String statusClass;
-        String dynamicExplanation;
+        String description;
 
         if (hasForceInstalled || (defaultBlocked && hasAllowlist)) {
             status = "Managed";
             statusClass = "bg-amber-100 text-amber-800";
-            dynamicExplanation = hasForceInstalled
-                    ? "Er zijn force-installed extensies: gebruikers kunnen deze niet verwijderen."
-                    : "De standaard is geblokkeerd; alleen specifieke extensies zijn toegestaan.";
+            description = hasForceInstalled
+                    ? "Er zijn force-installed extensies"
+                    : "Alleen specifieke extensies zijn toegestaan";
         } else if (defaultBlocked && !hasAllowlist && hasBlocklist) {
             // Default block, blocklist only (block all) - treat as Managed
             status = "Managed";
             statusClass = "bg-amber-100 text-amber-800";
-            dynamicExplanation = "Alle extensies zijn standaard geblokkeerd.";
+            description = "Alle extensies zijn standaard geblokkeerd";
         } else if (!defaultBlocked && (hasBlocklist || hasForceInstalled)) {
             status = "Restricted";
             statusClass = "bg-amber-100 text-amber-800";
-            dynamicExplanation = "De standaard is toegestaan, maar er is een blokkeerlijst of force-installed extensies.";
+            description = "Er is een blokkeerlijst of force-installed extensies";
         } else {
             status = "Open";
             statusClass = "bg-green-100 text-green-800";
-            dynamicExplanation = "De standaard is toegestaan en er zijn geen aanvullende restricties.";
+            description = "Er zijn geen aanvullende restricties";
         }
 
         String inheritanceExplanation = inherited
@@ -104,10 +104,10 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         return new OrgUnitPolicyDto(
                 key(),
                 "Chrome-extensies",
-                "Beheer van Chrome-browserextensies per OU",
+                description,
                 status,
                 statusClass,
-                BASE_EXPLANATION + " " + dynamicExplanation,
+                BASE_EXPLANATION,
                 inheritanceExplanation,
                 inherited,
                 SETTINGS_LINK_TEXT,
@@ -209,6 +209,9 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
     }
 
     private OrgUnitPolicyDto buildNotConfigured(String path, boolean apiError) {
+        String description = apiError
+                ? "Chrome-beheer niet ingeschakeld / API niet bereikbaar"
+                : "Er is geen actief extensiebeleid";
         String inheritanceExplanation = apiError
                 ? "Chrome Policy API niet beschikbaar of niet ingeschakeld. Schakel Chrome-beheer in voor uw domein."
                 : "Geen Chrome-extensiebeleid gevonden voor deze OU.";
@@ -216,7 +219,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         return new OrgUnitPolicyDto(
                 key(),
                 "Chrome-extensies",
-                "Beheer van Chrome-browserextensies per OU",
+                description,
                 "Niet geconfigureerd",
                 "bg-slate-100 text-slate-700",
                 BASE_EXPLANATION,

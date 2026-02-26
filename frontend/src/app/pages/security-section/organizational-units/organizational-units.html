@@ -150,11 +150,11 @@
               @if (policy.baseExplanation) {
               <p>{{ policy.baseExplanation }}</p>
               }
+              @if (policy.details) {
+              <p>{{ policy.details }}</p>
+              }
               @if (policy.inheritanceExplanation) {
               <p>{{ policy.inheritanceExplanation }}</p>
-              }
-              @if (policy.details) {
-              <p class="text-xs text-slate-500 font-medium">{{ policy.details }}</p>
               }
             </div>
             <div class="border-t border-slate-200/80 mt-3 pt-3 flex flex-col items-center">

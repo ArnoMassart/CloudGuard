@@ -56,7 +56,12 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
                 ? "bg-slate-100 text-slate-700"
                 : anyOff ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800";
 
-        String baseExplanation = "Deze beleidsregel toont de service-status van Gmail, Drive en Meet voor deze organisatie-eenheid. Services kunnen aan of uit staan per OU.";
+        String baseExplanation = "Hier zie je welke Google-diensten (zoals Gmail, Drive en Meet) beschikbaar zijn voor gebruikers in deze organisatie-eenheid. Services kunnen aan of uit staan per OU.";
+        String description = anyUnknown
+                ? "Er zijn geen beleidsregels gevonden voor alle services"
+                : anyOff
+                        ? "Een of meer services zijn uitgeschakeld"
+                        : "Alle services zijn ingeschakeld";
         String inheritanceExplanation = anyInherited
                 ? "Sommige services erven hun status van een bovenliggende OU."
                 : "Alle services zijn rechtstreeks ingesteld op deze OU.";
@@ -64,7 +69,7 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
         return new OrgUnitPolicyDto(
                 key(),
                 "Google Workspace Services",
-                "Gmail / Drive / Meet service status",
+                description,
                 status,
                 statusClass,
                 baseExplanation,
