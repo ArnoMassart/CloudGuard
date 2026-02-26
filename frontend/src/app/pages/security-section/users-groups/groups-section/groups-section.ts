@@ -48,7 +48,7 @@ export class GroupsSection implements OnInit {
   readonly nextPageToken = signal<string | null>(null);
   readonly currentPage = signal(1);
   private tokenHistory: (string | null)[] = [null];
-  private readonly pageSize = 3;
+  private readonly pageSize = 2;
 
   ngOnInit(): void {
     this.searchSubject

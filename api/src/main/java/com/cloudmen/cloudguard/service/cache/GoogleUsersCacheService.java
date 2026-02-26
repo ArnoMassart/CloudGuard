@@ -1,8 +1,9 @@
 package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
-import com.cloudmen.cloudguard.service.GoogleUsersService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.*;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,31 +25,21 @@ public class GoogleUsersCacheService {
 
     private final GoogleApiFactory googleApiFactory;
 
-    private final Map<String, UserCacheEntry> cache = new ConcurrentHashMap<>();
-    private static final long CACHE_TTL_MS = 3600000L;
+    private final Cache<String, UserCacheEntry> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
 
     public GoogleUsersCacheService(GoogleApiFactory googleApiFactory) {
         this.googleApiFactory = googleApiFactory;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
-        cache.compute(loggedInEmail, this::fetchFromGoogle);
+        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
     public UserCacheEntry getOrFetchUsersData(String loggedInEmail) {
-        // .compute() zorgt automatisch voor een 'Lock' op dit specifieke e-mailadres.
-        // Als 2 calls tegelijk komen, mag er 1 naar binnen. De 2e wacht tot de 1e klaar is.
-        return cache.compute(loggedInEmail, (email, entry) -> {
-            long now = System.currentTimeMillis();
-
-            // Als de 1e thread net klaar is, ziet de 2e thread direct dat de data nu wél vers is!
-            if (entry != null && (now - entry.timestamp() < CACHE_TTL_MS)) {
-                return entry;
-            }
-
-            // Haal nieuw op bij Google
-            return fetchFromGoogle(email, entry);
-        });
+        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
     public List<String> getUserRoles(String email) {

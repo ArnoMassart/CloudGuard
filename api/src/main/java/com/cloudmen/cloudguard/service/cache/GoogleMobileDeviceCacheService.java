@@ -2,6 +2,8 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.devices.MobileDeviceCacheEntry;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class GoogleMobileDeviceCacheService {
@@ -22,15 +25,17 @@ public class GoogleMobileDeviceCacheService {
 
     private final GoogleApiFactory googleApiFactory;
 
-    private final Map<String, MobileDeviceCacheEntry> cache = new ConcurrentHashMap<>();
-    private static final long CACHE_TTL_MS = 3600000L;
+    private final Cache<String, MobileDeviceCacheEntry> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
 
     public GoogleMobileDeviceCacheService(GoogleApiFactory googleApiFactory) {
         this.googleApiFactory = googleApiFactory;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
-        cache.compute(loggedInEmail, this::fetchFromGoogle);
+        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
     public MobileDeviceCacheEntry getOrFetchDeviceData(String loggedInEmail, boolean isTestMode) {
@@ -38,13 +43,7 @@ public class GoogleMobileDeviceCacheService {
             return new MobileDeviceCacheEntry(createMockGoogleDevices(), System.currentTimeMillis());
         }
 
-        return cache.compute(loggedInEmail, (email, existingEntry) -> {
-            long now = System.currentTimeMillis();
-            if (existingEntry != null && (now - existingEntry.timestamp() < CACHE_TTL_MS)) {
-                return existingEntry;
-            }
-            return fetchFromGoogle(email, existingEntry);
-        });
+        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
     private MobileDeviceCacheEntry fetchFromGoogle(String loggedInEmail, MobileDeviceCacheEntry fallbackEntry) {

@@ -5,6 +5,8 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
 import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.DriveList;
@@ -18,13 +20,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class GoogleSharedDriveCacheService {
     private final GoogleApiFactory googleApiFactory;
 
-    private final Map<String, SharedDriveCacheEntry> cache = new ConcurrentHashMap<>();
-    private static final long CACHE_TTL_MS = 3600000L;
+    private final Cache<String, SharedDriveCacheEntry> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
 
     private static final Logger log = LoggerFactory.getLogger(GoogleSharedDriveCacheService.class);
 
@@ -33,19 +38,11 @@ public class GoogleSharedDriveCacheService {
     }
 
     public void forceRefreshCache(String loggedInEmail) {
-        cache.compute(loggedInEmail, this::fetchFromGoogle);
+        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
     public SharedDriveCacheEntry getOrFetchDriveData(String loggedInEmail) {
-        return cache.compute(loggedInEmail, (email, entry) -> {
-            long now = System.currentTimeMillis();
-
-            if (entry != null && (now - entry.timestamp() < CACHE_TTL_MS)) {
-                return entry;
-            }
-
-            return fetchFromGoogle(email, entry);
-        });
+        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
     private SharedDriveCacheEntry fetchFromGoogle(String loggedInEmail, SharedDriveCacheEntry fallbackEntry) {

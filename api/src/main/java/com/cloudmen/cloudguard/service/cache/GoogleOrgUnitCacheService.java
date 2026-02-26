@@ -2,6 +2,8 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import com.google.api.services.admin.directory.model.OrgUnits;
 import com.google.api.services.admin.directory.model.Users;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class GoogleOrgUnitCacheService {
@@ -25,25 +28,21 @@ public class GoogleOrgUnitCacheService {
     private final GoogleApiFactory directoryFactory;
 
     // --- CACHE CONFIGURATIE ---
-    private final Map<String, OrgUnitCacheEntry> cache = new ConcurrentHashMap<>();
-    private static final long CACHE_TTL_MS = 3600000L;
+    private final Cache<String, OrgUnitCacheEntry> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
 
     public GoogleOrgUnitCacheService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 
     public void forceRefreshCache(String adminEmail) {
-        cache.compute(adminEmail, this::fetchFromGoogle);
+        cache.asMap().compute(adminEmail, this::fetchFromGoogle);
     }
 
     public OrgUnitCacheEntry getOrFetchOrgUnitData(String loggedInEmail) {
-        return cache.compute(loggedInEmail, (email, existingEntry) -> {
-            long now = System.currentTimeMillis();
-            if (existingEntry != null && (now - existingEntry.timestamp() < CACHE_TTL_MS)) {
-                return existingEntry;
-            }
-            return fetchFromGoogle(email, existingEntry);
-        });
+        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
     private OrgUnitCacheEntry fetchFromGoogle(String loggedInEmail, OrgUnitCacheEntry fallbackEntry) {

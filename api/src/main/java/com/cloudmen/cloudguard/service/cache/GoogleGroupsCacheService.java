@@ -5,6 +5,8 @@ import com.cloudmen.cloudguard.dto.groups.GroupCacheEntry;
 import com.cloudmen.cloudguard.dto.groups.GroupOrgDetail;
 import com.cloudmen.cloudguard.dto.groups.GroupSettingsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.decodePrivateKey;
 
@@ -34,8 +37,10 @@ public class GoogleGroupsCacheService {
 
     private final GoogleApiFactory googleApiFactory;
 
-    private final Map<String, GroupCacheEntry> cache = new ConcurrentHashMap<>();
-    private static final long CACHE_TTL_MS = 3600000L;
+    private final Cache<String, GroupCacheEntry> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
 
     private static final String CLOUD_IDENTITY_SCOPE = "https://www.googleapis.com/auth/cloud-identity.groups.readonly";
     private static final String GROUPS_SETTINGS_SCOPE = "https://www.googleapis.com/auth/apps.groups.settings";
@@ -52,19 +57,11 @@ public class GoogleGroupsCacheService {
     }
 
     public void forceRefreshCache(String loggedInEmail) {
-        cache.compute(loggedInEmail, this::fetchFromGoogle);
+        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
     public GroupCacheEntry getOrFetchGroupData(String loggedInEmail) {
-        return cache.compute(loggedInEmail, (email, entry) -> {
-            long now = System.currentTimeMillis();
-
-            if (entry != null && (now - entry.timestamp() < CACHE_TTL_MS)) {
-                return entry;
-            }
-
-            return fetchFromGoogle(email, entry);
-        });
+       return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
     private GroupCacheEntry fetchFromGoogle(String loggedInEmail, GroupCacheEntry fallbackEntry) {
