@@ -92,7 +92,7 @@
       <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center bg-white">
         <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
         <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
-          placeholder="Zoek gedeelde drives op naam (met volledige woorden)..." />
+          placeholder="Zoek gedeelde drives op naam..." />
       </div>
 
       @if (!isLoading()) {
@@ -114,12 +114,9 @@
               </div>
               <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
                 <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
-                  [class.bg-emerald-100]="drive.risk === 'Laag'"
-                  [class.text-emerald-800]="drive.risk === 'Laag'"
-                  [class.bg-amber-100]="drive.risk === 'Middel'"
-                  [class.text-amber-800]="drive.risk === 'Middel'"
-                  [class.bg-rose-100]="drive.risk === 'Hoog'"
-                  [class.text-rose-800]="drive.risk === 'Hoog'">
+                  [class.bg-emerald-100]="drive.risk === 'Laag'" [class.text-emerald-800]="drive.risk === 'Laag'"
+                  [class.bg-amber-100]="drive.risk === 'Middel'" [class.text-amber-800]="drive.risk === 'Middel'"
+                  [class.bg-rose-100]="drive.risk === 'Hoog'" [class.text-rose-800]="drive.risk === 'Hoog'">
                   {{ drive.risk }} risico
                 </span>
               </div>
@@ -136,8 +133,7 @@
               </div>
               <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN</p>
-                <span class="font-medium"
-                  [class.text-rose-600]="drive.externalMembers > 0"
+                <span class="font-medium" [class.text-rose-600]="drive.externalMembers > 0"
                   [class.text-emerald-600]="drive.externalMembers <= 0">
                   {{ drive.externalMembers }}
                 </span>
@@ -145,17 +141,11 @@
               <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">AANTAL BEHEERDERS</p>
                 <div class="flex items-center gap-2">
-                  <i-lucide
-                    [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert" size="16" class="text-gray-500"
-                    [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                    [class.text-black]="drive.totalOrganizers > 0"
-                    size="16"
-                  />
-                  <span
-                    [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                    [class.text-black]="drive.totalOrganizers > 0"
-                    class="text-sm font-medium text-slate-500"
-                  >
+                  <i-lucide [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert" size="16"
+                    class="text-gray-500" [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
+                    [class.text-black]="drive.totalOrganizers > 0" size="16" />
+                  <span [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
+                    [class.text-black]="drive.totalOrganizers > 0" class="text-sm font-medium text-slate-500">
                     {{ drive.totalOrganizers }}
                   </span>
                 </div>
@@ -177,9 +167,8 @@
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                   ALLEEN DOMEINGEBRUIKERS TOEGESTAAN
                 </p>
-                <div 
-                class="flex items-center gap-1 cursor-pointer" 
-                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
+                <div class="flex items-center gap-1 cursor-pointer"
+                  (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
                   @if (!drive.onlyDomainUsersAllowed) {
                   <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00] cursor-pointer" size="13" />
                   <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
@@ -193,9 +182,8 @@
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                   ALLEEN LEDEN KUNNEN TOEGANG KRIJKEN
                 </p>
-                <div 
-                class="flex items-center gap-1 cursor-pointer"
-                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
+                <div class="flex items-center gap-1 cursor-pointer"
+                  (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
                   @if (!drive.onlyMembersCanAccess) {
                   <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
                   <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
