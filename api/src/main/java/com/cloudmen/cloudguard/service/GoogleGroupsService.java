@@ -91,41 +91,4 @@ public class GoogleGroupsService {
                 totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore
         );
     }
-
-    public GroupSettingsDto getGroupSettings(String loggedInEmail, String groupEmail) {
-        if (groupEmail == null || groupEmail.isBlank()) {
-            return new GroupSettingsDto("—", "—");
-        }
-        try {
-            Groupssettings settingsService = groupsCacheService.getGroupsSettingsService(loggedInEmail);
-            Groups settings = settingsService.groups().get(groupEmail).execute();
-            String whoCanJoin = mapWhoCanJoin(settings.getWhoCanJoin());
-            String whoCanView = mapWhoCanViewMembership(settings.getWhoCanViewMembership());
-            return new GroupSettingsDto(whoCanJoin, whoCanView);
-        } catch (Throwable t) {
-            log.warn("Could not fetch Groups Settings for {}: {}", groupEmail, t.getMessage());
-            return new GroupSettingsDto("—", "—");
-        }
-    }
-
-    private String mapWhoCanJoin(String who) {
-        if (who == null || who.isBlank()) return "—";
-        return switch (who) {
-            case "ANYONE_CAN_JOIN" -> "Iedereen kan lid worden";
-            case "INVITED_CAN_JOIN" -> "Alleen uitgenodigde gebruikers";
-            case "CAN_REQUEST_TO_JOIN" -> "Kan verzoek doen om lid te worden";
-            case "ALL_IN_DOMAIN_CAN_JOIN" -> "Iedereen in het domein";
-            default -> who;
-        };
-    }
-
-    private String mapWhoCanViewMembership(String who) {
-        if (who == null || who.isBlank()) return "—";
-        return switch (who) {
-            case "ALL_IN_DOMAIN_CAN_VIEW" -> "Iedereen in het domein";
-            case "ALL_MANAGERS_CAN_VIEW" -> "Alle beheerders";
-            case "ALL_MEMBERS_CAN_VIEW" -> "Alle leden";
-            default -> who;
-        };
-    }
 }

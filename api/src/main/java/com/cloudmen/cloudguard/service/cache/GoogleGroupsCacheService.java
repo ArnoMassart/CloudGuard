@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.groups.CachedGroupItem;
 import com.cloudmen.cloudguard.dto.groups.GroupCacheEntry;
 import com.cloudmen.cloudguard.dto.groups.GroupOrgDetail;
-import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
+import com.cloudmen.cloudguard.dto.groups.GroupSettingsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -14,6 +14,7 @@ import com.google.api.services.admin.directory.model.Members;
 import com.google.api.services.cloudidentity.v1.CloudIdentity;
 import com.google.api.services.cloudidentity.v1.model.LookupGroupNameResponse;
 import com.google.api.services.groupssettings.Groupssettings;
+import com.google.api.services.groupssettings.model.Groups;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.slf4j.Logger;
@@ -86,7 +87,7 @@ public class GoogleGroupsCacheService {
             String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
 
             // A. Haal alle groepen en details op
-            List<CachedGroupItem> allMappedGroups = fetchAllGroups(service, cloudIdentity, primaryDomain);
+            List<CachedGroupItem> allMappedGroups = fetchAllGroups(service, cloudIdentity, primaryDomain, loggedInEmail);
 
             return new GroupCacheEntry(allMappedGroups, System.currentTimeMillis());
 
@@ -99,7 +100,7 @@ public class GoogleGroupsCacheService {
         }
     }
 
-    private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain) throws IOException {
+    private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain, String loggedInEmail) throws IOException {
         List<CachedGroupItem> allMappedGroups = new ArrayList<>();
         String pageToken = null;
 
@@ -141,8 +142,10 @@ public class GoogleGroupsCacheService {
                     String adminId = group.getId() != null ? group.getId() : "";
                     String groupName = group.getName() != null ? group.getName() : "";
 
+                    GroupSettingsDto settings = getGroupSettings(loggedInEmail, groupEmail);
+
                     GroupOrgDetail detail = new GroupOrgDetail(
-                            groupEmail, adminId, risk, tags, total, external, externalAllowed, "—", "—"
+                            groupEmail, adminId, risk, tags, total, external, externalAllowed, settings.getWhoCanJoin(), settings.getWhoCanView()
                     );
 
                     allMappedGroups.add(new CachedGroupItem(groupName, groupEmail, detail));
@@ -199,12 +202,51 @@ public class GoogleGroupsCacheService {
                 .setApplicationName("CloudGuard").build();
     }
 
-    public Groupssettings getGroupsSettingsService(String loggedInEmail) throws Exception {
+    private Groupssettings getGroupsSettingsService(String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail).setPrivateKey(decodePrivateKey(pk)).setServiceAccountUser(loggedInEmail)
                 .setScopes(Collections.singleton(GROUPS_SETTINGS_SCOPE)).build();
         return new Groupssettings.Builder(GoogleNetHttpTransport.newTrustedTransport(), GsonFactory.getDefaultInstance(), new HttpCredentialsAdapter(credentials))
                 .setApplicationName("CloudGuard").build();
+    }
+
+
+
+    private GroupSettingsDto getGroupSettings(String loggedInEmail, String groupEmail) {
+        if (groupEmail == null || groupEmail.isBlank()) {
+            return new GroupSettingsDto("—", "—");
+        }
+        try {
+            Groupssettings settingsService = getGroupsSettingsService(loggedInEmail);
+            Groups settings = settingsService.groups().get(groupEmail).execute();
+            String whoCanJoin = mapWhoCanJoin(settings.getWhoCanJoin());
+            String whoCanView = mapWhoCanViewMembership(settings.getWhoCanViewMembership());
+            return new GroupSettingsDto(whoCanJoin, whoCanView);
+        } catch (Throwable t) {
+            log.warn("Could not fetch Groups Settings for {}: {}", groupEmail, t.getMessage());
+            return new GroupSettingsDto("—", "—");
+        }
+    }
+
+    private String mapWhoCanJoin(String who) {
+        if (who == null || who.isBlank()) return "—";
+        return switch (who) {
+            case "ANYONE_CAN_JOIN" -> "Iedereen kan lid worden";
+            case "INVITED_CAN_JOIN" -> "Alleen uitgenodigde gebruikers";
+            case "CAN_REQUEST_TO_JOIN" -> "Kan verzoek doen om lid te worden";
+            case "ALL_IN_DOMAIN_CAN_JOIN" -> "Iedereen in het domein";
+            default -> who;
+        };
+    }
+
+    private String mapWhoCanViewMembership(String who) {
+        if (who == null || who.isBlank()) return "—";
+        return switch (who) {
+            case "ALL_IN_DOMAIN_CAN_VIEW" -> "Iedereen in het domein";
+            case "ALL_MANAGERS_CAN_VIEW" -> "Alle beheerders";
+            case "ALL_MEMBERS_CAN_VIEW" -> "Alle leden";
+            default -> who;
+        };
     }
 }

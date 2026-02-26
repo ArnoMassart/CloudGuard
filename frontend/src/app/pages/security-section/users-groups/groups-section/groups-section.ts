@@ -45,9 +45,6 @@ export class GroupsSection implements OnInit {
   readonly searchQuery = signal('');
   private readonly searchSubject = new Subject<string>();
 
-  readonly groupSettingsCache = signal<Record<string, GroupSettingsDto>>({});
-  readonly loadingSettingsFor = signal<Set<string>>(new Set());
-
   readonly nextPageToken = signal<string | null>(null);
   readonly currentPage = signal(1);
   private tokenHistory: (string | null)[] = [null];
@@ -133,11 +130,7 @@ export class GroupsSection implements OnInit {
           this.groups.set(this.mapToGroupSummary(res.groups));
           this.nextPageToken.set(res.nextPageToken ?? null);
           this.loading.set(false);
-          this.groupSettingsCache.set({});
-          this.loadingSettingsFor.set(new Set());
-          for (const g of res.groups) {
-            this.loadGroupSettings(g.name);
-          }
+          console.log(this.groups());
         },
         error: (error) => {
           console.error('Error fetching groups:', error);
@@ -159,40 +152,6 @@ export class GroupsSection implements OnInit {
       whoCanJoin: g.whoCanJoin,
       whoCanView: g.whoCanView,
     }));
-  }
-
-  
-  private loadGroupSettings(groupEmail: string): void {
-    this.loadingSettingsFor.update((s) => new Set(s).add(groupEmail));
-    this.#groupService.getGroupSettings(groupEmail).subscribe({
-      next: (settings) => {
-        this.groupSettingsCache.update((c) => ({ ...c, [groupEmail]: settings }));
-        this.loadingSettingsFor.update((s) => {
-          const next = new Set(s);
-          next.delete(groupEmail);
-          return next;
-        });
-      },
-      error: () => {
-        this.groupSettingsCache.update((c) => ({
-          ...c,
-          [groupEmail]: { whoCanJoin: '—', whoCanView: '—' },
-        }));
-        this.loadingSettingsFor.update((s) => {
-          const next = new Set(s);
-          next.delete(groupEmail);
-          return next;
-        });
-      },
-    });
-  }
-
-  getCachedSettings(groupEmail: string): GroupSettingsDto | undefined {
-    return this.groupSettingsCache()[groupEmail];
-  }
-
-  isSettingsLoading(groupEmail: string): boolean {
-    return this.loadingSettingsFor().has(groupEmail);
   }
 
   getGroupAdminUrl(group: GroupSummary): string {

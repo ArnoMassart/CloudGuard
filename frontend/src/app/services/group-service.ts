@@ -46,13 +46,6 @@ export class GroupService {
     });
   }
 
-  getGroupSettings(groupEmail: string): Observable<GroupSettingsDto> {
-    return this.#http.get<GroupSettingsDto>(`${this.#API_URL}/settings`, {
-      withCredentials: true,
-      params: { groupEmail },
-    });
-  }
-
   refreshGroupCache(): Observable<string> {
     return this.#http.post(
       `${this.#API_URL}/refresh`,

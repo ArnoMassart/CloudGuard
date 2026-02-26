@@ -114,8 +114,8 @@
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN TOEGESTAAN</p>
             <a class="inline-flex items-center gap-1 font-medium hover:opacity-80"
-              [ngClass]="group.externalAllowed ? 'text-rose-600 underline' : 'text-emerald-600'" [href]="getGroupAdminUrl(group)"
-              target="_blank" rel="noopener noreferrer">
+              [ngClass]="group.externalAllowed ? 'text-rose-600 underline' : 'text-emerald-600'"
+              [href]="getGroupAdminUrl(group)" target="_blank" rel="noopener noreferrer">
               <ng-container *ngIf="group.externalAllowed; else externalNo">
                 <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
                 Ja
@@ -127,24 +127,14 @@
 
         <!-- Bottom: Group settings (loaded via /groups/settings per group) -->
         <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          @if (isSettingsLoading(group.name)) {
-          <div class="col-span-2 flex items-center justify-center">
-            <div class="relative flex items-center justify-center">
-              <div class="h-8 w-8 rounded-full"></div>
-              <div class="absolute h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-          </div>
-          } @else {
-          @let settings = getCachedSettings(group.name);
           <div class="bg-slate-50 rounded-md px-3 py-3">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">WIE KAN LID WORDEN</p>
-            <p class="text-sm text-slate-900">{{ settings?.whoCanJoin ?? "—" }}</p>
+            <p class="text-sm text-slate-900">{{ group.whoCanJoin }}</p>
           </div>
           <div class="bg-slate-50 rounded-md px-3 py-3">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">WIE KAN LEDEN BEKIJKEN</p>
-            <p class="text-sm text-slate-900">{{ settings?.whoCanView ?? "—" }}</p>
+            <p class="text-sm text-slate-900">{{ group.whoCanView }}</p>
           </div>
-          }
         </div>
       </article>
       } @empty {

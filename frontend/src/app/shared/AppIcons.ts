@@ -13,6 +13,7 @@ import {
   ExternalLink,
   FolderOpen,
   FolderTree,
+  Funnel,
   Globe,
   HardDrive,
   Key,
@@ -21,6 +22,7 @@ import {
   LogOut,
   RefreshCw,
   Search,
+  Settings,
   Shield,
   ShieldAlert,
   ShieldCheck,
@@ -28,8 +30,6 @@ import {
   TriangleAlert,
   UserCog,
   Users,
-  Funnel,
-  Settings,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -47,6 +47,7 @@ export class AppIcons {
   static readonly ExternalLink = ExternalLink;
   static readonly FolderOpen = FolderOpen;
   static readonly FolderTree = FolderTree;
+  static readonly Funnel = Funnel;
   static readonly Globe = Globe;
   static readonly HardDrive = HardDrive;
   static readonly Key = Key;
@@ -55,6 +56,7 @@ export class AppIcons {
   static readonly LogOut = LogOut;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
+  static readonly Settings = Settings;
   static readonly Shield = Shield;
   static readonly ShieldAlert = ShieldAlert;
   static readonly ShieldCheck = ShieldCheck;
@@ -62,6 +64,4 @@ export class AppIcons {
   static readonly TriangleAlert = TriangleAlert;
   static readonly UserCog = UserCog;
   static readonly Users = Users;
-  static readonly Filter = Funnel;
-  static readonly Settings = Settings;
 }
