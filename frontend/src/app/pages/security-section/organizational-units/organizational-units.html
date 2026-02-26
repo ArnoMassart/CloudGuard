@@ -144,7 +144,7 @@
               {{ policy.status }}
             </span>
           </button>
-          @if (isPolicyExpanded(policy.key)) {
+            @if (isPolicyExpanded(policy.key)) {
           <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
             <div class="text-sm text-slate-600 mb-3 space-y-2">
               @if (policy.baseExplanation) {
@@ -152,6 +152,9 @@
               }
               @if (policy.inheritanceExplanation) {
               <p>{{ policy.inheritanceExplanation }}</p>
+              }
+              @if (policy.details) {
+              <p class="text-xs text-slate-500 font-medium">{{ policy.details }}</p>
               }
             </div>
             <div class="border-t border-slate-200/80 mt-3 pt-3 flex flex-col items-center">

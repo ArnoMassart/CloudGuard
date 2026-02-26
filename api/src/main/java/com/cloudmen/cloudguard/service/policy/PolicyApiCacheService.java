@@ -90,7 +90,9 @@ public class PolicyApiCacheService {
         String path = orgUnitPath.trim();
         for (Map.Entry<String, String> e : ouMap.entrySet()) {
             String p = e.getValue();
-            if (p != null && p.equals(path)) {
+            if (p == null) continue;
+            String norm = p.trim();
+            if (norm.equals(path) || (path.equals("/") && (norm.equals("/") || norm.isEmpty()))) {
                 return e.getKey();
             }
         }

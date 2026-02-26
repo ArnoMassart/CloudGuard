@@ -119,15 +119,11 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
             String schema = entry.getKey();
             JsonNode value = entry.getValue();
 
-            if (schema.contains("ExtensionSettings") || schema.contains("ExtensionSettings")) {
+            if (schema.contains("ExtensionSettings")) {
                 parseExtensionSettings(value, counts);
             } else if (schema.contains("ExtensionInstallBlocklist")) {
                 parseStringList(value, counts.blockedIds);
-                if (value.isArray()) {
-                    for (JsonNode item : value) {
-                        if ("*".equals(item.asText(""))) counts.defaultBlocked = true;
-                    }
-                }
+                if (counts.blockedIds.contains("*")) counts.defaultBlocked = true;
             } else if (schema.contains("ExtensionInstallAllowlist")) {
                 parseStringList(value, counts.allowedIds);
             } else if (schema.contains("ExtensionInstallForcelist")) {
@@ -138,9 +134,6 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         counts.blocked = counts.blockedIds.size();
         counts.allowed = counts.allowedIds.size();
         counts.forceInstalled = counts.forceInstalledIds.size();
-        if (counts.defaultBlocked && counts.allowedIds.isEmpty() && !counts.blockedIds.isEmpty()) {
-            counts.defaultBlocked = counts.blockedIds.contains("*");
-        }
         return counts;
     }
 
@@ -167,8 +160,23 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
 
     private void parseStringList(JsonNode value, Set<String> target) {
         if (value == null) return;
+        // Chrome Policy API may return protobuf Struct: listValue.values[].stringValue
+        JsonNode listNode = value.path("listValue");
+        if (!listNode.isMissingNode()) {
+            JsonNode values = listNode.path("values");
+            if (values.isArray()) {
+                for (JsonNode item : values) {
+                    String s = item.path("stringValue").asText("");
+                    if (!s.isBlank()) target.add(s);
+                }
+            }
+            return;
+        }
         if (value.isArray()) {
-            for (JsonNode item : value) target.add(item.asText(""));
+            for (JsonNode item : value) {
+                String s = item.isTextual() ? item.asText() : item.path("stringValue").asText("");
+                if (!s.isBlank()) target.add(s);
+            }
         } else if (value.isTextual()) {
             target.add(value.asText());
         }
@@ -176,13 +184,15 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
 
     private void parseForcelist(JsonNode value, ExtensionCounts counts) {
         if (value == null) return;
-        if (value.isArray()) {
-            for (JsonNode item : value) {
-                String s = item.asText("");
-                int idx = s.indexOf(';');
-                String extId = idx >= 0 ? s.substring(0, idx).trim() : s;
-                if (!extId.isBlank()) counts.forceInstalledIds.add(extId);
-            }
+        // Forcelist format: ["extId;updateUrl", ...] or listValue
+        JsonNode listNode = value.path("listValue");
+        JsonNode items = listNode.isMissingNode() ? value : listNode.path("values");
+        if (!items.isArray()) return;
+        for (JsonNode item : items) {
+            String s = item.path("stringValue").asText(item.asText(""));
+            int idx = s.indexOf(';');
+            String extId = idx >= 0 ? s.substring(0, idx).trim() : s.trim();
+            if (!extId.isBlank()) counts.forceInstalledIds.add(extId);
         }
     }
 
