@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.service.CacheWarmupService;
+import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
