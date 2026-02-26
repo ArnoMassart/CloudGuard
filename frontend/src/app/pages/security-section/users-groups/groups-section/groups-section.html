@@ -99,12 +99,12 @@
           </div>
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN TOEGESTAAN</p>
-            <a class="inline-flex items-center gap-1 font-medium underline hover:opacity-80"
-              [ngClass]="group.externalAllowed ? 'text-rose-600' : 'text-emerald-600'" [href]="getGroupAdminUrl(group)"
+            <a class="inline-flex items-center gap-1 font-medium hover:opacity-80"
+              [ngClass]="group.externalAllowed ? 'text-rose-600 underline' : 'text-emerald-600'" [href]="getGroupAdminUrl(group)"
               target="_blank" rel="noopener noreferrer">
               <ng-container *ngIf="group.externalAllowed; else externalNo">
+                <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
                 Ja
-                <i-lucide [img]="Icons.ExternalLink" size="14" class="inline-block align-middle" />
               </ng-container>
               <ng-template #externalNo>Nee</ng-template>
             </a>
