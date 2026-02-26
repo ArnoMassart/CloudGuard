@@ -41,12 +41,10 @@
   }
 
   <!-- Search -->
-  <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
-    <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
-      <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-      <input type="text" class="focus:outline-none w-full" placeholder="Zoek groepen op naam..." [value]="searchQuery()"
-        (input)="onKeyup(($any($event.target)).value)" />
-    </div>
+  <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center bg-white">
+    <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
+    <input type="text" class="focus:outline-none w-full" placeholder="Zoek groepen op naam..." [value]="searchQuery()"
+      (input)="onKeyup(($any($event.target)).value)" />
   </div>
 
   <!-- Groups list -->
