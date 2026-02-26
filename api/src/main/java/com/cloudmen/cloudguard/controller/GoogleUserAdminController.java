@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.UserOverviewResponse;
-import com.cloudmen.cloudguard.dto.UserPageResponse;
+import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
+import com.cloudmen.cloudguard.dto.users.UserPageResponse;
 import com.cloudmen.cloudguard.service.GoogleUserAdminService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/google/users")
 public class GoogleUserAdminController {
     private final JwtService jwtService;
-    private final GoogleUserAdminService googleUserAdminService;
+    private final GoogleUserAdminService googleUserService;
 
-    public GoogleUserAdminController(JwtService jwtService, GoogleUserAdminService googleUserAdminService) {
+    public GoogleUserAdminController(JwtService jwtService, GoogleUserAdminService googleUserService) {
         this.jwtService = jwtService;
-        this.googleUserAdminService = googleUserAdminService;
+        this.googleUserService = googleUserService;
     }
 
     @GetMapping
@@ -30,7 +30,7 @@ public class GoogleUserAdminController {
         }
 
         String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserAdminService.getWorkspaceUsersPaged(adminEmail, pageToken, size, query));
+        return ResponseEntity.ok(googleUserService.getWorkspaceUsersPaged(adminEmail, pageToken, size, query));
     }
 
     @GetMapping("/overview")
@@ -41,6 +41,19 @@ public class GoogleUserAdminController {
         }
 
         String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserAdminService.getUsersPageOverview(adminEmail));
+        return ResponseEntity.ok(googleUserService.getUsersPageOverview(adminEmail));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refreshUsersCache(
+            @CookieValue(name = "AuthToken", required = false) String token
+    ) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String adminEmail = jwtService.validateInternalToken(token);
+        googleUserService.forceRefreshCache(adminEmail);
+        return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

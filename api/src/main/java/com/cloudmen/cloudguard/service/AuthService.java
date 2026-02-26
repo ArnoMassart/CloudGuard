@@ -2,10 +2,8 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.LoginResult;
-import com.cloudmen.cloudguard.dto.UserDto;
+import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
-import com.sun.jdi.event.ExceptionEvent;
-import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;

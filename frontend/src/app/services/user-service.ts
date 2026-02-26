@@ -42,4 +42,14 @@ export class UserService {
       withCredentials: true,
     });
   }
+
+  refreshUsersCache(): Observable<string> {
+    return this.#http.post(
+      `${this.#API_URL}/refresh`,
+      {
+        withCredentials: true,
+      },
+      { responseType: 'text' }
+    );
+  }
 }

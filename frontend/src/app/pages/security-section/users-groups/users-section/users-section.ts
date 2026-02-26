@@ -42,6 +42,7 @@ export class UsersSection implements OnInit {
 
   orgUsers = signal<UserOrgDetail[]>([]);
   isLoading = signal(false);
+  isRefreshing = signal<boolean>(false);
   searchQuery = signal('');
   pageOverview = signal<UserOverviewResponse | null>(null);
 
@@ -128,6 +129,32 @@ export class UsersSection implements OnInit {
       default:
         return 'bg-gray-100 text-gray-600';
     }
+  }
+
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#userService.refreshUsersCache().subscribe({
+      next: (res) => {
+        console.log(res);
+
+        this.currentPage.set(1);
+        this.#tokenHistory = [null];
+
+        this.#loadUsers(null);
+        this.#loadPageOverview();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
   }
 
   // ==========================================

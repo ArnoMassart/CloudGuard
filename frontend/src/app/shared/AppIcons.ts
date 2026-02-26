@@ -12,12 +12,14 @@ import {
   CreditCard,
   ExternalLink,
   FolderOpen,
+  FolderTree,
   Globe,
   HardDrive,
   Key,
   Loader,
   Lock,
   LogOut,
+  RefreshCw,
   Search,
   Shield,
   ShieldAlert,
@@ -26,7 +28,6 @@ import {
   TriangleAlert,
   UserCog,
   Users,
-  FolderTree,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -50,6 +51,7 @@ export class AppIcons {
   static readonly Loader = Loader;
   static readonly Lock = Lock;
   static readonly LogOut = LogOut;
+  static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
   static readonly Shield = Shield;
   static readonly ShieldAlert = ShieldAlert;
