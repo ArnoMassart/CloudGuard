@@ -57,7 +57,6 @@ public class CacheWarmupService {
             try { tsvPolicyProvider.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("TSV Policy warmup failed", e); }
         });
 
-        // --- NIEUW: Warmup de Cloud Identity Policies (Gedeelde drives & Service statussen) ---
         CompletableFuture<Void> policyApiTask = CompletableFuture.runAsync(() -> {
             try {
                 policyApiCacheService.getAllPolicies(loggedInEmail);
@@ -66,6 +65,6 @@ public class CacheWarmupService {
         });
 
 
-        CompletableFuture.allOf(usersTask, groupsTask, orgUnitsTask, drivesTask, devicesTask, tsvTask, policyApiTask).thenAccept(v -> log.info("✅ Cache warm-up SUCCESVOL voltooid voor alle modules voor: {}", loggedInEmail));
+        CompletableFuture.allOf(usersTask, groupsTask, orgUnitsTask, drivesTask, devicesTask, tsvTask, policyApiTask).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
     }
 }

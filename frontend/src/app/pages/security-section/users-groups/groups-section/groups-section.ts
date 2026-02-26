@@ -101,9 +101,7 @@ export class GroupsSection implements OnInit {
     this.isRefreshing.set(true);
 
     this.#groupService.refreshGroupCache().subscribe({
-      next: (res) => {
-        console.log(res);
-
+      next: () => {
         this.currentPage.set(1);
         this.tokenHistory = [null];
 
