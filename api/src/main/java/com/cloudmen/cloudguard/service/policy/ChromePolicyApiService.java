@@ -20,6 +20,9 @@ import java.util.*;
 /**
  * Service to fetch Chrome policies via Chrome Policy API (chromepolicy.googleapis.com).
  * Used for Chrome extension policies (ExtensionSettings, ExtensionInstallBlocklist, etc.).
+ *
+ * Requires: Chrome Policy API enabled in GCP, scope chrome.management.policy.readonly,
+ * and domain-wide delegation for the service account with Chrome Management admin rights.
  */
 @Service
 public class ChromePolicyApiService {

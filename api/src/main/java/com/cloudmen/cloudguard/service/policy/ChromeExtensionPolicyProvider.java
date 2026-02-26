@@ -56,6 +56,10 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
             return buildNotConfigured(path, true);
         }
 
+        if (chromePolicies.isEmpty()) {
+            return buildNotConfigured(path, false);
+        }
+
         ExtensionCounts counts = parseExtensionCounts(chromePolicies);
         String sourceOuPath = resolveSourceOuPath(chromePolicies, ouMap);
         boolean inherited = sourceOuPath != null && !path.equals(sourceOuPath);
@@ -146,14 +150,16 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
             if (config == null || !config.isObject()) continue;
 
             String mode = config.path("installation_mode").asText("allowed");
-            switch (mode.toLowerCase()) {
-                case "blocked", "removed" -> counts.blockedIds.add(extId);
-                case "force_installed" -> counts.forceInstalledIds.add(extId);
-                case "allowed", "normal_installed" -> counts.allowedIds.add(extId);
-                default -> { /* ignore */ }
-            }
-            if ("*".equals(extId) && ("blocked".equalsIgnoreCase(mode) || "removed".equalsIgnoreCase(mode))) {
-                counts.defaultBlocked = true;
+            if ("*".equals(extId)) {
+                // * is the default for all extensions
+                counts.defaultBlocked = "blocked".equalsIgnoreCase(mode) || "removed".equalsIgnoreCase(mode);
+            } else {
+                switch (mode.toLowerCase()) {
+                    case "blocked", "removed" -> counts.blockedIds.add(extId);
+                    case "force_installed" -> counts.forceInstalledIds.add(extId);
+                    case "allowed", "normal_installed" -> counts.allowedIds.add(extId);
+                    default -> { /* ignore */ }
+                }
             }
         }
     }
