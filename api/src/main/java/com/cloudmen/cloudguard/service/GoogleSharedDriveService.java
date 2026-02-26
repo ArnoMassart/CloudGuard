@@ -49,8 +49,8 @@ public class GoogleSharedDriveService {
 
             List<SharedDriveBasicDetail> mappedDrives = driveList.getDrives().stream().map(drive -> {
                 com.google.api.services.drive.model.Drive.Restrictions res = drive.getRestrictions();
-                boolean domainOnly = res != null && Boolean.TRUE.equals(res.getDomainUsersOnly());
-                boolean membersOnly = res != null && Boolean.TRUE.equals(res.getDriveMembersOnly());
+                boolean domainOnly = checkDomainOnly(res);
+                boolean membersOnly = checkMembersOnly(res);
 
                 int totalMembers = 0;
                 int externalMembers = 0;
@@ -155,8 +155,8 @@ public class GoogleSharedDriveService {
 
                         // 2. Lees de restricties uit
                         com.google.api.services.drive.model.Drive.Restrictions res = drive.getRestrictions();
-                        boolean domainOnly = res != null && Boolean.TRUE.equals(res.getDomainUsersOnly());
-                        boolean membersOnly = res != null && Boolean.TRUE.equals(res.getDriveMembersOnly());
+                        boolean domainOnly = checkDomainOnly(res);
+                        boolean membersOnly = checkMembersOnly(res);
 
                         int externalMembers = 0;
                         int organizers = 0;
@@ -207,6 +207,14 @@ public class GoogleSharedDriveService {
         } catch (Exception e) {
             throw new RuntimeException("Fout bij ophalen van alle Shared Drives: " + e.getMessage());
         }
+    }
+
+    private boolean checkDomainOnly(com.google.api.services.drive.model.Drive.Restrictions res) {
+        return res != null && Boolean.TRUE.equals(res.getDomainUsersOnly());
+    }
+
+    private boolean checkMembersOnly(com.google.api.services.drive.model.Drive.Restrictions res) {
+        return res != null && Boolean.TRUE.equals(res.getDriveMembersOnly());
     }
 
     private String calculateRisk(int externalMembers, int totalOrganizers, boolean domainOnly, boolean membersOnly) {
