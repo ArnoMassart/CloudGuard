@@ -41,12 +41,10 @@
   }
 
   <!-- Search -->
-  <div class="bg-white rounded-lg p-4 border-2 border-muted/50">
-    <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center">
-      <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-      <input type="text" class="focus:outline-none w-full" placeholder="Zoek groepen op naam..." [value]="searchQuery()"
-        (input)="onKeyup(($any($event.target)).value)" />
-    </div>
+  <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center bg-white">
+    <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
+    <input type="text" class="focus:outline-none w-full" placeholder="Zoek groepen op naam..." [value]="searchQuery()"
+      (input)="onKeyup(($any($event.target)).value)" />
   </div>
 
   <!-- Groups list -->
@@ -71,7 +69,7 @@
       @for (group of groups(); track group.name) {
       <article class="rounded-lg border-2 border-muted/50 bg-white p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0 cursor-pointer flex-1" (click)="toggleGroupExpanded(group)">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
             <div class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0">
               <i-lucide [img]="Icons.Users" size="24" class="text-[#155dfc]" />
             </div>
@@ -115,24 +113,26 @@
           </div>
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN TOEGESTAAN</p>
-            <a class="inline-flex items-center gap-1 font-medium underline hover:opacity-80"
-              [ngClass]="group.externalAllowed ? 'text-rose-600' : 'text-emerald-600'" [href]="getGroupAdminUrl(group)"
+            <a class="inline-flex items-center gap-1 font-medium hover:opacity-80"
+              [ngClass]="group.externalAllowed ? 'text-rose-600 underline' : 'text-emerald-600'" [href]="getGroupAdminUrl(group)"
               target="_blank" rel="noopener noreferrer">
               <ng-container *ngIf="group.externalAllowed; else externalNo">
+                <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
                 Ja
-                <i-lucide [img]="Icons.ExternalLink" size="14" class="inline-block align-middle" />
               </ng-container>
               <ng-template #externalNo>Nee</ng-template>
             </a>
           </div>
         </div>
 
-        <!-- Bottom: Collapsible group settings -->
-        @if (isExpanded(group.name)) {
+        <!-- Bottom: Group settings (loaded via /groups/settings per group) -->
         <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
           @if (isSettingsLoading(group.name)) {
-          <div class="col-span-2 flex items-center justify-center py-6">
-            <i-lucide [img]="Icons.Loader" size="24" class="text-primary animate-spin" />
+          <div class="col-span-2 flex items-center justify-center">
+            <div class="relative flex items-center justify-center">
+              <div class="h-8 w-8 rounded-full"></div>
+              <div class="absolute h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
           </div>
           } @else {
           @let settings = getCachedSettings(group.name);
@@ -145,14 +145,6 @@
             <p class="text-sm text-slate-900">{{ settings?.whoCanView ?? "—" }}</p>
           </div>
           }
-        </div>
-        }
-        <div class="mt-1 flex justify-end">
-          <button type="button" class="rounded p-0.5 hover:bg-slate-100 transition-colors"
-            (click)="toggleGroupExpanded(group)" [attr.aria-expanded]="isExpanded(group.name)">
-            <i-lucide [img]="isExpanded(group.name) ? Icons.ChevronUp : Icons.ChevronDown" size="20"
-              class="text-slate-600" />
-          </button>
         </div>
       </article>
       } @empty {

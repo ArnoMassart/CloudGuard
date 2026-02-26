@@ -10,7 +10,7 @@
             <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
                 BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
             <app-section-top-card class="flex-1" Title="Goedgekeurde apparaten"
-                [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f" />
+                [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f" [Icon]="Icons.CircleCheck" />
             <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
                 [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
         </div>
@@ -77,35 +77,53 @@
         </div>
         }
 
-        <div class="flex w-full gap-4 ">
-            <div class="relative flex-1">
-                <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
-                    class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
-                    [class.border-primary]="selectedStatus() !== statusEnum.All"
-                    [class.ring-1]="selectedStatus() !== statusEnum.All"
-                    [class.ring-primary]="selectedStatus() !== statusEnum.All">
-
-                    @for (status of statusOptions; track status) {
-                    <option [value]="status">{{ status }}</option>
-                    }
-                </select>
-                <i-lucide [img]="Icons.ChevronDown" size="20"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i-lucide>
+        <div class="flex w-full items-center justify-end gap-3">
+            <!-- Filters label with icon -->
+            <div class="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                <span>Filters:</span>
+                <i-lucide [img]="Icons.Filter" size="16" class="text-[#99a1af]/80"></i-lucide>
             </div>
+            <!-- Compact filters next to label -->
+            <div class="flex gap-3 flex-wrap">
+                <!-- Status filter -->
+                <div class="relative">
+                    <select
+                        [ngModel]="selectedStatus()"
+                        (ngModelChange)="onStatusChange($event)"
+                        class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
+                        [class.border-primary]="selectedStatus() !== statusEnum.All"
+                        [class.ring-1]="selectedStatus() !== statusEnum.All"
+                        [class.ring-primary]="selectedStatus() !== statusEnum.All">
+                        @for (status of statusOptions; track status) {
+                        <option [value]="status">{{ status }}</option>
+                        }
+                    </select>
+                    <i-lucide
+                        [img]="Icons.ChevronDown"
+                        size="18"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                    </i-lucide>
+                </div>
 
-            <div class="relative flex-1">
-                <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
-                    class="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
-                    [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
-                    [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
-                    [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">
-
-                    @for (type of uniqueDeviceTypes(); track type) {
-                    <option [value]="type">{{ type }}</option>
-                    }
-                </select>
-                <i-lucide [img]="Icons.ChevronDown" size="20"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i-lucide>
+                <!-- Device type filter -->
+                <div class="relative">
+                    <select
+                        [ngModel]="selectedDeviceType()"
+                        (ngModelChange)="onDeviceTypeChange($event)"
+                        class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
+                        [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
+                        [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
+                        [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">
+                        @for (type of uniqueDeviceTypes(); track type) {
+                        <option [value]="type">{{ type }}</option>
+                        }
+                    </select>
+                    <i-lucide
+                        [img]="Icons.ChevronDown"
+                        size="18"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                    </i-lucide>
+                </div>
             </div>
         </div>
 

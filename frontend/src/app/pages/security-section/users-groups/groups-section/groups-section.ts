@@ -45,7 +45,6 @@ export class GroupsSection implements OnInit {
   readonly searchQuery = signal('');
   private readonly searchSubject = new Subject<string>();
 
-  readonly expandedGroups = signal<Set<string>>(new Set());
   readonly groupSettingsCache = signal<Record<string, GroupSettingsDto>>({});
   readonly loadingSettingsFor = signal<Set<string>>(new Set());
 
@@ -127,7 +126,6 @@ export class GroupsSection implements OnInit {
 
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
-    this.expandedGroups.set(new Set());
     this.#groupService
       .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)
       .subscribe({
@@ -135,6 +133,11 @@ export class GroupsSection implements OnInit {
           this.groups.set(this.mapToGroupSummary(res.groups));
           this.nextPageToken.set(res.nextPageToken ?? null);
           this.loading.set(false);
+          this.groupSettingsCache.set({});
+          this.loadingSettingsFor.set(new Set());
+          for (const g of res.groups) {
+            this.loadGroupSettings(g.name);
+          }
         },
         error: (error) => {
           console.error('Error fetching groups:', error);
@@ -158,63 +161,45 @@ export class GroupsSection implements OnInit {
     }));
   }
 
-  getGroupAdminUrl(group: GroupSummary): string {
-    const id = group.adminId?.trim();
-    if (!id) {
-      return 'https://admin.google.com/u/1/ac/groups';
-    }
-    return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
-  }
-
-  isExpanded(groupName: string): boolean {
-    return this.expandedGroups().has(groupName);
-  }
-
-  getCachedSettings(groupName: string): GroupSettingsDto | undefined {
-    return this.groupSettingsCache()[groupName];
-  }
-
-  isSettingsLoading(groupName: string): boolean {
-    return this.loadingSettingsFor().has(groupName);
-  }
-
-  toggleGroupExpanded(group: GroupSummary): void {
-    const name = group.name;
-    const expanded = new Set(this.expandedGroups());
-    if (expanded.has(name)) {
-      expanded.delete(name);
-      this.expandedGroups.set(expanded);
-      return;
-    }
-    expanded.add(name);
-    this.expandedGroups.set(expanded);
-    const cache = this.groupSettingsCache();
-    if (cache[name]) {
-      return;
-    }
-    const loading = new Set(this.loadingSettingsFor());
-    loading.add(name);
-    this.loadingSettingsFor.set(loading);
-    this.#groupService.getGroupSettings(name).subscribe({
+  
+  private loadGroupSettings(groupEmail: string): void {
+    this.loadingSettingsFor.update((s) => new Set(s).add(groupEmail));
+    this.#groupService.getGroupSettings(groupEmail).subscribe({
       next: (settings) => {
-        this.groupSettingsCache.update((c) => ({ ...c, [name]: settings }));
+        this.groupSettingsCache.update((c) => ({ ...c, [groupEmail]: settings }));
         this.loadingSettingsFor.update((s) => {
           const next = new Set(s);
-          next.delete(name);
+          next.delete(groupEmail);
           return next;
         });
       },
       error: () => {
         this.groupSettingsCache.update((c) => ({
           ...c,
-          [name]: { whoCanJoin: '—', whoCanView: '—' },
+          [groupEmail]: { whoCanJoin: '—', whoCanView: '—' },
         }));
         this.loadingSettingsFor.update((s) => {
           const next = new Set(s);
-          next.delete(name);
+          next.delete(groupEmail);
           return next;
         });
       },
     });
+  }
+
+  getCachedSettings(groupEmail: string): GroupSettingsDto | undefined {
+    return this.groupSettingsCache()[groupEmail];
+  }
+
+  isSettingsLoading(groupEmail: string): boolean {
+    return this.loadingSettingsFor().has(groupEmail);
+  }
+
+  getGroupAdminUrl(group: GroupSummary): string {
+    const id = group.adminId?.trim();
+    if (!id) {
+      return 'https://admin.google.com/u/1/ac/groups';
+    }
+    return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
   }
 }

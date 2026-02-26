@@ -28,6 +28,8 @@ import {
   TriangleAlert,
   UserCog,
   Users,
+  Funnel,
+  Settings,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -60,4 +62,6 @@ export class AppIcons {
   static readonly TriangleAlert = TriangleAlert;
   static readonly UserCog = UserCog;
   static readonly Users = Users;
+  static readonly Filter = Funnel;
+  static readonly Settings = Settings;
 }
