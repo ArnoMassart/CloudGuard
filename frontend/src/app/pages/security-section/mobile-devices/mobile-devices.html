@@ -10,7 +10,8 @@
             <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
                 BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
             <app-section-top-card class="flex-1" Title="Goedgekeurde apparaten"
-                [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f" [Icon]="Icons.CircleCheck" />
+                [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f"
+                [Icon]="Icons.CircleCheck" />
             <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
                 [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
         </div>
@@ -81,15 +82,13 @@
             <!-- Filters label with icon -->
             <div class="flex items-center gap-1.5 text-sm font-medium text-slate-700">
                 <span>Filters:</span>
-                <i-lucide [img]="Icons.Filter" size="16" class="text-[#99a1af]/80"></i-lucide>
+                <i-lucide [img]="Icons.Funnel" size="16" class="text-[#99a1af]/80"></i-lucide>
             </div>
             <!-- Compact filters next to label -->
             <div class="flex gap-3 flex-wrap">
                 <!-- Status filter -->
                 <div class="relative">
-                    <select
-                        [ngModel]="selectedStatus()"
-                        (ngModelChange)="onStatusChange($event)"
+                    <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
                         class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
                         [class.border-primary]="selectedStatus() !== statusEnum.All"
                         [class.ring-1]="selectedStatus() !== statusEnum.All"
@@ -98,18 +97,14 @@
                         <option [value]="status">{{ status }}</option>
                         }
                     </select>
-                    <i-lucide
-                        [img]="Icons.ChevronDown"
-                        size="18"
+                    <i-lucide [img]="Icons.ChevronDown" size="18"
                         class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
                     </i-lucide>
                 </div>
 
                 <!-- Device type filter -->
                 <div class="relative">
-                    <select
-                        [ngModel]="selectedDeviceType()"
-                        (ngModelChange)="onDeviceTypeChange($event)"
+                    <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
                         class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
                         [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
                         [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
@@ -118,9 +113,7 @@
                         <option [value]="type">{{ type }}</option>
                         }
                     </select>
-                    <i-lucide
-                        [img]="Icons.ChevronDown"
-                        size="18"
+                    <i-lucide [img]="Icons.ChevronDown" size="18"
                         class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
                     </i-lucide>
                 </div>
@@ -131,7 +124,17 @@
         @if (devices().length > 0) {
 
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-            <span class="font-medium text-lg ml-5.5">Alle mobiele apparaten</span>
+            <div class="flex justify-between items-center mx-5.5">
+                <span class="font-medium text-lg">Alle mobiele apparaten</span>
+                <button (click)="refreshData()" [disabled]="isRefreshing()"
+                    class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+
+                    <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+                    </i-lucide>
+
+                    {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+                </button>
+            </div>
 
             <table class="w-full text-left border-collapse mt-6">
                 <thead>

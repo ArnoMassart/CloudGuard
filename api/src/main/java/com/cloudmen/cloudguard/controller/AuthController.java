@@ -2,15 +2,13 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.TokenRequestDto;
-import com.cloudmen.cloudguard.dto.UserDto;
+import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.service.AuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/auth")

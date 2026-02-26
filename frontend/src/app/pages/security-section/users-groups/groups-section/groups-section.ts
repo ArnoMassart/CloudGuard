@@ -40,17 +40,15 @@ export class GroupsSection implements OnInit {
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
+  readonly isRefreshing = signal<boolean>(false);
   readonly pageOverview = signal<GroupOverviewResponse | null>(null);
   readonly searchQuery = signal('');
   private readonly searchSubject = new Subject<string>();
 
-  readonly groupSettingsCache = signal<Record<string, GroupSettingsDto>>({});
-  readonly loadingSettingsFor = signal<Set<string>>(new Set());
-
   readonly nextPageToken = signal<string | null>(null);
   readonly currentPage = signal(1);
   private tokenHistory: (string | null)[] = [null];
-  private readonly pageSize = 5;
+  private readonly pageSize = 2;
 
   ngOnInit(): void {
     this.searchSubject
@@ -97,6 +95,30 @@ export class GroupsSection implements OnInit {
     }
   }
 
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#groupService.refreshGroupCache().subscribe({
+      next: () => {
+        this.currentPage.set(1);
+        this.tokenHistory = [null];
+
+        this.loadGroups(null);
+        this.loadGroupsOverview();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
+  }
+
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
     this.#groupService
@@ -106,11 +128,7 @@ export class GroupsSection implements OnInit {
           this.groups.set(this.mapToGroupSummary(res.groups));
           this.nextPageToken.set(res.nextPageToken ?? null);
           this.loading.set(false);
-          this.groupSettingsCache.set({});
-          this.loadingSettingsFor.set(new Set());
-          for (const g of res.groups) {
-            this.loadGroupSettings(g.name);
-          }
+          console.log(this.groups());
         },
         error: (error) => {
           console.error('Error fetching groups:', error);
@@ -132,40 +150,6 @@ export class GroupsSection implements OnInit {
       whoCanJoin: g.whoCanJoin,
       whoCanView: g.whoCanView,
     }));
-  }
-
-  
-  private loadGroupSettings(groupEmail: string): void {
-    this.loadingSettingsFor.update((s) => new Set(s).add(groupEmail));
-    this.#groupService.getGroupSettings(groupEmail).subscribe({
-      next: (settings) => {
-        this.groupSettingsCache.update((c) => ({ ...c, [groupEmail]: settings }));
-        this.loadingSettingsFor.update((s) => {
-          const next = new Set(s);
-          next.delete(groupEmail);
-          return next;
-        });
-      },
-      error: () => {
-        this.groupSettingsCache.update((c) => ({
-          ...c,
-          [groupEmail]: { whoCanJoin: '—', whoCanView: '—' },
-        }));
-        this.loadingSettingsFor.update((s) => {
-          const next = new Set(s);
-          next.delete(groupEmail);
-          return next;
-        });
-      },
-    });
-  }
-
-  getCachedSettings(groupEmail: string): GroupSettingsDto | undefined {
-    return this.groupSettingsCache()[groupEmail];
-  }
-
-  isSettingsLoading(groupEmail: string): boolean {
-    return this.loadingSettingsFor().has(groupEmail);
   }
 
   getGroupAdminUrl(group: GroupSummary): string {

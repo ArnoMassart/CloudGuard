@@ -36,8 +36,6 @@ public class GoogleServiceHelperMethods {
 
         if (isActive && !isTwoFactorEnabled) return false;
         if (isActive && yearsSinceLogin >= 1) return false;
-        if (!isActive && daysSinceLogin <= 7) return false;
-
-        return true;
+        return isActive || daysSinceLogin > 7;
     }
 }

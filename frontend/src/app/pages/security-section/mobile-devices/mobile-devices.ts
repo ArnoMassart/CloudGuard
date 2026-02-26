@@ -46,29 +46,30 @@ export class MobileDevices {
   // ==========================================
   readonly isExpanded = signal(true);
 
-  devices = signal<MobileDevice[]>([]);
-  pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
-  expandedDevice = signal<string | null>(null);
+  readonly devices = signal<MobileDevice[]>([]);
+  readonly pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
+  readonly expandedDevice = signal<string | null>(null);
 
-  uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
-  selectedDeviceType = signal<string>('Alle apparaat typen');
+  readonly uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
+  readonly selectedDeviceType = signal<string>('Alle apparaat typen');
 
-  selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
-  statusOptions = Object.values(MobileDeviceStatus);
+  readonly selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
+  readonly statusOptions = Object.values(MobileDeviceStatus);
 
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
-  isLoading = signal(false);
+  readonly currentPage = signal(1);
+  readonly nextPageToken = signal<string | null>(null);
+  readonly isLoading = signal(false);
+  readonly isRefreshing = signal<boolean>(false);
 
-  hasWarnings = signal(false);
-  devicePageWarnings = signal<MobileDevicesPageWarnings>({
+  readonly hasWarnings = signal(false);
+  readonly devicePageWarnings = signal<MobileDevicesPageWarnings>({
     lockScreenWarning: false,
     encryptionWarning: false,
     osVersionWarning: false,
     integrityWarning: false,
   });
 
-  hasMultipleWarnings = computed(() => {
+  readonly hasMultipleWarnings = computed(() => {
     const warnings = this.devicePageWarnings();
     const activeCount = Object.values(warnings).filter((val) => val === true).length;
     return activeCount > 1;
@@ -131,6 +132,32 @@ export class MobileDevices {
     }
   }
 
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#mobileDeviceService.refreshDeviceCache().subscribe({
+      next: (res) => {
+        console.log(res);
+
+        this.currentPage.set(1);
+        this.#tokenHistory = [null];
+
+        this.#loadMobileDevices(null);
+        this.#loadPageOverview();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
+  }
+
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
@@ -144,7 +171,6 @@ export class MobileDevices {
         this.selectedDeviceType(),
         ITEMS_PER_PAGE
       )
-      .pipe(delay(2000))
       .subscribe({
         next: (res) => {
           this.devices.set(res.devices);

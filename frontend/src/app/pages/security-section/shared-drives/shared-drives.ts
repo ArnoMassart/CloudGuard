@@ -36,22 +36,24 @@ export class SharedDrives implements OnInit {
   readonly isExpanded = signal(true);
 
   drives = signal<SharedDrive[]>([]);
-  isLoading = signal(false);
-  searchQuery = signal('');
-  pageOverview = signal<SharedDriveOverviewResponse | null>(null);
+  readonly isLoading = signal(false);
+  readonly isRefreshing = signal<boolean>(false);
 
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
+  readonly searchQuery = signal('');
+  readonly pageOverview = signal<SharedDriveOverviewResponse | null>(null);
 
-  hasWarnings = signal(false);
-  drivePageWarnings = signal<SharedDrivesPageWarnings>({
+  readonly currentPage = signal(1);
+  readonly nextPageToken = signal<string | null>(null);
+
+  readonly hasWarnings = signal(false);
+  readonly drivePageWarnings = signal<SharedDrivesPageWarnings>({
     notOnlyDomainUsersAllowedWarning: false,
     notOnlyMembersCanAccessWarning: false,
     externalMembersWarning: false,
     orphanDrivesWarning: false,
   });
 
-  hasMultipleWarnings = computed(() => {
+  readonly hasMultipleWarnings = computed(() => {
     const warnings = this.drivePageWarnings();
     const activeCount = Object.values(warnings).filter((val) => val === true).length;
     return activeCount > 1;
@@ -109,6 +111,32 @@ export class SharedDrives implements OnInit {
       this.currentPage.update((p) => p - 1);
       this.#loadDrives(prevToken);
     }
+  }
+
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#driveService.refreshDriveCache().subscribe({
+      next: (res) => {
+        console.log(res);
+
+        this.currentPage.set(1);
+        this.#tokenHistory = [null];
+
+        this.#loadDrives(null);
+        this.#loadPageOverview();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
   }
 
   // ==========================================

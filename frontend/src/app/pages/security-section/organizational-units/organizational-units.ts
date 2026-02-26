@@ -34,6 +34,7 @@ export class OrganizationalUnits implements OnInit {
   readonly #orgUnitService = inject(OrgUnitService);
   readonly tree = signal<OrgUnitNode | null>(null);
   readonly loading = signal(true);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
   readonly selectedOrgUnit = signal<OrgUnitNodeDto | null>(null);
 
@@ -66,6 +67,10 @@ export class OrganizationalUnits implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadUnitTree();
+  }
+
+  loadUnitTree(): void {
     this.#orgUnitService.getOrgUnitTree().subscribe({
       next: (data) => {
         this.tree.set(data);
@@ -118,6 +123,26 @@ export class OrganizationalUnits implements OnInit {
 
   isPolicyExpanded(policyKey: string): boolean {
     return this.expandedPolicies().has(policyKey);
+  }
+
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#orgUnitService.refreshOrgUnitsCache().subscribe({
+      next: () => {
+        this.loadUnitTree();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
   }
 
   openPolicyAdmin(adminLink: string | undefined): void {

@@ -12,11 +12,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/google/devices")
-public class MobileDeviceController {
+public class GoogleMobileDeviceController {
     private final GoogleMobileDeviceService googleMobileDeviceService;
     private final JwtService jwtService;
 
-    public MobileDeviceController(GoogleMobileDeviceService googleMobileDeviceService, JwtService jwtService) {
+    public GoogleMobileDeviceController(GoogleMobileDeviceService googleMobileDeviceService, JwtService jwtService) {
         this.googleMobileDeviceService = googleMobileDeviceService;
         this.jwtService = jwtService;
     }
@@ -61,5 +61,18 @@ public class MobileDeviceController {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, isTestMode));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refreshUsersCache(
+            @CookieValue(name = "AuthToken", required = false) String token
+    ) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String adminEmail = jwtService.validateInternalToken(token);
+        googleMobileDeviceService.forceRefreshCache(adminEmail);
+        return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }
