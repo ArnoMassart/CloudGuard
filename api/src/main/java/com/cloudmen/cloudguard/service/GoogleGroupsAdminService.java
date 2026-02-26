@@ -126,6 +126,7 @@ public class GoogleGroupsAdminService {
                             }
 
                             String adminId = group.getId() != null ? group.getId() : "";
+                            GroupSettingsDto settings = getGroupSettings(loggedInEmail, groupEmail);
 
                             result.add(new GroupOrgDetail(
                                     groupEmail,
@@ -135,8 +136,8 @@ public class GoogleGroupsAdminService {
                                     total,
                                     external,
                                     externalAllowed,
-                                    "—",
-                                    "—"
+                                    settings.getWhoCanJoin(),
+                                    settings.getWhoCanView()
                             ));
                         } catch (Throwable t) {
                             log.warn("Failed to process group: {}", t.getMessage());
