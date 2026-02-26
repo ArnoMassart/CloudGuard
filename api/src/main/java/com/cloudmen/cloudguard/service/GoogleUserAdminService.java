@@ -4,7 +4,6 @@ import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.dto.users.UserOrgDetail;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserPageResponse;
-import com.cloudmen.cloudguard.service.policy.OrgUnitPolicyAggregator;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -39,8 +38,8 @@ public class GoogleUserAdminService {
         this.directoryFactory = directoryFactory;
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        cache.compute(adminEmail, this::fetchFromGoogle);
+    public void forceRefreshCache(String loggedInEmail) {
+        cache.compute(loggedInEmail, this::fetchFromGoogle);
     }
 
     public List<String> getUserRoles(String email) {
@@ -75,7 +74,7 @@ public class GoogleUserAdminService {
 
     public UserPageResponse getWorkspaceUsersPaged(String loggedInEmail, String pageToken, int size, String query) {
         // 1. Haal de lijst uit het RAM geheugen (Praat NIET met Google, tenzij de cache leeg is)
-        UserCacheEntry cachedData = getOrFetchWorkspaceData(loggedInEmail);
+        UserCacheEntry cachedData = getOrFetchUsersData(loggedInEmail);
 
         // 2. Filter IN HET GEHEUGEN
         List<User> filteredList = cachedData.allUsers();
@@ -123,7 +122,7 @@ public class GoogleUserAdminService {
     }
 
     public UserOverviewResponse getUsersPageOverview(String loggedInEmail) {
-        UserCacheEntry cachedData = getOrFetchWorkspaceData(loggedInEmail);
+        UserCacheEntry cachedData = getOrFetchUsersData(loggedInEmail);
         List<User> googleUsers = cachedData.allUsers();
         LocalDate now = LocalDate.now();
 
@@ -171,10 +170,10 @@ public class GoogleUserAdminService {
         return googleUsers;
     }
 
-    private UserCacheEntry getOrFetchWorkspaceData(String adminEmail) {
+    private UserCacheEntry getOrFetchUsersData(String loggedInEmail) {
         // .compute() zorgt automatisch voor een 'Lock' op dit specifieke e-mailadres.
         // Als 2 calls tegelijk komen, mag er 1 naar binnen. De 2e wacht tot de 1e klaar is.
-        return cache.compute(adminEmail, (email, existingEntry) -> {
+        return cache.compute(loggedInEmail, (email, existingEntry) -> {
             long now = System.currentTimeMillis();
 
             // Als de 1e thread net klaar is, ziet de 2e thread direct dat de data nu wél vers is!

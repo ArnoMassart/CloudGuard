@@ -40,6 +40,7 @@ export class GroupsSection implements OnInit {
   readonly #groupService = inject(GroupService);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
+  readonly isRefreshing = signal<boolean>(false);
   readonly pageOverview = signal<GroupOverviewResponse | null>(null);
   readonly searchQuery = signal('');
   private readonly searchSubject = new Subject<string>();
@@ -96,6 +97,32 @@ export class GroupsSection implements OnInit {
       this.currentPage.update((p) => p - 1);
       this.loadGroups(prevToken);
     }
+  }
+
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#groupService.refreshGroupCache().subscribe({
+      next: (res) => {
+        console.log(res);
+
+        this.currentPage.set(1);
+        this.tokenHistory = [null];
+
+        this.loadGroups(null);
+        this.loadGroupsOverview();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
   }
 
   private loadGroups(pageToken: string | null): void {

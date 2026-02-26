@@ -51,6 +51,20 @@
 
   <!-- Groups list -->
   <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+    <div class="flex justify-between items-center mx-6 pb-5 ">
+      <span class="font-medium text-lg">Alle groepen</span>
+      <button (click)="refreshData()" [disabled]="isRefreshing()"
+        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+
+        <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+        </i-lucide>
+
+        {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+      </button>
+    </div>
+
+    <div></div>
+
     @if (!loading()) {
 
     <div class="space-y-4 mt-1 px-6">
