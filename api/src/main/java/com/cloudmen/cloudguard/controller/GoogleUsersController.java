@@ -2,19 +2,22 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserPageResponse;
-import com.cloudmen.cloudguard.service.GoogleUserAdminService;
+import com.cloudmen.cloudguard.service.GoogleUsersService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/google/users")
-public class GoogleUserAdminController {
+public class GoogleUsersController {
     private final JwtService jwtService;
-    private final GoogleUserAdminService googleUserService;
+    private final GoogleUsersService googleUserService;
 
-    public GoogleUserAdminController(JwtService jwtService, GoogleUserAdminService googleUserService) {
+
+    public GoogleUsersController(JwtService jwtService, GoogleUsersService googleUserService ) {
         this.jwtService = jwtService;
         this.googleUserService = googleUserService;
     }

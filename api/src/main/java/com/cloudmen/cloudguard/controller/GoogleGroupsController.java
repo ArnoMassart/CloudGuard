@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.controller;
 import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.groups.GroupPageResponse;
 import com.cloudmen.cloudguard.dto.groups.GroupSettingsDto;
-import com.cloudmen.cloudguard.service.GoogleGroupsAdminService;
+import com.cloudmen.cloudguard.service.GoogleGroupsService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/google/groups")
-public class GoogleGroupAdminController {
-    private final GoogleGroupsAdminService googleGroupsAdminService;
+public class GoogleGroupsController {
+    private final GoogleGroupsService googleGroupsService;
     private final JwtService jwtService;
 
-    public GoogleGroupAdminController(GoogleGroupsAdminService googleGroupsAdminService, JwtService jwtService) {
-        this.googleGroupsAdminService = googleGroupsAdminService;
+    public GoogleGroupsController(GoogleGroupsService googleGroupsService, JwtService jwtService) {
+        this.googleGroupsService = googleGroupsService;
         this.jwtService = jwtService;
     }
 
@@ -31,7 +31,7 @@ public class GoogleGroupAdminController {
         }
 
         String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsAdminService.getGroupsPaged(email, query, pageToken, size));
+        return ResponseEntity.ok(googleGroupsService.getGroupsPaged(email, query, pageToken, size));
     }
 
     @GetMapping("/overview")
@@ -42,7 +42,7 @@ public class GoogleGroupAdminController {
         }
 
         String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsAdminService.getGroupsOverview(email));
+        return ResponseEntity.ok(googleGroupsService.getGroupsOverview(email));
     }
 
     @GetMapping("/settings")
@@ -54,7 +54,7 @@ public class GoogleGroupAdminController {
         }
 
         String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsAdminService.getGroupSettings(email, groupEmail));
+        return ResponseEntity.ok(googleGroupsService.getGroupSettings(email, groupEmail));
     }
 
     @PostMapping("/refresh")
@@ -66,7 +66,7 @@ public class GoogleGroupAdminController {
         }
 
         String adminEmail = jwtService.validateInternalToken(token);
-        googleGroupsAdminService.forceRefreshCache(adminEmail);
+        googleGroupsService.forceRefreshCache(adminEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

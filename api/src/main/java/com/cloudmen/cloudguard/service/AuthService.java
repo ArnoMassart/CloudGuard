@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -18,13 +19,13 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final GoogleUserAdminService googleUserAdminService;
+    private final GoogleUsersCacheService usersCacheService;
 
-    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleUserAdminService googleUserAdminService) {
+    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleUsersCacheService usersCacheService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-        this.googleUserAdminService = googleUserAdminService;
+        this.usersCacheService = usersCacheService;
     }
 
     public LoginResult processLogin(String externalIdToken) {
@@ -108,7 +109,7 @@ public class AuthService {
                     .map(userService::convertToDto);
 
             if (userDto.isPresent()) {
-                List<String> roles = googleUserAdminService.getUserRoles(email).stream().map(this::translateRoleName).toList();
+                List<String> roles = usersCacheService.getUserRoles(email).stream().map(this::translateRoleName).toList();
                 userDto.get().setRoles(roles);
             }
 
