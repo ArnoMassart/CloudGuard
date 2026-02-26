@@ -81,6 +81,22 @@ public class PolicyApiCacheService {
         return ouMap.getOrDefault(id, "/");
     }
 
+    /**
+     * Resolves an OU path (e.g. "/" or "/Sales") to the org unit ID for Chrome Policy API.
+     * Returns null if the path is not found.
+     */
+    public String resolvePathToOuId(String orgUnitPath, Map<String, String> ouMap) {
+        if (orgUnitPath == null || orgUnitPath.isBlank()) orgUnitPath = "/";
+        String path = orgUnitPath.trim();
+        for (Map.Entry<String, String> e : ouMap.entrySet()) {
+            String p = e.getValue();
+            if (p != null && p.equals(path)) {
+                return e.getKey();
+            }
+        }
+        return null;
+    }
+
     private Map<String, String> fetchOuIdToPathMap(String adminEmail) throws Exception {
         Directory directory = directoryFactory.getDirectoryService(
                 Set.of(DirectoryScopes.ADMIN_DIRECTORY_ORGUNIT_READONLY), adminEmail);
