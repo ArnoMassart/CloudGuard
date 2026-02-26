@@ -28,6 +28,7 @@ import {
   Users,
   FolderTree,
   Filter,
+  Settings
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -60,4 +61,5 @@ export class AppIcons {
   static readonly UserCog = UserCog;
   static readonly Users = Users;
   static readonly Filter = Filter;
+  static readonly Settings = Settings;
 }
