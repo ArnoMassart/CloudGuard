@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto;
+package com.cloudmen.cloudguard.dto.users;
 
 public record UserOverviewResponse(
             long totalUsers,

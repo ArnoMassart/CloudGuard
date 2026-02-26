@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto;
+package com.cloudmen.cloudguard.dto.groups;
 
 public record GroupOverviewResponse(
         long totalGroups,

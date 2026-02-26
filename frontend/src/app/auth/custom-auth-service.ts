@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { catchError, tap, timeout } from 'rxjs/operators';
 import { User } from '../models/User';
 import { AuthService } from '@auth0/auth0-angular';
+import { WarmupCacheService } from '../services/warmup-cache-service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ export class CustomAuthService {
   readonly #initializedStatus = new BehaviorSubject<boolean>(false);
 
   readonly #auth0 = inject(AuthService);
+  readonly #warmupCacheService = inject(WarmupCacheService);
 
   readonly currentUser = signal<User | null>(null);
 
@@ -129,6 +131,8 @@ export class CustomAuthService {
           this.#loggedInStatus.next(true);
           this.#initializedStatus.next(true);
           this.#fetchCurrentUser();
+
+          this.#warmupCacheService.triggerWarmup();
         })
       );
   }

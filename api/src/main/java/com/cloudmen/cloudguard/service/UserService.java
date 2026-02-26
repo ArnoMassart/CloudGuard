@@ -1,11 +1,9 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
-import com.cloudmen.cloudguard.dto.UserDto;
+import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
