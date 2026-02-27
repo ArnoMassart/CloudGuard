@@ -120,8 +120,6 @@ export class SharedDrives implements OnInit {
 
     this.#driveService.refreshDriveCache().subscribe({
       next: (res) => {
-        console.log(res);
-
         this.currentPage.set(1);
         this.#tokenHistory = [null];
 

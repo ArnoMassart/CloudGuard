@@ -1,181 +1,308 @@
 <div class="px-10 py-6">
-    <app-page-header Title="App Toegang"
-        Description="Controleer apps van derden die toegang hebben tot Google Workspace data van uw gebruikers"
-        AdminLink="owl/list?tab=configuredApps" />
+  <app-page-header
+    Title="App Toegang"
+    Description="Controleer apps van derden die toegang hebben tot Google Workspace data van uw gebruikers"
+    AdminLink="owl/list"
+  />
 
-    <div class="pt-6">
-        <div class="w-full flex flex-col gap-5">
-            <div class="w-full flex gap-4">
-                <app-section-top-card class="flex-1" Title="Gekoppelde 3rd-party apps" [Value]="5" />
+  <div class="pt-6">
+    <div class="w-full flex flex-col gap-5">
+      <div class="w-full flex gap-4">
+        <app-section-top-card
+          class="flex-1"
+          Title="Gekoppelde 3rd-party apps"
+          [Value]="pageOverview()?.totalThirdPartyApps"
+        />
 
-                <app-section-top-card class="flex-1" Title="Hoog risico" [Value]="2" BackgroundColor="#ffe2e2"
-                    IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Hoog risico"
+          [Value]="pageOverview()?.totalHighRiskApps"
+          BackgroundColor="#ffe2e2"
+          IconColor="#e7000b"
+          TextColor="#e7000b"
+          [Icon]="Icons.TriangleAlert"
+        />
 
-                <app-section-top-card class="flex-1" Title="Verleende permissies" [Value]="11" BackgroundColor="#f3e8ff"
-                    IconColor="#9810fa" TextColor="#9810fa" [Icon]="Icons.ShieldCheck" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Verleende permissies"
+          [Value]="pageOverview()?.totalPermissionsGranted"
+          BackgroundColor="#f3e8ff"
+          IconColor="#9810fa"
+          TextColor="#9810fa"
+          [Icon]="Icons.ShieldCheck"
+        />
 
-                <app-section-top-card class="flex-1" Title="Security Score" [Value]="60" [IsPercentage]="true"
-                    BackgroundColor="#fef9c2" IconColor="#d69518" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Security Score"
+          [Value]="pageOverview()?.securityScore"
+          [IsPercentage]="true"
+          BackgroundColor="#fef9c2"
+          IconColor="#d69518"
+        />
+      </div>
+
+      <div class="p-3 border-2 border-muted/50 rounded-md flex gap-5 w-full items-center bg-white">
+        <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
+        <input
+          type="text"
+          #searchInput
+          (input)="onKeyup(searchInput.value)"
+          class="focus:outline-none w-full"
+          placeholder="Zoek verbonden apps op naam..."
+        />
+      </div>
+
+      @if (!isLoading()) {
+        @if (apps().length > 0) {
+          <!-- Drives list -->
+          <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="flex justify-between items-center mx-6 pb-2">
+              <span class="font-medium text-lg">Verbonden Apps</span>
+              <button
+                (click)="refreshData()"
+                [disabled]="isRefreshing()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+                </i-lucide>
+
+                {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+              </button>
             </div>
+            <div class="space-y-4 mt-1 px-6">
+              @for (app of apps(); track app.id) {
+                <article
+                  class="rounded-lg border border-muted bg-white p-5 shadow-sm [&:not(:has(button:hover)):hover]:bg-gray-50/60 cursor-pointer group"
+                  (click)="toggleExpand(app.id.toString())"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <div
+                        class="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
+                        [class.text-emerald-600]="!app.isHighRisk"
+                        [class.bg-[#dbfce7]]="!app.isHighRisk"
+                        [class.text-[#e7000b]]="app.isHighRisk"
+                        [class.bg-[#ffe2e2]]="app.isHighRisk"
+                      >
+                        <i-lucide
+                          [img]="!app.isHighRisk ? Icons.ShieldCheck : Icons.ShieldAlert"
+                          size="24"
+                        />
+                      </div>
+                      <div class="flex flex-col gap-2">
+                        <span class="font-medium text-slate-900 text-base truncate">
+                          {{ app.name }}
+                        </span>
+                        <span class="text-muted-foreground truncate text-xs">
+                          {{ app.appType }}
+                        </span>
+                      </div>
+                    </div>
 
-            <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center bg-white">
-                <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-                <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
-                    placeholder="Zoek verbonden apps op naam..." />
-            </div>
+                    <div class="flex gap-3 items-center">
+                      <div
+                        class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg bg-sky-100 text-sky-700"
+                      >
+                        {{ app.appSource }}
+                      </div>
 
-            @if (!isLoading()) {
-            @if (apps.length > 0) {
+                      @if (app.isAnonymous) {
+                        <div
+                          class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100"
+                        >
+                          <i-lucide [img]="Icons.ShieldAlert" size="14" />
 
-            <!-- Drives list -->
-            <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-                <div class="flex justify-between items-center mx-5.5 pb-2">
-                    <span class="font-medium text-lg">Verbonden Apps</span>
-                    <button (click)="refreshData()" [disabled]="isRefreshing()"
-                        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-
-                        <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-                        </i-lucide>
-
-                        {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
-                    </button>
-                </div>
-                <div class="space-y-4 mt-1 px-6">
-                    @for (app of apps; track app.id) {
-                    <article
-                        class="rounded-lg border-2 border-muted/50 bg-white p-5 shadow-sm hover:bg-gray-50 cursor-pointer"
-                        (click)="toggleExpand(app.id.toString())">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <div class="flex items-center gap-3 min-w-0 flex-1">
-                                <div class="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
-                                    [class.text-emerald-600]="app.verified" [class.bg-[#dbfce7]]="app.verified"
-                                    [class.text-[#e7000b]]="!app.verified" [class.bg-[#ffe2e2]]="!app.verified">
-                                    <i-lucide [img]="app.verified ? Icons.ShieldCheck : Icons.ShieldAlert" size="24" />
-                                </div>
-                                <div class="flex flex-col gap-2">
-                                    <span class="font-medium text-slate-900 text-base truncate">
-                                        {{ app.name }}
-                                    </span>
-                                    <span class="text-muted-foreground truncate text-xs">
-                                        {{ app.developer }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-3 items-center">
-                                <div class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5  rounded-lg"
-                                    [class.text-emerald-600]="app.verified" [class.bg-[#dbfce7]]="app.verified"
-                                    [class.text-[#e7000b]]="!app.verified" [class.bg-[#ffe2e2]]="!app.verified">
-                                    <i-lucide [img]="app.verified ? Icons.ShieldCheck : Icons.ShieldAlert" size="14" />
-
-                                    {{ app.verified ? "Geverifieerd" : "Niet Geverifieerd" }}
-                                </div>
-                                @if (app.highRisk) {
-                                <div class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5  rounded-lg"
-                                    [class.text-emerald-600]="!app.highRisk" [class.bg-[#dbfce7]]="!app.highRisk"
-                                    [class.text-[#e7000b]]="app.highRisk" [class.bg-[#ffe2e2]]="app.highRisk">
-                                    {{ app.highRisk ? "Hoog risico" : ""}}
-                                </div>
-                                }
-                                <i-lucide
-                                    [img]="expandedApp() === app.id.toString() ? Icons.ChevronDown : Icons.ChevronRight "
-                                    size="20"
-                                    class="cursor-pointer text-muted-foreground/70 transition-transform ml-3" />
-                            </div>
+                          {{ app.isAnonymous ? 'Anonieme app' : '' }}
                         </div>
-
-                        <!-- Middle: 4 columns - TOTAAL LEDEN, EXTERNE LEDEN, AANTAL BEHEERDERS, OPGERICHT -->
-                        <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Gebruikers
-                                </p>
-                                <div class="flex items-center gap-2">
-                                    <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
-                                    <span class="font-medium text-slate-600">{{ app.totalUsers }}</span>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Eerste
-                                    detectie</p>
-                                <div class="flex items-center gap-2">
-                                    <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
-                                    <span class="text-muted-foreground text-sm font-medium">
-                                        {{ app.firstDetection }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Laatst
-                                    gebruikt</p>
-                                <div class="flex items-center gap-2">
-                                    <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
-                                    <span class="text-muted-foreground text-sm font-medium">
-                                        {{ app.lastUsed }}
-                                    </span>
-                                </div>
-                            </div>
+                      }
+                      @if (app.isHighRisk) {
+                        <div
+                          class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100"
+                        >
+                          {{ app.isHighRisk ? 'Hoog risico' : '' }}
                         </div>
+                      }
+                      <i-lucide
+                        [img]="
+                          expandedApp() === app.id.toString()
+                            ? Icons.ChevronDown
+                            : Icons.ChevronRight
+                        "
+                        size="20"
+                        class="cursor-pointer text-muted-foreground/70 transition-transform ml-3"
+                      />
+                    </div>
+                  </div>
 
-                        @if (expandedApp() === app.id.toString()) {
-                        <div>Test</div>
+                  <!-- Middle: 4 columns - TOTAAL LEDEN, EXTERNE LEDEN, AANTAL BEHEERDERS, OPGERICHT -->
+                  <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        Gebruikers
+                      </p>
+                      <div class="flex items-center gap-2">
+                        <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
+                        <span class="font-medium text-slate-600">{{ app.totalUsers }}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        Exposure
+                      </p>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted-foreground text-sm font-medium">
+                          {{ app.exposurePercentage }}%
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        scope count
+                      </p>
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted-foreground text-sm font-medium">
+                          {{ app.scopeCount }} permissies
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  @if (expandedApp() === app.id.toString()) {
+                    <div class="border-t border-gray-200 mt-4 pt-4"></div>
+                    <span class="font-medium text-[15px]"> Data toegang</span>
+                    @if (app.dataAccess.length > 0) {
+                      <div class="flex flex-col gap-2 mt-2">
+                        @for (access of app.dataAccess; track $index) {
+                          <div
+                            class="flex gap-3 items-center rounded-xl p-2 border"
+                            [class.bg-gray-50]="!access.risk"
+                            [class.border-gray-200/50]="!access.risk"
+                            [class.bg-red-50]="access.risk"
+                            [class.border-red-200/50]="access.risk"
+                          >
+                            <i-lucide
+                              [img]="access.risk ? Icons.TriangleAlert : Icons.CircleCheck"
+                              size="15"
+                              [class.text-muted-foreground]="!access.risk"
+                              [class.text-red-600]="access.risk"
+                            />
+                            <div class="flex flex-col">
+                              <span
+                                class="font-medium text-[13px] leading-tight pb-0.5"
+                                [class.text-black]="!access.risk"
+                                [class.text-red-900]="access.risk"
+                                >{{ access.name }}</span
+                              >
+                              <span
+                                class="font-medium text-[11px] leading-tight"
+                                [class.text-muted-foreground]="!access.risk"
+                                [class.text-red-700]="access.risk"
+                                >{{ access.rights }}</span
+                              >
+                            </div>
+                          </div>
                         }
-
-
-                    </article>
+                      </div>
                     }
 
+                    @if (app.highRiskCount > 0) {
+                      <div
+                        class="text-red-900 bg-red-50 flex flex-col gap-3 p-3 rounded-xl mt-5 border border-red-200/50"
+                      >
+                        <div class="flex gap-2 items-center font-medium">
+                          <i-lucide [img]="Icons.TriangleAlert" size="15" />
+                          <span class="text-sm">Waarom is dit risicovol?</span>
+                        </div>
+                        <span class="text-red-800 text-[13px]">
+                          Deze app heeft volledige toegang tot een of meerdere Google services. Als
+                          deze app gecomprimitteerd wordt, kan een aanvaller alle data van
+                          {{ app.totalUsers }} gebruiker{{ app.totalUsers > 1 ? 's' : '' }} lezen,
+                          wijzigen en verwijderen.
+                        </span>
+                      </div>
+                    }
+
+                    <button
+                      class="flex items-center justify-center gap-2 text-muted-foreground py-2 px-3 border border-gray-200 rounded-lg mt-3 cursor-pointer shadow-sm hover:bg-gray-100/80"
+                      (click)="
+                        $event.stopPropagation();
+                        UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
+                      "
+                    >
+                      <span class="text-[13px] font-normal">Beheer in Admin Console</span>
+                      <i-lucide [img]="Icons.ExternalLink" size="12" />
+                    </button>
+                  } @else if (app.isHighRisk) {
                     <div
-                        class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-                        <span class="text-sm text-gray-500">
-                            Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
-                        </span>
-                        <div class="flex gap-2">
-                            <button (click)="prevPage()" [disabled]="currentPage() === 1"
-                                class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i-lucide [img]="Icons.ChevronLeft" size="16" />
-                                Vorige
-                            </button>
-                            <button (click)="nextPage()" [disabled]="!nextPageToken()"
-                                class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                Volgende
-                                <i-lucide [img]="Icons.ChevronRight" size="16" />
-                            </button>
-                        </div>
+                      class="text-red-900 bg-red-50 flex gap-2 p-3 rounded-xl mt-5 border border-red-200/50 items-center font-medium"
+                    >
+                      <i-lucide [img]="Icons.TriangleAlert" size="15" />
+                      <span class="text-sm"
+                        >Deze app heeft volledige toegang tot {{ app.highRiskCount }} service{{
+                          app.highRiskCount > 1 ? 's' : ''
+                        }}</span
+                      >
                     </div>
+                  }
+                </article>
+              }
+
+              <div
+                class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
+              >
+                <span class="text-sm text-gray-500">
+                  Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+                </span>
+                <div class="flex gap-2">
+                  <button
+                    (click)="prevPage()"
+                    [disabled]="currentPage() === 1"
+                    class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <i-lucide [img]="Icons.ChevronLeft" size="16" />
+                    Vorige
+                  </button>
+                  <button
+                    (click)="nextPage()"
+                    [disabled]="!nextPageToken()"
+                    class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Volgende
+                    <i-lucide [img]="Icons.ChevronRight" size="16" />
+                  </button>
                 </div>
+              </div>
             </div>
-
-            } @else {
-            <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-
-                <div class="flex items-center justify-center p-5">
-                    <span class="text-lg font-medium text-slate-600">
-                        Geen apps gevonden!
-                    </span>
-
-                </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+            <div class="flex items-center justify-center p-5">
+              <span class="text-lg font-medium text-slate-600"> Geen apps gevonden! </span>
             </div>
-            }
-            } @else {
-            <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
+          </div>
+        }
+      } @else {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
+          <div class="flex flex-col items-center p-3 pt-6">
+            <div class="flex flex-col items-center space-y-4 p-8">
+              <div class="relative flex items-center justify-center">
+                <div class="h-12 w-12 rounded-full"></div>
 
-                <div class="flex flex-col items-center p-3 pt-6">
-                    <div class="flex flex-col items-center space-y-4 p-8">
-                        <div class="relative flex items-center justify-center">
-                            <div class="h-12 w-12 rounded-full"></div>
+                <div
+                  class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                ></div>
+              </div>
 
-                            <div
-                                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-                            </div>
-                        </div>
-
-                        <span class="text-sm font-medium text-slate-600 animate-pulse">
-                            Apps worden geladen...
-                        </span>
-                    </div>
-                </div>
+              <span class="text-sm font-medium text-slate-600 animate-pulse">
+                Apps worden geladen...
+              </span>
             </div>
-            }
+          </div>
         </div>
+      }
     </div>
+  </div>
 </div>

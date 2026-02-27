@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.drives.*;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -22,7 +23,6 @@ public class GoogleSharedDriveService {
     public SharedDrivePageResponse getSharedDrivesPaged(String loggedInEmail, String pageToken, int size, String query) {
         SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
 
-        // 1. Filter IN HET GEHEUGEN
         List<SharedDriveBasicDetail> filteredList = cachedData.allDrives();
         if (query != null && !query.trim().isEmpty()) {
             String lowerQuery = query.toLowerCase().trim();
@@ -31,11 +31,7 @@ public class GoogleSharedDriveService {
                     .toList();
         }
 
-        // 2. Pagineren IN HET GEHEUGEN
-        int page = 1;
-        if (pageToken != null && !pageToken.isBlank()) {
-            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
-        }
+        int page = GoogleServiceHelperMethods.getPage(pageToken);
 
         int totalDrives = filteredList.size();
         int startIndex = (page - 1) * size;

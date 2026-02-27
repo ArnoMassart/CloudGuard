@@ -1,262 +1,368 @@
 <div class="px-10 py-6">
-  <app-page-header Title="Gedeelde Drives Controle"
+  <app-page-header
+    Title="Gedeelde Drives Controle"
     Description="Controleer instellingen voor gedeelde Drives om de gegevensbeveiliging te garanderen"
-    AdminLink="drive/manageshareddrives" />
+    AdminLink="drive/manageshareddrives"
+  />
 
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
       <div class="w-full flex gap-4">
-        <app-section-top-card class="flex-1" Title="Totaal Drives" [Value]="pageOverview()?.totalDrives"
-          [Icon]="Icons.HardDrive" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Totaal Drives"
+          [Value]="pageOverview()?.totalDrives"
+          [Icon]="Icons.HardDrive"
+        />
 
-        <app-section-top-card class="flex-1" Title="Drives zonder beheerders" [Value]="pageOverview()?.orphanDrives"
-          BackgroundColor="#f3e8ff" IconColor="#9810fa" TextColor="#9810fa" [Icon]="Icons.Settings" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Drives zonder beheerders"
+          [Value]="pageOverview()?.orphanDrives"
+          BackgroundColor="#f3e8ff"
+          IconColor="#9810fa"
+          TextColor="#9810fa"
+          [Icon]="Icons.Settings"
+        />
 
-        <app-section-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRisk"
-          BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Hoog risico"
+          [Value]="pageOverview()?.totalHighRisk"
+          BackgroundColor="#ffe2e2"
+          IconColor="#e7000b"
+          TextColor="#e7000b"
+          [Icon]="Icons.TriangleAlert"
+        />
 
-        <app-section-top-card class="flex-1" Title="Met externe leden"
-          [Value]="pageOverview()?.externalMembersDriveCount" BackgroundColor="#ffedd4" IconColor="#f54a00"
-          TextColor="#f54a00" [Icon]="Icons.Users" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Met externe leden"
+          [Value]="pageOverview()?.externalMembersDriveCount"
+          BackgroundColor="#ffedd4"
+          IconColor="#f54a00"
+          TextColor="#f54a00"
+          [Icon]="Icons.Users"
+        />
 
-        <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
-          [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+        <app-section-top-card
+          class="flex-1"
+          Title="Security Score"
+          [Value]="pageOverview()?.securityScore"
+          [IsPercentage]="true"
+          BackgroundColor="#fef9c2"
+          IconColor="#d69518"
+        />
       </div>
 
       @if (hasWarnings() && !isLoading()) {
-      <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded-lg p-4 transition-all duration-200">
-        <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
+        <div
+          class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded-lg p-4 transition-all duration-200"
+        >
+          <div
+            class="flex items-start justify-between cursor-pointer group"
+            (click)="toggleExpanded()"
+          >
+            <div class="flex gap-3 items-center">
+              <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
+              <span class="text-[#b7610a] font-medium text-[16px]"
+                >Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' : '' }}
+              </span>
+            </div>
 
-          <div class="flex gap-3 items-center">
-            <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
-            <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{
-              hasMultipleWarnings() ?
-              'en' : '' }}
-            </span>
+            <i-lucide
+              [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown"
+              size="20"
+              class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity"
+            />
           </div>
 
-          <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
-            class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
+          @if (isExpanded()) {
+            <div class="flex flex-col gap-2 mt-3 ml-8">
+              @if (drivePageWarnings().orphanDrivesWarning) {
+                <div class="flex gap-2 items-center text-center">
+                  <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                  <span class="text-xs text-[#b7610a]"
+                    >{{ pageOverview()?.orphanDrives }}
+                    wees
+                    {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
+                    zonder beheerder gevonden
+                  </span>
+                </div>
+              }
+
+              @if (drivePageWarnings().externalMembersWarning) {
+                <div class="flex gap-2 items-center text-center">
+                  <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                  <span class="text-xs text-[#b7610a]"
+                    >{{ pageOverview()?.externalMembersDriveCount }}
+                    {{
+                      pageOverview()?.externalMembersDriveCount === 1
+                        ? 'drive heeft'
+                        : 'drives hebben'
+                    }}
+                    externe leden buiten uw domein
+                  </span>
+                </div>
+              }
+
+              @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
+                <div class="flex gap-2 items-center text-center">
+                  <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                  <span class="text-xs text-[#b7610a]"
+                    >{{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
+                    {{
+                      pageOverview()?.notOnlyDomainUsersAllowedCount === 1
+                        ? 'drive staat'
+                        : 'drives staan'
+                    }}
+                    delen met gebruikers buiten uw domein toe
+                  </span>
+                </div>
+              }
+
+              @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
+                <div class="flex gap-2 items-center text-center">
+                  <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
+                  <span class="text-xs text-[#b7610a]"
+                    >{{ pageOverview()?.notOnlyMembersCanAccessCount }}
+                    {{
+                      pageOverview()?.notOnlyMembersCanAccessCount === 1
+                        ? 'drive kan'
+                        : 'drives kunnen'
+                    }}
+                    toegang verlenen aan niet-leden
+                  </span>
+                </div>
+              }
+            </div>
+          }
         </div>
-
-        @if (isExpanded()) {
-
-
-        <div class="flex flex-col gap-2 mt-3 ml-8">
-
-          @if (drivePageWarnings().orphanDrivesWarning) {
-          <div class="flex gap-2 items-center text-center">
-            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.orphanDrives }}
-              wees
-              {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
-              zonder beheerder gevonden
-            </span>
-          </div>
-          }
-
-          @if (drivePageWarnings().externalMembersWarning) {
-          <div class="flex gap-2 items-center text-center">
-            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.externalMembersDriveCount }}
-              {{ pageOverview()?.externalMembersDriveCount === 1 ? 'drive heeft' : 'drives hebben' }}
-              externe leden buiten uw domein
-            </span>
-          </div>
-          }
-
-          @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
-          <div class="flex gap-2 items-center text-center">
-            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
-              {{ pageOverview()?.notOnlyDomainUsersAllowedCount === 1 ? 'drive staat' : 'drives staan' }}
-              delen met gebruikers buiten uw domein toe
-            </span>
-          </div>
-          }
-
-          @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
-          <div class="flex gap-2 items-center text-center">
-            <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-            <span class="text-xs text-[#b7610a]">{{ pageOverview()?.notOnlyMembersCanAccessCount }}
-              {{ pageOverview()?.notOnlyMembersCanAccessCount === 1 ? 'drive kan' : 'drives kunnen' }}
-              toegang verlenen aan niet-leden
-            </span>
-          </div>
-          }
-        </div>
-        }
-      </div>
       }
 
-      <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center bg-white">
+      <div class="p-3 border-2 border-muted/50 rounded-md flex gap-5 w-full items-center bg-white">
         <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-        <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
-          placeholder="Zoek gedeelde drives op naam..." />
+        <input
+          type="text"
+          #searchInput
+          (input)="onKeyup(searchInput.value)"
+          class="focus:outline-none w-full"
+          placeholder="Zoek gedeelde drives op naam..."
+        />
       </div>
 
       @if (!isLoading()) {
-      @if (drives().length > 0) {
+        @if (drives().length > 0) {
+          <!-- Drives list -->
+          <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="flex justify-between items-center mx-5.5 pb-2">
+              <span class="font-medium text-lg">Alle drives</span>
+              <button
+                (click)="refreshData()"
+                [disabled]="isRefreshing()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+                </i-lucide>
 
-      <!-- Drives list -->
-      <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-        <div class="flex justify-between items-center mx-5.5 pb-2">
-          <span class="font-medium text-lg">Alle drives</span>
-          <button (click)="refreshData()" [disabled]="isRefreshing()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-
-            <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-            </i-lucide>
-
-            {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
-          </button>
-        </div>
-        <div class="space-y-4 mt-1 px-6">
-          @for (drive of drives(); track drive.id) {
-          <article class="rounded-lg border-2 border-muted/50 bg-white p-5 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="flex items-center gap-3 min-w-0 flex-1">
-                <div class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0">
-                  <i-lucide [img]="Icons.FolderOpen" size="24" class="text-[#155dfc]" />
-                </div>
-                <p class="font-medium text-slate-900 text-base truncate">
-                  {{ drive.name }}
-                </p>
-              </div>
-              <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
-                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
-                  [class.bg-emerald-100]="drive.risk === 'Laag'" [class.text-emerald-800]="drive.risk === 'Laag'"
-                  [class.bg-amber-100]="drive.risk === 'Middel'" [class.text-amber-800]="drive.risk === 'Middel'"
-                  [class.bg-rose-100]="drive.risk === 'Hoog'" [class.text-rose-800]="drive.risk === 'Hoog'">
-                  {{ drive.risk }} risico
-                </span>
-              </div>
-            </div>
-
-            <!-- Middle: 4 columns - TOTAAL LEDEN, EXTERNE LEDEN, AANTAL BEHEERDERS, OPGERICHT -->
-            <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">TOTAAL LEDEN</p>
-                <div class="flex items-center gap-2">
-                  <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
-                  <span class="font-medium text-slate-600">{{ drive.totalMembers }}</span>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">EXTERNE LEDEN</p>
-                <span class="font-medium" [class.text-rose-600]="drive.externalMembers > 0"
-                  [class.text-emerald-600]="drive.externalMembers <= 0">
-                  {{ drive.externalMembers }}
-                </span>
-              </div>
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">AANTAL BEHEERDERS</p>
-                <div class="flex items-center gap-2">
-                  <i-lucide [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert" size="16"
-                    class="text-gray-500" [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                    [class.text-black]="drive.totalOrganizers > 0" size="16" />
-                  <span [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                    [class.text-black]="drive.totalOrganizers > 0" class="text-sm font-medium text-slate-500">
-                    {{ drive.totalOrganizers }}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">OPGERICHT</p>
-                <div class="flex items-center gap-2">
-                  <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
-                  <span class="text-muted-foreground text-sm font-medium">
-                    {{ drive.createdTime }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Shared drive settings - always visible, no expand/collapse -->
-            <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="bg-slate-50 rounded-md px-3 py-3">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                  ALLEEN DOMEINGEBRUIKERS TOEGESTAAN
-                </p>
-                <div class="flex items-center gap-1 cursor-pointer"
-                  (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
-                  @if (!drive.onlyDomainUsersAllowed) {
-                  <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00] cursor-pointer" size="13" />
-                  <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
-                  } @else {
-                  <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                  <span class="text-emerald-600 text-xs font-medium">Ja</span>
-                  }
-                </div>
-              </div>
-              <div class="bg-slate-50 rounded-md px-3 py-3">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                  ALLEEN LEDEN KUNNEN TOEGANG KRIJKEN
-                </p>
-                <div class="flex items-center gap-1 cursor-pointer"
-                  (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
-                  @if (!drive.onlyMembersCanAccess) {
-                  <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                  <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
-                  } @else {
-                  <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                  <span class="text-emerald-600 text-xs font-medium">Ja</span>
-                  }
-                </div>
-              </div>
-            </div>
-          </article>
-          }
-
-          <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-            <span class="text-sm text-gray-500">
-              Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
-            </span>
-            <div class="flex gap-2">
-              <button (click)="prevPage()" [disabled]="currentPage() === 1"
-                class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i-lucide [img]="Icons.ChevronLeft" size="16" />
-                Vorige
+                {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
               </button>
-              <button (click)="nextPage()" [disabled]="!nextPageToken()"
-                class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                Volgende
-                <i-lucide [img]="Icons.ChevronRight" size="16" />
-              </button>
+            </div>
+            <div class="space-y-4 mt-1 px-6">
+              @for (drive of drives(); track drive.id) {
+                <article class="rounded-lg border border-muted bg-white p-5 shadow-sm">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <div
+                        class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0"
+                      >
+                        <i-lucide [img]="Icons.FolderOpen" size="24" class="text-[#155dfc]" />
+                      </div>
+                      <p class="font-medium text-slate-900 text-base truncate">
+                        {{ drive.name }}
+                      </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
+                      <span
+                        class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+                        [class.bg-emerald-100]="drive.risk === 'Laag'"
+                        [class.text-emerald-800]="drive.risk === 'Laag'"
+                        [class.bg-amber-100]="drive.risk === 'Middel'"
+                        [class.text-amber-800]="drive.risk === 'Middel'"
+                        [class.bg-rose-100]="drive.risk === 'Hoog'"
+                        [class.text-rose-800]="drive.risk === 'Hoog'"
+                      >
+                        {{ drive.risk }} risico
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Middle: 4 columns - TOTAAL LEDEN, EXTERNE LEDEN, AANTAL BEHEERDERS, OPGERICHT -->
+                  <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        TOTAAL LEDEN
+                      </p>
+                      <div class="flex items-center gap-2">
+                        <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
+                        <span class="font-medium text-slate-600">{{ drive.totalMembers }}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        EXTERNE LEDEN
+                      </p>
+                      <span
+                        class="font-medium"
+                        [class.text-rose-600]="drive.externalMembers > 0"
+                        [class.text-emerald-600]="drive.externalMembers <= 0"
+                      >
+                        {{ drive.externalMembers }}
+                      </span>
+                    </div>
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        AANTAL BEHEERDERS
+                      </p>
+                      <div class="flex items-center gap-2">
+                        <i-lucide
+                          [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert"
+                          size="16"
+                          class="text-gray-500"
+                          [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
+                          [class.text-black]="drive.totalOrganizers > 0"
+                          size="16"
+                        />
+                        <span
+                          [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
+                          [class.text-black]="drive.totalOrganizers > 0"
+                          class="text-sm font-medium text-slate-500"
+                        >
+                          {{ drive.totalOrganizers }}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        OPGERICHT
+                      </p>
+                      <div class="flex items-center gap-2">
+                        <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
+                        <span class="text-muted-foreground text-sm font-medium">
+                          {{ drive.createdTime }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Shared drive settings - always visible, no expand/collapse -->
+                  <div
+                    class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4"
+                  >
+                    <div class="bg-slate-50 rounded-md px-3 py-3">
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        ALLEEN DOMEINGEBRUIKERS TOEGESTAAN
+                      </p>
+                      <div
+                        class="flex items-center gap-1 cursor-pointer"
+                        (click)="
+                          UtilityMethods.openAdminPage(
+                            'https://admin.google.com/ac/drive/manageshareddrives'
+                          );
+                          $event.stopPropagation()
+                        "
+                      >
+                        @if (!drive.onlyDomainUsersAllowed) {
+                          <i-lucide
+                            [img]="Icons.TriangleAlert"
+                            class="text-[#f54a00] cursor-pointer"
+                            size="13"
+                          />
+                          <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
+                        } @else {
+                          <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
+                          <span class="text-emerald-600 text-xs font-medium">Ja</span>
+                        }
+                      </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-md px-3 py-3">
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                        ALLEEN LEDEN KUNNEN TOEGANG KRIJKEN
+                      </p>
+                      <div
+                        class="flex items-center gap-1 cursor-pointer"
+                        (click)="
+                          UtilityMethods.openAdminPage(
+                            'https://admin.google.com/ac/drive/manageshareddrives'
+                          );
+                          $event.stopPropagation()
+                        "
+                      >
+                        @if (!drive.onlyMembersCanAccess) {
+                          <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
+                          <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
+                        } @else {
+                          <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
+                          <span class="text-emerald-600 text-xs font-medium">Ja</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              }
+
+              <div
+                class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
+              >
+                <span class="text-sm text-gray-500">
+                  Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+                </span>
+                <div class="flex gap-2">
+                  <button
+                    (click)="prevPage()"
+                    [disabled]="currentPage() === 1"
+                    class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <i-lucide [img]="Icons.ChevronLeft" size="16" />
+                    Vorige
+                  </button>
+                  <button
+                    (click)="nextPage()"
+                    [disabled]="!nextPageToken()"
+                    class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Volgende
+                    <i-lucide [img]="Icons.ChevronRight" size="16" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+            <div class="flex items-center justify-center p-5">
+              <span class="text-lg font-medium text-slate-600"> Geen drives gevonden! </span>
+            </div>
+          </div>
+        }
+      } @else {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
+          <div class="flex flex-col items-center p-3 pt-6">
+            <div class="flex flex-col items-center space-y-4 p-8">
+              <div class="relative flex items-center justify-center">
+                <div class="h-12 w-12 rounded-full"></div>
+
+                <div
+                  class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                ></div>
+              </div>
+
+              <span class="text-sm font-medium text-slate-600 animate-pulse">
+                Gedeelde drives worden geladen...
+              </span>
             </div>
           </div>
         </div>
-      </div>
-
-      } @else {
-      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-
-        <div class="flex items-center justify-center p-5">
-          <span class="text-lg font-medium text-slate-600">
-            Geen drives gevonden!
-          </span>
-
-        </div>
-      </div>
-      }
-      } @else {
-      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
-
-        <div class="flex flex-col items-center p-3 pt-6">
-          <div class="flex flex-col items-center space-y-4 p-8">
-            <div class="relative flex items-center justify-center">
-              <div class="h-12 w-12 rounded-full"></div>
-
-              <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-              </div>
-            </div>
-
-            <span class="text-sm font-medium text-slate-600 animate-pulse">
-              Gedeelde drives worden geladen...
-            </span>
-          </div>
-        </div>
-      </div>
       }
     </div>
   </div>

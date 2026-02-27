@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
@@ -6,11 +6,14 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { OAuthService } from '../../../services/o-auth-service';
+import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
+import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-app-access',
@@ -24,84 +27,24 @@ export class AppAccess {
   // ==========================================
   readonly Icons = AppIcons;
   readonly UtilityMethods = UtilityMethods;
+  readonly #oAuthService = inject(OAuthService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
 
-  // drives = signal<SharedDrive[]>([]);
+  apps = signal<AggregatedAppDto[]>([]);
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
 
   readonly searchQuery = signal('');
-  // readonly pageOverview = signal<SharedDriveOverviewResponse | null>(null);
+  readonly pageOverview = signal<OAuthOverviewResponse | null>(null);
 
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
   readonly expandedApp = signal<string | null>(null);
-
-  apps = [
-    {
-      id: 1,
-      name: 'Slack Workspace Integration',
-      developer: 'Slack Technologies, Inc.',
-      verified: true,
-      highRisk: false,
-      totalUsers: 24,
-      firstDetection: '15-11-2025',
-      lastUsed: '17 dagen geleden',
-      dataAccess: [
-        { name: 'Google Drive', rights: 'Lezen', risk: false },
-        { name: 'Gmail', rights: 'Berichten verzenden', risk: false },
-        { name: 'Google Agenda', rights: 'Lezen', risk: false },
-      ],
-    },
-    {
-      id: 2,
-      name: 'ProjectManager Pro',
-      developer: 'ProjectManager Solutions Ltd.',
-      verified: false,
-      highRisk: true,
-      totalUsers: 8,
-      firstDetection: '20-09-2025',
-      lastUsed: '18 dagen geleden',
-      dataAccess: [
-        { name: 'Google Drive', rights: 'Volledige Toegang', risk: true },
-        { name: 'Google Contacten', rights: 'Volledige Toegang', risk: true },
-        { name: 'Google Agenda', rights: 'Volledige Toegang', risk: true },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Email Analytics Tool',
-      developer: 'Analytics Inc.',
-      verified: false,
-      highRisk: true,
-      totalUsers: 3,
-      firstDetection: '10-06-2024',
-      lastUsed: '2 maanden geleden',
-      dataAccess: [
-        { name: 'Gmail', rights: 'Volledige Toegang', risk: true },
-        { name: 'Google Groepen', rights: 'Lezen', risk: false },
-      ],
-    },
-    {
-      id: 4,
-      name: 'Google Workspace Marketplace - DocuSign',
-      developer: 'DocuSign, Inc.',
-      verified: true,
-      highRisk: false,
-      totalUsers: 45,
-      firstDetection: '20-03-2024',
-      lastUsed: '17 dagen geleden',
-      dataAccess: [
-        { name: 'Google Drive', rights: 'Bestanden uploaden', risk: false },
-        { name: 'Gmail', rights: 'Lezen', risk: false },
-      ],
-    },
-  ];
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -165,14 +108,59 @@ export class AppAccess {
     }
   }
 
-  refreshData() {}
+  refreshData() {
+    if (this.isRefreshing()) return;
+
+    this.isRefreshing.set(true);
+
+    this.#oAuthService.refreshOAuthCache().subscribe({
+      next: (res) => {
+        this.currentPage.set(1);
+        this.#tokenHistory = [null];
+
+        this.#loadApps(null);
+        this.#loadPageOverview();
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        // Stop de spinner zodra alles klaar is
+        this.isRefreshing.set(false);
+      },
+    });
+  }
 
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
   #loadApps(token: string | null = null) {
-    // this.isLoading.set(true);
+    this.isLoading.set(true);
+
+    this.#oAuthService.getApps(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
+      next: (res) => {
+        this.apps.set(res.apps);
+        this.nextPageToken.set(res.nextPageToken);
+        this.isLoading.set(false);
+        console.log(this.apps());
+        console.log(this.nextPageToken());
+      },
+      error: (err) => {
+        console.error('Failed to load oAuth apps', err);
+        this.isLoading.set(false);
+      },
+    });
   }
 
-  #loadPageOverview() {}
+  #loadPageOverview() {
+    this.#oAuthService.getOAuthPageOverview().subscribe({
+      next: (res) => {
+        this.pageOverview.set(res);
+      },
+      error: (err) => {
+        console.error('Failed to load page overview', err);
+      },
+    });
+  }
 }
