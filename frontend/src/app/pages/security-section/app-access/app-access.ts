@@ -31,12 +31,16 @@ export class AppAccess {
   readonly isExpanded = signal(true);
 
   // drives = signal<SharedDrive[]>([]);
-  isLoading = signal(false);
-  searchQuery = signal('');
-  // pageOverview = signal<SharedDriveOverviewResponse | null>(null);
+  readonly isLoading = signal(false);
+  readonly isRefreshing = signal<boolean>(false);
 
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
+  readonly searchQuery = signal('');
+  // readonly pageOverview = signal<SharedDriveOverviewResponse | null>(null);
+
+  readonly currentPage = signal(1);
+  readonly nextPageToken = signal<string | null>(null);
+
+  readonly expandedApp = signal<string | null>(null);
 
   apps = [
     {
@@ -152,6 +156,16 @@ export class AppAccess {
       this.#loadApps(prevToken);
     }
   }
+
+  toggleExpand(deviceId: string) {
+    if (this.expandedApp() === deviceId) {
+      this.expandedApp.set(null);
+    } else {
+      this.expandedApp.set(deviceId);
+    }
+  }
+
+  refreshData() {}
 
   // ==========================================
   // PRIVATE METHODS
