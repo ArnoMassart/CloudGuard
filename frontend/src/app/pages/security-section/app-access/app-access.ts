@@ -14,7 +14,7 @@ import { Risk } from '../../../models/o-auth/Risk';
 // ==========================================
 // CONSTANTS
 // ==========================================
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 3;
 
 @Component({
   selector: 'app-app-access',
