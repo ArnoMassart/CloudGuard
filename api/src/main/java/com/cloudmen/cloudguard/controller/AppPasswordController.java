@@ -1,0 +1,31 @@
+package com.cloudmen.cloudguard.controller;
+
+import com.cloudmen.cloudguard.dto.AppPasswordDto;
+import com.cloudmen.cloudguard.service.AppPasswordsService;
+import com.cloudmen.cloudguard.service.JwtService;
+import com.google.api.services.admin.directory.model.Asp;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/google/app-passwords")
+public class AppPasswordController {
+    private final AppPasswordsService appPasswordsService;
+    private final JwtService jwtService;
+
+    public AppPasswordController(AppPasswordsService appPasswordsService, JwtService jwtService) {
+        this.appPasswordsService = appPasswordsService;
+        this.jwtService = jwtService;
+    }
+
+    @GetMapping()
+    public List<AppPasswordDto> getOrgAppPasswords(@CookieValue(name="AuthToken", required = false) String token) {
+        String email = jwtService.validateInternalToken(token);
+        return appPasswordsService.getAllAppPasswords(email);
+    }
+
+
+}
