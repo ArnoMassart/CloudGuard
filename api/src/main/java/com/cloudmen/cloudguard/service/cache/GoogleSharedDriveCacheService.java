@@ -27,7 +27,7 @@ public class GoogleSharedDriveCacheService {
     private final GoogleApiFactory googleApiFactory;
 
     private final Cache<String, SharedDriveCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
+            .expireAfterWrite(24, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 

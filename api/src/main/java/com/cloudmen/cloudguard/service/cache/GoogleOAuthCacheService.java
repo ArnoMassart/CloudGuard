@@ -25,7 +25,7 @@ public class GoogleOAuthCacheService {
     private final GoogleUsersCacheService usersCacheService;
 
     private final Cache<String, OAuthCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(6, TimeUnit.HOURS)
+            .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 

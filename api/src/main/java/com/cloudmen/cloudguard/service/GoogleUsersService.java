@@ -18,10 +18,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -49,13 +46,15 @@ public class GoogleUsersService {
                     .toList();
         }
 
+        List<User> sortedList = filteredList.stream().sorted(Comparator.comparing(a -> a.getName().getFullName())).toList();
+
         int page = GoogleServiceHelperMethods.getPage(pageToken);
 
-        int totalUsers = filteredList.size();
+        int totalUsers = sortedList.size();
         int startIndex = (page - 1) * size;
         int endIndex = Math.min(startIndex + size, totalUsers);
 
-        List<User> pagedGoogleUsers = (startIndex >= totalUsers) ? Collections.emptyList() : filteredList.subList(startIndex, endIndex);
+        List<User> pagedGoogleUsers = (startIndex >= totalUsers) ? Collections.emptyList() : sortedList.subList(startIndex, endIndex);
 
         List<UserOrgDetail> mappedUsers = pagedGoogleUsers.stream().map(user -> {
             Long roleId = cachedData.userRoleAssignments().get(user.getPrimaryEmail());
