@@ -41,10 +41,18 @@ public class GoogleOAuthService {
 
         List<AggregatedAppBuilder> filteredBuilders = builders;
 
+        int allFilteredApps = filteredBuilders.size();
+
+        List<AggregatedAppBuilder> highRiskBuilders = filteredBuilders.stream().filter(builder -> isAppHighRisk(builder.allScopes)).toList();
+        List<AggregatedAppBuilder> notHighRiskBuilders = filteredBuilders.stream().filter(builder -> !isAppHighRisk(builder.allScopes)).toList();
+
+       int allHighRiskApps = highRiskBuilders.size();
+       int allNotHighRiskApps = notHighRiskBuilders.size();
+
         if (risk != null) {
             switch (risk) {
-                case "high" -> filteredBuilders = builders.stream().filter(builder -> isAppHighRisk(builder.allScopes)).toList();
-                case "not-high" -> filteredBuilders = builders.stream().filter(builder -> !isAppHighRisk(builder.allScopes)).toList();
+                case "high" -> filteredBuilders = highRiskBuilders;
+                case "not-high" -> filteredBuilders = notHighRiskBuilders;
                 default -> {}
             }
         }
@@ -68,7 +76,7 @@ public class GoogleOAuthService {
                 .toList();
 
         String nextTokenToReturn = (endIndex < totalApps) ? String.valueOf(page + 1) : null;
-        return new OAuthPagedResponse(mappedItems, nextTokenToReturn);
+        return new OAuthPagedResponse(mappedItems, nextTokenToReturn, allFilteredApps, allHighRiskApps, allNotHighRiskApps);
     }
 
     public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail) {
@@ -89,15 +97,12 @@ public class GoogleOAuthService {
             double penalty = ((double) totalHighRiskApps / totalThirdPartyApps) * 100;
             securityScore = (int) Math.max(0, 100 - Math.round(penalty));
         }
-
-        long totalApps = apps.size();
-
+        
         return new OAuthOverviewResponse(
                 totalThirdPartyApps,
                 totalHighRiskApps,
                 totalPermissionsGranted,
-                securityScore,
-                totalApps
+                securityScore
         );
     }
 

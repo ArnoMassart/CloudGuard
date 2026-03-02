@@ -49,6 +49,10 @@ export class AppAccess {
 
   readonly riskFilter = signal<Risk>('all');
 
+  readonly allFilteredApps = signal(0);
+  readonly allHighRiskApps = signal(0);
+  readonly allNotHighRiskApps = signal(0);
+
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
@@ -163,6 +167,9 @@ export class AppAccess {
         next: (res) => {
           this.apps.set(res.apps);
           this.nextPageToken.set(res.nextPageToken);
+          this.allFilteredApps.set(res.allFilteredApps);
+          this.allHighRiskApps.set(res.allHighRiskApps);
+          this.allNotHighRiskApps.set(res.allNotHighRiskApps);
           this.isLoading.set(false);
         },
         error: (err) => {
