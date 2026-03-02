@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { RouteService } from './route-service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 export interface AppPassword {
     codeId: number;
@@ -14,6 +14,11 @@ export interface AppPasswordOverviewResponse {
     totalAppPasswords: number;
     totalHighRiskAppPasswords: number;
     securityScore: number;
+}
+
+export interface AppPasswordPageResponse {
+    users: Array<{ name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }>;
+    nextPageToken: string | null;
 }
 
 export interface UserAppPasswords {
@@ -31,15 +36,12 @@ export class AppPasswordsService {
     readonly #API_URL = RouteService.getBackendUrl('/google/app-passwords');
     readonly #http = inject(HttpClient);
 
-    public getAppPasswords() {
-        return this.#http.get<Array<{
-            name: string;
-            email: string;
-            role: string;
-            tsv: boolean;
-            passwords: AppPassword[];
-        }>>(`${this.#API_URL}`, {
-            withCredentials: true
+    public getAppPasswords(size: number, pageToken?: string) {
+        let params = new HttpParams().set('size', String(size));
+        if (pageToken) params = params.set('pageToken', pageToken);
+        return this.#http.get<AppPasswordPageResponse>(`${this.#API_URL}`, {
+            withCredentials: true,
+            params,
         });
     }
 

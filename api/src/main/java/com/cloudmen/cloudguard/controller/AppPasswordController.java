@@ -1,12 +1,10 @@
 package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
-import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/google/app-passwords")
@@ -20,9 +18,12 @@ public class AppPasswordController {
     }
 
     @GetMapping()
-    public List<UserAppPasswordsDto> getAppPasswords(@CookieValue(name="AuthToken", required = false) String token) {
+    public AppPasswordPageResponse getAppPasswords(
+            @CookieValue(name = "AuthToken", required = false) String token,
+            @RequestParam(required = false) String pageToken,
+            @RequestParam(defaultValue = "10") int size) {
         String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getAppPasswords(email);
+        return appPasswordsService.getAppPasswordsPaged(email, pageToken, size);
     }
 
     @GetMapping("/overview")

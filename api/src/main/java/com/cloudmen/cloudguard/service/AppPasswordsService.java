@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordCacheEntry;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -45,15 +47,28 @@ public class AppPasswordsService {
         this.apiFactory = apiFactory;
     }
 
-    public List<UserAppPasswordsDto> getAppPasswords(String adminEmail) {
+    public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size) {
         AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
-        try {
-            Object toLog = entry.users().isEmpty() ? List.of() : entry.users();
-            log.info("App passwords response (full JSON): {}", objectMapper.writeValueAsString(toLog));
-        } catch (Exception e) {
-            log.warn("Could not serialize app passwords to JSON: {}", e.getMessage());
+        List<UserAppPasswordsDto> allUsers = entry.users();
+
+        int page = 1;
+        if (pageToken != null && !pageToken.isBlank()) {
+            try {
+                page = Integer.parseInt(pageToken);
+            } catch (NumberFormatException ignored) {
+            }
         }
-        return entry.users();
+
+        int totalUsers = allUsers.size();
+        int startIndex = (page - 1) * size;
+        int endIndex = Math.min(startIndex + size, totalUsers);
+
+        List<UserAppPasswordsDto> pagedUsers = (startIndex >= totalUsers)
+                ? Collections.emptyList()
+                : new ArrayList<>(allUsers.subList(startIndex, endIndex));
+
+        String nextToken = (endIndex < totalUsers) ? String.valueOf(page + 1) : null;
+        return new AppPasswordPageResponse(pagedUsers, nextToken);
     }
 
     public AppPasswordOverviewResponse getOverview(String adminEmail) {

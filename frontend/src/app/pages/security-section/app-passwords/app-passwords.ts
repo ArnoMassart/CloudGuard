@@ -4,8 +4,10 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {AppPassword, AppPasswordOverviewResponse, UserAppPasswords} from "../../../services/app-password-service";
+import { AppPassword, AppPasswordOverviewResponse, UserAppPasswords } from '../../../services/app-password-service';
 import { LucideAngularModule } from 'lucide-angular';
+
+const ITEMS_PER_PAGE = 10;
 
 @Component({
   selector: 'app-app-passwords',
@@ -13,16 +15,39 @@ import { LucideAngularModule } from 'lucide-angular';
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
 })
-export class AppPasswords implements OnInit{
+export class AppPasswords implements OnInit {
   readonly Icons = AppIcons;
-  readonly pageOverview = signal<AppPasswordOverviewResponse|null>(null);
+  readonly pageOverview = signal<AppPasswordOverviewResponse | null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly userAppPasswords = signal<UserAppPasswords[]>([]);
   readonly isExpanded = signal(true);
-  readonly expandedAppPassword = signal<string|null>(null);
+  readonly expandedAppPassword = signal<string | null>(null);
+  readonly currentPage = signal(1);
+  readonly nextPageToken = signal<string | null>(null);
+  readonly isLoading = signal(false);
+  #tokenHistory: (string | null)[] = [null];
 
-  ngOnInit(): void{
-    this.#loadAppPasswords();
+  ngOnInit(): void {
+    this.#loadOverview();
+    this.#loadAppPasswords(null);
+  }
+
+  nextPage() {
+    const token = this.nextPageToken();
+    if (token) {
+      this.#tokenHistory.push(token);
+      this.currentPage.update((p) => p + 1);
+      this.#loadAppPasswords(token);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.#tokenHistory.pop();
+      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      this.currentPage.update((p) => p - 1);
+      this.#loadAppPasswords(prevToken);
+    }
   }
 
   toggleExpanded(appPasswordId: string) {
@@ -37,22 +62,33 @@ export class AppPasswords implements OnInit{
     }
   }
 
-  #loadAppPasswords() {
+  #loadOverview() {
     this.#appPasswordsService.getOverview().subscribe({
       next: (overview) => this.pageOverview.set(overview),
       error: () => {},
     });
-    this.#appPasswordsService.getAppPasswords().subscribe({
+  }
+
+  #loadAppPasswords(pageToken: string | null) {
+    this.isLoading.set(true);
+    this.expandedAppPassword.set(null);
+    this.#appPasswordsService.getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined).subscribe({
       next: (response) => {
-        const data = response.length > 0
-          ? response.map((u) => this.#mapToUserAppPasswords(u))
+        const data = response.users.length > 0
+          ? response.users.map((u) => this.#mapToUserAppPasswords(u))
           : this.#getDemoData();
         this.userAppPasswords.set(data);
+        this.nextPageToken.set(response.users.length > 0 ? (response.nextPageToken ?? null) : null);
+        this.isLoading.set(false);
       },
       error: (_err) => {
         const demoData = this.#getDemoData();
         this.userAppPasswords.set(demoData);
-        this.#setDemoOverview(demoData);
+        this.nextPageToken.set(null);
+        this.isLoading.set(false);
+        if (this.pageOverview() === null) {
+          this.#setDemoOverview(demoData);
+        }
       },
     });
   }
