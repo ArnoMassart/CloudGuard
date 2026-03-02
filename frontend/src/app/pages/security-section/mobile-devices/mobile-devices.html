@@ -89,7 +89,7 @@
                 <!-- Status filter -->
                 <div class="relative">
                     <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
-                        class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
+                        class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
                         [class.border-primary]="selectedStatus() !== statusEnum.All"
                         [class.ring-1]="selectedStatus() !== statusEnum.All"
                         [class.ring-primary]="selectedStatus() !== statusEnum.All">
@@ -105,7 +105,7 @@
                 <!-- Device type filter -->
                 <div class="relative">
                     <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
-                        class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
+                        class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
                         [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
                         [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
                         [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">

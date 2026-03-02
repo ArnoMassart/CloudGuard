@@ -3,4 +3,5 @@ export type OAuthOverviewResponse = {
   totalHighRiskApps: number;
   totalPermissionsGranted: number;
   securityScore: number;
+  totalApps: number;
 };

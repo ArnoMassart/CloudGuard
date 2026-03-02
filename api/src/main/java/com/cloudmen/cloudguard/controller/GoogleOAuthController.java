@@ -20,17 +20,19 @@ public class GoogleOAuthController {
     }
 
     @GetMapping
-    public ResponseEntity<OAuthPagedResponse> getToken(@CookieValue(name = "AuthToken", required = false) String token,
+    public ResponseEntity<OAuthPagedResponse> getTokens(@CookieValue(name = "AuthToken", required = false) String token,
                                                        @RequestParam(required = false) String pageToken,
                                                        @RequestParam(defaultValue = "3") int size,
-                                                       @RequestParam(required = false) String query) {
+                                                       @RequestParam(required = false) String query,
+                                                       @RequestParam(required = false) String risk
+                                                       ) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(oAuthService.getOAuthPaged(loggedInEmail, pageToken, size, query));
+        return ResponseEntity.ok(oAuthService.getOAuthPaged(loggedInEmail, pageToken, size, query, risk));
     }
 
     @GetMapping("/overview")

@@ -4,6 +4,7 @@ public record OAuthOverviewResponse(
         long totalThirdPartyApps,
         long totalHighRiskApps,
         long totalPermissionsGranted,
-        int securityScore
+        int securityScore,
+        long totalApps
 ) {
 }

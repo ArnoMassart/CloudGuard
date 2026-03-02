@@ -9,6 +9,7 @@ import { SectionTopCard } from '../../../components/section-top-card/section-top
 import { OAuthService } from '../../../services/o-auth-service';
 import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
+import { Risk } from '../../../models/o-auth/Risk';
 
 // ==========================================
 // CONSTANTS
@@ -46,6 +47,8 @@ export class AppAccess {
 
   readonly expandedApp = signal<string | null>(null);
 
+  readonly riskFilter = signal<Risk>('all');
+
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
@@ -67,22 +70,20 @@ export class AppAccess {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
-  toggleExpanded() {
+  toggleExpanded(): void {
     this.isExpanded.update((v) => !v);
   }
 
-  onKeyup(value: string) {
+  onKeyup(value: string): void {
     this.#searchSubject.next(value);
   }
 
-  onSearch(value: string) {
+  onSearch(value: string): void {
     this.searchQuery.set(value);
-    this.currentPage.set(1);
-    this.#tokenHistory = [null];
-    this.#loadApps(null);
+    this.#resetData();
   }
 
-  nextPage() {
+  nextPage(): void {
     const token = this.nextPageToken();
     if (token) {
       this.#tokenHistory.push(token);
@@ -91,7 +92,7 @@ export class AppAccess {
     }
   }
 
-  prevPage() {
+  prevPage(): void {
     if (this.currentPage() > 1) {
       this.#tokenHistory.pop();
       const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
@@ -100,7 +101,7 @@ export class AppAccess {
     }
   }
 
-  toggleExpand(deviceId: string) {
+  toggleExpand(deviceId: string): void {
     if (this.expandedApp() === deviceId) {
       this.expandedApp.set(null);
     } else {
@@ -108,17 +109,14 @@ export class AppAccess {
     }
   }
 
-  refreshData() {
+  refreshData(): void {
     if (this.isRefreshing()) return;
 
     this.isRefreshing.set(true);
 
     this.#oAuthService.refreshOAuthCache().subscribe({
       next: (res) => {
-        this.currentPage.set(1);
-        this.#tokenHistory = [null];
-
-        this.#loadApps(null);
+        this.#resetData();
         this.#loadPageOverview();
       },
       error: (err) => {
@@ -132,28 +130,49 @@ export class AppAccess {
     });
   }
 
+  setRiskFilter(risk: Risk): void {
+    this.riskFilter.set(risk);
+    this.#resetData();
+  }
+
+  getRiskButtonClass(risk: Risk): string {
+    let classNames = 'px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm';
+
+    if (risk === 'all' && this.riskFilter() === 'all') {
+      classNames += ' bg-[#3ABFAD] text-white';
+    } else if (risk === 'high' && this.riskFilter() === 'high') {
+      classNames += ' bg-red-600 text-white';
+    } else if (risk === 'not-high' && this.riskFilter() === 'not-high') {
+      classNames += ' bg-emerald-600 text-white';
+    } else {
+      classNames += ' bg-white border border-gray-300 text-gray-700 hover:bg-gray-50';
+    }
+
+    return classNames;
+  }
+
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
-  #loadApps(token: string | null = null) {
+  #loadApps(token: string | null = null): void {
     this.isLoading.set(true);
 
-    this.#oAuthService.getApps(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
-      next: (res) => {
-        this.apps.set(res.apps);
-        this.nextPageToken.set(res.nextPageToken);
-        this.isLoading.set(false);
-        console.log(this.apps());
-        console.log(this.nextPageToken());
-      },
-      error: (err) => {
-        console.error('Failed to load oAuth apps', err);
-        this.isLoading.set(false);
-      },
-    });
+    this.#oAuthService
+      .getApps(ITEMS_PER_PAGE, this.riskFilter(), token || undefined, this.searchQuery())
+      .subscribe({
+        next: (res) => {
+          this.apps.set(res.apps);
+          this.nextPageToken.set(res.nextPageToken);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load oAuth apps', err);
+          this.isLoading.set(false);
+        },
+      });
   }
 
-  #loadPageOverview() {
+  #loadPageOverview(): void {
     this.#oAuthService.getOAuthPageOverview().subscribe({
       next: (res) => {
         this.pageOverview.set(res);
@@ -162,5 +181,11 @@ export class AppAccess {
         console.error('Failed to load page overview', err);
       },
     });
+  }
+
+  #resetData(): void {
+    this.currentPage.set(1);
+    this.#tokenHistory = [null];
+    this.#loadApps(null);
   }
 }
