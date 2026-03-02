@@ -42,4 +42,10 @@ export class AppPasswordsService {
             withCredentials: true
         });
     }
+
+    public getOverview() {
+        return this.#http.get<AppPasswordOverviewResponse>(`${this.#API_URL}/overview`, {
+            withCredentials: true
+        });
+    }
 }

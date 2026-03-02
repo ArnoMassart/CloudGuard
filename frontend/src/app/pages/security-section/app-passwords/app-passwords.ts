@@ -38,6 +38,10 @@ export class AppPasswords implements OnInit{
   }
 
   #loadAppPasswords() {
+    this.#appPasswordsService.getOverview().subscribe({
+      next: (overview) => this.pageOverview.set(overview),
+      error: () => {},
+    });
     this.#appPasswordsService.getAppPasswords().subscribe({
       next: (response) => {
         const data = response.length > 0
@@ -46,8 +50,21 @@ export class AppPasswords implements OnInit{
         this.userAppPasswords.set(data);
       },
       error: (_err) => {
-        this.userAppPasswords.set(this.#getDemoData());
+        const demoData = this.#getDemoData();
+        this.userAppPasswords.set(demoData);
+        this.#setDemoOverview(demoData);
       },
+    });
+  }
+
+  #setDemoOverview(users: UserAppPasswords[]) {
+    const totalAppPasswords = users.reduce((sum, u) => sum + u.appPasswords.length, 0);
+    const usersWithAppPasswords = users.length;
+    this.pageOverview.set({
+      allowed: true,
+      totalAppPasswords,
+      totalHighRiskAppPasswords: totalAppPasswords,
+      securityScore: usersWithAppPasswords === 0 ? 100 : Math.max(0, 100 - usersWithAppPasswords * 10),
     });
   }
 

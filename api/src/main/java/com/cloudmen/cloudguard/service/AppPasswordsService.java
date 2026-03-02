@@ -1,6 +1,8 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordCacheEntry;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +29,7 @@ public class AppPasswordsService {
     private static final Logger log = LoggerFactory.getLogger(AppPasswordsService.class);
 
     private final GoogleApiFactory apiFactory;
-    private final Cache<String, List<UserAppPasswordsDto>> cache = Caffeine.newBuilder()
+    private final Cache<String, AppPasswordCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
@@ -44,36 +46,39 @@ public class AppPasswordsService {
     }
 
     public List<UserAppPasswordsDto> getAppPasswords(String adminEmail) {
-        List<UserAppPasswordsDto> result = cache.get(adminEmail, this::fetchAllAppPasswords);
+        AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
         try {
-            Object toLog = result.isEmpty() ? List.of(createStructureSample()) : result;
+            Object toLog = entry.users().isEmpty() ? List.of() : entry.users();
             log.info("App passwords response (full JSON): {}", objectMapper.writeValueAsString(toLog));
         } catch (Exception e) {
             log.warn("Could not serialize app passwords to JSON: {}", e.getMessage());
         }
-        return result;
+        return entry.users();
     }
 
-    private static UserAppPasswordsDto createStructureSample() {
-        return new UserAppPasswordsDto(
-                "Example User",
-                "example@domain.com",
-                "User",
-                false,
-                List.of()
-        );
+    public AppPasswordOverviewResponse getOverview(String adminEmail) {
+        AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
+        int usersWithAppPasswords = entry.users().size();
+        int totalAppPasswords = entry.users().stream()
+                .mapToInt(u -> u.passwords().size())
+                .sum();
+        int totalUserCount = entry.totalUserCount();
+        int securityScore = totalUserCount == 0 ? 100
+                : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
+        return new AppPasswordOverviewResponse(true, totalAppPasswords, totalAppPasswords, securityScore);
     }
 
     public void forceRefreshCache(String adminEmail) {
         cache.asMap().compute(adminEmail, (email, existing) -> fetchAllAppPasswords(email));
     }
 
-    private List<UserAppPasswordsDto> fetchAllAppPasswords(String adminEmail) {
+    private AppPasswordCacheEntry fetchAllAppPasswords(String adminEmail) {
         try {
             log.info("Ophalen LIVE app passwords van Google voor: {}", adminEmail);
             Directory directory = apiFactory.getDirectoryService(scopes, adminEmail);
 
             List<UserAppPasswordsDto> result = new ArrayList<>();
+            int totalUserCount = 0;
             String pageToken = null;
 
             do {
@@ -88,6 +93,7 @@ public class AppPasswordsService {
 
                 if (users.getUsers() != null) {
                     for (User u : users.getUsers()) {
+                        totalUserCount++;
                         String userEmail = u.getPrimaryEmail();
                         log.info("Checking app passwords for user: {}", userEmail);
                         Asps asps = directory.asps().list(userEmail).execute();
@@ -114,7 +120,7 @@ public class AppPasswordsService {
 
             } while (pageToken != null && !pageToken.isEmpty());
 
-            return result;
+            return new AppPasswordCacheEntry(result, totalUserCount);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch app passwords", e);

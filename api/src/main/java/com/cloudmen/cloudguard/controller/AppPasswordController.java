@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
@@ -24,5 +25,9 @@ public class AppPasswordController {
         return appPasswordsService.getAppPasswords(email);
     }
 
-
+    @GetMapping("/overview")
+    public AppPasswordOverviewResponse getOverview(@CookieValue(name="AuthToken", required = false) String token) {
+        String email = jwtService.validateInternalToken(token);
+        return appPasswordsService.getOverview(email);
+    }
 }
