@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
+import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -26,7 +27,7 @@ public class AppPasswordsService {
     private static final Logger log = LoggerFactory.getLogger(AppPasswordsService.class);
 
     private final GoogleApiFactory apiFactory;
-    private final Cache<String, List<AppPasswordDto>> cache = Caffeine.newBuilder()
+    private final Cache<String, List<UserAppPasswordsDto>> cache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
@@ -42,12 +43,10 @@ public class AppPasswordsService {
         this.apiFactory = apiFactory;
     }
 
-    public List<AppPasswordDto> getAppPasswords(String adminEmail) {
-        List<AppPasswordDto> result = cache.get(adminEmail, this::fetchAllAppPasswords);
+    public List<UserAppPasswordsDto> getAppPasswords(String adminEmail) {
+        List<UserAppPasswordsDto> result = cache.get(adminEmail, this::fetchAllAppPasswords);
         try {
-            Object toLog = result.isEmpty()
-                    ? List.of(createStructureSample())
-                    : result;
+            Object toLog = result.isEmpty() ? List.of(createStructureSample()) : result;
             log.info("App passwords response (full JSON): {}", objectMapper.writeValueAsString(toLog));
         } catch (Exception e) {
             log.warn("Could not serialize app passwords to JSON: {}", e.getMessage());
@@ -55,64 +54,74 @@ public class AppPasswordsService {
         return result;
     }
 
-    private static AppPasswordDto createStructureSample() {
-        AppPasswordDto sample = new AppPasswordDto();
-        sample.setCodeId(null);
-        sample.setName("not found");
-        sample.setCreationTime("not found");
-        sample.setLastTimeUsed("not found");
-        return sample;
+    private static UserAppPasswordsDto createStructureSample() {
+        return new UserAppPasswordsDto(
+                "Example User",
+                "example@domain.com",
+                "User",
+                false,
+                List.of()
+        );
     }
 
-    public void forceRefreshCache(String adminEmail){
-        cache.asMap().compute(adminEmail, (email, existing)-> fetchAllAppPasswords(email));
+    public void forceRefreshCache(String adminEmail) {
+        cache.asMap().compute(adminEmail, (email, existing) -> fetchAllAppPasswords(email));
     }
 
-    private List<AppPasswordDto> fetchAllAppPasswords(String adminEmail){
-        try{
+    private List<UserAppPasswordsDto> fetchAllAppPasswords(String adminEmail) {
+        try {
             log.info("Ophalen LIVE app passwords van Google voor: {}", adminEmail);
             Directory directory = apiFactory.getDirectoryService(scopes, adminEmail);
 
-            List<AppPasswordDto> result = new ArrayList<>();
+            List<UserAppPasswordsDto> result = new ArrayList<>();
             String pageToken = null;
 
-            do{
+            do {
                 Directory.Users.List req = directory.users()
                         .list()
                         .setCustomer("my_customer")
-                        .setMaxResults(100);
+                        .setMaxResults(100)
+                        .setFields("nextPageToken, users(primaryEmail, name/fullName, isAdmin, isEnrolledIn2Sv)");
 
-                if(pageToken != null) req.setPageToken(pageToken);
+                if (pageToken != null) req.setPageToken(pageToken);
                 Users users = req.execute();
 
-                if(users.getUsers() != null){
-                    for(User u : users.getUsers()){
+                if (users.getUsers() != null) {
+                    for (User u : users.getUsers()) {
                         String userEmail = u.getPrimaryEmail();
                         log.info("Checking app passwords for user: {}", userEmail);
                         Asps asps = directory.asps().list(userEmail).execute();
-                        if(asps.getItems() == null || asps.getItems().isEmpty()) {
+                        if (asps.getItems() == null || asps.getItems().isEmpty()) {
                             log.info("  No app passwords for {}", userEmail);
                             continue;
                         }
-                        for(Asp asp: asps.getItems()) {
+                        String userName = u.getName() != null && u.getName().getFullName() != null
+                                ? u.getName().getFullName() : userEmail;
+                        String role = Boolean.TRUE.equals(u.getIsAdmin()) ? "Admin" : "User";
+                        boolean twoFactorEnabled = Boolean.TRUE.equals(u.getIsEnrolledIn2Sv());
+
+                        List<AppPasswordDto> passwords = asps.getItems().stream()
+                                .map(asp -> mapToDto(asp))
+                                .toList();
+
+                        result.add(new UserAppPasswordsDto(userName, userEmail, role, twoFactorEnabled, passwords));
+                        for (Asp asp : asps.getItems()) {
                             log.info("  {} -> app password: name={}, codeId={}", userEmail, asp.getName(), asp.getCodeId());
-                            result.add(mapToDto(userEmail, asp));
                         }
                     }
                 }
                 pageToken = users.getNextPageToken();
 
-            }while(pageToken !=null && !pageToken.isEmpty());
+            } while (pageToken != null && !pageToken.isEmpty());
 
             return result;
 
-        }catch(Exception e){
-            throw new RuntimeException("Failed to fetch app passwords",e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch app passwords", e);
         }
-
     }
 
-    private AppPasswordDto mapToDto(String email, Asp asp){
+    private AppPasswordDto mapToDto(Asp asp) {
         AppPasswordDto dto = new AppPasswordDto();
         dto.setCodeId(asp.getCodeId());
         dto.setName(asp.getName());

@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
+import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ public class AppPasswordController {
     }
 
     @GetMapping()
-    public List<AppPasswordDto> getAppPasswords(@CookieValue(name="AuthToken", required = false) String token) {
+    public List<UserAppPasswordsDto> getAppPasswords(@CookieValue(name="AuthToken", required = false) String token) {
         String email = jwtService.validateInternalToken(token);
         return appPasswordsService.getAppPasswords(email);
     }

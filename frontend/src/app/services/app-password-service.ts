@@ -3,13 +3,10 @@ import { RouteService } from './route-service';
 import { HttpClient } from '@angular/common/http';
 
 export interface AppPassword {
-    userName: string;
-    userEmail: string;
-    userRole: string;
     codeId: number;
     name: string;
-    createdAt: Date;
-    lastUsedAt: Date | null;
+    creationTime: string | null;
+    lastTimeUsed: string | null;
 }
 
 export interface AppPasswordOverviewResponse {
@@ -23,6 +20,7 @@ export interface UserAppPasswords {
     name: string;
     email: string;
     role: string;
+    twoFactorEnabled: boolean;
     appPasswords: AppPassword[];
 }
 
@@ -34,7 +32,13 @@ export class AppPasswordsService {
     readonly #http = inject(HttpClient);
 
     public getAppPasswords() {
-        return this.#http.get<AppPassword[]>(`${this.#API_URL}`, {
+        return this.#http.get<Array<{
+            name: string;
+            email: string;
+            role: string;
+            tsv: boolean;
+            passwords: AppPassword[];
+        }>>(`${this.#API_URL}`, {
             withCredentials: true
         });
     }
