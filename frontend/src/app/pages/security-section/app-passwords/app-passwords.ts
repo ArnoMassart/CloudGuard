@@ -20,11 +20,11 @@ export class AppPasswords implements OnInit {
   readonly pageOverview = signal<AppPasswordOverviewResponse | null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly userAppPasswords = signal<UserAppPasswords[]>([]);
-  readonly isExpanded = signal(true);
   readonly expandedAppPassword = signal<string | null>(null);
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
   readonly isLoading = signal(false);
+  readonly isRefreshing = signal(false);
   #tokenHistory: (string | null)[] = [null];
 
   ngOnInit(): void {
@@ -50,16 +50,32 @@ export class AppPasswords implements OnInit {
     }
   }
 
-  toggleExpanded(appPasswordId: string) {
-    this.isExpanded.update((v) => !v);
-  }
-
-  toggleExpand(appPasswordId: string) {
-    if (this.expandedAppPassword() === appPasswordId) {
+  toggleExpand(email: string) {
+    if (this.expandedAppPassword() === email) {
       this.expandedAppPassword.set(null);
     } else {
-      this.expandedAppPassword.set(appPasswordId);
+      this.expandedAppPassword.set(email);
     }
+  }
+
+  refreshData() {
+    if (this.isRefreshing()) return;
+    this.isRefreshing.set(true);
+    this.#appPasswordsService.refreshCache().subscribe({
+      next: () => {
+        this.#loadOverview();
+        this.#tokenHistory = [null];
+        this.currentPage.set(1);
+        this.#loadAppPasswords(null);
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+      complete: () => {
+        this.isRefreshing.set(false);
+      },
+    });
   }
 
   #loadOverview() {

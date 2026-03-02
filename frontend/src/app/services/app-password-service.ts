@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { RouteService } from './route-service';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface AppPassword {
     codeId: number;
@@ -49,5 +50,13 @@ export class AppPasswordsService {
         return this.#http.get<AppPasswordOverviewResponse>(`${this.#API_URL}/overview`, {
             withCredentials: true
         });
+    }
+
+    public refreshCache(): Observable<string> {
+        return this.#http.post(
+            `${this.#API_URL}/refresh`,
+            {},
+            { withCredentials: true, responseType: 'text' }
+        );
     }
 }

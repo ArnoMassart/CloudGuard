@@ -6,7 +6,6 @@ import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -41,8 +40,6 @@ public class AppPasswordsService {
             DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
     );
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     public AppPasswordsService(GoogleApiFactory apiFactory) {
         this.apiFactory = apiFactory;
     }
@@ -54,14 +51,16 @@ public class AppPasswordsService {
         int page = 1;
         if (pageToken != null && !pageToken.isBlank()) {
             try {
-                page = Integer.parseInt(pageToken);
+                int parsed = Integer.parseInt(pageToken);
+                if (parsed > 0) page = parsed;
             } catch (NumberFormatException ignored) {
             }
         }
+        int pageSize = Math.max(1, Math.min(size, 100));
 
         int totalUsers = allUsers.size();
-        int startIndex = (page - 1) * size;
-        int endIndex = Math.min(startIndex + size, totalUsers);
+        int startIndex = (page - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, totalUsers);
 
         List<UserAppPasswordsDto> pagedUsers = (startIndex >= totalUsers)
                 ? Collections.emptyList()
@@ -122,7 +121,7 @@ public class AppPasswordsService {
                         boolean twoFactorEnabled = Boolean.TRUE.equals(u.getIsEnrolledIn2Sv());
 
                         List<AppPasswordDto> passwords = asps.getItems().stream()
-                                .map(asp -> mapToDto(asp))
+                                .map(this::mapToDto)
                                 .toList();
 
                         result.add(new UserAppPasswordsDto(userName, userEmail, role, twoFactorEnabled, passwords));

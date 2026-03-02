@@ -4,6 +4,8 @@ import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,8 +29,18 @@ public class AppPasswordController {
     }
 
     @GetMapping("/overview")
-    public AppPasswordOverviewResponse getOverview(@CookieValue(name="AuthToken", required = false) String token) {
+    public AppPasswordOverviewResponse getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
         String email = jwtService.validateInternalToken(token);
         return appPasswordsService.getOverview(email);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<String> refreshCache(@CookieValue(name = "AuthToken", required = false) String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String email = jwtService.validateInternalToken(token);
+        appPasswordsService.forceRefreshCache(email);
+        return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }
