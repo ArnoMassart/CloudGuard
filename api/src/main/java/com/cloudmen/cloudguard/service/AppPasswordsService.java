@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -35,12 +36,32 @@ public class AppPasswordsService {
             DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
     );
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public AppPasswordsService(GoogleApiFactory apiFactory) {
         this.apiFactory = apiFactory;
     }
 
-    public List<AppPasswordDto> getAppPasswords(String adminEmail){
-        return cache.get(adminEmail, this::fetchAllAppPasswords);
+    public List<AppPasswordDto> getAppPasswords(String adminEmail) {
+        List<AppPasswordDto> result = cache.get(adminEmail, this::fetchAllAppPasswords);
+        try {
+            Object toLog = result.isEmpty()
+                    ? List.of(createStructureSample())
+                    : result;
+            log.info("App passwords response (full JSON): {}", objectMapper.writeValueAsString(toLog));
+        } catch (Exception e) {
+            log.warn("Could not serialize app passwords to JSON: {}", e.getMessage());
+        }
+        return result;
+    }
+
+    private static AppPasswordDto createStructureSample() {
+        AppPasswordDto sample = new AppPasswordDto();
+        sample.setCodeId(null);
+        sample.setName("not found");
+        sample.setCreationTime("not found");
+        sample.setLastTimeUsed("not found");
+        return sample;
     }
 
     public void forceRefreshCache(String adminEmail){
@@ -93,7 +114,6 @@ public class AppPasswordsService {
 
     private AppPasswordDto mapToDto(String email, Asp asp){
         AppPasswordDto dto = new AppPasswordDto();
-        dto.setUserEmail(email);
         dto.setCodeId(asp.getCodeId());
         dto.setName(asp.getName());
         dto.setCreationTime(asp.getCreationTime() != null ? String.valueOf(asp.getCreationTime()) : null);

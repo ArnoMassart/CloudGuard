@@ -5,12 +5,12 @@ import { SectionTopCard } from '../../../components/section-top-card/section-top
 import { AppIcons } from '../../../shared/AppIcons';
 import { App } from '../../../app';
 import { PageHeader } from '../../../components/page-header/page-header';
-import { AppPassword } from '../../../services/app-password-service';
-import {AppPasswordOverviewResponse} from "../../../services/app-password-service";
+import {AppPassword, AppPasswordOverviewResponse, UserAppPasswords} from "../../../services/app-password-service";
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-app-passwords',
-  imports: [SectionTopCard, CommonModule, PageHeader],
+  imports: [SectionTopCard, CommonModule, PageHeader, LucideAngularModule],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
 })
@@ -19,6 +19,7 @@ export class AppPasswords implements OnInit{
   readonly pageOverview = signal<AppPasswordOverviewResponse|null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly appPasswords = signal<AppPassword[]>([]);
+  readonly userAppPasswords = signal<UserAppPasswords[]>([]);
 
   ngOnInit(): void{
     this.#loadAppPasswords();

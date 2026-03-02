@@ -3,11 +3,13 @@ import { RouteService } from './route-service';
 import { HttpClient } from '@angular/common/http';
 
 export interface AppPassword {
-  userEmail: string;
-  codeId: number;
-  name: string;
-  createdAt: Date;
-  lastUsedAt: Date | null;
+    userName: string;
+    userEmail: string;
+    userRole: string;
+    codeId: number;
+    name: string;
+    createdAt: Date;
+    lastUsedAt: Date | null;
 }
 
 export interface AppPasswordOverviewResponse {
@@ -15,6 +17,13 @@ export interface AppPasswordOverviewResponse {
     totalAppPasswords: number;
     totalHighRiskAppPasswords: number;
     securityScore: number;
+}
+
+export interface UserAppPasswords {
+    name: string;
+    email: string;
+    role: string;
+    appPasswords: AppPassword[];
 }
 
 @Injectable({

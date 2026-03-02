@@ -10,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AppPasswordDto {
-    private String userEmail;
     private Integer codeId;
     private String name;
     private String creationTime;
