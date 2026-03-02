@@ -20,4 +20,5 @@ public class OrgUnitPolicyDto {
     private boolean inherited;
     private String settingsLinkText;
     private String adminLink;
+    private String details;
 }

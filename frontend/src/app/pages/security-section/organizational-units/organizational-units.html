@@ -144,11 +144,14 @@
               {{ policy.status }}
             </span>
           </button>
-          @if (isPolicyExpanded(policy.key)) {
+            @if (isPolicyExpanded(policy.key)) {
           <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
             <div class="text-sm text-slate-600 mb-3 space-y-2">
               @if (policy.baseExplanation) {
               <p>{{ policy.baseExplanation }}</p>
+              }
+              @if (policy.details) {
+              <p>{{ policy.details }}</p>
               }
               @if (policy.inheritanceExplanation) {
               <p>{{ policy.inheritanceExplanation }}</p>

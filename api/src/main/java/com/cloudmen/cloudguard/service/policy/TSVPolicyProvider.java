@@ -52,30 +52,35 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         String status;
         String css;
 
+        String baseExplanation = "Deze beleidsregel toont de adoptie van tweestapsverificatie (2SV) onder gebruikers in deze organisatie-eenheid. Tweestapsverificatie voegt een extra beveiligingslaag toe aan het inloggen.";
+        String description;
+
         if (total == 0) {
             status = "Geen gebruikers";
             css = "bg-slate-100 text-slate-700";
+            description = "Er zijn geen gebruikers om te controleren";
         } else if (without2sv == 0) {
             status = "OK (" + total + "/" + total + ")";
             css = "bg-green-100 text-green-800";
+            description = "Alle gebruikers hebben 2SV ingeschakeld";
         } else {
             status = "Risico (" + without2sv + "/" + total + " zonder 2SV)";
             css = "bg-amber-100 text-amber-800";
+            description = "Sommige gebruikers hebben geen 2SV geactiveerd";
         }
-
-        String baseExplanation = "Deze beleidsregel toont de adoptie van tweestapsverificatie (2SV) onder gebruikers in deze organisatie-eenheid. Het gaat om compliance op basis van user-data.";
 
         return new OrgUnitPolicyDto(
                 key(),
                 "Tweestapsverificatie (2SV) adoptie",
-                "Aantal gebruikers met 2SV in deze OU",
+                description,
                 status,
                 css,
                 baseExplanation,
                 null,
                 false,
                 SETTINGS_LINK_TEXT,
-                "https://admin.google.com/u/1/ac/security/2sv"
+                "https://admin.google.com/u/1/ac/security/2sv",
+                null
         );
     }
 
