@@ -182,7 +182,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="py-1 flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+                            <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                                 [class.text-emerald-600]="device.complianceScore >= 75"
                                 [class.bg-[#dbfce7]]="device.complianceScore >= 75"
                                 [class.text-[#d69518]]="device.complianceScore < 75 && device.complianceScore >= 50"
@@ -195,7 +195,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="py-1 flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+                            <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                                 [class.text-emerald-600]="device.status === 'Approved'"
                                 [class.bg-[#dbfce7]]="device.status === 'Approved'"
                                 [class.text-[#d69518]]="device.status === 'Pending'"

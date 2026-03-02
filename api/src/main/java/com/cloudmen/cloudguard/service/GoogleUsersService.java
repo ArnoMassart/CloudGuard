@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class GoogleUsersService {
+    private static final Logger log = LoggerFactory.getLogger(GoogleUsersService.class);
     private final GoogleUsersCacheService usersCacheService;
 
     public GoogleUsersService(GoogleUsersCacheService usersCacheService) {
@@ -57,7 +58,9 @@ public class GoogleUsersService {
         List<User> pagedGoogleUsers = (startIndex >= totalUsers) ? Collections.emptyList() : sortedList.subList(startIndex, endIndex);
 
         List<UserOrgDetail> mappedUsers = pagedGoogleUsers.stream().map(user -> {
-            Long roleId = cachedData.userRoleAssignments().get(user.getPrimaryEmail());
+            Long roleId = cachedData.userRoleAssignments().get(user.getId());
+            cachedData.userRoleAssignments().forEach((d, i) -> {
+            });
             String roleName = (roleId != null) ? cachedData.roleDictionary().getOrDefault(roleId, "Unknown Role") : "Regular User";
 
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
