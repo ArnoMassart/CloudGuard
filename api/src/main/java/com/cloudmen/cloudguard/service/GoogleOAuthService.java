@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GoogleOAuthService {
@@ -43,19 +44,21 @@ public class GoogleOAuthService {
 
         int allFilteredApps = filteredBuilders.size();
 
-        List<AggregatedAppBuilder> highRiskBuilders = filteredBuilders.stream().filter(builder -> isAppHighRisk(builder.allScopes)).toList();
-        List<AggregatedAppBuilder> notHighRiskBuilders = filteredBuilders.stream().filter(builder -> !isAppHighRisk(builder.allScopes)).toList();
+        Map<Boolean, List<AggregatedAppBuilder>> partitioned = filteredBuilders.stream().collect(Collectors.partitioningBy(b -> isAppHighRisk(b.allScopes)));
 
-       int allHighRiskApps = highRiskBuilders.size();
-       int allNotHighRiskApps = notHighRiskBuilders.size();
+        List<AggregatedAppBuilder> highRiskBuilders = partitioned.get(true);
+        List<AggregatedAppBuilder> notHighRiskBuilders = partitioned.get(false);
 
-        if (risk != null) {
-            switch (risk) {
-                case "high" -> filteredBuilders = highRiskBuilders;
-                case "not-high" -> filteredBuilders = notHighRiskBuilders;
-                default -> {}
-            }
-        }
+        int allHighRiskApps = highRiskBuilders.size();
+        int allNotHighRiskApps = notHighRiskBuilders.size();
+
+         if (risk != null) {
+            filteredBuilders = switch (risk) {
+                case "high" -> highRiskBuilders;
+                case "not-high" -> notHighRiskBuilders;
+                default -> filteredBuilders;
+            };
+         }
 
         filteredBuilders = filteredBuilders.stream()
                 .sorted(Comparator.comparing(a -> a.name))
@@ -97,7 +100,7 @@ public class GoogleOAuthService {
             double penalty = ((double) totalHighRiskApps / totalThirdPartyApps) * 100;
             securityScore = (int) Math.max(0, 100 - Math.round(penalty));
         }
-        
+
         return new OAuthOverviewResponse(
                 totalThirdPartyApps,
                 totalHighRiskApps,
@@ -120,7 +123,6 @@ public class GoogleOAuthService {
     }
 
     private AggregatedAppDto mapToFrontendDto(AggregatedAppBuilder builder, int totalDomainUsers) {
-        // Rechten en Risico
         List<DataAccessDto> accessList = builder.allScopes.stream()
                 .map(this::translateScopeDetails)
                 .distinct()
@@ -129,7 +131,6 @@ public class GoogleOAuthService {
         int highRiskCount = (int) accessList.stream().filter(DataAccessDto::risk).count();
         boolean isHighRisk = highRiskCount > 0;
 
-        // App Type en Exposure
         String appType = builder.isNative ? "Geïnstalleerde App (Lokaal)" : "Web Applicatie (Cloud)";
 
         int exposure = 0;
@@ -137,8 +138,6 @@ public class GoogleOAuthService {
             exposure = (int) Math.round(((double) builder.userEmails.size() / totalDomainUsers) * 100);
         }
 
-        // --- NIEUW: Intern of Third-Party logica ---
-        // Het is "Intern" als het in jouw eigen lijst staat, of als het een anoniem (ouderwets) intern script is.
         boolean isInternalApp = builder.isAnonymous || INTERNAL_CLIENT_IDS.contains(builder.clientId);
         boolean isThirdParty = !isInternalApp;
         String appSource = isThirdParty ? "Third party" : "Intern";
@@ -228,15 +227,12 @@ public class GoogleOAuthService {
 
 
         // --- FALLBACK ---
-        // Pakt het laatste woord uit de URL als we de scope niet herkennen (bijv. "apps.licensing" -> "licensing")
         String fallbackName = scopeUrl.substring(scopeUrl.lastIndexOf('/') + 1);
 
-        // Soms gebruiken Google's interne API's punten in plaats van slashes. We schonen dit een beetje op:
         if (fallbackName.contains(".")) {
             fallbackName = fallbackName.substring(fallbackName.lastIndexOf('.') + 1);
         }
 
-        // Maak de eerste letter een hoofdletter voor een mooie weergave
         fallbackName = fallbackName.substring(0, 1).toUpperCase() + fallbackName.substring(1);
 
         return new DataAccessDto("Overige (" + fallbackName + ")", "Beperkte toegang", false);
