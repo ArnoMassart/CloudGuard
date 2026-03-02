@@ -1,11 +1,8 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.AppPasswordDto;
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.google.api.services.admin.directory.model.Asp;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

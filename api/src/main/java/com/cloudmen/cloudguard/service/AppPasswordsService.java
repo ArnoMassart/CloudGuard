@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.dto.AppPasswordDto;
+import com.cloudmen.cloudguard.dto.passwords.AppPasswordDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

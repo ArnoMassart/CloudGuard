@@ -10,6 +10,13 @@ export interface AppPassword {
   lastUsedAt: Date | null;
 }
 
+export interface AppPasswordOverviewResponse {
+    allowed: boolean;
+    totalAppPasswords: number;
+    totalHighRiskAppPasswords: number;
+    securityScore: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })

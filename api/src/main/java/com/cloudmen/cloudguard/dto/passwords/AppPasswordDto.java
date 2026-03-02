@@ -1,12 +1,9 @@
-package com.cloudmen.cloudguard.dto;
+package com.cloudmen.cloudguard.dto.passwords;
 
-import com.google.api.client.util.DateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Date;
 
 @AllArgsConstructor
 @NoArgsConstructor
