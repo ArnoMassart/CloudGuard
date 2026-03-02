@@ -1,6 +1,5 @@
 package com.cloudmen.cloudguard.service.cache;
 
-import com.cloudmen.cloudguard.service.policy.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

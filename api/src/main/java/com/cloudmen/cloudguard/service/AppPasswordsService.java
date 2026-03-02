@@ -2,24 +2,35 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.AppPasswordDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.Asp;
 import com.google.api.services.admin.directory.model.Asps;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AppPasswordsService {
 
-    private final GoogleApiFactory apiFactory;
+    private static final Logger log = LoggerFactory.getLogger(AppPasswordsService.class);
 
-    Set<String> scopes = Set.of(
+    private final GoogleApiFactory apiFactory;
+    private final Cache<String, List<AppPasswordDto>> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
+
+    private final Set<String> scopes = Set.of(
             DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY,
             DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
     );
@@ -28,8 +39,17 @@ public class AppPasswordsService {
         this.apiFactory = apiFactory;
     }
 
-    public List<AppPasswordDto> getAllAppPasswords(String adminEmail){
+    public List<AppPasswordDto> getAppPasswords(String adminEmail){
+        return cache.get(adminEmail, this::fetchAllAppPasswords);
+    }
+
+    public void forceRefreshCache(String adminEmail){
+        cache.asMap().compute(adminEmail, (email, existing)-> fetchAllAppPasswords(email));
+    }
+
+    private List<AppPasswordDto> fetchAllAppPasswords(String adminEmail){
         try{
+            log.info("Ophalen LIVE app passwords van Google voor: {}", adminEmail);
             Directory directory = apiFactory.getDirectoryService(scopes, adminEmail);
 
             List<AppPasswordDto> result = new ArrayList<>();
@@ -47,10 +67,14 @@ public class AppPasswordsService {
                 if(users.getUsers() != null){
                     for(User u : users.getUsers()){
                         String userEmail = u.getPrimaryEmail();
+                        log.info("Checking app passwords for user: {}", userEmail);
                         Asps asps = directory.asps().list(userEmail).execute();
-                        if(asps.getItems() == null) continue;
-
+                        if(asps.getItems() == null || asps.getItems().isEmpty()) {
+                            log.info("  No app passwords for {}", userEmail);
+                            continue;
+                        }
                         for(Asp asp: asps.getItems()) {
+                            log.info("  {} -> app password: name={}, codeId={}", userEmail, asp.getName(), asp.getCodeId());
                             result.add(mapToDto(userEmail, asp));
                         }
                     }

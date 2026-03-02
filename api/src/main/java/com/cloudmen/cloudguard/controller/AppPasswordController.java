@@ -22,9 +22,9 @@ public class AppPasswordController {
     }
 
     @GetMapping()
-    public List<AppPasswordDto> getOrgAppPasswords(@CookieValue(name="AuthToken", required = false) String token) {
+    public List<AppPasswordDto> getAppPasswords(@CookieValue(name="AuthToken", required = false) String token) {
         String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getAllAppPasswords(email);
+        return appPasswordsService.getAppPasswords(email);
     }
 
 
