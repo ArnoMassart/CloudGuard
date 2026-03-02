@@ -72,7 +72,9 @@ public class AppPasswordsService {
 
     public AppPasswordOverviewResponse getOverview(String adminEmail) {
         AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
-        int usersWithAppPasswords = entry.users().size();
+        int usersWithAppPasswords = (int) entry.users().stream()
+                .filter(u -> !u.passwords().isEmpty())
+                .count();
         int totalAppPasswords = entry.users().stream()
                 .mapToInt(u -> u.passwords().size())
                 .sum();
@@ -100,7 +102,7 @@ public class AppPasswordsService {
                         .list()
                         .setCustomer("my_customer")
                         .setMaxResults(100)
-                        .setFields("nextPageToken, users(primaryEmail, name/fullName, isAdmin, isEnrolledIn2Sv)");
+                        .setFields("nextPageToken, users(id, primaryEmail, name/fullName, isAdmin, isEnrolledIn2Sv)");
 
                 if (pageToken != null) req.setPageToken(pageToken);
                 Users users = req.execute();
@@ -108,26 +110,27 @@ public class AppPasswordsService {
                 if (users.getUsers() != null) {
                     for (User u : users.getUsers()) {
                         totalUserCount++;
+                        String userId = u.getId() != null ? u.getId() : u.getPrimaryEmail();
                         String userEmail = u.getPrimaryEmail();
-                        log.info("Checking app passwords for user: {}", userEmail);
-                        Asps asps = directory.asps().list(userEmail).execute();
-                        if (asps.getItems() == null || asps.getItems().isEmpty()) {
-                            log.info("  No app passwords for {}", userEmail);
-                            continue;
-                        }
                         String userName = u.getName() != null && u.getName().getFullName() != null
                                 ? u.getName().getFullName() : userEmail;
                         String role = Boolean.TRUE.equals(u.getIsAdmin()) ? "Admin" : "User";
                         boolean twoFactorEnabled = Boolean.TRUE.equals(u.getIsEnrolledIn2Sv());
 
-                        List<AppPasswordDto> passwords = asps.getItems().stream()
-                                .map(this::mapToDto)
-                                .toList();
-
-                        result.add(new UserAppPasswordsDto(userName, userEmail, role, twoFactorEnabled, passwords));
-                        for (Asp asp : asps.getItems()) {
-                            log.info("  {} -> app password: name={}, codeId={}", userEmail, asp.getName(), asp.getCodeId());
+                        List<AppPasswordDto> passwords = Collections.emptyList();
+                        try {
+                            Asps asps = directory.asps().list(userEmail).execute();
+                            if (asps.getItems() != null && !asps.getItems().isEmpty()) {
+                                passwords = asps.getItems().stream().map(this::mapToDto).toList();
+                            }
+                        } catch (Exception e) {
+                            log.warn("Kon app-wachtwoorden niet ophalen voor {}: {}", userEmail, e.getMessage());
                         }
+
+                        // Option: to show only users WITH app passwords, add:
+                        // if (passwords.isEmpty()) continue;
+                        // Also update getOverview(): usersWithAppPasswords = entry.users().size()
+                        result.add(new UserAppPasswordsDto(userId, userName, userEmail, role, twoFactorEnabled, passwords));
                     }
                 }
                 pageToken = users.getNextPageToken();

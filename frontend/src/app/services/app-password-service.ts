@@ -18,11 +18,12 @@ export interface AppPasswordOverviewResponse {
 }
 
 export interface AppPasswordPageResponse {
-    users: Array<{ name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }>;
+    users: Array<{ id: string; name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }>;
     nextPageToken: string | null;
 }
 
 export interface UserAppPasswords {
+    id: string;
     name: string;
     email: string;
     role: string;
