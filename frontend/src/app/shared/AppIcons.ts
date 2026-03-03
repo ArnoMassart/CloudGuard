@@ -12,6 +12,7 @@ import {
   Cpu,
   CreditCard,
   ExternalLink,
+  FileText,
   FolderOpen,
   FolderTree,
   Funnel,
@@ -47,6 +48,7 @@ export class AppIcons {
   static readonly Cpu = Cpu;
   static readonly CreditCard = CreditCard;
   static readonly ExternalLink = ExternalLink;
+  static readonly FileText = FileText;
   static readonly FolderOpen = FolderOpen;
   static readonly FolderTree = FolderTree;
   static readonly Funnel = Funnel;

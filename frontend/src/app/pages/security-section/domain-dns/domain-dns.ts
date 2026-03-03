@@ -3,6 +3,7 @@ import { PageHeader } from '../../../components/page-header/page-header';
 import { Domain, DomainService } from '../../../services/domain-service';
 import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
+import { DnsRecord, DnsService } from '../../../services/dns-service';
 
 @Component({
   selector: 'app-domain-dns',
@@ -17,8 +18,37 @@ export class DomainDns implements OnInit {
   readonly #domainService = inject(DomainService);
   readonly Icons = AppIcons;
 
+  private readonly dnsService = inject(DnsService);
+  readonly rows = signal<DnsRecord[]>([]);
+  readonly isloadingDns = signal(false);
+  readonly selectedDnsDomain = signal<string | null>(null);
+  readonly expandedDnsRow = signal<string | null>(null);
+
   ngOnInit() {
     this.#loadDomains();
+  }
+
+  selectDnsDomain(domain: string) {
+    this.selectedDnsDomain.set(domain);
+    this.#loadDns(domain);
+  }
+
+  toggleExpandDnsRow(key: string) {
+    this.expandedDnsRow.update((current) => (current === key ? null : key));
+  }
+
+  getDnsStatusLabel(status: string): string {
+    if (status === 'VALID' || status === 'OK') return 'Geldig';
+    if (status === 'ATTENTION' || status === 'MISSING') return 'Aandacht';
+    if (status === 'ERROR') return 'Fout';
+    return status;
+  }
+
+  getDnsStatusClass(status: string): 'valid' | 'attention' | 'error' | 'neutral' {
+    if (status === 'VALID' || status === 'OK') return 'valid';
+    if (status === 'ATTENTION' || status === 'MISSING') return 'attention';
+    if (status === 'ERROR') return 'error';
+    return 'neutral';
   }
 
   refreshData() {
@@ -41,11 +71,30 @@ export class DomainDns implements OnInit {
       next: (domains) => {
         this.domains.set(domains);
         this.isLoading.set(false);
+        const primary = domains.find((d) => d.domainType === 'Primary Domain');
+        if (primary && !this.selectedDnsDomain()) {
+          this.selectDnsDomain(primary.domainName);
+        }
       },
       error: (err) => {
         console.error('Failed to load domains', err);
         this.isLoading.set(false);
       },
+    });
+  }
+
+  #loadDns(domain: string) {
+    this.isloadingDns.set(true);
+
+    this.dnsService.getDnsRecords(domain).subscribe({
+      next: (res) => {
+        this.rows.set(res.rows);
+        this.isloadingDns.set(false);
+      },
+      error: (err) => {
+        console.error('DNS load failed', err);
+        this.isloadingDns.set(false);
+      }
     });
   }
 }

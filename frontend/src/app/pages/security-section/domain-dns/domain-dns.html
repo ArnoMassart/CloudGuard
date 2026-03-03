@@ -8,7 +8,12 @@
         @if (domains().length > 0) {
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
             <div class="flex justify-between items-center mx-5.5">
-                <span class="font-medium text-lg">Alle domeinen</span>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-lg font-medium text-gray-900">Alle domeinen</h2>
+                    <p class="text-sm text-gray-500 mt-0.5">
+                        Alle domeinen gekoppeld aan je Workspace
+                    </p>
+                </div>
                 <button (click)="refreshData()" [disabled]="isRefreshing()"
                     class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                     <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
@@ -94,4 +99,110 @@
         </div>
         }
     </div>
+
+
+        <!-- DNS Records card -->
+        <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-8">
+            <div class="p-6 border-b border-gray-200 flex items-start gap-3">
+                <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                    <i-lucide [img]="Icons.FileText" size="22" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-lg font-medium text-gray-900">DNS Records</h2>
+                    <p class="text-sm text-gray-500 mt-0.5">
+                        Belangrijke DNS records voor e-mail authenticatie en beveiliging
+                    </p>
+                </div>
+                @if (domains().length > 0) {
+                <select
+                    [value]="selectedDnsDomain() ?? ''"
+                    (change)="selectDnsDomain($any($event.target).value)"
+                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="" disabled>Selecteer domein</option>
+                    @for (d of domains(); track d.domainName) {
+                    <option [value]="d.domainName">{{ d.domainName }}</option>
+                    }
+                </select>
+                }
+            </div>
+
+            @if (isloadingDns()) {
+            <div class="flex flex-col items-center p-8">
+                <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <span class="text-sm text-gray-500 mt-1">DNS records worden geladen...</span>
+            </div>
+            } @else if (rows().length > 0) {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse table-fixed">
+                    <colgroup>
+                        <col style="width: 2.5rem" />
+                        <col style="width: 5rem" />
+                        <col style="width: 14rem" />
+                        <col style="width: 24rem" />
+                        <col style="width: 7.5rem" />
+                    </colgroup>
+                    <thead>
+                        <tr class="border-b border-t border-gray-200 bg-gray-50/80">
+                            <th class="px-4 py-4 text-left"></th>
+                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
+                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Naam</th>
+                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</th>
+                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (row of rows(); track row.type + row.name) {
+                        <tr (click)="toggleExpandDnsRow(row.type + row.name)"
+                            class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer">
+                            <td class="px-4 py-4 align-middle">
+                                <i-lucide [img]="expandedDnsRow() === row.type + row.name ? Icons.ChevronDown : Icons.ChevronRight"
+                                    size="16" class="text-gray-400" />
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900 align-middle">{{ row.type }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-700 align-middle">{{ row.name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600 align-middle overflow-hidden">
+                                <span class="block truncate" [title]="row.values?.[0] || ''">{{ row.values?.[0] || '–' }}</span>
+                            </td>
+                            <td class="px-6 py-4 align-middle">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+                                    [class.bg-emerald-100]="getDnsStatusClass(row.status) === 'valid'"
+                                    [class.text-emerald-700]="getDnsStatusClass(row.status) === 'valid'"
+                                    [class.bg-amber-100]="getDnsStatusClass(row.status) === 'attention'"
+                                    [class.text-amber-700]="getDnsStatusClass(row.status) === 'attention'"
+                                    [class.bg-red-100]="getDnsStatusClass(row.status) === 'error'"
+                                    [class.text-red-700]="getDnsStatusClass(row.status) === 'error'"
+                                    [class.bg-gray-100]="getDnsStatusClass(row.status) === 'neutral'"
+                                    [class.text-gray-700]="getDnsStatusClass(row.status) === 'neutral'">
+                                    <lucide-icon [img]="getDnsStatusClass(row.status) === 'valid' ? Icons.CircleCheck : (getDnsStatusClass(row.status) === 'error' ? Icons.CircleX : Icons.TriangleAlert)"
+                                        size="12"></lucide-icon>
+                                    {{ getDnsStatusLabel(row.status) }}
+                                </span>
+                            </td>
+                        </tr>
+                        @if (expandedDnsRow() === row.type + row.name) {
+                        <tr class="border-b border-gray-100 bg-gray-50/60">
+                            <td colspan="5" class="px-6 py-4 pl-14">
+                                <div class="text-sm text-gray-600 break-all font-mono bg-white/80 rounded px-3 py-2 border border-gray-100">
+                                    {{ row.values?.join(' ') || row.message || '–' }}
+                                </div>
+                                @if (row.message) {
+                                <p class="text-xs text-gray-500 mt-2">{{ row.message }}</p>
+                                }
+                            </td>
+                        </tr>
+                        }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else if (selectedDnsDomain()) {
+            <div class="flex flex-col items-center justify-center p-8">
+                <span class="text-sm text-gray-500">Geen DNS records gevonden voor dit domein.</span>
+            </div>
+            } @else {
+            <div class="flex flex-col items-center justify-center p-8">
+                <span class="text-sm text-gray-500">Selecteer een domein om DNS records te bekijken.</span>
+            </div>
+            }
+        </div>
 </div>
