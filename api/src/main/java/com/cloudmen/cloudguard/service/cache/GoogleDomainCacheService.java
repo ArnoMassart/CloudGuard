@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.service.cache;
 
-import com.cloudmen.cloudguard.dto.DomainCacheEntry;
-import com.cloudmen.cloudguard.dto.DomainDto;
+import com.cloudmen.cloudguard.dto.domain.DomainCacheEntry;
+import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

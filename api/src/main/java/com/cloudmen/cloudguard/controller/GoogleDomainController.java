@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.DomainDto;
+import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.service.GoogleDomainService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
@@ -26,11 +26,14 @@ public class GoogleDomainController {
     }
 
     @GetMapping
-    public List<DomainDto> getAllDomains(
+    public ResponseEntity<List<DomainDto>> getAllDomains(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String email = jwtService.validateInternalToken(token);
-        return googleDomainService.getAllDomains(email);
+        return ResponseEntity.ok(googleDomainService.getAllDomains(email));
     }
 
     @PostMapping("/refresh")

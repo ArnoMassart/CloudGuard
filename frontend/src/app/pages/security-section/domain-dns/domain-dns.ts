@@ -20,7 +20,7 @@ export class DomainDns implements OnInit {
 
   private readonly dnsService = inject(DnsService);
   readonly rows = signal<DnsRecord[]>([]);
-  readonly isloadingDns = signal(false);
+  readonly isLoadingDns = signal(false);
   readonly selectedDnsDomain = signal<string | null>(null);
   readonly expandedDnsRow = signal<string | null>(null);
 
@@ -92,16 +92,16 @@ export class DomainDns implements OnInit {
   }
 
   #loadDns(domain: string) {
-    this.isloadingDns.set(true);
+    this.isLoadingDns.set(true);
 
     this.dnsService.getDnsRecords(domain).subscribe({
       next: (res) => {
         this.rows.set(res.rows);
-        this.isloadingDns.set(false);
+        this.isLoadingDns.set(false);
       },
       error: (err) => {
         console.error('DNS load failed', err);
-        this.isloadingDns.set(false);
+        this.isLoadingDns.set(false);
       }
     });
   }

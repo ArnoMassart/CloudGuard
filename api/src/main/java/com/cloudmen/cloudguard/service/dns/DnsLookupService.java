@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.dns;
 
+import com.cloudmen.cloudguard.dto.dns.DnsLookupResult;
 import org.springframework.stereotype.Service;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;

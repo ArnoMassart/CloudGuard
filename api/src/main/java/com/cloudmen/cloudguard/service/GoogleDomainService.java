@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.dto.DomainDto;
+import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.service.cache.GoogleDomainCacheService;
 import org.springframework.stereotype.Service;
 
