@@ -144,7 +144,7 @@
             <version>v1-rev20220430-2.0.0</version>
         </dependency>
 
-        </dependency>
+        <dependency>
             <groupId>dnsjava</groupId>
             <artifactId>dnsjava</artifactId>
             <version>3.6.2</version>
