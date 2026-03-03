@@ -27,7 +27,7 @@ export class DomainDns implements OnInit {
 
   readonly totalDomains = computed(() => this.domains().length);
   readonly validDnsRecords = computed(() =>
-    this.rows().filter((r) => r.status === 'VALID' || r.status === 'OK').length
+    this.rows().filter((r) => r.status === 'VALID').length
   );
   readonly securityScore = 100;
 
@@ -45,17 +45,31 @@ export class DomainDns implements OnInit {
   }
 
   getDnsStatusLabel(status: string): string {
-    if (status === 'VALID' || status === 'OK') return 'Geldig';
+    if (status === 'VALID') return 'Geldig';
+    if (status === 'OK') return 'Optioneel';
     if (status === 'ATTENTION' || status === 'MISSING') return 'Aandacht';
     if (status === 'ERROR') return 'Fout';
     return status;
   }
 
   getDnsStatusClass(status: string): 'valid' | 'attention' | 'error' | 'neutral' {
-    if (status === 'VALID' || status === 'OK') return 'valid';
+    if (status === 'VALID') return 'valid';
+    if (status === 'OK') return 'neutral';
     if (status === 'ATTENTION' || status === 'MISSING') return 'attention';
     if (status === 'ERROR') return 'error';
     return 'neutral';
+  }
+
+  getDnsRecordDescription(type: string): string {
+    const descriptions: Record<string, string> = {
+      SPF: 'SPF record authoriseert Google om emails te verzenden namens uw domein',
+      DKIM: 'DKIM record voor digitale ondertekening van uitgaande emails',
+      DMARC: 'DMARC record voor beleid rond email authenticatie en bescherming tegen spoofing',
+      MX: 'MX record voor routing van inkomende emails naar Google servers',
+      TXT: 'TXT record voor Google site verificatie (optioneel)',
+      CNAME: 'CNAME record voor mail subdomein (optioneel)',
+    };
+    return descriptions[type] ?? '';
   }
 
   refreshData() {

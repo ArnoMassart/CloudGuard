@@ -172,7 +172,7 @@
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 align-middle">{{ row.type }}</td>
                             <td class="px-6 py-4 text-sm text-gray-700 align-middle">{{ row.name }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600 align-middle overflow-hidden">
-                                <span class="block truncate" [title]="row.values?.[0] || ''">{{ row.values?.[0] || '–' }}</span>
+                                <span class="block truncate" [title]="row.values?.[0] || ''">{{ row.values?.[0] || '-' }}</span>
                             </td>
                             <td class="px-6 py-4 align-middle">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
@@ -193,12 +193,18 @@
                         @if (expandedDnsRow() === row.type + row.name) {
                         <tr class="border-b border-gray-100 bg-gray-50/60">
                             <td colspan="5" class="px-6 py-4 pl-14">
-                                <div class="text-sm text-gray-600 break-all font-mono bg-white/80 rounded px-3 py-2 border border-gray-100">
-                                    {{ row.values?.join(' ') || row.message || '–' }}
+                                <div class="flex flex-col gap-4">
+                                    <div>
+                                        <p class="font-medium text-gray-900 text-sm mb-1">Beschrijving</p>
+                                        <p class="text-sm text-gray-700">{{ getDnsRecordDescription(row.type) || '–' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 text-sm mb-1">Volledige waarde</p>
+                                        <div class="text-sm text-gray-600 break-all font-mono bg-white rounded px-3 py-2 border border-gray-200">
+                                            {{ row.values?.join(' ') || row.message || '–' }}
+                                        </div>
+                                    </div>
                                 </div>
-                                @if (row.message) {
-                                <p class="text-xs text-gray-500 mt-2">{{ row.message }}</p>
-                                }
                             </td>
                         </tr>
                         }
