@@ -4,15 +4,29 @@
         AdminLink="domains/manage" />
 
     <div class="w-full flex flex-col gap-5 pt-6">
+        <div class="w-full flex gap-4">
+            <app-section-top-card class="flex-1" Title="Totaal domeinen" [Value]="totalDomains()"
+                [Icon]="Icons.Globe" />
+            <app-section-top-card class="flex-1" Title="Geldige DNS records" [Value]="validDnsRecords()"
+                BackgroundColor="#dbfce7" IconColor="#17b04f" TextColor="#17b04f" [Icon]="Icons.CircleCheck" />
+            <app-section-top-card class="flex-1" Title="Security Score" [Value]="securityScore"
+                [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+        </div>
+
         @if (!isLoading()) {
         @if (domains().length > 0) {
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
             <div class="flex justify-between items-center mx-5.5">
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 flex items-center gap-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#dbeafe] text-[#155dfc] shrink-0">
+                        <i-lucide [img]="Icons.Globe" size="22" />
+                    </div>
+                    <div>
                     <h2 class="text-lg font-medium text-gray-900">Alle domeinen</h2>
                     <p class="text-sm text-gray-500 mt-0.5">
                         Alle domeinen gekoppeld aan je Workspace
                     </p>
+                    </div>
                 </div>
                 <button (click)="refreshData()" [disabled]="isRefreshing()"
                     class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
@@ -21,7 +35,7 @@
                 </button>
             </div>
 
-            <table class="w-full text-left border-collapse mt-6">
+            <table class="w-full text-center border-collapse mt-6">
                 <thead>
                     <tr class="border-b border-t border-gray-200 bg-gray-50/50">
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Domeinnaam</th>
@@ -35,11 +49,8 @@
                     @for (domain of domains(); track domain.domainName) {
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="h-10 w-10 rounded-lg bg-[#dbeafe] flex items-center justify-center shrink-0">
-                                    <i-lucide [img]="Icons.Globe" size="20" class="text-[#155dfc]" />
-                                </div>
-                                <span class="font-medium text-slate-900 text-sm">{{ domain.domainName }}</span>
+                            <div class="flex items-center gap-3 justify-center">
+                                <span class="font-medium text-slate-900 text-sm text-center">{{ domain.domainName }}</span>
                             </div>
                         </td>
 
@@ -68,7 +79,7 @@
                         </td>
 
                         <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 justify-center">
                                 <i-lucide [img]="Icons.Users" size="16" class="text-gray-500" />
                                 <span class="text-sm font-medium text-slate-600">{{ domain.totalUsers ?? '–' }}</span>
                             </div>

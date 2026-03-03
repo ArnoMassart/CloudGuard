@@ -1,5 +1,6 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
+import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { Domain, DomainService } from '../../../services/domain-service';
 import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
@@ -7,7 +8,7 @@ import { DnsRecord, DnsService } from '../../../services/dns-service';
 
 @Component({
   selector: 'app-domain-dns',
-  imports: [PageHeader, LucideAngularModule],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule],
   templateUrl: './domain-dns.html',
   styleUrl: './domain-dns.css',
 })
@@ -23,6 +24,12 @@ export class DomainDns implements OnInit {
   readonly isLoadingDns = signal(false);
   readonly selectedDnsDomain = signal<string | null>(null);
   readonly expandedDnsRow = signal<string | null>(null);
+
+  readonly totalDomains = computed(() => this.domains().length);
+  readonly validDnsRecords = computed(() =>
+    this.rows().filter((r) => r.status === 'VALID' || r.status === 'OK').length
+  );
+  readonly securityScore = 100;
 
   ngOnInit() {
     this.#loadDomains();
