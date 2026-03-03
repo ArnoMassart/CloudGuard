@@ -6,11 +6,13 @@ import {
   ChevronRight,
   ChevronUp,
   CircleCheck,
+  CircleHelp,
   CircleX,
   Clock,
   Cpu,
   CreditCard,
   ExternalLink,
+  FileText,
   FolderOpen,
   FolderTree,
   Funnel,
@@ -40,11 +42,13 @@ export class AppIcons {
   static readonly ChevronRight = ChevronRight;
   static readonly ChevronUp = ChevronUp;
   static readonly CircleCheck = CircleCheck;
+  static readonly CircleHelp = CircleHelp;
   static readonly CircleX = CircleX;
   static readonly Clock = Clock;
   static readonly Cpu = Cpu;
   static readonly CreditCard = CreditCard;
   static readonly ExternalLink = ExternalLink;
+  static readonly FileText = FileText;
   static readonly FolderOpen = FolderOpen;
   static readonly FolderTree = FolderTree;
   static readonly Funnel = Funnel;
