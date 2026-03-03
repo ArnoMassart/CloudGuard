@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.dto.licenses.LicenseCacheEntry;
 import com.cloudmen.cloudguard.service.policy.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
 import org.slf4j.Logger;
@@ -22,7 +23,9 @@ public class CacheWarmupService {
     private final TSVPolicyProvider tsvPolicyProvider;
     private final PolicyApiCacheService policyApiCacheService;
 
-    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleMobileDeviceCacheService mobileDeviceCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService) {
+    private final GoogleLicenseCacheService licenseCacheService;
+
+    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleMobileDeviceCacheService mobileDeviceCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService) {
         this.usersCacheService = usersCacheService;
         this.groupsCacheService = groupsCacheService;
         this.orgUnitCacheService = orgUnitCacheService;
@@ -30,6 +33,7 @@ public class CacheWarmupService {
         this.mobileDeviceCacheService = mobileDeviceCacheService;
         this.tsvPolicyProvider = tsvPolicyProvider;
         this.policyApiCacheService = policyApiCacheService;
+        this.licenseCacheService = licenseCacheService;
     }
 
     public void warmupAllCachesAsync(String loggedInEmail) {
@@ -64,7 +68,11 @@ public class CacheWarmupService {
             } catch (Exception e) { log.warn("Policy API warmup failed", e); }
         });
 
+        CompletableFuture<Void> licensesTask = CompletableFuture.runAsync(() -> {
+            try { licenseCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Licenses warmup failed", e); }
+        });
 
-        CompletableFuture.allOf(usersTask, groupsTask, orgUnitsTask, drivesTask, devicesTask, tsvTask, policyApiTask).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
+
+        CompletableFuture.allOf(usersTask, groupsTask, orgUnitsTask, drivesTask, devicesTask, tsvTask, policyApiTask, licensesTask).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
     }
 }

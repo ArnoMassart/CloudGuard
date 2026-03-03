@@ -18,6 +18,7 @@ export class SectionTopCard {
   @Input() IconColor: string = '#155dfc';
   @Input() TextColor: string = 'black';
   @Input() IsPercentage: boolean = false;
+  @Input() IsCurrency: boolean = false;
 
   getTextColor(): string {
     if (!this.IsPercentage) return this.TextColor;

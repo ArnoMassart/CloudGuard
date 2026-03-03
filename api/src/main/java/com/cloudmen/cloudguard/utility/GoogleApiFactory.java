@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.licensing.Licensing;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -63,5 +64,21 @@ public class GoogleApiFactory {
                 new HttpCredentialsAdapter(credentials))
                 .setApplicationName("CloudGuard")
                 .build();
+    }
+
+    public Licensing getLicensingService(String scope, String loggedInEmail) throws Exception {
+        return getLicensingService(Collections.singleton(scope), loggedInEmail);
+    }
+
+    public Licensing getLicensingService(Set<String> scopes, String loggedInEmail) throws Exception {
+        ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
+
+        return new Licensing.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance(),
+                new HttpCredentialsAdapter(credentials))
+                .setApplicationName("CloudGuard")
+                .build();
+
     }
 }

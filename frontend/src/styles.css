@@ -3,6 +3,11 @@
 @import 'tailwindcss';
 @import './theme.css';
 
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
 .logout-dialog-panel {
   --mat-dialog-container-shape: 12px;
   border-radius: 12px;
