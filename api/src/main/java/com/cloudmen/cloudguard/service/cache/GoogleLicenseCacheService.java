@@ -7,11 +7,7 @@ import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.api.client.util.DateTime;
-import com.google.api.services.admin.directory.Directory;
-import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.User;
-import com.google.api.services.admin.directory.model.UserName;
 import com.google.api.services.licensing.Licensing;
 import com.google.api.services.licensing.LicensingScopes;
 import com.google.api.services.licensing.model.LicenseAssignment;
@@ -20,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.context.annotation.ApplicationScope;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -66,16 +61,33 @@ public class GoogleLicenseCacheService {
             Licensing licensingDirectory = googleApiFactory.getLicensingService(LicensingScopes.APPS_LICENSING, loggedInEmail);
             String domain = loggedInEmail.split("@")[1];
 
-            LicenseAssignmentList assignments = licensingDirectory.licenseAssignments()
-                    .listForProduct("Google-Apps", domain).execute();
+            List<String> productIds = List.of(
+                    "Google-Apps",
+                    "101001",
+                    "101005",
+                    "101031",
+                    "101037"
+            );
+            List<LicenseAssignment> allItems = new ArrayList<>();
 
-            List<LicenseAssignment> items = assignments.getItems() != null ? assignments.getItems() : Collections.emptyList();
+            for (String productId : productIds) {
+                try {
+                    LicenseAssignmentList assignments = licensingDirectory.licenseAssignments()
+                            .listForProduct(productId, domain).execute();
+
+                    if (assignments.getItems() != null) {
+                        allItems.addAll(assignments.getItems());
+                    }
+                } catch (Exception e) {
+                    log.warn("Kon geen data ophalen voor Product ID: {} - {}", productId, e.getMessage());
+                }
+            }
 
             List<User> allUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
 
-            List<LicenseType> licenseTypes = aggregateLicenseType(items);
+            List<LicenseType> licenseTypes = mapAssignmentsToLicenseTypes(allItems);
 
-            List<InactiveUser> inactiveUsers = findInactiveUsersWithLicenses(allUsers, items);
+            List<InactiveUser> inactiveUsers = findInactiveUsersWithLicenses(allUsers, allItems);
 
             return new LicenseCacheEntry(licenseTypes, inactiveUsers, System.currentTimeMillis());
         } catch (Exception e) {
@@ -83,36 +95,43 @@ public class GoogleLicenseCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallback;
             }
-            throw new RuntimeException("Fout bij ophalen Google licentie data, en geen cache beschikbaar: " + e.getMessage());
+            throw new RuntimeException("Fout bij ophalen Google licentie data: " + e.getMessage());
         }
     }
 
-    private record Sku(
-            String skuId,
-            String skuName
-    ) {}
+    private List<LicenseType> mapAssignmentsToLicenseTypes(List<LicenseAssignment> assignments) {
+        Map<String, Integer> counts = new HashMap<>();
+        Map<String, String> names = new HashMap<>();
 
-    private List<LicenseType> aggregateLicenseType(List<LicenseAssignment> assignments) {
-        Map<Sku, Integer> assignedCounts = new HashMap<>();
         for (LicenseAssignment assignment : assignments) {
-            assignedCounts.merge(new Sku(assignment.getSkuId(), assignment.getSkuName()), 1, Integer::sum);
+            String skuId = assignment.getSkuId();
+
+            String skuName = (assignment.getSkuName() != null) ? assignment.getSkuName() : skuId;
+
+            counts.merge(skuId, 1, Integer::sum);
+            names.putIfAbsent(skuId, skuName);
         }
 
-        List<LicenseType> types = new ArrayList<>();
+        List<LicenseType> results = new ArrayList<>();
 
-        for (Map.Entry<Sku, Integer> entry : assignedCounts.entrySet()) {
-            String skuId = entry.getKey().skuId;
-            String skuName = entry.getKey().skuName;
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            String skuId = entry.getKey();
             int assigned = entry.getValue();
+            String skuName = names.get(skuId);
 
             int totalPurchased = fetchTotalSeatsFromBillingSystem(skuId, assigned);
-
             int available = totalPurchased - assigned;
 
-            types.add(new LicenseType(skuId, skuName, totalPurchased, assigned, available));
+            results.add(new LicenseType(
+                    skuId,
+                    skuName,
+                    totalPurchased,
+                    assigned,
+                    available
+            ));
         }
 
-        return types;
+        return results;
     }
 
     private List<InactiveUser> findInactiveUsersWithLicenses(List<User> users, List<LicenseAssignment> assignments) {
@@ -139,14 +158,8 @@ public class GoogleLicenseCacheService {
         return result;
     }
 
-    // Dit is de 'Connector naar het billing systeem' uit je opdracht!
+    // Dit is de 'Connector naar het billing systeem'
     private int fetchTotalSeatsFromBillingSystem(String skuId, int currentlyAssigned) {
-        // In het echt doe je hier een API-call naar bijvoorbeeld Exact, AFAS of jullie interne CRM.
-        // Voorbeeld logica: Het facturatiesysteem zegt dat er 60 gekocht zijn.
-        if (skuId.equals("1010020027")) return 60;
-
-        // Fallback: Als het billingsysteem even niet werkt, gaan we er vanuit dat er
-        // in ieder geval genoeg licenties zijn gekocht voor de mensen die er een hebben, plus 5 reserve.
         return currentlyAssigned + 5;
     }
 }
