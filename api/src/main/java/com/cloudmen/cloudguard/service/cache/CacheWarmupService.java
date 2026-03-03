@@ -18,16 +18,18 @@ public class CacheWarmupService {
     private final GoogleOrgUnitCacheService orgUnitCacheService;
     private final GoogleSharedDriveCacheService sharedDriveCacheService;
     private final GoogleMobileDeviceCacheService mobileDeviceCacheService;
+    private final GoogleOAuthCacheService oAuthCacheService;
 
     private final TSVPolicyProvider tsvPolicyProvider;
     private final PolicyApiCacheService policyApiCacheService;
 
-    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleMobileDeviceCacheService mobileDeviceCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService) {
+    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleMobileDeviceCacheService mobileDeviceCacheService, GoogleOAuthCacheService oAuthCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService) {
         this.usersCacheService = usersCacheService;
         this.groupsCacheService = groupsCacheService;
         this.orgUnitCacheService = orgUnitCacheService;
         this.sharedDriveCacheService = sharedDriveCacheService;
         this.mobileDeviceCacheService = mobileDeviceCacheService;
+        this.oAuthCacheService = oAuthCacheService;
         this.tsvPolicyProvider = tsvPolicyProvider;
         this.policyApiCacheService = policyApiCacheService;
     }
@@ -64,6 +66,9 @@ public class CacheWarmupService {
             } catch (Exception e) { log.warn("Policy API warmup failed", e); }
         });
 
+        CompletableFuture<Void> oAuthTask = CompletableFuture.runAsync(() -> {
+            try { oAuthCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("OAuth warmup failed", e); }
+        });
 
         CompletableFuture.allOf(usersTask, groupsTask, orgUnitsTask, drivesTask, devicesTask, tsvTask, policyApiTask).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
     }

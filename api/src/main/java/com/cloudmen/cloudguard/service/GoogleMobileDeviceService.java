@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.devices.*;
 import com.cloudmen.cloudguard.service.cache.GoogleMobileDeviceCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,6 @@ public class GoogleMobileDeviceService {
         List<MobileDevice> filteredList = cachedData.allDevices();
         MobileDeviceStatus filterStatus = MobileDeviceStatus.fromString(filterStatusStr);
 
-        // 1. Filters toepassen IN HET GEHEUGEN
         if (filterStatus != null && filterStatus != MobileDeviceStatus.ALL) {
             filteredList = filteredList.stream()
                     .filter(d -> d.getStatus() != null && d.getStatus().equalsIgnoreCase(filterStatus.getValue()))
@@ -41,11 +41,7 @@ public class GoogleMobileDeviceService {
                     .toList();
         }
 
-        // 2. Paginatie IN HET GEHEUGEN
-        int page = 1;
-        if (pageToken != null && !pageToken.isEmpty()) {
-            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
-        }
+        int page = GoogleServiceHelperMethods.getPage(pageToken);
 
         int totalDevices = filteredList.size();
         int startIndex = (page - 1) * size;
@@ -55,7 +51,6 @@ public class GoogleMobileDeviceService {
                 ? Collections.emptyList()
                 : filteredList.subList(startIndex, endIndex);
 
-        // 3. Mappen naar DTO
         List<MobileDeviceDetail> mappedDevices = pagedDevices.stream().map(this::mapToDetail).toList();
 
         String nextTokenToReturn = (endIndex < totalDevices) ? String.valueOf(page + 1) : null;

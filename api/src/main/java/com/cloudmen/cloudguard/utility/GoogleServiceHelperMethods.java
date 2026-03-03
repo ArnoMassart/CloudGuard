@@ -38,4 +38,13 @@ public class GoogleServiceHelperMethods {
         if (isActive && yearsSinceLogin >= 1) return false;
         return isActive || daysSinceLogin > 7;
     }
+
+    public static int getPage(String pageToken) {
+        int page = 1;
+        if (pageToken != null && !pageToken.isBlank()) {
+            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
+        }
+
+        return page;
+    }
 }

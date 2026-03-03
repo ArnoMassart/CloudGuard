@@ -18,15 +18,13 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class GoogleUsersService {
+    private static final Logger log = LoggerFactory.getLogger(GoogleUsersService.class);
     private final GoogleUsersCacheService usersCacheService;
 
     public GoogleUsersService(GoogleUsersCacheService usersCacheService) {
@@ -38,10 +36,8 @@ public class GoogleUsersService {
     }
 
     public UserPageResponse getWorkspaceUsersPaged(String loggedInEmail, String pageToken, int size, String query) {
-        // 1. Haal de lijst uit het RAM geheugen (Praat NIET met Google, tenzij de cache leeg is)
         UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
 
-        // 2. Filter IN HET GEHEUGEN
         List<User> filteredList = cachedData.allUsers();
         if (query != null && !query.trim().isEmpty()) {
             String lowerQuery = query.toLowerCase().trim();
@@ -51,21 +47,20 @@ public class GoogleUsersService {
                     .toList();
         }
 
-        // 3. Pagineren IN HET GEHEUGEN
-        int page = 1;
-        if (pageToken != null && !pageToken.isEmpty()) {
-            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
-        }
+        List<User> sortedList = filteredList.stream().sorted(Comparator.comparing(a -> a.getName().getFullName())).toList();
 
-        int totalUsers = filteredList.size();
+        int page = GoogleServiceHelperMethods.getPage(pageToken);
+
+        int totalUsers = sortedList.size();
         int startIndex = (page - 1) * size;
         int endIndex = Math.min(startIndex + size, totalUsers);
 
-        List<User> pagedGoogleUsers = (startIndex >= totalUsers) ? Collections.emptyList() : filteredList.subList(startIndex, endIndex);
+        List<User> pagedGoogleUsers = (startIndex >= totalUsers) ? Collections.emptyList() : sortedList.subList(startIndex, endIndex);
 
-        // 4. Mappen naar DTO
         List<UserOrgDetail> mappedUsers = pagedGoogleUsers.stream().map(user -> {
-            Long roleId = cachedData.userRoleAssignments().get(user.getPrimaryEmail());
+            Long roleId = cachedData.userRoleAssignments().get(user.getId());
+            cachedData.userRoleAssignments().forEach((d, i) -> {
+            });
             String roleName = (roleId != null) ? cachedData.roleDictionary().getOrDefault(roleId, "Unknown Role") : "Regular User";
 
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());

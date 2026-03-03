@@ -14,8 +14,8 @@
     <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
       <div class="flex gap-3 items-center">
         <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
-        <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{ hasMultipleWarnings() ?
-          'en' : '' }}
+        <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' :
+          '' }}
         </span>
       </div>
 
@@ -49,9 +49,7 @@
       <div class="flex gap-2 items-center text-center">
         <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
         <span class="text-xs text-[#b7610a]">{{ pageOverview()?.inactiveRecentLoginCount }} inactieve
-          {{
-          pageOverview()?.inactiveRecentLoginCount === 1 ? 'gebruiker' : 'gebruikers'
-          }}
+          {{ pageOverview()?.inactiveRecentLoginCount === 1 ? 'gebruiker' : 'gebruikers' }}
           met een laatste login van minder dan 1 week geleden gedetecteerd</span>
       </div>
       }
@@ -60,22 +58,19 @@
   </div>
   }
 
-  <div class="p-3 border border-muted rounded-md flex gap-5 w-full items-center bg-white">
+  <div class="p-3 border-2 border-muted/50 rounded-md flex gap-5 w-full items-center bg-white">
     <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
     <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
       placeholder="Zoek gebruikers op naam..." />
   </div>
 
-
   @if (!isLoading()) {
   @if (orgUsers().length > 0) {
-
   <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
     <div class="flex justify-between items-center mx-5.5">
       <span class="font-medium text-lg">Alle gebruikers</span>
       <button (click)="refreshData()" [disabled]="isRefreshing()"
         class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-
         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
         </i-lucide>
 
@@ -106,7 +101,7 @@
           </td>
 
           <td class="px-6 py-4">
-            <span class="px-3 py-1 inline-flex items-center text-center gap-2 rounded-md text-xs font-medium"
+            <span class="px-3 py-1 inline-flex justify-center text-center gap-1.5 rounded-md text-xs font-medium"
               [ngClass]="getRoleClass(user.role)">
               @if (user.role === 'Super Admin') {
               <i-lucide [img]="Icons.Shield" size="14" />
@@ -116,7 +111,7 @@
           </td>
 
           <td class="px-6 py-4">
-            <div class="py-1 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg"
+            <div class="px-3 py-1 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
               [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
               [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
               <lucide-icon [img]="user.active ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
@@ -174,25 +169,19 @@
   </div>
   } @else {
   <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-
     <div class="flex items-center justify-center p-5">
-      <span class="text-lg font-medium text-slate-600">
-        Geen gebruikers gevonden!
-      </span>
-
+      <span class="text-lg font-medium text-slate-600"> Geen gebruikers gevonden! </span>
     </div>
   </div>
   }
   } @else {
   <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-
     <div class="flex flex-col items-center p-3">
       <div class="flex flex-col items-center space-y-4 p-8">
         <div class="relative flex items-center justify-center">
           <div class="h-12 w-12 rounded-full"></div>
 
-          <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-          </div>
+          <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
 
         <span class="text-sm font-medium text-slate-600 animate-pulse">
