@@ -62,6 +62,7 @@ public class GoogleLicenseCacheService {
 
     private LicenseCacheEntry fetchFromGoogle(String loggedInEmail, LicenseCacheEntry fallback) {
         try {
+            log.info("Ophalen LIVE License data van Google voor: {}", loggedInEmail);
             Licensing licensingDirectory = googleApiFactory.getLicensingService(LicensingScopes.APPS_LICENSING, loggedInEmail);
             String domain = loggedInEmail.split("@")[1];
 
