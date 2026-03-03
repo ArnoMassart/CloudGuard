@@ -113,7 +113,7 @@
             <artifactId>google-api-services-cloudidentity</artifactId>
             <version>v1-rev20220620-1.32.1</version>
         </dependency>
-        
+
         <dependency>
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-oauth2-http</artifactId>
@@ -143,6 +143,11 @@
             <artifactId>google-api-services-licensing</artifactId>
             <version>v1-rev20220430-2.0.0</version>
         </dependency>
+            <groupId>dnsjava</groupId>
+            <artifactId>dnsjava</artifactId>
+            <version>3.6.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>
