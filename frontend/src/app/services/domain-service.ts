@@ -4,9 +4,9 @@ import { HttpClient } from '@angular/common/http';
 
 export interface Domain {
     domainName: string;
-    kind: string;
-    isPrimary: boolean;
+    domainType: string;
     isVerified: boolean;
+    totalUsers?: number;
 }
 
 @Injectable({

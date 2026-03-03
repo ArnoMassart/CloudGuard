@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ChevronUp,
   CircleCheck,
+  CircleHelp,
   CircleX,
   Clock,
   Cpu,
@@ -40,6 +41,7 @@ export class AppIcons {
   static readonly ChevronRight = ChevronRight;
   static readonly ChevronUp = ChevronUp;
   static readonly CircleCheck = CircleCheck;
+  static readonly CircleHelp = CircleHelp;
   static readonly CircleX = CircleX;
   static readonly Clock = Clock;
   static readonly Cpu = Cpu;

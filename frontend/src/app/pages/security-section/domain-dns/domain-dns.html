@@ -1,16 +1,97 @@
 <div class="px-10 py-6">
     <app-page-header Title="Domein & DNS"
         Description="Monitor domeinen en DNS-instellingen"
-        AdminLink="domains" />
+        AdminLink="domains/manage" />
 
-    <div>
-        <ul>
-            @for(domain of domains(); track domain.domainName){
-                <li>{{domain.domainName}}, {{domain.kind}}, {{domain.isPrimary}}, {{domain.isVerified}}</li>
-            }
-            @if(domains().length === 0){
-                <li>Geen domeinen gevonden.</li>
-            }
-        </ul>
+    <div class="w-full flex flex-col gap-5 pt-6">
+        @if (!isLoading()) {
+        @if (domains().length > 0) {
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="flex justify-between items-center mx-5.5">
+                <span class="font-medium text-lg">Alle domeinen</span>
+                <button (click)="refreshData()" [disabled]="isRefreshing()"
+                    class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                    <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
+                    {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+                </button>
+            </div>
+
+            <table class="w-full text-left border-collapse mt-6">
+                <thead>
+                    <tr class="border-b border-t border-gray-200 bg-gray-50/50">
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Domeinnaam</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Verificatiestatus</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Aantal Gebruikers</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                    @for (domain of domains(); track domain.domainName) {
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 rounded-lg bg-[#dbeafe] flex items-center justify-center shrink-0">
+                                    <i-lucide [img]="Icons.Globe" size="20" class="text-[#155dfc]" />
+                                </div>
+                                <span class="font-medium text-slate-900 text-sm">{{ domain.domainName }}</span>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <span class="inline-flex justify-center rounded-md text-xs font-medium px-3 py-1"
+                                [class.bg-indigo-100]="domain.domainType === 'Primary Domain'"
+                                [class.text-indigo-700]="domain.domainType === 'Primary Domain'"
+                                [class.bg-slate-100]="domain.domainType === 'Secondary Domain'"
+                                [class.text-slate-700]="domain.domainType === 'Secondary Domain'"
+                                [class.bg-gray-100]="domain.domainType === 'Domain alias'"
+                                [class.text-gray-700]="domain.domainType === 'Domain alias'">
+                                {{ domain.domainType || '–' }}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium"
+                                [class.text-emerald-600]="domain.isVerified"
+                                [class.bg-[#dbfce7]]="domain.isVerified"
+                                [class.text-amber-700]="!domain.isVerified"
+                                [class.bg-amber-100]="!domain.isVerified">
+                                <lucide-icon [img]="domain.isVerified ? Icons.CircleCheck : Icons.TriangleAlert"
+                                    size="14"></lucide-icon>
+                                {{ domain.isVerified ? 'Geverifieerd' : 'Niet geverifieerd' }}
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <i-lucide [img]="Icons.Users" size="16" class="text-gray-500" />
+                                <span class="text-sm font-medium text-slate-600">{{ domain.totalUsers ?? '–' }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        } @else {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+            <div class="flex flex-col items-center justify-center p-8 gap-4">
+                <span class="text-lg font-medium text-slate-600">Geen domeinen gevonden.</span>
+            </div>
+        </div>
+        }
+        } @else {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+            <div class="flex flex-col items-center p-3 pt-6">
+                <div class="flex flex-col items-center space-y-4 p-8">
+                    <div class="relative flex items-center justify-center">
+                        <div class="h-12 w-12 rounded-full"></div>
+                        <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                    </div>
+                    <span class="text-sm font-medium text-slate-600 animate-pulse">Domeinen worden geladen...</span>
+                </div>
+            </div>
+        </div>
+        }
     </div>
 </div>

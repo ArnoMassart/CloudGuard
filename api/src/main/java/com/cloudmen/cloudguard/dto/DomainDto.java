@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 public class DomainDto {
     String domainName;
-    String kind;
-    boolean isPrimary;
-    boolean isVerified;
+    String domainType;
+    Boolean isVerified;
+    Integer totalUsers;
 }
