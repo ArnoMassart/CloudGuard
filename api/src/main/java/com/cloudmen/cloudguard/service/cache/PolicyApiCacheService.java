@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.service.policy;
+package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -29,7 +29,7 @@ public class GoogleOrgUnitCacheService {
 
     // --- CACHE CONFIGURATIE ---
     private final Cache<String, OrgUnitCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
+            .expireAfterWrite(24, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 

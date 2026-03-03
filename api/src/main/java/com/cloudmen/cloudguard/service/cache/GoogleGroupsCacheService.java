@@ -38,7 +38,7 @@ public class GoogleGroupsCacheService {
     private final GoogleApiFactory googleApiFactory;
 
     private final Cache<String, GroupCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
+            .expireAfterWrite(6, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 

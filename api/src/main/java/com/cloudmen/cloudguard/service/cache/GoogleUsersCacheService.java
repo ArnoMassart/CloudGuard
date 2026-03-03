@@ -26,7 +26,7 @@ public class GoogleUsersCacheService {
     private final GoogleApiFactory googleApiFactory;
 
     private final Cache<String, UserCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
+            .expireAfterWrite(4, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 

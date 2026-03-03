@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.groups.*;
 import com.cloudmen.cloudguard.service.cache.GoogleGroupsCacheService;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.services.groupssettings.Groupssettings;
 import com.google.api.services.groupssettings.model.Groups;
 import org.slf4j.Logger;
@@ -12,10 +13,6 @@ import java.util.*;
 
 @Service
 public class GoogleGroupsService {
-
-    private static final Logger log = LoggerFactory.getLogger(GoogleGroupsService.class);
-
-
     private final GoogleGroupsCacheService groupsCacheService;
 
 
@@ -28,10 +25,8 @@ public class GoogleGroupsService {
     }
 
     public GroupPageResponse getGroupsPaged(String loggedInEmail, String query, String pageToken, int size) {
-        // 1. Haal de lijst uit het RAM geheugen (Praat NIET met Google, tenzij de cache leeg is)
         GroupCacheEntry cachedData = groupsCacheService.getOrFetchGroupData(loggedInEmail);
 
-        // 2. Filter IN HET GEHEUGEN
         List<CachedGroupItem> filteredList = cachedData.allGroups();
         if (query != null && !query.trim().isEmpty()) {
             String lowerQuery = query.toLowerCase().trim();
@@ -41,11 +36,7 @@ public class GoogleGroupsService {
                     .toList();
         }
 
-        // 3. Pagineren IN HET GEHEUGEN
-        int page = 1;
-        if (pageToken != null && !pageToken.isBlank()) {
-            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
-        }
+        int page = GoogleServiceHelperMethods.getPage(pageToken);
 
         int totalGroups = filteredList.size();
         int startIndex = (page - 1) * size;
@@ -53,7 +44,6 @@ public class GoogleGroupsService {
 
         List<CachedGroupItem> pagedItems = (startIndex >= totalGroups) ? Collections.emptyList() : filteredList.subList(startIndex, endIndex);
 
-        // 4. Mappen naar DTO
         List<GroupOrgDetail> result = pagedItems.stream().map(CachedGroupItem::detail).toList();
 
         String nextTokenToReturn = (endIndex < totalGroups) ? String.valueOf(page + 1) : null;
@@ -72,7 +62,6 @@ public class GoogleGroupsService {
         for (CachedGroupItem item : cachedData.allGroups()) {
             GroupOrgDetail detail = item.detail();
 
-            // Gebruik jouw getters!
             if (detail.getExternalMembers() > 0 || detail.isExternalAllowed()) {
                 groupsWithExternal++;
             }

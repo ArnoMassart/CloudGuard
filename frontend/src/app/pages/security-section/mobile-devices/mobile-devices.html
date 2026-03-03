@@ -89,7 +89,7 @@
                 <!-- Status filter -->
                 <div class="relative">
                     <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
-                        class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
+                        class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
                         [class.border-primary]="selectedStatus() !== statusEnum.All"
                         [class.ring-1]="selectedStatus() !== statusEnum.All"
                         [class.ring-primary]="selectedStatus() !== statusEnum.All">
@@ -105,7 +105,7 @@
                 <!-- Device type filter -->
                 <div class="relative">
                     <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
-                        class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors"
+                        class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
                         [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
                         [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
                         [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">
@@ -182,7 +182,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="py-1 flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+                            <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                                 [class.text-emerald-600]="device.complianceScore >= 75"
                                 [class.bg-[#dbfce7]]="device.complianceScore >= 75"
                                 [class.text-[#d69518]]="device.complianceScore < 75 && device.complianceScore >= 50"
@@ -195,7 +195,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="py-1 flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+                            <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                                 [class.text-emerald-600]="device.status === 'Approved'"
                                 [class.bg-[#dbfce7]]="device.status === 'Approved'"
                                 [class.text-[#d69518]]="device.status === 'Pending'"

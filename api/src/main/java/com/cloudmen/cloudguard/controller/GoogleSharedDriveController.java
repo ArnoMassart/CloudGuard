@@ -13,12 +13,10 @@ import org.springframework.web.bind.annotation.*;
 public class GoogleSharedDriveController {
     private final GoogleSharedDriveService driveService;
     private final JwtService jwtService;
-    private final GoogleSharedDriveService googleSharedDriveService;
 
-    public GoogleSharedDriveController(GoogleSharedDriveService driveService, JwtService jwtService, GoogleSharedDriveService googleSharedDriveService) {
+    public GoogleSharedDriveController(GoogleSharedDriveService driveService, JwtService jwtService) {
         this.driveService = driveService;
         this.jwtService = jwtService;
-        this.googleSharedDriveService = googleSharedDriveService;
     }
 
     @GetMapping
@@ -37,7 +35,7 @@ public class GoogleSharedDriveController {
         return ResponseEntity.ok(driveService.getSharedDrivesPaged(loggedInEmail, pageToken, size, query));
     }
 
-    @GetMapping("overview")
+    @GetMapping("/overview")
     public ResponseEntity<SharedDriveOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -57,7 +55,7 @@ public class GoogleSharedDriveController {
         }
 
         String adminEmail = jwtService.validateInternalToken(token);
-        googleSharedDriveService.forceRefreshCache(adminEmail);
+        driveService.forceRefreshCache(adminEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

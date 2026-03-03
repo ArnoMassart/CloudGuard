@@ -12,7 +12,7 @@ export class SectionTopCard {
   readonly Icons = AppIcons;
 
   @Input() Title: string = '';
-  @Input() Value: number | undefined = 0;
+  @Input() Value: string | number | undefined = 0;
   @Input() Icon: LucideIconData = this.Icons.Shield;
   @Input() BackgroundColor: string = '#dbeafe';
   @Input() IconColor: string = '#155dfc';
@@ -23,9 +23,10 @@ export class SectionTopCard {
   getTextColor(): string {
     if (!this.IsPercentage) return this.TextColor;
 
-    if (this.Value != undefined) {
-      if (this.Value < 50) return '#e7000b';
-      else if (this.Value < 75) return '#d38700';
+    const num = typeof this.Value === 'number' ? this.Value : undefined;
+    if (num != undefined) {
+      if (num < 50) return '#e7000b';
+      else if (num < 75) return '#d38700';
       else return '#3abfad';
     }
 
@@ -35,9 +36,10 @@ export class SectionTopCard {
   getIconColor(): string {
     if (!this.IsPercentage) return this.IconColor;
 
-    if (this.Value != undefined) {
-      if (this.Value < 50) return '#f54a00';
-      else if (this.Value < 75) return '#d38700';
+    const num = typeof this.Value === 'number' ? this.Value : undefined;
+    if (num != undefined) {
+      if (num < 50) return '#f54a00';
+      else if (num < 75) return '#d38700';
       else return '#3abfad';
     }
 
@@ -47,9 +49,10 @@ export class SectionTopCard {
   getBackgroundColor(): string {
     if (!this.IsPercentage) return this.BackgroundColor;
 
-    if (this.Value != undefined) {
-      if (this.Value < 50) return '#ffe2e2';
-      else if (this.Value < 75) return '#fef9c2';
+    const num = typeof this.Value === 'number' ? this.Value : undefined;
+    if (num != undefined) {
+      if (num < 50) return '#ffe2e2';
+      else if (num < 75) return '#fef9c2';
       else return '#d8f2ef';
     }
 
