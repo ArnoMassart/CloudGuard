@@ -54,13 +54,21 @@ export class DomainDns implements OnInit {
   refreshData() {
     if (this.isRefreshing()) return;
     this.isRefreshing.set(true);
-    this.#domainService.getDomains().subscribe({
-      next: (domains) => {
-        this.domains.set(domains);
-        this.isRefreshing.set(false);
+    this.#domainService.refreshCache().subscribe({
+      next: () => {
+        this.#domainService.getDomains().subscribe({
+          next: (domains) => {
+            this.domains.set(domains);
+            this.isRefreshing.set(false);
+          },
+          error: (err) => {
+            console.error('Failed to load domains', err);
+            this.isRefreshing.set(false);
+          },
+        });
       },
       error: (err) => {
-        console.error('Failed to load domains', err);
+        console.error('Failed to refresh cache', err);
         this.isRefreshing.set(false);
       },
     });
