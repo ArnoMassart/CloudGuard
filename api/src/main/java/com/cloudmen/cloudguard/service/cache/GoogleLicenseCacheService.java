@@ -108,6 +108,8 @@ public class GoogleLicenseCacheService {
 
             String skuName = (assignment.getSkuName() != null) ? assignment.getSkuName() : skuId;
 
+            if (skuName.contains("Free")) continue;
+
             counts.merge(skuId, 1, Integer::sum);
             names.putIfAbsent(skuId, skuName);
         }
@@ -143,6 +145,7 @@ public class GoogleLicenseCacheService {
 
         for (User user : users) {
             if (user.getLastLoginTime() == null || !userToSku.containsKey(user.getPrimaryEmail())) continue;
+            if (userToSku.get(user.getPrimaryEmail()).contains("Free")) continue;
 
             Instant lastLogin = Instant.parse(user.getLastLoginTime().toString());
             if (lastLogin.isBefore(ninetyDaysAgo)) {
