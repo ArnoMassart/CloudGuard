@@ -1,1 +1,16 @@
-<p>domain-dns works!</p>
+<div class="px-10 py-6">
+    <app-page-header Title="Domein & DNS"
+        Description="Monitor domeinen en DNS-instellingen"
+        AdminLink="domains" />
+
+    <div>
+        <ul>
+            @for(domain of domains(); track domain.domainName){
+                <li>{{domain.domainName}}, {{domain.kind}}, {{domain.isPrimary}}, {{domain.isVerified}}</li>
+            }
+            @if(domains().length === 0){
+                <li>Geen domeinen gevonden.</li>
+            }
+        </ul>
+    </div>
+</div>
