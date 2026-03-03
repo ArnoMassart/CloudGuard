@@ -4,13 +4,16 @@
 
     <div class="w-full flex flex-col gap-5 pt-6">
         <div class="w-full flex gap-4">
-            <app-section-top-card class="flex-1" Title="Totaal licenties" [Value]="100" [Icon]="Icons.Users" />
-            <app-section-top-card class="flex-1" Title="Maandelijkse kosten" [Value]="960" BackgroundColor="#f3e8ff"
-                IconColor="#9810fa" [Icon]="Icons.CreditCard" [IsCurrency]="true" />
-            <app-section-top-card class="flex-1" Title="Mogelijke besparing" [Value]="312.5" BackgroundColor="#dbfce7"
-                IconColor="#00a63e" TextColor="#00a63e" [Icon]="Icons.TrendingDown" [IsCurrency]="true" />
-            <app-section-top-card class="flex-1" Title="Gebruikerspercentage" [Icon]="Icons.DollarSign" [Value]="75"
-                [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+            <app-section-top-card class="flex-1" Title="Totaal licenties" [Value]="pageOverview()?.totalLicenses"
+                [Icon]="Icons.Users" />
+            <app-section-top-card class="flex-1" Title="Maandelijkse kosten (later)" [Value]="0"
+                BackgroundColor="#f3e8ff" IconColor="#9810fa" [Icon]="Icons.CreditCard" [IsCurrency]="true" />
+            <app-section-top-card class="flex-1" Title="Mogelijke besparing (later)" [Value]="0"
+                BackgroundColor="#dbfce7" IconColor="#00a63e" TextColor="#00a63e" [Icon]="Icons.TrendingDown"
+                [IsCurrency]="true" />
+            <app-section-top-card class="flex-1" Title="Gebruikerspercentage" [Icon]="Icons.DollarSign"
+                [Value]="pageOverview()?.usagePercentage" [IsPercentage]="true" BackgroundColor="#fef9c2"
+                IconColor="#d69518" />
         </div>
 
         @if (hasCostsSaved() && !isLoading()){
@@ -46,7 +49,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl mx-auto">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-90">
                 <h2 class="text-lg font-medium text-gray-900 mb-6 px-4">
-                    Licentie Gebruik per Type
+                    Licentiegebruik per Type
                 </h2>
 
                 <div class="grow">
@@ -85,21 +88,13 @@
 
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
             <div class="flex justify-between items-center mx-5.5">
-                <span class="font-medium text-lg">Licentie Types Overzicht</span>
-                <!-- <button (click)="refreshData()" [disabled]="isRefreshing()"
-                    class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-
-                    <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-                    </i-lucide>
-
-                    {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
-                </button> -->
+                <span class="font-medium text-lg">Licentietype Overzicht</span>
             </div>
 
             <table class="w-full text-left border-collapse mt-6">
                 <thead>
                     <tr class="border-b border-t border-gray-200 bg-gray-50/50">
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Licentie Type</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Licentietype</th>
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Totaal</th>
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Toegewezen</th>
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Beschikbaar</th>
@@ -128,13 +123,13 @@
                         </td>
 
                         <td class="px-6 py-4">
-                            <span class="text-slate-900 text-sm">€{{ license.pricePerLicense ?
+                            <span class="text-slate-900 text-sm">€{{ license.pricePerLicense != undefined ?
                                 license.pricePerLicense.toFixed(2) : '0.00'
                                 }}</span>
                         </td>
 
                         <td class="px-6 py-4">
-                            <span class="font-medium text-slate-900 text-sm">€{{ license.totalCosts?
+                            <span class="font-medium text-slate-900 text-sm">€{{ license.totalCosts != undefined ?
                                 license.totalCosts.toFixed(2) : '0.00' }}</span>
                         </td>
                     </tr>
@@ -204,7 +199,7 @@
         </div>
 
         <div class="bg-white rounded-lg border-2 border-muted/50 pt-6 pb-6">
-            <span class="font-medium text-lg px-6">Huidige Facturatieperiode</span>
+            <span class="font-medium text-lg px-6">Huidige Facturatieperiode (later)</span>
 
             <div class="h-1 w-full border-t border-gray-200 mt-6 pb-4"></div>
 

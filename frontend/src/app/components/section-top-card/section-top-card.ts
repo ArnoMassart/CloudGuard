@@ -20,6 +20,35 @@ export class SectionTopCard {
   @Input() IsPercentage: boolean = false;
   @Input() IsCurrency: boolean = false;
 
+  getValue(): string {
+    let result = '';
+
+    if (this.Value === undefined || this.Value === null) {
+      result = '0';
+    } else if (this.IsCurrency) {
+      result = '€';
+      if (typeof this.Value === 'number') {
+        result += this.Value.toFixed(2);
+      } else {
+        result += this.Value;
+      }
+    } else {
+      result = this.Value.toString();
+    }
+
+    if (this.IsPercentage) {
+      result += '%';
+    }
+
+    return result;
+  }
+
+  /*
+  {{IsCurrency ? "€" : ""}}{{Value !=
+            undefined ? IsCurrency && Value typeof number ? Value.toFixed(2) : Value :
+            0}}{{IsPercentage ? "%" : ""}}
+  */
+
   getTextColor(): string {
     if (!this.IsPercentage) return this.TextColor;
 

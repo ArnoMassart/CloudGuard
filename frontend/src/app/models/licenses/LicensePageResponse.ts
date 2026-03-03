@@ -5,4 +5,5 @@ export type LicensePageResponse = {
   licenseTypes: LicenseType[];
   inactiveUsers: InactiveUser[];
   maxLicenseAmount: number;
+  chartStepSize: number;
 };

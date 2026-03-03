@@ -12,7 +12,8 @@ import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from '
 import { LicenseService } from '../../../services/license-service';
 import { LicenseType } from '../../../models/licenses/LicenseType';
 import { InactiveUser } from '../../../models/licenses/InactiveUser';
-import { window } from 'rxjs';
+import { single, window } from 'rxjs';
+import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOverviewResponse';
 
 @Component({
   selector: 'app-licenses-billing',
@@ -50,13 +51,16 @@ export class LicensesBilling {
   readonly licenseTypes = signal<LicenseType[]>([]);
   readonly inactiveUsers = signal<InactiveUser[]>([]);
   readonly maxLicenseAmount = signal(0);
+  readonly stepSize = signal(0);
+
+  readonly pageOverview = signal<LicenseOverviewResponse | null>(null);
 
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
 
-  readonly hasCostsSaved = signal(true);
+  readonly hasCostsSaved = signal(false);
 
   // Custom Colors Matching the Image
   private colors = {
@@ -99,12 +103,21 @@ export class LicensesBilling {
         grid: {
           display: false,
         },
+        ticks: {
+          callback: function (value: any) {
+            const label = this.getLabelForValue(value);
+
+            if (label.length > 15) {
+              return label.substring(0, 15) + '...';
+            }
+            return label;
+          },
+          maxRotation: 0,
+          minRotation: 0,
+        },
       },
       y: {
         beginAtZero: true,
-        ticks: {
-          stepSize: 15,
-        },
         grid: {
           color: '#f3f4f6',
         },
@@ -184,6 +197,7 @@ export class LicensesBilling {
         this.licenseTypes.set(res.licenseTypes);
         this.inactiveUsers.set(res.inactiveUsers);
         this.maxLicenseAmount.set(res.maxLicenseAmount);
+        this.stepSize.set(res.chartStepSize);
 
         this.#updateBarChart();
 
@@ -196,7 +210,16 @@ export class LicensesBilling {
     });
   }
 
-  #loadPageOverview() {}
+  #loadPageOverview() {
+    this.#licenseService.getLicensesPageOverview().subscribe({
+      next: (res) => {
+        this.pageOverview.set(res);
+      },
+      error: (err) => {
+        console.error('Failed to load page overview', err);
+      },
+    });
+  }
 
   #updateBarChart() {
     this.barChartData.labels = this.licenseTypes().map((l) => l.skuName);
@@ -205,7 +228,13 @@ export class LicensesBilling {
     this.barChartData.datasets[1].data = this.licenseTypes().map((l) => l.totalAvailable);
 
     if (this.barChartOptions?.scales?.['y']) {
-      this.barChartOptions.scales['y'].max = this.maxLicenseAmount();
+      const yScale = this.barChartOptions.scales['y'] as any;
+
+      yScale.max = this.maxLicenseAmount();
+
+      // Zorg dat het ticks object bestaat voordat je de stepSize zet
+      if (!yScale.ticks) yScale.ticks = {};
+      yScale.ticks.stepSize = this.stepSize();
     }
 
     this.barChartData = { ...this.barChartData };

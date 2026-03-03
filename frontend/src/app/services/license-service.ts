@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { RouteService } from './route-service';
 import { Observable } from 'rxjs';
 import { LicensePageResponse } from '../models/licenses/LicensePageResponse';
+import { LicenseOverviewResponse } from '../models/licenses/LicenseOverviewResponse';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,12 @@ export class LicenseService {
 
   getLicenses(): Observable<LicensePageResponse> {
     return this.#http.get<LicensePageResponse>(this.#API_URL, {
+      withCredentials: true,
+    });
+  }
+
+  getLicensesPageOverview(): Observable<LicenseOverviewResponse> {
+    return this.#http.get<LicenseOverviewResponse>(`${this.#API_URL}/overview`, {
       withCredentials: true,
     });
   }

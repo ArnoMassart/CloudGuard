@@ -5,6 +5,7 @@ import java.util.List;
 public record LicensePageResponse(
         List<LicenseType> licenseTypes,
         List<InactiveUser> inactiveUsers,
-        long maxLicenseAmount
+        int maxLicenseAmount,
+        int chartStepSize
 ) {
 }
