@@ -44,9 +44,17 @@ public class AppPasswordsService {
         this.apiFactory = apiFactory;
     }
 
-    public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size) {
+    public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size, String query) {
         AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
         List<UserAppPasswordsDto> allUsers = entry.users();
+
+        if (query != null && !query.trim().isEmpty()) {
+            String lowerQuery = query.toLowerCase().trim();
+            allUsers = allUsers.stream()
+                    .filter(u -> (u.name() != null && u.name().toLowerCase().contains(lowerQuery))
+                            || (u.email() != null && u.email().toLowerCase().contains(lowerQuery)))
+                    .toList();
+        }
 
         int page = 1;
         if (pageToken != null && !pageToken.isBlank()) {
@@ -72,9 +80,7 @@ public class AppPasswordsService {
 
     public AppPasswordOverviewResponse getOverview(String adminEmail) {
         AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
-        int usersWithAppPasswords = (int) entry.users().stream()
-                .filter(u -> !u.passwords().isEmpty())
-                .count();
+        int usersWithAppPasswords = entry.users().size();
         int totalAppPasswords = entry.users().stream()
                 .mapToInt(u -> u.passwords().size())
                 .sum();
@@ -127,9 +133,7 @@ public class AppPasswordsService {
                             log.warn("Kon app-wachtwoorden niet ophalen voor {}: {}", userEmail, e.getMessage());
                         }
 
-                        // Option: to show only users WITH app passwords, add:
-                        // if (passwords.isEmpty()) continue;
-                        // Also update getOverview(): usersWithAppPasswords = entry.users().size()
+                        if (passwords.isEmpty()) continue;
                         result.add(new UserAppPasswordsDto(userId, userName, userEmail, role, twoFactorEnabled, passwords));
                     }
                 }

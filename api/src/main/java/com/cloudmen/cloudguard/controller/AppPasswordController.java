@@ -23,9 +23,10 @@ public class AppPasswordController {
     public AppPasswordPageResponse getAppPasswords(
             @CookieValue(name = "AuthToken", required = false) String token,
             @RequestParam(required = false) String pageToken,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String query) {
         String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getAppPasswordsPaged(email, pageToken, size);
+        return appPasswordsService.getAppPasswordsPaged(email, pageToken, size, query);
     }
 
     @GetMapping("/overview")

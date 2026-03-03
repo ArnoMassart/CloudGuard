@@ -38,9 +38,10 @@ export class AppPasswordsService {
     readonly #API_URL = RouteService.getBackendUrl('/google/app-passwords');
     readonly #http = inject(HttpClient);
 
-    public getAppPasswords(size: number, pageToken?: string) {
+    public getAppPasswords(size: number, pageToken?: string, query?: string) {
         let params = new HttpParams().set('size', String(size));
         if (pageToken) params = params.set('pageToken', pageToken);
+        if (query?.trim()) params = params.set('query', query.trim());
         return this.#http.get<AppPasswordPageResponse>(`${this.#API_URL}`, {
             withCredentials: true,
             params,
