@@ -4,6 +4,6 @@ public enum DnsRecordStatus {
     VALID,
     OK,
     ATTENTION,
-    MISSING,
+    ACTION_REQUIRED,
     ERROR
 }

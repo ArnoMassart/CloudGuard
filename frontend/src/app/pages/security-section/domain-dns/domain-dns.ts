@@ -47,15 +47,17 @@ export class DomainDns implements OnInit {
   getDnsStatusLabel(status: string): string {
     if (status === 'VALID') return 'Geldig';
     if (status === 'OK') return 'Optioneel';
-    if (status === 'ATTENTION' || status === 'MISSING') return 'Aandacht';
+    if (status === 'ACTION_REQUIRED') return 'Actie vereist';
+    if (status === 'ATTENTION') return 'Aandacht';
     if (status === 'ERROR') return 'Fout';
     return status;
   }
 
-  getDnsStatusClass(status: string): 'valid' | 'attention' | 'error' | 'neutral' {
+  getDnsStatusClass(status: string, type: string): 'valid' | 'attention' | 'error' | 'neutral' {
     if (status === 'VALID') return 'valid';
     if (status === 'OK') return 'neutral';
-    if (status === 'ATTENTION' || status === 'MISSING') return 'attention';
+    if (status === 'ACTION_REQUIRED') return 'error';
+    if (status === 'ATTENTION') return 'attention';
     if (status === 'ERROR') return 'error';
     return 'neutral';
   }
@@ -66,6 +68,8 @@ export class DomainDns implements OnInit {
       DKIM: 'DKIM record voor digitale ondertekening van uitgaande emails',
       DMARC: 'DMARC record voor beleid rond email authenticatie en bescherming tegen spoofing',
       MX: 'MX record voor routing van inkomende emails naar Google servers',
+      DNSSEC: 'DNSKEY records voor DNSSEC – cryptografische verificatie van DNS antwoorden',
+      CAA: 'CAA record beperkt welke certificaatautoriteiten SSL/TLS certificaten mogen uitgeven',
       TXT: 'TXT record voor Google site verificatie (optioneel)',
       CNAME: 'CNAME record voor mail subdomein (optioneel)',
     };

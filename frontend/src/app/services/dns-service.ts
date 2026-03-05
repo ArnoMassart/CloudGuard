@@ -7,6 +7,7 @@ export interface DnsRecord {
   name: string;
   values: string[];
   status: string;
+  importance?: string;
   message?: string;
 }
 
