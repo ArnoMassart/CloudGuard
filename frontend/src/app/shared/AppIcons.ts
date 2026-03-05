@@ -32,11 +32,15 @@ import {
   TriangleAlert,
   UserCog,
   Users,
+  DollarSign,
+  TrendingDown,
+  Calendar,
 } from 'lucide-angular';
 
 export class AppIcons {
   static readonly Bell = Bell;
   static readonly Building2 = Building2;
+  static readonly Calendar = Calendar;
   static readonly ChevronDown = ChevronDown;
   static readonly ChevronLeft = ChevronLeft;
   static readonly ChevronRight = ChevronRight;
@@ -47,6 +51,7 @@ export class AppIcons {
   static readonly Clock = Clock;
   static readonly Cpu = Cpu;
   static readonly CreditCard = CreditCard;
+  static readonly DollarSign = DollarSign;
   static readonly ExternalLink = ExternalLink;
   static readonly FileText = FileText;
   static readonly FolderOpen = FolderOpen;
@@ -65,6 +70,7 @@ export class AppIcons {
   static readonly ShieldAlert = ShieldAlert;
   static readonly ShieldCheck = ShieldCheck;
   static readonly SmartPhone = Smartphone;
+  static readonly TrendingDown = TrendingDown;
   static readonly TriangleAlert = TriangleAlert;
   static readonly UserCog = UserCog;
   static readonly Users = Users;

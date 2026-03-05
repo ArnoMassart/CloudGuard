@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class GoogleUsersService {
-    private static final Logger log = LoggerFactory.getLogger(GoogleUsersService.class);
     private final GoogleUsersCacheService usersCacheService;
 
     public GoogleUsersService(GoogleUsersCacheService usersCacheService) {

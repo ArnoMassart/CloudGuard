@@ -22,7 +22,7 @@ export class UserService {
   }
 
   getRole(user: { roles: string[] }): string {
-    return user.roles.length > 0 ? user.roles[0] : 'Admin';
+    return user.roles ? (user.roles.length > 0 ? user.roles[0] : 'Admin') : '';
   }
 
   getOrgUsers(size: number, pageToken?: string, query?: string): Observable<UserPageResponse> {
