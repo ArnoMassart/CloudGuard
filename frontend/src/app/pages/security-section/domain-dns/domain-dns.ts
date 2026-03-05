@@ -1,4 +1,5 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { Domain, DomainService } from '../../../services/domain-service';
@@ -8,7 +9,7 @@ import { DnsRecord, DnsService } from '../../../services/dns-service';
 
 @Component({
   selector: 'app-domain-dns',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule],
   templateUrl: './domain-dns.html',
   styleUrl: './domain-dns.css',
 })
