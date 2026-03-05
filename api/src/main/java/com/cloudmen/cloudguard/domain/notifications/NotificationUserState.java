@@ -20,8 +20,7 @@ public class NotificationUserState {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @Column(name="notification_id")
+    @Column(name = "notification_id")
     private Long notificationId;
 
     @Column(name = "user_id")
