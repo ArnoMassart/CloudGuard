@@ -1,1 +1,194 @@
-<p>reports-reactions works!</p>
+<div class="px-10 py-6">
+    <app-page-header Title="Meldingen & Feedback"
+        Description="Real-time notificaties over beveiligingsissues en mogelijkheid tot feedback"
+        [NeedAdminLink]="false" />
+
+    <div class="w-full flex flex-col gap-5 pt-6">
+        <!-- Summary cards -->
+        <div class="w-full flex gap-4">
+            <app-section-top-card class="flex-1" Title="Totaal" [Value]="totalCount()"
+                [Icon]="Icons.Bell" BackgroundColor="#dbeafe" IconColor="#155dfc" />
+            <app-section-top-card class="flex-1" Title="Nieuwe meldingen" [Value]="0"
+                [Icon]="Icons.CircleHelp" BackgroundColor="#dbeafe" IconColor="#155dfc" />
+            <app-section-top-card class="flex-1" Title="Kritiek" [Value]="criticalCount()"
+                [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
+            <app-section-top-card class="flex-1" Title="In behandeling" [Value]="0"
+                [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad" TextColor="#3abfad" />
+        </div>
+
+        <!-- Critical warning banner -->
+        @if (criticalCount() > 0) {
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 shrink-0">
+                <i-lucide [img]="Icons.CircleX" size="20" />
+            </div>
+            <div>
+                <p class="font-medium text-red-800">
+                    {{ criticalCount() }} kritieke beveiligingswaarschuwing{{ criticalCount() > 1 ? 'en' : '' }}
+                </p>
+                <p class="text-sm text-red-700 mt-0.5">
+                    Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.
+                </p>
+            </div>
+        </div>
+        }
+
+        <!-- Filter section -->
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+                <i-lucide [img]="Icons.Funnel" size="18" />
+                <span>Filter:</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    (click)="setFilter('all')"
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-primary]="filterSeverity() === 'all'"
+                    [class.text-white]="filterSeverity() === 'all'"
+                    [class.bg-gray-100]="filterSeverity() !== 'all'"
+                    [class.text-gray-700]="filterSeverity() !== 'all'"
+                    [class.hover:bg-gray-200]="filterSeverity() !== 'all'">
+                    Alle ({{ totalCount() }})
+                </button>
+                <button
+                    (click)="setFilter('critical')"
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-red-100]="filterSeverity() === 'critical'"
+                    [class.text-red-800]="filterSeverity() === 'critical'"
+                    [class.bg-gray-100]="filterSeverity() !== 'critical'"
+                    [class.text-gray-700]="filterSeverity() !== 'critical'"
+                    [class.hover:bg-gray-200]="filterSeverity() !== 'critical'">
+                    Kritiek ({{ criticalCount() }})
+                </button>
+                <button
+                    (click)="setFilter('warning')"
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-amber-100]="filterSeverity() === 'warning'"
+                    [class.text-amber-800]="filterSeverity() === 'warning'"
+                    [class.bg-gray-100]="filterSeverity() !== 'warning'"
+                    [class.text-gray-700]="filterSeverity() !== 'warning'"
+                    [class.hover:bg-gray-200]="filterSeverity() !== 'warning'">
+                    Waarschuwing ({{ warningCount() }})
+                </button>
+                <button
+                    (click)="setFilter('info')"
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-blue-100]="filterSeverity() === 'info'"
+                    [class.text-blue-800]="filterSeverity() === 'info'"
+                    [class.bg-gray-100]="filterSeverity() !== 'info'"
+                    [class.text-gray-700]="filterSeverity() !== 'info'"
+                    [class.hover:bg-gray-200]="filterSeverity() !== 'info'">
+                    Info ({{ infoCount() }})
+                </button>
+                <button
+                    (click)="setFilter('resolved')"
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-emerald-100]="filterSeverity() === 'resolved'"
+                    [class.text-emerald-800]="filterSeverity() === 'resolved'"
+                    [class.bg-gray-100]="filterSeverity() !== 'resolved'"
+                    [class.text-gray-700]="filterSeverity() !== 'resolved'"
+                    [class.hover:bg-gray-200]="filterSeverity() !== 'resolved'">
+                    Opgelost (0)
+                </button>
+            </div>
+            <button
+                (click)="refresh()"
+                [disabled]="isLoading()"
+                class="ml-auto flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isLoading()" />
+                {{ isLoading() ? 'Laden...' : 'Vernieuwen' }}
+            </button>
+        </div>
+
+        @if (isLoading()) {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
+            <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <span class="text-sm text-gray-500 mt-3">Meldingen worden geladen...</span>
+        </div>
+        } @else if (filteredNotifications().length === 0) {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
+            <div class="w-16 h-16 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-4">
+                <i-lucide [img]="Icons.CircleCheck" size="32" />
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Geen meldingen</h3>
+            <p class="text-sm text-gray-500 mt-1 text-center max-w-md">
+                @if (filterSeverity() === 'all') {
+                Er zijn geen kritieke meldingen of waarschuwingen voor dit Workspace.
+                } @else if (filterSeverity() === 'resolved') {
+                Geen opgeloste meldingen.
+                } @else {
+                Geen meldingen met dit filter. Probeer een ander filter.
+                }
+            </p>
+        </div>
+        } @else {
+        <div class="flex flex-col gap-4">
+            @for (n of filteredNotifications(); track n.id) {
+            <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden p-6">
+                <div class="flex items-start gap-4">
+                    <div class="shrink-0 mt-0.5">
+                        @if (n.severity === 'critical') {
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600">
+                            <i-lucide [img]="Icons.CircleX" size="20" />
+                        </div>
+                        } @else if (n.severity === 'warning') {
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <i-lucide [img]="Icons.TriangleAlert" size="20" />
+                        </div>
+                        } @else {
+                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                            <i-lucide [img]="Icons.CircleHelp" size="20" />
+                        </div>
+                        }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                [class.bg-red-100]="n.severity === 'critical'"
+                                [class.text-red-700]="n.severity === 'critical'"
+                                [class.bg-amber-100]="n.severity === 'warning'"
+                                [class.text-amber-700]="n.severity === 'warning'"
+                                [class.bg-blue-100]="n.severity === 'info'"
+                                [class.text-blue-700]="n.severity === 'info'">
+                                {{ getSeverityLabel(n.severity) }}
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                {{ n.notificationType }}
+                            </span>
+                        </div>
+                        <h3 class="font-medium text-gray-900 text-lg">{{ n.title }}</h3>
+                        <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
+                        <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                            <i-lucide [img]="Icons.Clock" size="12" />
+                            Vandaag
+                        </p>
+                        @if (n.recommendedActions && n.recommendedActions.length > 0) {
+                        <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                            <p class="font-medium text-blue-900 text-sm mb-2">Aanbevolen acties:</p>
+                            <ul class="list-disc list-inside text-sm text-blue-900 space-y-1">
+                                @for (action of n.recommendedActions; track action) {
+                                <li>{{ action }}</li>
+                                }
+                            </ul>
+                        </div>
+                        }
+                        <div class="flex flex-wrap gap-2 mt-6">
+                            <button
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors">
+                                <i-lucide [img]="Icons.MessageCircle" size="16" />
+                                Stuur feedback
+                            </button>
+                            <a [routerLink]="n.sourceRoute"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                                <i-lucide [img]="Icons.CircleCheck" size="16" />
+                                Markeer als opgelost
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+</div>
