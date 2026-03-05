@@ -179,9 +179,10 @@ export class DomainDns implements OnInit {
       SPF: 'https://support.google.com/a/answer/33786',
       DKIM: 'https://support.google.com/a/answer/174124',
       DMARC: 'https://support.google.com/a/answer/2466580',
-      MX: 'https://support.google.com/a/answer/33786',
-      DNSSEC: 'https://developers.google.com/speed/public-dns/docs/dnssec',
-      CAA: 'https://developers.cloudflare.com/dns/dns-records/caa-record/',
+      MX: 'https://support.google.com/a/answer/140034',
+      TXT: 'https://support.google.com/a/answer/183895',
+      DNSSEC: 'https://docs.cloud.google.com/dns/docs/dnssec',
+      CAA: 'https://developers.cloudflare.com/ssl/edge-certificates/caa-records',
     };
     return urls[type] ?? null;
   }
