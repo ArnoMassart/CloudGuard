@@ -2,9 +2,9 @@ package com.cloudmen.cloudguard.service.dns;
 
 import com.cloudmen.cloudguard.dto.dns.DnsLookupResult;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
-import com.cloudmen.cloudguard.dto.dns.DnsRecordImportance;
+import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
-import com.cloudmen.cloudguard.dto.dns.DnsRecordStatus;
+import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
