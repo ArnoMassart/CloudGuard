@@ -23,6 +23,14 @@ public class DnsLookupService {
         return lookup(name, Type.CNAME);
     }
 
+    public DnsLookupResult lookupDnsKey(String name) {
+        return lookup(name, Type.DNSKEY);
+    }
+
+    public DnsLookupResult lookupCaa(String name) {
+        return lookup(name, Type.CAA);
+    }
+
     private DnsLookupResult lookup(String name, int type) {
         try {
             Name n = Name.fromString(ensureDot(name));

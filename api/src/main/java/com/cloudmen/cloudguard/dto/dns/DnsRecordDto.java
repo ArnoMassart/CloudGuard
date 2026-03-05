@@ -7,6 +7,7 @@ public record DnsRecordDto(
         String name,
         List<String> values,
         DnsRecordStatus status,
+        DnsRecordImportance importance,
         String message
 ) {
 }
