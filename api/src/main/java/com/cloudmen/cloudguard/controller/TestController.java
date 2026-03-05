@@ -13,8 +13,8 @@ public class TestController {
         return ResponseEntity.ok("API connection works!");
     }
 
-    @GetMapping("/teamleader")
-    public ResponseEntity<String> testTeamLeader() {
-
-    }
+//    @GetMapping("/teamleader")
+//    public ResponseEntity<String> testTeamLeader() {
+//
+//    }
 }

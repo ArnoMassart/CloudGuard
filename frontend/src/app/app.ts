@@ -26,11 +26,8 @@ export class App {
       window.location.pathname.includes('/callback')
   );
 
-  // Deze methode wordt aangeroepen als de Splash 'emit' doet
   onSplashEnded() {
-    // 1. Update the session storage so it doesn't show again this session
     sessionStorage.setItem('has_seen_splash', 'true');
-    // 2. Update the local state to trigger the UI switch
     this.hasSeenSplash.set(true);
   }
 
@@ -39,6 +36,8 @@ export class App {
       this.showNavbar =
         !this.#router.url.includes('/login') &&
         !this.#router.url.includes('/forbidden') &&
+        !this.#router.url.includes('/access-denied') &&
+        !this.#router.url.includes('/server-error') &&
         !this.#router.url.includes('/callback');
     });
 

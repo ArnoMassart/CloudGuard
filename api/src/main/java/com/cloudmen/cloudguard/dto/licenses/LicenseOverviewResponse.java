@@ -1,7 +1,9 @@
 package com.cloudmen.cloudguard.dto.licenses;
 
 public record LicenseOverviewResponse(
-        long totalLicenses,
-        long usagePercentage
+        long totalAssigned,
+        long riskyAccounts,
+        long unusedLicenses,
+        long mfaPercentage
 ) {
 }

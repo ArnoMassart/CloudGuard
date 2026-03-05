@@ -35,6 +35,8 @@ import {
   DollarSign,
   TrendingDown,
   Calendar,
+  UserX,
+  ServerCrash,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -65,6 +67,7 @@ export class AppIcons {
   static readonly LogOut = LogOut;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
+  static readonly ServerCrash = ServerCrash;
   static readonly Settings = Settings;
   static readonly Shield = Shield;
   static readonly ShieldAlert = ShieldAlert;
@@ -74,4 +77,5 @@ export class AppIcons {
   static readonly TriangleAlert = TriangleAlert;
   static readonly UserCog = UserCog;
   static readonly Users = Users;
+  static readonly UserX = UserX;
 }

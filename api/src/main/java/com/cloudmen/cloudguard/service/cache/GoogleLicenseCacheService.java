@@ -34,14 +34,6 @@ public class GoogleLicenseCacheService {
             .maximumSize(100)
             .build();
 
-    // Mapping van SKU ID naar de mooie namen uit je mockup
-    private static final Map<String, String> GOOGLE_SKU_CATALOG = Map.of(
-            "1010020027", "Google Workspace Business Standard",
-            "1010060001", "Google Workspace Enterprise",
-            "1010330003", "Google Voice",
-            "1010020025", "Google Workspace Business Plus" // Jouw nieuwe licentie!
-    );
-
     public GoogleLicenseCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService) {
         this.googleApiFactory = googleApiFactory;
         this.usersCacheService = usersCacheService;
@@ -108,8 +100,6 @@ public class GoogleLicenseCacheService {
 
             String skuName = (assignment.getSkuName() != null) ? assignment.getSkuName() : skuId;
 
-            if (skuName.contains("Free")) continue;
-
             counts.merge(skuId, 1, Integer::sum);
             names.putIfAbsent(skuId, skuName);
         }
@@ -121,15 +111,10 @@ public class GoogleLicenseCacheService {
             int assigned = entry.getValue();
             String skuName = names.get(skuId);
 
-            int totalPurchased = fetchTotalSeatsFromBillingSystem(skuId, assigned);
-            int available = totalPurchased - assigned;
-
             results.add(new LicenseType(
                     skuId,
                     skuName,
-                    totalPurchased,
-                    assigned,
-                    available
+                    assigned
             ));
         }
 
@@ -153,16 +138,12 @@ public class GoogleLicenseCacheService {
                         user.getPrimaryEmail(),
                         DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()),
                         userToSku.get(user.getPrimaryEmail()),
+                        user.getIsEnrolledIn2Sv(),
                         ChronoUnit.DAYS.between(lastLogin, Instant.now())
                 ));
             }
         }
 
         return result;
-    }
-
-    // Dit is de 'Connector naar het billing systeem'
-    private int fetchTotalSeatsFromBillingSystem(String skuId, int currentlyAssigned) {
-        return currentlyAssigned + 5;
     }
 }

@@ -10,10 +10,13 @@ import { MobileDevices } from './pages/security-section/mobile-devices/mobile-de
 import { AppAccess } from './pages/security-section/app-access/app-access';
 import { AppPasswords } from './pages/security-section/app-passwords/app-passwords';
 import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
-import { LicensesBilling } from './pages/control-section/licenses-billing/licenses-billing';
+import { Licenses } from './pages/control-section/licenses/licenses';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
 import { authGuard } from './auth/auth.guard';
 import { Forbidden } from './pages/forbidden/forbidden';
+import { TeamleaderTest } from './pages/teamleader-test/teamleader-test';
+import { TeamleaderAccessDenied } from './pages/teamleader-access-denied/teamleader-access-denied';
+import { ServerError } from './pages/server-error/server-error';
 
 export const routes: Routes = [
   {
@@ -27,6 +30,18 @@ export const routes: Routes = [
   {
     path: 'callback',
     component: Callback,
+  },
+  {
+    path: 'access-denied',
+    component: TeamleaderAccessDenied,
+  },
+  {
+    path: 'server-error',
+    component: ServerError,
+  },
+  {
+    path: 'teamleader',
+    component: TeamleaderTest,
   },
   {
     path: '',
@@ -74,8 +89,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
-    path: 'licenses-billing',
-    component: LicensesBilling,
+    path: 'licenses',
+    component: Licenses,
     canActivate: [authGuard],
   },
   {

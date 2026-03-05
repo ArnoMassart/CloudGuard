@@ -1,4 +1,6 @@
 export type LicenseOverviewResponse = {
-  totalLicenses: number;
-  usagePercentage: number;
+  totalAssigned: number;
+  riskyAccounts: number;
+  unusedLicenses: number;
+  mfaPercentage: number;
 };
