@@ -183,6 +183,7 @@ export class DomainDns implements OnInit {
       TXT: 'https://support.google.com/a/answer/183895',
       DNSSEC: 'https://docs.cloud.google.com/dns/docs/dnssec',
       CAA: 'https://developers.cloudflare.com/ssl/edge-certificates/caa-records',
+      CNAME: 'https://support.google.com/a/answer/112037',
     };
     return urls[type] ?? null;
   }

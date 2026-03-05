@@ -280,7 +280,6 @@
                         <col style="width: 5rem" />
                         <col style="width: 14rem" />
                         <col style="width: 24rem" />
-                        <col style="width: 7.5rem" />
                     </colgroup>
                     <thead>
                         <tr class="border-b border-t border-gray-200 bg-gray-50/80">
@@ -288,7 +287,6 @@
                             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
                             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Naam</th>
                             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</th>
-                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -304,25 +302,10 @@
                             <td class="px-6 py-4 text-sm text-gray-600 align-middle overflow-hidden">
                                 <span class="block truncate" [title]="row.values?.[0] || ''">{{ row.values?.[0] || '-' }}</span>
                             </td>
-                            <td class="px-6 py-4 align-middle">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
-                                    [class.bg-emerald-100]="getDnsStatusClass(row.status, row.type) === 'valid'"
-                                    [class.text-emerald-700]="getDnsStatusClass(row.status, row.type) === 'valid'"
-                                    [class.bg-amber-100]="getDnsStatusClass(row.status, row.type) === 'attention'"
-                                    [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
-                                    [class.bg-red-100]="getDnsStatusClass(row.status, row.type) === 'error'"
-                                    [class.text-red-700]="getDnsStatusClass(row.status, row.type) === 'error'"
-                                    [class.bg-gray-100]="getDnsStatusClass(row.status, row.type) === 'neutral'"
-                                    [class.text-gray-700]="getDnsStatusClass(row.status, row.type) === 'neutral'">
-                                    <lucide-icon [img]="getDnsStatusClass(row.status, row.type) === 'valid' ? Icons.CircleCheck : (getDnsStatusClass(row.status, row.type) === 'error' ? Icons.CircleX : Icons.TriangleAlert)"
-                                        size="12"></lucide-icon>
-                                    {{ getDnsStatusLabel(row.status) }}
-                                </span>
-                            </td>
                         </tr>
                         @if (expandedDnsRow() === row.type + row.name) {
                         <tr class="border-b border-gray-100 bg-gray-50/60">
-                            <td colspan="5" class="px-6 py-4 pl-14">
+                            <td colspan="4" class="px-6 py-4 pl-14">
                                 <div class="flex flex-col gap-4">
                                     <div>
                                         <p class="font-medium text-gray-900 text-sm mb-1">Beschrijving</p>
