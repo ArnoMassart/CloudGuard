@@ -94,7 +94,10 @@ export class ReportsReactions implements OnInit {
       'oauth-high-risk',
       'drive-orphan',
       'drive-external',
-      'device-compliance',
+      'device-lockscreen',
+      'device-encryption',
+      'device-os',
+      'device-integrity',
     ].includes(notificationType);
   }
 

@@ -131,48 +131,18 @@ export class AppPasswords implements OnInit {
     this.expandedAppPassword.set(null);
     this.#appPasswordsService.getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery()).subscribe({
       next: (response) => {
-        const data = response.users.length > 0
-          ? response.users.map((u) => this.#mapToUserAppPasswords(u))
-          : this.#getDemoData();
+        const data = response.users.map((u) => this.#mapToUserAppPasswords(u));
         this.userAppPasswords.set(data);
-        this.nextPageToken.set(response.users.length > 0 ? (response.nextPageToken ?? null) : null);
+        this.nextPageToken.set(response.nextPageToken ?? null);
         this.isLoading.set(false);
       },
       error: () => {
-        const demoData = this.#getDemoData();
-        this.userAppPasswords.set(demoData);
+        this.userAppPasswords.set([]);
         this.nextPageToken.set(null);
-        this.loadError.set(false);
+        this.loadError.set(true);
         this.isLoading.set(false);
-        if (this.pageOverview() === null) {
-          this.#setDemoOverview(demoData);
-        }
       },
     });
-  }
-
-  #setDemoOverview(users: UserAppPasswords[]) {
-    const totalAppPasswords = users.reduce((sum, u) => sum + u.appPasswords.length, 0);
-    const usersWithAppPasswords = users.filter((u) => u.appPasswords.length > 0).length;
-    this.pageOverview.set({
-      allowed: true,
-      totalAppPasswords,
-      totalHighRiskAppPasswords: totalAppPasswords,
-      securityScore: usersWithAppPasswords === 0 ? 100 : Math.max(0, 100 - usersWithAppPasswords * 10),
-    });
-  }
-
-  #getDemoData(): UserAppPasswords[] {
-    const now = new Date();
-    const daysAgo = (d: number) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
-    const ts = (d: Date) => String(d.getTime());
-    return [
-      { id: 'demo-1', name: 'Pieter de Vries', email: 'pieter.devries@bedrijf.nl', role: 'User', twoFactorEnabled: false, appPasswords: [{ codeId: 101, name: 'Outlook Desktop', creationTime: ts(daysAgo(350)), lastTimeUsed: ts(daysAgo(27)) }] },
-      { id: 'demo-2', name: 'Thomas Mulder', email: 'thomas.mulder@bedrijf.nl', role: 'User', twoFactorEnabled: true, appPasswords: [{ codeId: 102, name: 'Thunderbird', creationTime: ts(daysAgo(200)), lastTimeUsed: ts(daysAgo(3)) }] },
-      { id: 'demo-3', name: 'Lisa van Berg', email: 'lisa.vanberg@bedrijf.nl', role: 'Admin', twoFactorEnabled: true, appPasswords: [{ codeId: 103, name: 'Apple Mail', creationTime: ts(daysAgo(180)), lastTimeUsed: ts(daysAgo(1)) }, { codeId: 104, name: 'Outlook Desktop', creationTime: ts(daysAgo(90)), lastTimeUsed: null }] },
-      { id: 'demo-4', name: 'Jan Bakker', email: 'jan.bakker@bedrijf.nl', role: 'User', twoFactorEnabled: true, appPasswords: [{ codeId: 105, name: 'Google Calendar Sync', creationTime: ts(daysAgo(60)), lastTimeUsed: ts(daysAgo(14)) }] },
-      { id: 'demo-5', name: 'Sophie Jansen', email: 'sophie.jansen@bedrijf.nl', role: 'User', twoFactorEnabled: false, appPasswords: [{ codeId: 106, name: 'Thunderbird', creationTime: ts(daysAgo(400)), lastTimeUsed: ts(daysAgo(45)) }, { codeId: 107, name: 'Outlook Mobile', creationTime: ts(daysAgo(120)), lastTimeUsed: ts(daysAgo(0)) }] },
-    ];
   }
 
   #mapToUserAppPasswords(u: { id: string; name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }): UserAppPasswords {

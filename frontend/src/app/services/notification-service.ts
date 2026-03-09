@@ -99,18 +99,36 @@ export class NotificationService {
           }),
           catchError(() => of([]))
         );
-      case 'device-compliance':
-        return this.#mobileDeviceService.getDevices(undefined, undefined, undefined, 100).pipe(
-          map((r) =>
-            r.devices
-              .filter((d) => !d.isScreenLockSecure || !d.isEncryptionSecure)
-              .map((d) => `${d.deviceName} – ${d.userName} (${d.userEmail})`)
-          ),
-          catchError(() => of([]))
-        );
+      case 'device-lockscreen':
+        return this.#getDevicesByFilter((d) => !d.isScreenLockSecure);
+      case 'device-encryption':
+        return this.#getDevicesByFilter((d) => !d.isEncryptionSecure);
+      case 'device-os':
+        return this.#getDevicesByFilter((d) => !d.isOsSecure);
+      case 'device-integrity':
+        return this.#getDevicesByFilter((d) => !d.isIntegritySecure);
       default:
         return of([]);
     }
+  }
+
+  #getDevicesByFilter(
+    predicate: (d: { resourceId: string; deviceName: string; userName: string; userEmail: string; isScreenLockSecure: boolean; isEncryptionSecure: boolean; isOsSecure: boolean; isIntegritySecure: boolean }) => boolean
+  ): Observable<string[]> {
+    return this.#mobileDeviceService.getDevices(undefined, undefined, undefined, 100).pipe(
+      map((r) => {
+        const seen = new Set<string>();
+        return r.devices
+          .filter((d) => {
+            if (!predicate(d)) return false;
+            if (seen.has(d.resourceId)) return false;
+            seen.add(d.resourceId);
+            return true;
+          })
+          .map((d) => `${d.deviceName} – ${d.userName} (${d.userEmail})`);
+      }),
+      catchError(() => of([]))
+    );
   }
 
   #aggregateNotifications(data: {
@@ -271,10 +289,10 @@ export class NotificationService {
       if (data.devices.lockScreenCount > 0) {
         add({
           severity: 'warning',
-          title: 'Apparaten zonder lockscreen',
-          description: `${data.devices.lockScreenCount} apparaat(en) hebben geen lockscreen.`,
+          title: 'Apparaten zonder vergrendelscherm beveiliging',
+          description: `${data.devices.lockScreenCount} apparaat(en) hebben geen vergrendelscherm beveiliging.`,
           recommendedActions: ['Vereis lockscreen voor alle apparaten'],
-          notificationType: 'device-compliance',
+          notificationType: 'device-lockscreen',
           source: 'mobile-devices',
           sourceLabel: 'Mobiele Apparaten',
           sourceRoute: '/mobile-devices',
@@ -286,7 +304,31 @@ export class NotificationService {
           title: 'Apparaten zonder encryptie',
           description: `${data.devices.encryptionCount} apparaat(en) zijn niet versleuteld.`,
           recommendedActions: ['Schakel apparaatencryptie in'],
-          notificationType: 'device-compliance',
+          notificationType: 'device-encryption',
+          source: 'mobile-devices',
+          sourceLabel: 'Mobiele Apparaten',
+          sourceRoute: '/mobile-devices',
+        });
+      }
+      if (data.devices.osVersionCount > 0) {
+        add({
+          severity: 'warning',
+          title: 'Apparaten met verouderde OS versie',
+          description: `${data.devices.osVersionCount} apparaat(en) hebben een verouderde besturingssysteemversie.`,
+          recommendedActions: ['Vereis minimale OS-versie voor alle apparaten'],
+          notificationType: 'device-os',
+          source: 'mobile-devices',
+          sourceLabel: 'Mobiele Apparaten',
+          sourceRoute: '/mobile-devices',
+        });
+      }
+      if (data.devices.integrityCount > 0) {
+        add({
+          severity: 'warning',
+          title: 'Apparaten met integriteitsproblemen',
+          description: `${data.devices.integrityCount} apparaat(en) hebben integriteitsproblemen (root/jailbreak).`,
+          recommendedActions: ['Blokkeer geroote of gejailbroken apparaten'],
+          notificationType: 'device-integrity',
           source: 'mobile-devices',
           sourceLabel: 'Mobiele Apparaten',
           sourceRoute: '/mobile-devices',
@@ -313,7 +355,7 @@ export class NotificationService {
     if (data.appPasswords) {
       if (data.appPasswords.allowed && data.appPasswords.totalAppPasswords > 0) {
         add({
-          severity: 'warning',
+          severity: 'critical',
           title: 'App-wachtwoorden actief',
           description: `${data.appPasswords.totalAppPasswords} app-wachtwoord(en) actief. App-wachtwoorden omzeilen 2FA.`,
           recommendedActions: ['Overweeg OAuth-gebaseerde authenticatie waar mogelijk'],
