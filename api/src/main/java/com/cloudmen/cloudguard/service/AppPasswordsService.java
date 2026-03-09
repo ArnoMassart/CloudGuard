@@ -44,8 +44,8 @@ public class AppPasswordsService {
         this.apiFactory = apiFactory;
     }
 
-    public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size, String query) {
-        AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
+    public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size, String query, boolean isTestMode) {
+        AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(adminEmail, this::fetchAllAppPasswords);
         List<UserAppPasswordsDto> allUsers = entry.users();
 
         if (query != null && !query.trim().isEmpty()) {
@@ -78,8 +78,8 @@ public class AppPasswordsService {
         return new AppPasswordPageResponse(pagedUsers, nextToken);
     }
 
-    public AppPasswordOverviewResponse getOverview(String adminEmail) {
-        AppPasswordCacheEntry entry = cache.get(adminEmail, this::fetchAllAppPasswords);
+    public AppPasswordOverviewResponse getOverview(String adminEmail, boolean isTestMode) {
+        AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(adminEmail, this::fetchAllAppPasswords);
         int usersWithAppPasswords = entry.users().size();
         int totalAppPasswords = entry.users().stream()
                 .mapToInt(u -> u.passwords().size())
@@ -146,6 +146,28 @@ public class AppPasswordsService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch app passwords", e);
         }
+    }
+
+    private AppPasswordCacheEntry createMockAppPasswords() {
+        long now = System.currentTimeMillis();
+        long dayMs = 24L * 60 * 60 * 1000;
+
+        AppPasswordDto p1 = new AppPasswordDto(101, "Outlook Desktop", String.valueOf(now - 350 * dayMs), String.valueOf(now - 27 * dayMs));
+        AppPasswordDto p2 = new AppPasswordDto(102, "Thunderbird", String.valueOf(now - 200 * dayMs), String.valueOf(now - 3 * dayMs));
+        AppPasswordDto p3a = new AppPasswordDto(103, "Apple Mail", String.valueOf(now - 180 * dayMs), String.valueOf(now - 1 * dayMs));
+        AppPasswordDto p3b = new AppPasswordDto(104, "Outlook Desktop", String.valueOf(now - 90 * dayMs), null);
+        AppPasswordDto p4 = new AppPasswordDto(105, "Google Calendar Sync", String.valueOf(now - 60 * dayMs), String.valueOf(now - 14 * dayMs));
+        AppPasswordDto p5a = new AppPasswordDto(106, "Thunderbird", String.valueOf(now - 400 * dayMs), String.valueOf(now - 45 * dayMs));
+        AppPasswordDto p5b = new AppPasswordDto(107, "Outlook Mobile", String.valueOf(now - 120 * dayMs), String.valueOf(now));
+
+        List<UserAppPasswordsDto> users = List.of(
+                new UserAppPasswordsDto("demo-1", "Pieter de Vries", "pieter.devries@bedrijf.nl", "User", false, List.of(p1)),
+                new UserAppPasswordsDto("demo-2", "Thomas Mulder", "thomas.mulder@bedrijf.nl", "User", true, List.of(p2)),
+                new UserAppPasswordsDto("demo-3", "Lisa van Berg", "lisa.vanberg@bedrijf.nl", "Admin", true, List.of(p3a, p3b)),
+                new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, List.of(p4)),
+                new UserAppPasswordsDto("demo-5", "Sophie Jansen", "sophie.jansen@bedrijf.nl", "User", false, List.of(p5a, p5b))
+        );
+        return new AppPasswordCacheEntry(users, 5);
     }
 
     private AppPasswordDto mapToDto(Asp asp) {

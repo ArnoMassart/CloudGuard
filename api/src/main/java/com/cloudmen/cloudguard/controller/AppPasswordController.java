@@ -14,6 +14,8 @@ public class AppPasswordController {
     private final AppPasswordsService appPasswordsService;
     private final JwtService jwtService;
 
+    private final boolean isTestMode = true;
+
     public AppPasswordController(AppPasswordsService appPasswordsService, JwtService jwtService) {
         this.appPasswordsService = appPasswordsService;
         this.jwtService = jwtService;
@@ -26,13 +28,13 @@ public class AppPasswordController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String query) {
         String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getAppPasswordsPaged(email, pageToken, size, query);
+        return appPasswordsService.getAppPasswordsPaged(email, pageToken, size, query, isTestMode);
     }
 
     @GetMapping("/overview")
     public AppPasswordOverviewResponse getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
         String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getOverview(email);
+        return appPasswordsService.getOverview(email, isTestMode);
     }
 
     @PostMapping("/refresh")

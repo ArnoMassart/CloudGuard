@@ -9,6 +9,7 @@ import {
   CircleHelp,
   CircleX,
   Clock,
+  MessageCircle,
   Cpu,
   CreditCard,
   ExternalLink,
@@ -63,6 +64,7 @@ export class AppIcons {
   static readonly Loader = Loader;
   static readonly Lock = Lock;
   static readonly LogOut = LogOut;
+  static readonly MessageCircle = MessageCircle;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
   static readonly Settings = Settings;
