@@ -213,6 +213,20 @@ public class NotificationService {
         );
     }
 
+    /**
+     * Get the count of all the notifications (used on dashboard).
+     */
+    public long getNotificationsCount() {
+        return notificationRepository.count();
+    }
+
+    /**
+     * Get the count of all the notifications with severity 'Critical' (used on dashboard).
+     */
+    public long getNotificationsCriticalCount() {
+        return notificationRepository.countBySeverity(NotificationSeverity.CRITICAL);
+    }
+
     private NotificationUserStateDto toUserStateDto(NotificationUserState state) {
         return new NotificationUserStateDto(
                 state.getId(),

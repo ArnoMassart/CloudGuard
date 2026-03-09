@@ -49,19 +49,19 @@ public class GoogleSharedDriveService {
             SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
             List<SharedDriveBasicDetail> drives = cachedData.allDrives();
 
-            long totalDrives = drives.size();
+            int totalDrives = drives.size();
 
-            long orphanDrives = drives.stream().filter(d -> d.totalOrganizers() <= 0).count();
-            long totalLowRisk = drives.stream().filter(d -> d.risk().equals("Laag")).count();
-            long totalMediumRisk = drives.stream().filter(d -> d.risk().equals("Middel")).count();
-            long totalHighRisk = drives.stream().filter(d -> d.risk().equals("Hoog")).count();
-            long totalExternalMembersCount = drives.stream().filter(d -> d.externalMembers() > 0).count();
+        int orphanDrives = (int) drives.stream().filter(d -> d.totalOrganizers() <= 0).count();
+        int totalLowRisk = (int) drives.stream().filter(d -> d.risk().equals("Laag")).count();
+        int totalMediumRisk = (int) drives.stream().filter(d -> d.risk().equals("Middel")).count();
+        int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("Hoog")).count();
+        int totalExternalMembersCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
 
-            long securityScore = totalDrives == 0 ? 0 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
+        int securityScore = totalDrives == 0 ? 0 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
 
-            long notOnlyDomainUsersAllowedCount = drives.stream().filter(d -> !d.onlyDomainUsersAllowed()).count();
-            long notOnlyMembersCanAccessCount = drives.stream().filter(d -> !d.onlyMembersCanAccess()).count();
-            long externalMembersDriveCount = drives.stream().filter(d -> d.externalMembers() > 0).count();
+        int notOnlyDomainUsersAllowedCount = (int) drives.stream().filter(d -> !d.onlyDomainUsersAllowed()).count();
+        int notOnlyMembersCanAccessCount = (int) drives.stream().filter(d -> !d.onlyMembersCanAccess()).count();
+        int externalMembersDriveCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
 
             return new SharedDriveOverviewResponse(
                     totalDrives,

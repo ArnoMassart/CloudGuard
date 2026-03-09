@@ -44,16 +44,22 @@ export class NotificationService {
         const primaryDomain = primary?.domainName;
 
         const dns$ = primaryDomain
-          ? this.#dnsService.getDnsRecords(primaryDomain).pipe(
-              catchError(() => of<DnsRecordResponse>({ domain: primaryDomain, rows: [] }))
-            )
-          : of<DnsRecordResponse>({ domain: '', rows: [] });
+          ? this.#dnsService
+              .getDnsRecords(primaryDomain)
+              .pipe(
+                catchError(() =>
+                  of<DnsRecordResponse>({ domain: primaryDomain, rows: [], securityScore: 0 })
+                )
+              )
+          : of<DnsRecordResponse>({ domain: '', rows: [], securityScore: 0 });
 
         return forkJoin({
           dns: dns$,
           users: this.#userService.getUsersPageOverview().pipe(catchError(() => of(null))),
           drives: this.#driveService.getDrivesPageOverview().pipe(catchError(() => of(null))),
-          devices: this.#mobileDeviceService.getMobileDevicesPageOverview().pipe(catchError(() => of(null))),
+          devices: this.#mobileDeviceService
+            .getMobileDevicesPageOverview()
+            .pipe(catchError(() => of(null))),
           appPasswords: this.#appPasswordsService.getOverview().pipe(catchError(() => of(null))),
           groups: this.#groupService.getGroupsOverview().pipe(catchError(() => of(null))),
           oAuth: this.#oAuthService.getOAuthPageOverview().pipe(catchError(() => of(null))),
@@ -89,9 +95,7 @@ export class NotificationService {
         return this.#driveService.getDrives(100).pipe(
           map((r) => {
             if (notification.notificationType === 'drive-orphan') {
-              return r.drives
-                .filter((d) => d.totalOrganizers <= 0)
-                .map((d) => d.name);
+              return r.drives.filter((d) => d.totalOrganizers <= 0).map((d) => d.name);
             }
             return r.drives
               .filter((d) => d.externalMembers > 0)
@@ -113,7 +117,16 @@ export class NotificationService {
   }
 
   #getDevicesByFilter(
-    predicate: (d: { resourceId: string; deviceName: string; userName: string; userEmail: string; isScreenLockSecure: boolean; isEncryptionSecure: boolean; isOsSecure: boolean; isIntegritySecure: boolean }) => boolean
+    predicate: (d: {
+      resourceId: string;
+      deviceName: string;
+      userName: string;
+      userEmail: string;
+      isScreenLockSecure: boolean;
+      isEncryptionSecure: boolean;
+      isOsSecure: boolean;
+      isIntegritySecure: boolean;
+    }) => boolean
   ): Observable<string[]> {
     return this.#mobileDeviceService.getDevices(undefined, undefined, undefined, 100).pipe(
       map((r) => {
@@ -133,7 +146,11 @@ export class NotificationService {
 
   #aggregateNotifications(data: {
     dns: DnsRecordResponse;
-    users: { withoutTwoFactor: number; activeLongNoLoginCount: number; inactiveRecentLoginCount: number } | null;
+    users: {
+      withoutTwoFactor: number;
+      activeLongNoLoginCount: number;
+      inactiveRecentLoginCount: number;
+    } | null;
     drives: {
       orphanDrives: number;
       notOnlyDomainUsersAllowedCount: number;
@@ -182,7 +199,9 @@ export class NotificationService {
       add({
         severity: 'critical',
         title: 'DNS records ontbreken of niet correct',
-        description: `${typesList} ${criticalDnsTypes.size === 1 ? 'ontbreekt' : 'ontbreken'} of ${criticalDnsTypes.size === 1 ? 'is niet' : 'zijn niet'} correct geconfigureerd.`,
+        description: `${typesList} ${criticalDnsTypes.size === 1 ? 'ontbreekt' : 'ontbreken'} of ${
+          criticalDnsTypes.size === 1 ? 'is niet' : 'zijn niet'
+        } correct geconfigureerd.`,
         recommendedActions: ['Controleer en configureer alle DNS records via je DNS provider'],
         notificationType: 'dns-critical',
         source: 'domain-dns',
@@ -195,7 +214,9 @@ export class NotificationService {
       add({
         severity: 'warning',
         title: 'DNS records vereisen aandacht',
-        description: `${typesList} ${attentionDnsTypes.size === 1 ? 'kan' : 'kunnen'} worden verbeterd.`,
+        description: `${typesList} ${
+          attentionDnsTypes.size === 1 ? 'kan' : 'kunnen'
+        } worden verbeterd.`,
         recommendedActions: ['Controleer de DNS configuratie via je DNS provider'],
         notificationType: 'dns-attention',
         source: 'domain-dns',

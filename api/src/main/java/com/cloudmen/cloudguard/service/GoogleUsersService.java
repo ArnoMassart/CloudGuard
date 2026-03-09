@@ -98,18 +98,18 @@ public class GoogleUsersService {
         List<User> googleUsers = cachedData.allUsers();
         LocalDate now = LocalDate.now();
 
-        long totalUsers = googleUsers.size();
-        long withoutTwoFactor = googleUsers.stream().filter(user -> !user.getSuspended() && !user.getIsEnrolledIn2Sv()).count();
-        long adminUsers = googleUsers.stream().filter(User::getIsAdmin).count();
-        long securityScore = calculateSecurityScore(googleUsers);
+        int totalUsers = googleUsers.size();
+        int withoutTwoFactor = (int) googleUsers.stream().filter(user -> !user.getSuspended() && !user.getIsEnrolledIn2Sv()).count();
+        int adminUsers = (int) googleUsers.stream().filter(User::getIsAdmin).count();
+        int securityScore = calculateSecurityScore(googleUsers);
 
-        long activeLongNoLoginCount = googleUsers.stream().filter(user -> {
+        int activeLongNoLoginCount = (int) googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
             LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
             return !Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.YEARS.between(loginDate, now) >= 1;
         }).count();
 
-        long inactiveRecentLoginCount = googleUsers.stream().filter(user -> {
+        int inactiveRecentLoginCount = (int) googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
             LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
             return Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) <= 7;

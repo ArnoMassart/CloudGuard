@@ -4,6 +4,7 @@ import java.util.List;
 
 public record DnsRecordResponseDto(
         String domain,
-        List<DnsRecordDto> rows
+        List<DnsRecordDto> rows,
+        int securityScore
 ) {
 }

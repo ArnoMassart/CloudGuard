@@ -27,38 +27,9 @@ export class DomainDns implements OnInit {
   readonly expandedDnsRow = signal<string | null>(null);
 
   readonly totalDomains = computed(() => this.domains().length);
-  readonly validDnsRecords = computed(() =>
-    this.rows().filter((r) => r.status === 'VALID').length
-  );
+  readonly validDnsRecords = computed(() => this.rows().filter((r) => r.status === 'VALID').length);
 
-  /** Security score */
-  readonly securityScore = computed(() => {
-    const rows = this.rows();
-    if (rows.length === 0) return 0;
-
-    const importanceWeight: Record<string, number> = {
-      REQUIRED: 15,
-      RECOMMENDED: 10,
-      OPTIONAL: 5,
-    };
-
-    const statusMultiplier: Record<string, number> = {
-      VALID: 1,
-      OK: 0.5,
-      ATTENTION: 0.5,
-      ACTION_REQUIRED: 0,
-      ERROR: 0,
-    };
-
-    let score = 0;
-    for (const row of rows) {
-      const weight = importanceWeight[row.importance ?? 'OPTIONAL'] ?? 5;
-      const mult = statusMultiplier[row.status] ?? 0;
-      score += weight * mult;
-    }
-
-    return Math.round(Math.min(100, score));
-  });
+  securityScore = signal<number>(0);
 
   /** Controls sorted by severity */
   readonly securityControlsRows = computed(() => {
@@ -69,13 +40,9 @@ export class DomainDns implements OnInit {
   });
 
   readonly hasCriticalProblems = computed(() =>
-    this.rows().some(
-      (r) => r.status === 'ACTION_REQUIRED' || r.status === 'ERROR'
-    )
+    this.rows().some((r) => r.status === 'ACTION_REQUIRED' || r.status === 'ERROR')
   );
-  readonly hasWarnings = computed(() =>
-    this.rows().some((r) => r.status === 'ATTENTION')
-  );
+  readonly hasWarnings = computed(() => this.rows().some((r) => r.status === 'ATTENTION'));
 
   ngOnInit() {
     this.#loadDomains();
@@ -192,7 +159,7 @@ export class DomainDns implements OnInit {
     const tips: Record<string, string> = {
       SPF: 'Als geen andere servers mail voor dit domein verzenden, stel dan in: v=spf1 include:_spf.google.com ~all',
       DKIM: 'Configureer DKIM in Google Admin voor uw domein',
-      DMARC: 'Overweeg policy te verhogen naar \'reject\' voor maximale beveiliging',
+      DMARC: "Overweeg policy te verhogen naar 'reject' voor maximale beveiliging",
       MX: 'Wijzig MX records naar Google mail servers (bijv. ASPMX.L.GOOGLE.COM)',
       DNSSEC: 'Schakel DNSSEC in bij je domeinregistrar voor extra beveiliging',
       CAA: 'Voeg CAA records toe om te bepalen welke certificaatautoriteiten certificaten voor uw domein mogen uitgeven',
@@ -262,12 +229,13 @@ export class DomainDns implements OnInit {
     this.dnsService.getDnsRecords(domain).subscribe({
       next: (res) => {
         this.rows.set(res.rows);
+        this.securityScore.set(res.securityScore);
         this.isLoadingDns.set(false);
       },
       error: (err) => {
         console.error('DNS load failed', err);
         this.isLoadingDns.set(false);
-      }
+      },
     });
   }
 }
