@@ -1,0 +1,42 @@
+package com.cloudmen.cloudguard.controller;
+
+import com.cloudmen.cloudguard.domain.feedback.NotificationFeedback;
+import com.cloudmen.cloudguard.domain.feedback.NotificationFeedbackRequest;
+import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.NotificationFeedbackService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/notifications/feedback")
+public class NotificationFeedbackController {
+    private NotificationFeedbackService notificationFeedbackService;
+    private JwtService jwtService;
+
+    public NotificationFeedbackController(NotificationFeedbackService notificationFeedbackService, JwtService jwtService) {
+        this.notificationFeedbackService = notificationFeedbackService;
+        this.jwtService = jwtService;
+    }
+
+    @GetMapping
+    public ResponseEntity<Boolean> hasFeedback(
+            @CookieValue(name="AuthToken") String token,
+            @RequestParam String source,
+            @RequestParam String notificationType
+
+    ){
+        String userId = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(notificationFeedbackService.hasFeedback(userId,source,notificationType));
+
+    }
+
+    @PostMapping
+    public ResponseEntity<?> submitFeedback(
+            @CookieValue(name="AuthToken") String token,
+            @RequestBody NotificationFeedbackRequest request
+    ){
+        String userId = jwtService.validateInternalToken(token);
+        notificationFeedbackService.submitFeedback(userId, request.source(), request.notificationType(), request.feedbackText());
+        return ResponseEntity.ok().build();
+    }
+}
