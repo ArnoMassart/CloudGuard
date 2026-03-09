@@ -9,6 +9,7 @@ import {
   Notification,
   NotificationSeverity,
 } from '../../../services/notification-service';
+import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -19,6 +20,7 @@ import {
 export class ReportsReactions implements OnInit {
   readonly Icons = AppIcons;
   readonly #notificationService = inject(NotificationService);
+  readonly #notificationFeedbackService = inject(NotificationFeedbackService);
 
   readonly notifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
@@ -26,6 +28,11 @@ export class ReportsReactions implements OnInit {
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
+
+  readonly feedbackModalOpen = signal<string | null>(null);  // notification id when open
+  readonly feedbackText = signal('');
+  readonly feedbackSubmitted = signal<Set<string>>(new Set());  // ids that have feedback 
+  readonly isSubmitting = signal(false);
 
   readonly filteredNotifications = computed(() => {
     const list = this.notifications();
@@ -59,9 +66,11 @@ export class ReportsReactions implements OnInit {
     this.expandedIds.set(new Set());
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
+    this.feedbackSubmitted.set(new Set());
     this.#notificationService.getNotifications().subscribe({
       next: (list) => {
         this.notifications.set(list);
+        this.#loadFeedbackStatus(list);
         this.isLoading.set(false);
       },
       error: () => {
@@ -145,5 +154,43 @@ export class ReportsReactions implements OnInit {
 
   isLoadingDetails(id: string): boolean {
     return this.loadingDetailsIds().has(id);
+  }
+
+  openFeedbackModal(n: Notification) {
+    this.feedbackModalOpen.set(n.id);
+    this.feedbackText.set('');
+  }
+
+  closeFeedbackModal() {
+    this.feedbackModalOpen.set(null);
+  }
+
+  #loadFeedbackStatus(list: Notification[]) {
+    list.forEach((n) => {
+      this.#notificationFeedbackService.hasFeedback(n.source, n.notificationType).subscribe({
+        next: (has) => {
+          if (has) {
+            this.feedbackSubmitted.update((s) => new Set(s).add(n.id));
+          }
+        },
+      });
+    });
+  }
+
+  submitFeedback(n: Notification) {
+    const text = this.feedbackText().trim();
+    if (!text) return;
+    this.isSubmitting.set(true);
+
+    this.#notificationFeedbackService.submitFeedback(n.source,n.notificationType, text).subscribe({
+      next: () => {
+        this.feedbackSubmitted.update(s => new Set(s).add(n.id));
+        this.closeFeedbackModal();
+        this.isSubmitting.set(false);
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+      }
+    });
   }
 }

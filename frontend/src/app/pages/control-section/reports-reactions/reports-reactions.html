@@ -207,9 +207,17 @@
                         }
                         <div class="flex flex-wrap gap-2 mt-6">
                             <button
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors">
+                                (click)="openFeedbackModal(n); $event.stopPropagation()"
+                                [disabled]="feedbackSubmitted().has(n.id)"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                [class.bg-primary]="!feedbackSubmitted().has(n.id)"
+                                [class.text-white]="!feedbackSubmitted().has(n.id)"
+                                [class.hover:bg-primary/90]="!feedbackSubmitted().has(n.id)"
+                                [class.bg-gray-200]="feedbackSubmitted().has(n.id)"
+                                [class.text-gray-500]="feedbackSubmitted().has(n.id)"
+                                [class.cursor-not-allowed]="feedbackSubmitted().has(n.id)">
                                 <i-lucide [img]="Icons.MessageCircle" size="16" />
-                                Stuur feedback
+                                {{ feedbackSubmitted().has(n.id) ? 'Feedback verzonden' : 'Stuur feedback' }}
                             </button>
                             <a [routerLink]="n.sourceRoute"
                                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
@@ -217,6 +225,7 @@
                                 Markeer als opgelost
                             </a>
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -224,4 +233,34 @@
         </div>
         }
     </div>
+
+    @if (feedbackModalOpen()) {
+        @let n = notifications().find(nn => nn.id === feedbackModalOpen());
+        @if (n) {
+        <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="closeFeedbackModal()">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl" (click)="$event.stopPropagation()">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Feedback voor: {{ n.title }}</h3>
+                <textarea
+                    [value]="feedbackText()"
+                    (input)="feedbackText.set($any($event.target).value)"
+                    rows="4"
+                    class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="Uw feedback..."></textarea>
+                <div class="flex gap-2 mt-4">
+                    <button
+                        (click)="submitFeedback(n)"
+                        [disabled]="isSubmitting() || !feedbackText().trim()"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        {{ isSubmitting() ? 'Versturen...' : 'Verstuur' }}
+                    </button>
+                    <button
+                        (click)="closeFeedbackModal()"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                        Annuleren
+                    </button>
+                </div>
+            </div>
+        </div>
+        }
+    }
 </div>
