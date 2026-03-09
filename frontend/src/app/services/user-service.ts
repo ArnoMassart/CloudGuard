@@ -5,6 +5,7 @@ import { UserOrgDetail } from '../models/UserOrgDetails';
 import { Observable } from 'rxjs';
 import { UserPageResponse } from '../models/UserPageResponse';
 import { UserOverviewResponse } from '../models/UserOverviewResponse';
+import { UsersWithoutTwoFactorResponse } from '../models/UsersWithoutTwoFactorResponse';
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +40,12 @@ export class UserService {
 
   getUsersPageOverview(): Observable<UserOverviewResponse> {
     return this.#http.get<UserOverviewResponse>(`${this.#API_URL}/overview`, {
+      withCredentials: true,
+    });
+  }
+
+  getUsersWithoutTwoFactor(): Observable<UsersWithoutTwoFactorResponse> {
+    return this.#http.get<UsersWithoutTwoFactorResponse>(`${this.#API_URL}/without-two-factor`, {
       withCredentials: true,
     });
   }

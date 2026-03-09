@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserPageResponse;
+import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
 import com.cloudmen.cloudguard.service.GoogleUsersService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.UserService;
@@ -34,6 +35,17 @@ public class GoogleUsersController {
 
         String adminEmail = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(googleUserService.getWorkspaceUsersPaged(adminEmail, pageToken, size, query));
+    }
+
+//for notifications
+    @GetMapping("/without-two-factor")
+    public ResponseEntity<UsersWithoutTwoFactorResponse> getUsersWithoutTwoFactor(
+            @CookieValue(name = "AuthToken", required = false) String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String adminEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleUserService.getUsersWithoutTwoFactor(adminEmail));
     }
 
     @GetMapping("/overview")

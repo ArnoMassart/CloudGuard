@@ -23,6 +23,9 @@ export class ReportsReactions implements OnInit {
   readonly notifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved'>('all');
+  readonly expandedIds = signal<Set<string>>(new Set());
+  readonly detailsCache = signal<Record<string, string[]>>({});
+  readonly loadingDetailsIds = signal<Set<string>>(new Set());
 
   readonly filteredNotifications = computed(() => {
     const list = this.notifications();
@@ -53,6 +56,9 @@ export class ReportsReactions implements OnInit {
 
   #loadNotifications() {
     this.isLoading.set(true);
+    this.expandedIds.set(new Set());
+    this.detailsCache.set({});
+    this.loadingDetailsIds.set(new Set());
     this.#notificationService.getNotifications().subscribe({
       next: (list) => {
         this.notifications.set(list);
@@ -79,5 +85,62 @@ export class ReportsReactions implements OnInit {
     if (severity === 'critical') return 'Kritiek';
     if (severity === 'warning') return 'Waarschuwing';
     return 'Info';
+  }
+
+  supportsDetails(notificationType: string): boolean {
+    return [
+      'user-control',
+      'group-external',
+      'oauth-high-risk',
+      'drive-orphan',
+      'drive-external',
+      'device-compliance',
+    ].includes(notificationType);
+  }
+
+  toggleExpand(n: Notification) {
+    const id = n.id;
+    const expanded = new Set(this.expandedIds());
+    if (expanded.has(id)) {
+      expanded.delete(id);
+    } else {
+      expanded.add(id);
+      const cache = this.detailsCache();
+      if (!(id in cache)) {
+        const loading = new Set(this.loadingDetailsIds());
+        loading.add(id);
+        this.loadingDetailsIds.set(loading);
+        this.#notificationService.getNotificationDetails(n).subscribe({
+          next: (details) => {
+            this.detailsCache.update((c) => ({ ...c, [id]: details }));
+            this.loadingDetailsIds.update((s) => {
+              const next = new Set(s);
+              next.delete(id);
+              return next;
+            });
+          },
+          error: () => {
+            this.loadingDetailsIds.update((s) => {
+              const next = new Set(s);
+              next.delete(id);
+              return next;
+            });
+          },
+        });
+      }
+    }
+    this.expandedIds.set(expanded);
+  }
+
+  isExpanded(id: string): boolean {
+    return this.expandedIds().has(id);
+  }
+
+  getDetails(id: string): string[] {
+    return this.detailsCache()[id] ?? [];
+  }
+
+  isLoadingDetails(id: string): boolean {
+    return this.loadingDetailsIds().has(id);
   }
 }

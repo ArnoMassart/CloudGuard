@@ -8,6 +8,7 @@ import { DriveService } from './drive-service';
 import { MobileDeviceService } from './mobile-device-service';
 import { AppPasswordsService } from './app-password-service';
 import { GroupService } from './group-service';
+import { OAuthService } from './o-auth-service';
 
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
 
@@ -34,6 +35,7 @@ export class NotificationService {
   readonly #mobileDeviceService = inject(MobileDeviceService);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly #groupService = inject(GroupService);
+  readonly #oAuthService = inject(OAuthService);
 
   getNotifications(): Observable<Notification[]> {
     return this.#domainService.getDomains().pipe(
@@ -54,10 +56,61 @@ export class NotificationService {
           devices: this.#mobileDeviceService.getMobileDevicesPageOverview().pipe(catchError(() => of(null))),
           appPasswords: this.#appPasswordsService.getOverview().pipe(catchError(() => of(null))),
           groups: this.#groupService.getGroupsOverview().pipe(catchError(() => of(null))),
+          oAuth: this.#oAuthService.getOAuthPageOverview().pipe(catchError(() => of(null))),
         });
       }),
       map((data) => this.#aggregateNotifications(data))
     );
+  }
+
+  getNotificationDetails(notification: Notification): Observable<string[]> {
+    switch (notification.notificationType) {
+      case 'user-control':
+        return this.#userService.getUsersWithoutTwoFactor().pipe(
+          map((r) => r.users.map((u) => `${u.fullName} (${u.email})`)),
+          catchError(() => of([]))
+        );
+      case 'group-external':
+        return this.#groupService.getOrgGroups(undefined, undefined, 200).pipe(
+          map((r) =>
+            r.groups
+              .filter((g) => g.externalMembers > 0)
+              .map((g) => `${g.name} (${g.externalMembers} externe leden)`)
+          ),
+          catchError(() => of([]))
+        );
+      case 'oauth-high-risk':
+        return this.#oAuthService.getApps(50, 'high').pipe(
+          map((r) => r.apps.map((a) => `${a.name} (${a.totalUsers} gebruikers)`)),
+          catchError(() => of([]))
+        );
+      case 'drive-orphan':
+      case 'drive-external':
+        return this.#driveService.getDrives(100).pipe(
+          map((r) => {
+            if (notification.notificationType === 'drive-orphan') {
+              return r.drives
+                .filter((d) => d.totalOrganizers <= 0)
+                .map((d) => d.name);
+            }
+            return r.drives
+              .filter((d) => d.externalMembers > 0)
+              .map((d) => `${d.name} (${d.externalMembers} externe leden)`);
+          }),
+          catchError(() => of([]))
+        );
+      case 'device-compliance':
+        return this.#mobileDeviceService.getDevices(undefined, undefined, undefined, 100).pipe(
+          map((r) =>
+            r.devices
+              .filter((d) => !d.isScreenLockSecure || !d.isEncryptionSecure)
+              .map((d) => `${d.deviceName} – ${d.userName} (${d.userEmail})`)
+          ),
+          catchError(() => of([]))
+        );
+      default:
+        return of([]);
+    }
   }
 
   #aggregateNotifications(data: {
@@ -77,6 +130,7 @@ export class NotificationService {
     } | null;
     appPasswords: { totalAppPasswords: number; allowed: boolean } | null;
     groups: { groupsWithExternal: number } | null;
+    oAuth: { totalHighRiskApps: number } | null;
   }): Notification[] {
     const notifications: Notification[] = [];
     let id = 0;
@@ -238,6 +292,22 @@ export class NotificationService {
           sourceRoute: '/mobile-devices',
         });
       }
+    }
+
+    if (data.oAuth && data.oAuth.totalHighRiskApps > 0) {
+      add({
+        severity: 'critical',
+        title: 'Third-party applicaties met te veel toegang',
+        description: `${data.oAuth.totalHighRiskApps} applicatie(s) hebben toegang tot gevoelige gegevens of admin-functies.`,
+        recommendedActions: [
+          'Controleer de toegangsrechten voor deze applicaties',
+          'Herroep toegang voor apps die niet meer nodig zijn',
+        ],
+        notificationType: 'oauth-high-risk',
+        source: 'app-access',
+        sourceLabel: 'App Toegang',
+        sourceRoute: '/app-access',
+      });
     }
 
     if (data.appPasswords) {
