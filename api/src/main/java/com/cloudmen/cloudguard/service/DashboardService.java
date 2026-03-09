@@ -47,7 +47,7 @@ public class DashboardService {
         return new DashboardPageResponse(
                 scores,
                 overallScore,
-                DateTimeConverter.parseToPattern(lastUpdated, "d MMMM yyyy, HH:mm")
+                DateTimeConverter.parseWithPattern(lastUpdated, "d MMMM yyyy, HH:mm")
         );
     }
 
@@ -59,21 +59,25 @@ public class DashboardService {
     }
 
     private DashboardScores getAllScores(String loggedInEmail) {
-        // 1. Start de 6 standaard modules tegelijkertijd op (Net als voorheen)
         CompletableFuture<Integer> usersFuture = CompletableFuture.supplyAsync(() ->
                 usersService.getUsersPageOverview(loggedInEmail).securityScore());
+
         CompletableFuture<Integer> groupsFuture = CompletableFuture.supplyAsync(() ->
                 groupsService.getGroupsOverview(loggedInEmail).securityScore());
+
         CompletableFuture<Integer> drivesFuture = CompletableFuture.supplyAsync(() ->
                 sharedDriveService.getDrivesPageOverview(loggedInEmail).securityScore());
+
         CompletableFuture<Integer> devicesFuture = CompletableFuture.supplyAsync(() ->
                 mobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, IsTestmode).securityScore());
+
         CompletableFuture<Integer> appAccessFuture = CompletableFuture.supplyAsync(() ->
                 oAuthService.getOAuthPageOverview(loggedInEmail).securityScore());
+
         CompletableFuture<Integer> appPasswordsFuture = CompletableFuture.supplyAsync(() ->
                 passwordsService.getOverview(loggedInEmail, IsTestmode).securityScore());
+        
 
-        // 2. De DNS Berekening: Haal asynchroon de domeinen op, en vuur daarna per domein een check af
         CompletableFuture<Integer> dnsAverageFuture = CompletableFuture.supplyAsync(() ->
                         domainService.getAllDomains(loggedInEmail))
                 .thenCompose(domains -> {
@@ -81,22 +85,18 @@ public class DashboardService {
                         return CompletableFuture.completedFuture(0);
                     }
 
-                    // Maak voor ELK domein een nieuwe, parallelle DNS-check aan
                     List<CompletableFuture<Integer>> dnsTasks = domains.stream()
                             .map(dto -> CompletableFuture.supplyAsync(() ->
                                     dnsRecordsService.getImportantRecords(dto.domainName(), "google").securityScore()
                             ))
                             .toList();
 
-                    // Wacht tot álle individuele DNS checks van alle domeinen klaar zijn
                     return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
                             .thenApply(v -> {
-                                // Tel alle voltooide scores bij elkaar op
                                 int totalScore = dnsTasks.stream()
                                         .mapToInt(CompletableFuture::join)
                                         .sum();
 
-                                // Bereken het gemiddelde. (Geen * 100 meer nodig, want de scores zijn al 0-100)
                                 return Math.round((float) totalScore / domains.size());
                             });
                 });

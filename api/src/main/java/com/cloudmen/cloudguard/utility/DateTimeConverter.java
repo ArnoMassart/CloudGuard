@@ -30,7 +30,7 @@ public class DateTimeConverter {
                 .toLocalDate();
     }
 
-    public static String parseToPattern(LocalDateTime value, String pattern) {
+    public static String parseWithPattern(LocalDateTime value, String pattern) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern).withLocale(new Locale("nl", "BE"));
 
         return value.format(formatter);
