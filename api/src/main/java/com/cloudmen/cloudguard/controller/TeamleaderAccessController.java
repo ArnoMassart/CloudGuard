@@ -40,30 +40,16 @@ public class TeamleaderAccessController {
         }
     }
 
-    @GetMapping("/test-company")
-    public ResponseEntity<Map<String, Object>> testTeamleaderConnection(@CookieValue(name = "AuthToken", required = false) String token) {
+    @GetMapping("/check")
+    public ResponseEntity<Map<String, Boolean>> checkAccess(@CookieValue(name = "AuthToken", required = false) String token) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        HttpHeaders headers = teamleaderAccessService.createHeaders();
+        boolean hasAccess = teamleaderAccessService.hasCloudGuardAccess(loggedInEmail);
 
-        String id = teamleaderAccessService.getCompanyIdByEmail(loggedInEmail, headers);
-
-        Map<String, Object> rawData = teamleaderAccessService.getCompanyDetails(id, headers);
-        return ResponseEntity.ok(rawData);
-    }
-
-    @GetMapping("/test-company")
-    public ResponseEntity<Boolean> testTeamleader(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String loggedInEmail = jwtService.validateInternalToken(token);
-
-        return ResponseEntity.ok(teamleaderAccessService.hasCloudGuardAccess(loggedInEmail));
+        return ResponseEntity.ok(Map.of("hasAccess", hasAccess));
     }
 }

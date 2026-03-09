@@ -58,6 +58,7 @@ public class TeamleaderAccessService {
 
     public boolean hasCloudGuardAccess(String loggedInEmail) {
         try {
+            log.info("Checking CloudGuard Access");
             return executeAccessCheckFlow(loggedInEmail);
         }catch (HttpClientErrorException.Unauthorized e) {
         log.warn("Teamleader token verlopen (401), proberen te vernieuwen...");
@@ -118,7 +119,7 @@ public class TeamleaderAccessService {
         return false;
     }
 
-    public Map<String, Object> getCompanyDetails(String companyId, HttpHeaders headers) {
+    private Map<String, Object> getCompanyDetails(String companyId, HttpHeaders headers) {
         String infoBody = "{\"id\": \"" + companyId + "\"}";
         HttpEntity<String> entity = new HttpEntity<>(infoBody, headers);
 
@@ -130,7 +131,7 @@ public class TeamleaderAccessService {
 
         return (Map<String, Object>) response.getBody().get("data");    }
 
-    public String getCompanyIdByEmail(String email, HttpHeaders headers) {
+    private String getCompanyIdByEmail(String email, HttpHeaders headers) {
         String body = """
         {
           "filter": {
@@ -159,7 +160,7 @@ public class TeamleaderAccessService {
         return null;
     }
 
-    public HttpHeaders createHeaders() {
+    private HttpHeaders createHeaders() {
         TeamleaderCredential creds = getCredentials();
 
         HttpHeaders headers = new HttpHeaders();
