@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.TeamleaderAccessService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,7 +48,22 @@ public class TeamleaderAccessController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        Map<String, Object> rawData = teamleaderAccessService.getRawCompanyData(loggedInEmail);
+        HttpHeaders headers = teamleaderAccessService.createHeaders();
+
+        String id = teamleaderAccessService.getCompanyIdByEmail(loggedInEmail, headers);
+
+        Map<String, Object> rawData = teamleaderAccessService.getCompanyDetails(id, headers);
         return ResponseEntity.ok(rawData);
+    }
+
+    @GetMapping("/test-company")
+    public ResponseEntity<Boolean> testTeamleader(@CookieValue(name = "AuthToken", required = false) String token) {
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(teamleaderAccessService.hasCloudGuardAccess(loggedInEmail));
     }
 }

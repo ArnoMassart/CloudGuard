@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.TeamleaderCredential;
 import com.cloudmen.cloudguard.repository.TeamleaderCredentialRepository;
+import org.hibernate.annotations.NotFound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 
 @Service
@@ -30,6 +32,7 @@ public class TeamleaderAccessService {
     @Value("${teamleader.client.id}") private String clientId;
     @Value("${teamleader.client.secret}") private String clientSecret;
     @Value("${teamleader.customfield.cloudguard.id}") private String cloudGuardFieldId;
+    @Value("${teamleader.api.base}") private String teamleaderApiBase;
 
     public TeamleaderAccessService(TeamleaderCredentialRepository repository) {
         this.repository = repository;
@@ -55,44 +58,115 @@ public class TeamleaderAccessService {
 
     public boolean hasCloudGuardAccess(String loggedInEmail) {
         try {
-            Map<String, Object> rawData = getRawCompanyData(loggedInEmail);
-            return parseAccessFromResponse(rawData);
-        } catch (Exception e) {
-            log.error("Gatekeeper check faalde {}", e.getMessage());
+            return executeAccessCheckFlow(loggedInEmail);
+        }catch (HttpClientErrorException.Unauthorized e) {
+        log.warn("Teamleader token verlopen (401), proberen te vernieuwen...");
+
+        // Als het token verlopen is, probeer het te vernieuwen
+        if (refreshTokens()) {
+            log.info("Token succesvol vernieuwd, API call opnieuw uitvoeren.");
+            try {
+                // Tweede poging met het nieuwe token
+                return executeAccessCheckFlow(loggedInEmail);
+            } catch (Exception ex) {
+                log.error("API Call faalde definitief na token refresh: {}", ex.getMessage());
+                return false;
+            }
+        }
+
+        log.error("Vernieuwen van Teamleader token is mislukt.");
+        return false;
+
+    } catch (Exception e) {
+        log.error("Onverwachte fout tijdens Teamleader API Call: {}", e.getMessage());
+        return false; // Veilige fallback voor de Gatekeeper
+    }
+
+    }
+
+    private boolean executeAccessCheckFlow(String domainEmail) {
+        HttpHeaders headers = createHeaders();
+
+        String companyId = getCompanyIdByEmail(domainEmail, headers);
+        if (companyId == null) {
+            log.info("Geen bedrijf gevonden voor domein: {}", domainEmail);
             return false;
         }
-    }
 
-    public Map<String, Object> getRawCompanyData(String userEmail) {
-        if (userEmail == null || !userEmail.contains("@")) return Map.of("error", "Ongeldig e-mailadres");
-        String domain = userEmail.substring(userEmail.indexOf("@") + 1);
-
-        try {
-            return callTeamleaderApi(domain);
-        } catch (HttpClientErrorException.Unauthorized e) {
-            log.warn("Token verlopen, proberen te vernieuwen...");
-            if (refreshTokens()) {
-                return callTeamleaderApi(domain);
-            }
-            return Map.of("error", "Vernieuwen van token mislukt.");
-        } catch (Exception e) {
-            return Map.of("error", "API Call faalde: " + e.getMessage());
+        Map<String, Object> companyDetails = getCompanyDetails(companyId, headers);
+        if (companyDetails == null) {
+            return false;
         }
+
+        return extractCloudGuardAccessValue(companyDetails);
     }
 
-    private Map<String, Object> callTeamleaderApi(String domain) {
+    private boolean extractCloudGuardAccessValue(Map<String, Object> companyDetails) {
+        List<Map<String, Object>> customFields = (List<Map<String, Object>>) companyDetails.get("custom_fields");
+
+        if (customFields != null) {
+            for (Map<String, Object> field : customFields) {
+                Map<String, Object> definition = (Map<String, Object>) field.get("definition");
+
+                if (definition != null && cloudGuardFieldId.equals(definition.get("id"))) {
+                    Object value = field.get("value");
+                    return Boolean.TRUE.equals(value);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public Map<String, Object> getCompanyDetails(String companyId, HttpHeaders headers) {
+        String infoBody = "{\"id\": \"" + companyId + "\"}";
+        HttpEntity<String> entity = new HttpEntity<>(infoBody, headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                teamleaderApiBase + "/companies.info",
+                entity,
+                Map.class
+        );
+
+        return (Map<String, Object>) response.getBody().get("data");    }
+
+    public String getCompanyIdByEmail(String email, HttpHeaders headers) {
+        String body = """
+        {
+          "filter": {
+            "email": {
+              "type": "primary",
+              "email": "%s"
+            }
+          }
+        }
+        """.formatted(email);
+
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                teamleaderApiBase+"/companies.list",
+                entity,
+                Map.class
+        );
+
+        List<Map<String, Object>> data = (List<Map<String, Object>>) response.getBody().get("data");
+        if (data != null && !data.isEmpty()) {
+            return (String) data.get(0).get("id");
+        }
+
+        return null;
+    }
+
+    public HttpHeaders createHeaders() {
         TeamleaderCredential creds = getCredentials();
+
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(creds.getAccessToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String body = "{\"filter\": {\"email\": {\"type\": \"substring\", \"match\": \"" + domain + "\"}}, \"page\": {\"size\": 1}}";
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                "https://api.focus.teamleader.eu/companies.list",
-                new HttpEntity<>(body, headers),
-                Map.class
-        );
-        return response.getBody();
+        return headers;
     }
 
     private boolean refreshTokens() {
@@ -119,24 +193,6 @@ public class TeamleaderAccessService {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private boolean parseAccessFromResponse(Map<String, Object> body) {
-        if (body == null || !body.containsKey("data")) return false;
-        List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
-        if (data == null || data.isEmpty()) return false;
-
-        List<Map<String, Object>> customFields = (List<Map<String, Object>>) data.get(0).get("custom_fields");
-        if (customFields == null) return false;
-
-        return customFields.stream()
-                .filter(f -> cloudGuardFieldId.equals(f.get("id")))
-                .map(f -> {
-                    Object val = f.get("value");
-                    return Boolean.TRUE.equals(val) || "true".equalsIgnoreCase(String.valueOf(val));
-                })
-                .findFirst()
-                .orElse(false);
     }
 
     private TeamleaderCredential getCredentials() {
