@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.dto.users.UserOrgDetail;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserPageResponse;
+import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
@@ -78,6 +79,18 @@ public class GoogleUsersService {
 
         String nextTokenToReturn = (endIndex < totalUsers) ? String.valueOf(page + 1) : null;
         return new UserPageResponse(mappedUsers, nextTokenToReturn);
+    }
+
+    public UsersWithoutTwoFactorResponse getUsersWithoutTwoFactor(String loggedInEmail) {
+        UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
+        List<UsersWithoutTwoFactorResponse.UserSummary> users = cachedData.allUsers().stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getSuspended()) && !Boolean.TRUE.equals(user.getIsEnrolledIn2Sv()))
+                .sorted(Comparator.comparing(u -> u.getName() != null ? u.getName().getFullName() : ""))
+                .map(user -> new UsersWithoutTwoFactorResponse.UserSummary(
+                        user.getName() != null ? user.getName().getFullName() : "",
+                        user.getPrimaryEmail() != null ? user.getPrimaryEmail() : ""))
+                .toList();
+        return new UsersWithoutTwoFactorResponse(users);
     }
 
     public UserOverviewResponse getUsersPageOverview(String loggedInEmail) {
