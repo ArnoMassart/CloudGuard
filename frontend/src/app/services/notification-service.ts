@@ -165,42 +165,43 @@ export class NotificationService {
       DNSSEC: 'DNSSEC',
       CAA: 'CAA Records',
     };
-    const dnsAdded = new Set<string>();
+    const criticalDnsTypes = new Set<string>();
+    const attentionDnsTypes = new Set<string>();
     for (const row of data.dns.rows) {
       if (row.status === 'ACTION_REQUIRED' || row.status === 'ERROR') {
-        const key = `critical-${row.type}`;
-        if (dnsAdded.has(key)) continue;
-        dnsAdded.add(key);
-        const title = dnsTitles[row.type] ?? row.type;
-        add({
-          severity: 'critical',
-          title: `${title} ontbreekt of niet correct`,
-          description: row.message ?? `${title} vereist actie.`,
-          recommendedActions: [`Voeg ${title} toe via je DNS provider`],
-          notificationType: `dns-${row.type.toLowerCase()}`,
-          source: 'domain-dns',
-          sourceLabel: 'Domein & DNS',
-          sourceRoute: '/domain-dns',
-        });
+        criticalDnsTypes.add(dnsTitles[row.type] ?? row.type);
       } else if (
         row.status === 'ATTENTION' &&
         (row.importance === 'REQUIRED' || row.importance === 'RECOMMENDED')
       ) {
-        const key = `attention-${row.type}`;
-        if (dnsAdded.has(key)) continue;
-        dnsAdded.add(key);
-        const title = dnsTitles[row.type] ?? row.type;
-        add({
-          severity: 'warning',
-          title: `${title} vereist aandacht`,
-          description: row.message ?? `${title} kan worden verbeterd.`,
-          recommendedActions: [`Controleer ${title} configuratie`],
-          notificationType: `dns-${row.type.toLowerCase()}`,
-          source: 'domain-dns',
-          sourceLabel: 'Domein & DNS',
-          sourceRoute: '/domain-dns',
-        });
+        attentionDnsTypes.add(dnsTitles[row.type] ?? row.type);
       }
+    }
+    if (criticalDnsTypes.size > 0) {
+      const typesList = Array.from(criticalDnsTypes).join(', ');
+      add({
+        severity: 'critical',
+        title: 'DNS records ontbreken of niet correct',
+        description: `${typesList} ${criticalDnsTypes.size === 1 ? 'ontbreekt' : 'ontbreken'} of ${criticalDnsTypes.size === 1 ? 'is niet' : 'zijn niet'} correct geconfigureerd.`,
+        recommendedActions: ['Controleer en configureer alle DNS records via je DNS provider'],
+        notificationType: 'dns-critical',
+        source: 'domain-dns',
+        sourceLabel: 'Domein & DNS',
+        sourceRoute: '/domain-dns',
+      });
+    }
+    if (attentionDnsTypes.size > 0) {
+      const typesList = Array.from(attentionDnsTypes).join(', ');
+      add({
+        severity: 'warning',
+        title: 'DNS records vereisen aandacht',
+        description: `${typesList} ${attentionDnsTypes.size === 1 ? 'kan' : 'kunnen'} worden verbeterd.`,
+        recommendedActions: ['Controleer de DNS configuratie via je DNS provider'],
+        notificationType: 'dns-attention',
+        source: 'domain-dns',
+        sourceLabel: 'Domein & DNS',
+        sourceRoute: '/domain-dns',
+      });
     }
 
     if (data.users) {
