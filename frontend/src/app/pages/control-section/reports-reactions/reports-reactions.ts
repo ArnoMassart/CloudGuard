@@ -29,10 +29,10 @@ export class ReportsReactions implements OnInit {
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
 
-  readonly feedbackModalOpen = signal<string | null>(null);  // notification id when open
-  readonly feedbackText = signal('');
-  readonly feedbackSubmitted = signal<Set<string>>(new Set());  // ids that have feedback 
-  readonly isSubmitting = signal(false);
+  readonly feedbackTextById = signal<Record<string, string>>({});
+  readonly feedbackSubmitted = signal<Set<string>>(new Set());
+  readonly submittingIds = signal<Set<string>>(new Set());
+  readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
 
   readonly filteredNotifications = computed(() => {
     const list = this.notifications();
@@ -57,6 +57,35 @@ export class ReportsReactions implements OnInit {
     this.#loadNotifications();
   }
 
+  getFeedbackText(id: string): string {
+    return this.feedbackTextById()[id] ?? '';
+  }
+
+  setFeedbackText(id: string, text: string) {
+    this.feedbackTextById.update((m) => ({ ...m, [id]: text }));
+  }
+
+  isSubmittingFeedback(id: string): boolean {
+    return this.submittingIds().has(id);
+  }
+
+  openFeedbackForm(n: Notification) {
+    this.feedbackFormOpenIds.update((s) => new Set(s).add(n.id));
+  }
+
+  closeFeedbackForm(n: Notification) {
+    this.feedbackFormOpenIds.update((s) => {
+      const next = new Set(s);
+      next.delete(n.id);
+      return next;
+    });
+    this.setFeedbackText(n.id, '');
+  }
+
+  isFeedbackFormOpen(id: string): boolean {
+    return this.feedbackFormOpenIds().has(id);
+  }
+
   setFilter(filter: NotificationSeverity | 'all' | 'resolved') {
     this.filterSeverity.set(filter);
   }
@@ -67,6 +96,7 @@ export class ReportsReactions implements OnInit {
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
     this.feedbackSubmitted.set(new Set());
+    this.feedbackFormOpenIds.set(new Set());
     this.#notificationService.getNotifications().subscribe({
       next: (list) => {
         this.notifications.set(list);
@@ -156,15 +186,6 @@ export class ReportsReactions implements OnInit {
     return this.loadingDetailsIds().has(id);
   }
 
-  openFeedbackModal(n: Notification) {
-    this.feedbackModalOpen.set(n.id);
-    this.feedbackText.set('');
-  }
-
-  closeFeedbackModal() {
-    this.feedbackModalOpen.set(null);
-  }
-
   #loadFeedbackStatus(list: Notification[]) {
     list.forEach((n) => {
       this.#notificationFeedbackService.hasFeedback(n.source, n.notificationType).subscribe({
@@ -178,19 +199,36 @@ export class ReportsReactions implements OnInit {
   }
 
   submitFeedback(n: Notification) {
-    const text = this.feedbackText().trim();
+    const text = this.getFeedbackText(n.id).trim();
     if (!text) return;
-    this.isSubmitting.set(true);
+    this.submittingIds.update((s) => new Set(s).add(n.id));
 
-    this.#notificationFeedbackService.submitFeedback(n.source,n.notificationType, text).subscribe({
+    this.#notificationFeedbackService.submitFeedback(n.source, n.notificationType, text).subscribe({
       next: () => {
-        this.feedbackSubmitted.update(s => new Set(s).add(n.id));
-        this.closeFeedbackModal();
-        this.isSubmitting.set(false);
+        this.feedbackSubmitted.update((s) => new Set(s).add(n.id));
+        this.feedbackFormOpenIds.update((s) => {
+          const next = new Set(s);
+          next.delete(n.id);
+          return next;
+        });
+        this.feedbackTextById.update((m) => {
+          const next = { ...m };
+          delete next[n.id];
+          return next;
+        });
+        this.submittingIds.update((s) => {
+          const next = new Set(s);
+          next.delete(n.id);
+          return next;
+        });
       },
       error: () => {
-        this.isSubmitting.set(false);
-      }
+        this.submittingIds.update((s) => {
+          const next = new Set(s);
+          next.delete(n.id);
+          return next;
+        });
+      },
     });
   }
 }
