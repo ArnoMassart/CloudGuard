@@ -2,14 +2,11 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.TeamleaderCredential;
 import com.cloudmen.cloudguard.repository.TeamleaderCredentialRepository;
-import org.hibernate.annotations.NotFound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -19,10 +16,11 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Objects;
 
 
 @Service
+@SuppressWarnings("unchecked")
 public class TeamleaderAccessService {
     private static final Logger log = LoggerFactory.getLogger(TeamleaderAccessService.class);
 
@@ -44,14 +42,14 @@ public class TeamleaderAccessService {
             throw new IllegalArgumentException("Access token and Refresh token cannot be empty.");
         }
 
-        TeamleaderCredential creds = repository.findById("SINGLETON")
+        TeamleaderCredential credentials = repository.findById("SINGLETON")
                 .orElse(new TeamleaderCredential());
 
-        creds.setAccessToken(accessToken);
-        creds.setRefreshToken(refreshToken);
-        creds.setUpdatedAt(LocalDateTime.now());
+        credentials.setAccessToken(accessToken);
+        credentials.setRefreshToken(refreshToken);
+        credentials.setUpdatedAt(LocalDateTime.now());
 
-        repository.save(creds);
+        repository.save(credentials);
 
         log.info("Teamleader credentials manually updated via setup endpoint.");
     }
@@ -123,13 +121,15 @@ public class TeamleaderAccessService {
         String infoBody = "{\"id\": \"" + companyId + "\"}";
         HttpEntity<String> entity = new HttpEntity<>(infoBody, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 teamleaderApiBase + "/companies.info",
+                HttpMethod.POST,
                 entity,
-                Map.class
+                new ParameterizedTypeReference<>() {
+                }
         );
 
-        return (Map<String, Object>) response.getBody().get("data");    }
+        return (Map<String, Object>) Objects.requireNonNull(response.getBody()).get("data");    }
 
     private String getCompanyIdByEmail(String email, HttpHeaders headers) {
         String body = """
@@ -146,13 +146,15 @@ public class TeamleaderAccessService {
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                teamleaderApiBase+"/companies.list",
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                teamleaderApiBase + "/companies.list",
+                HttpMethod.POST,
                 entity,
-                Map.class
+                new ParameterizedTypeReference<>() {
+                }
         );
 
-        List<Map<String, Object>> data = (List<Map<String, Object>>) response.getBody().get("data");
+        List<Map<String, Object>> data = (List<Map<String, Object>>) Objects.requireNonNull(response.getBody()).get("data");
         if (data != null && !data.isEmpty()) {
             return (String) data.get(0).get("id");
         }
@@ -161,35 +163,37 @@ public class TeamleaderAccessService {
     }
 
     private HttpHeaders createHeaders() {
-        TeamleaderCredential creds = getCredentials();
+        TeamleaderCredential credentials = getCredentials();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(creds.getAccessToken());
+        headers.setBearerAuth(credentials.getAccessToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         return headers;
     }
 
     private boolean refreshTokens() {
-        TeamleaderCredential creds = getCredentials();
+        TeamleaderCredential credentials = getCredentials();
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", clientId);
         map.add("client_secret", clientSecret);
-        map.add("refresh_token", creds.getRefreshToken());
+        map.add("refresh_token", credentials.getRefreshToken());
         map.add("grant_type", "refresh_token");
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     "https://focus.teamleader.eu/oauth2/access_token",
-                    new HttpEntity<>(map, new HttpHeaders()), Map.class);
+                    HttpMethod.POST,
+                    new HttpEntity<>(map, new HttpHeaders()), new ParameterizedTypeReference<>(){});
 
             Map<String, Object> body = response.getBody();
-            creds.setAccessToken((String) body.get("access_token"));
-            creds.setRefreshToken((String) body.get("refresh_token"));
-            creds.setUpdatedAt(LocalDateTime.now());
+            assert body != null;
+            credentials.setAccessToken((String) body.get("access_token"));
+            credentials.setRefreshToken((String) body.get("refresh_token"));
+            credentials.setUpdatedAt(LocalDateTime.now());
 
-            repository.save(creds);
+            repository.save(credentials);
             return true;
         } catch (Exception e) {
             return false;
