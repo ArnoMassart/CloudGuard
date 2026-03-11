@@ -14,7 +14,7 @@ import { ResolvedNotificationService } from '../../../services/resolved-notifica
 
 @Component({
   selector: 'app-reports-reactions',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, RouterLink],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
 })
