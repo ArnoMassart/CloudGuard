@@ -29,34 +29,7 @@ export class DomainDns implements OnInit {
   readonly totalDomains = computed(() => this.domains().length);
   readonly validDnsRecords = computed(() => this.rows().filter((r) => r.status === 'VALID').length);
 
-  /** Security score */
-  readonly securityScore = computed(() => {
-    const rows = this.rows();
-    if (rows.length === 0) return 0;
-
-    const importanceWeight: Record<string, number> = {
-      REQUIRED: 15,
-      RECOMMENDED: 10,
-      OPTIONAL: 5,
-    };
-
-    const statusMultiplier: Record<string, number> = {
-      VALID: 1,
-      OK: 0.5,
-      ATTENTION: 0.5,
-      ACTION_REQUIRED: 0,
-      ERROR: 0,
-    };
-
-    let score = 0;
-    for (const row of rows) {
-      const weight = importanceWeight[row.importance ?? 'OPTIONAL'] ?? 5;
-      const mult = statusMultiplier[row.status] ?? 0;
-      score += weight * mult;
-    }
-
-    return Math.round(Math.min(100, score));
-  });
+  securityScore = signal<number>(0);
 
   /** Controls sorted by severity */
   readonly securityControlsRows = computed(() => {
@@ -256,6 +229,7 @@ export class DomainDns implements OnInit {
     this.dnsService.getDnsRecords(domain).subscribe({
       next: (res) => {
         this.rows.set(res.rows);
+        this.securityScore.set(res.securityScore);
         this.isLoadingDns.set(false);
       },
       error: (err) => {

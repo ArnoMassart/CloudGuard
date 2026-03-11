@@ -5,7 +5,9 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
@@ -26,5 +28,11 @@ public class DateTimeConverter {
         return Instant.ofEpochMilli(millis)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
+    }
+
+    public static String parseWithPattern(LocalDateTime value, String pattern) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern).withLocale(new Locale("nl", "BE"));
+
+        return value.format(formatter);
     }
 }

@@ -1,13 +1,13 @@
 package com.cloudmen.cloudguard.dto.drives;
 
 public record SharedDriveOverviewResponse(
-        long totalDrives,
-        long orphanDrives,
-        long totalHighRisk,
-        long totalExternalMembersCount,
-        long securityScore,
-        long notOnlyDomainUsersAllowedCount,
-        long notOnlyMembersCanAccessCount,
-        long externalMembersDriveCount
+        int totalDrives,
+        int orphanDrives,
+        int totalHighRisk,
+        int totalExternalMembersCount,
+        int securityScore,
+        int notOnlyDomainUsersAllowedCount,
+        int notOnlyMembersCanAccessCount,
+        int externalMembersDriveCount
 )
 { }

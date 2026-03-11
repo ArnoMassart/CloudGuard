@@ -1,4 +1,130 @@
-<body>
-    <p class="p-5">Welcome to CloudGuard!</p>
-    <h1>CloudGuard Home</h1>
-</body>
+<div class="px-10 py-6">
+    <app-page-header Title="Security Dashboard Overzicht"
+        Description="Real-time inzicht in uw Google Workspace beveiliging en compliance" AdminLink="home" />
+
+    <div class="pt-6">
+        <div class="w-full flex flex-col gap-5">
+            <div class="w-full flex gap-4">
+                <app-section-top-card class="flex-1" Title="Totale meldingen"
+                    [Value]="pageOverview()?.totalNotifications" BackgroundColor="#ffedd4" IconColor="#f54a00"
+                    TextColor="#f54a00" [Icon]="Icons.TriangleAlert" />
+
+                <app-section-top-card class="flex-1" Title="Kritieke problemen"
+                    [Value]="pageOverview()?.criticalNotifications" BackgroundColor="#ffe2e2" IconColor="#e7000b"
+                    TextColor="#e7000b" [Icon]="Icons.CircleX" />
+
+                <app-section-top-card class="flex-1" Title="Compliance" [Value]="score()" [IsPercentage]="true"
+                    BackgroundColor="#fef9c2" IconColor="#d69518" />
+            </div>
+
+            @if (hasWarnings() && !isLoading()) {
+            <div class="bg-red-50 border-2 border-red-300/30 rounded-lg p-4 transition-all duration-200">
+                <div class="flex items-start justify-between">
+                    <div class="flex gap-3 items-center">
+                        <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-red-600" />
+                        <span class="text-red-800 font-medium text-base">{{pageOverview()?.criticalNotifications}}
+                            kritieke Beveiligingswaarschuwing{{
+                            pageOverview()?.criticalNotifications ? 'en'
+                            : '' }}
+                        </span>
+                    </div>
+
+                    <button (click)="navigateToNotifications()"
+                        class="cursor-pointer bg-red-600 text-white hover:bg-red-600/80 py-2 px-4 rounded-lg flex gap-2 items-center text-[13px]"><span>Bekijk
+                            meldingen</span>
+                    </button>
+                </div>
+
+                <div class="ml-8">
+                    <div class="flex items-center">
+                        <span class="text-[13px] text-red-600">
+                            Er zijn urgente beveiligingsproblemen die onmiddelijk aandacht vereisen.
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+            }
+
+            @if (!isLoading()) {
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div
+                    class="p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col items-center font-sans">
+                    <div class="flex flex-col justify-between gap-15 items-center flex-1">
+                        <div class="flex flex-col items-center">
+                            <h2 class="text-xl font-bold mb-8">Algemene Beveiligingsscore</h2>
+
+                            <app-security-gauge [score]="score()" />
+                        </div>
+
+                        <div class="flex flex-col items-center">
+                            <span [class.bg-emerald-50]="score() >= 75" [class.text-emerald-600]="score() >= 75"
+                                [class.bg-amber-50]="score() > 50 && score() < 75"
+                                [class.text-amber-600]="score ()> 50 && score() < 75" [class.bg-rose-50]="score() <= 50"
+                                [class.text-rose-600]="score() <= 50"
+                                class="px-4 py-1 rounded-full text-sm font-semibold mb-4">
+                                {{score() == 100 ? "Perfect" : score() >= 75 ? "Goed" : score() > 50 ? "Matig" :
+                                "Slecht"}}
+                            </span>
+                            <p class="text-gray-400 text-xs">
+                                Laatste update: {{pageResponse()?.lastUpdated}}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col font-sans flex-2 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold ">Security Deelgebieden</h2>
+                        <button (click)="refreshData()" [disabled]="isRefreshing()"
+                            class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                            <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+                            </i-lucide>
+
+                            {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+                        </button>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        <app-security-component [Value]="pageResponse()?.scores?.usersScore" />
+                        <app-security-component Label="Groepen" [Value]="pageResponse()?.scores?.groupsScore"
+                            [Icon]="Icons.UsersRound" [IsGroups]="true" />
+                        <app-security-component Label="Organisatie-eenheden" [Icon]="Icons.Building2"
+                            [NoValueShow]="true" Route="organizational-units" />
+                        <app-security-component Label="Drives" [Value]="pageResponse()?.scores?.drivesScore"
+                            [Icon]="Icons.FolderOpen" Route="shared-drives" />
+                        <app-security-component Label="Apparaten" [Value]="pageResponse()?.scores?.devicesScore"
+                            [Icon]="Icons.SmartPhone" Route="mobile-devices" />
+                        <app-security-component Label="App Toegang" [Value]="pageResponse()?.scores?.appAccessScore"
+                            [Icon]="Icons.Key" Route="app-access" />
+                        <app-security-component Label="App Wachtwoorden"
+                            [Value]="pageResponse()?.scores?.appPasswordsScore" [Icon]="Icons.Lock"
+                            Route="app-passwords" />
+                        <app-security-component Label="DNS" [Value]="pageResponse()?.scores?.dnsScore"
+                            [Icon]="Icons.Globe" Route="domain-dns" />
+                    </div>
+                </div>
+            </div>
+            } @else {
+            <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
+                <div class="flex flex-col items-center p-3 pt-6">
+                    <div class="flex flex-col items-center space-y-4 p-8">
+                        <div class="relative flex items-center justify-center">
+                            <div class="h-12 w-12 rounded-full"></div>
+
+                            <div
+                                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+                            </div>
+                        </div>
+
+                        <span class="text-sm font-medium text-slate-600 animate-pulse">
+                            Dashboard data wordt geladen...
+                        </span>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>

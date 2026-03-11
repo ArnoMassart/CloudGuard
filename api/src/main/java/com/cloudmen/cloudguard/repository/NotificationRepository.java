@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.repository;
 
 import com.cloudmen.cloudguard.domain.notifications.Notification;
+import com.cloudmen.cloudguard.domain.notifications.NotificationSeverity;
 import com.cloudmen.cloudguard.domain.notifications.NotificationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,4 +17,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByStatus(NotificationStatus status);
 
     List<Notification> findByDomainIdAndStatus(String domainId, NotificationStatus status);
+
+    long countBySeverity(NotificationSeverity severity);
 }

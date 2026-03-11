@@ -1,0 +1,28 @@
+<div class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-2xl max-w-sm shadow-sm font-sans cursor-pointer hover:bg-gray-50"
+    (click)="handleClick()">
+
+    <div class="flex items-center justify-center p-3 bg-gray-50 rounded-lg">
+        <i-lucide [img]="Icon" size="22" class="text-muted-foreground" />
+    </div>
+
+    <div class="flex-1">
+        <h3 class="font-medium text-sm mb-2">{{ Label }}</h3>
+
+        <div class="flex gap-2 items-center">
+            <div class="w-full h-2.5 rounded-full overflow-hidden" [class.bg-gray-100]="!NoValueShow"
+                [class.bg-gray-200]="NoValueShow">
+                @if (!NoValueShow && Value !== undefined) {
+                <div [class.bg-green-500]="Value >= 75" [class.bg-amber-500]="Value > 50 && Value < 75"
+                    [class.bg-red-500]="Value <= 50" class="h-full transition-all duration-700 ease-in-out"
+                    [style.width.%]="Value">
+                </div>
+                }
+            </div>
+            @if (!NoValueShow) {
+            <div class="text-slate-800 font-semibold text-sm">
+                {{ Value }}%
+            </div>
+            }
+        </div>
+    </div>
+</div>

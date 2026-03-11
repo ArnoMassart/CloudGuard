@@ -1,0 +1,13 @@
+<div class="relative w-60">
+    <svg viewBox="0 0 100 55" class="w-full">
+        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#f1f5f9" stroke-width="10" stroke-linecap="round" />
+
+        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" [attr.stroke]="strokeColor" stroke-width="10"
+            stroke-linecap="round" [attr.stroke-dasharray]="dashArray" class="transition-all duration-1000 ease-out" />
+    </svg>
+
+    <div class="absolute inset-0 flex flex-col items-center justify-end pb-1">
+        <span class="text-5xl font-bold text-slate-800">{{ score }}</span>
+        <span class="text-muted-foreground text-sm mt-1">Security Score</span>
+    </div>
+</div>
