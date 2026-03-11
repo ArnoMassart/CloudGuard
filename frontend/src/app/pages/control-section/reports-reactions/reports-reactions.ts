@@ -9,6 +9,8 @@ import {
   Notification,
   NotificationSeverity,
 } from '../../../services/notification-service';
+import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
+import { ResolvedNotificationService } from '../../../services/resolved-notification-service';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -19,23 +21,33 @@ import {
 export class ReportsReactions implements OnInit {
   readonly Icons = AppIcons;
   readonly #notificationService = inject(NotificationService);
+  readonly #notificationFeedbackService = inject(NotificationFeedbackService);
+  readonly #resolvedService = inject(ResolvedNotificationService);
 
   readonly notifications = signal<Notification[]>([]);
+  readonly resolvedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved'>('all');
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved' | 'in-behandeling'>('all');
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
 
+  readonly feedbackTextById = signal<Record<string, string>>({});
+  readonly submittingIds = signal<Set<string>>(new Set());
+  readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
+  readonly resolvingIds = signal<Set<string>>(new Set());
+
   readonly filteredNotifications = computed(() => {
-    const list = this.notifications();
     const filter = this.filterSeverity();
+    if (filter === 'resolved') return this.resolvedNotifications();
+    const list = this.notifications();
+    if (filter === 'in-behandeling') return list.filter((n) => n.status === 'in_behandeling');
     if (filter === 'all') return list;
-    if (filter === 'resolved') return [];
     return list.filter((n) => n.severity === filter);
   });
 
   readonly totalCount = computed(() => this.notifications().length);
+  readonly resolvedCount = computed(() => this.resolvedNotifications().length);
   readonly criticalCount = computed(() =>
     this.notifications().filter((n) => n.severity === 'critical').length
   );
@@ -45,12 +57,44 @@ export class ReportsReactions implements OnInit {
   readonly infoCount = computed(() =>
     this.notifications().filter((n) => n.severity === 'info').length
   );
+  readonly inBehandelingCount = computed(() =>
+    this.notifications().filter((n) => n.status === 'in_behandeling').length
+  );
 
   ngOnInit() {
     this.#loadNotifications();
   }
 
-  setFilter(filter: NotificationSeverity | 'all' | 'resolved') {
+  getFeedbackText(id: string): string {
+    return this.feedbackTextById()[id] ?? '';
+  }
+
+  setFeedbackText(id: string, text: string) {
+    this.feedbackTextById.update((m) => ({ ...m, [id]: text }));
+  }
+
+  isSubmittingFeedback(id: string): boolean {
+    return this.submittingIds().has(id);
+  }
+
+  openFeedbackForm(n: Notification) {
+    this.feedbackFormOpenIds.update((s) => new Set(s).add(n.id));
+  }
+
+  closeFeedbackForm(n: Notification) {
+    this.feedbackFormOpenIds.update((s) => {
+      const next = new Set(s);
+      next.delete(n.id);
+      return next;
+    });
+    this.setFeedbackText(n.id, '');
+  }
+
+  isFeedbackFormOpen(id: string): boolean {
+    return this.feedbackFormOpenIds().has(id);
+  }
+
+  setFilter(filter: NotificationSeverity | 'all' | 'resolved' | 'in-behandeling') {
     this.filterSeverity.set(filter);
   }
 
@@ -59,16 +103,57 @@ export class ReportsReactions implements OnInit {
     this.expandedIds.set(new Set());
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
-    this.#notificationService.getNotifications().subscribe({
-      next: (list) => {
-        this.notifications.set(list);
+    this.feedbackFormOpenIds.set(new Set());
+    this.#notificationService.getNotificationsAndResolved().subscribe({
+      next: ({ active, resolved }) => {
+        this.notifications.set(active);
+        this.resolvedNotifications.set(resolved);
         this.isLoading.set(false);
       },
       error: () => {
         this.notifications.set([]);
+        this.resolvedNotifications.set([]);
         this.isLoading.set(false);
       },
     });
+  }
+
+  markAsResolved(n: Notification) {
+    const key = `${n.source}:${n.notificationType}`;
+    if (this.resolvingIds().has(key)) return;
+    this.resolvingIds.update((s) => new Set(s).add(key));
+    this.#resolvedService
+      .markAsResolved({
+        source: n.source,
+        notificationType: n.notificationType,
+        sourceLabel: n.sourceLabel,
+        sourceRoute: n.sourceRoute,
+        title: n.title,
+        description: n.description,
+        severity: n.severity,
+        recommendedActions: n.recommendedActions,
+      })
+      .subscribe({
+        next: () => {
+          this.resolvingIds.update((s) => {
+            const next = new Set(s);
+            next.delete(key);
+            return next;
+          });
+          this.refresh();
+        },
+        error: () => {
+          this.resolvingIds.update((s) => {
+            const next = new Set(s);
+            next.delete(key);
+            return next;
+          });
+        },
+      });
+  }
+
+  isResolving(n: Notification): boolean {
+    return this.resolvingIds().has(`${n.source}:${n.notificationType}`);
   }
 
   refresh() {
@@ -85,20 +170,6 @@ export class ReportsReactions implements OnInit {
     if (severity === 'critical') return 'Kritiek';
     if (severity === 'warning') return 'Waarschuwing';
     return 'Info';
-  }
-
-  supportsDetails(notificationType: string): boolean {
-    return [
-      'user-control',
-      'group-external',
-      'oauth-high-risk',
-      'drive-orphan',
-      'drive-external',
-      'device-lockscreen',
-      'device-encryption',
-      'device-os',
-      'device-integrity',
-    ].includes(notificationType);
   }
 
   toggleExpand(n: Notification) {
@@ -145,5 +216,43 @@ export class ReportsReactions implements OnInit {
 
   isLoadingDetails(id: string): boolean {
     return this.loadingDetailsIds().has(id);
+  }
+
+  submitFeedback(n: Notification) {
+    const text = this.getFeedbackText(n.id).trim();
+    if (!text) return;
+    this.submittingIds.update((s) => new Set(s).add(n.id));
+
+    this.#notificationFeedbackService.submitFeedback(n.source, n.notificationType, text).subscribe({
+      next: () => {
+        this.notifications.update((list) =>
+          list.map((item) =>
+            item.id === n.id ? { ...item, status: 'in_behandeling' as const } : item
+          )
+        );
+        this.feedbackFormOpenIds.update((s) => {
+          const next = new Set(s);
+          next.delete(n.id);
+          return next;
+        });
+        this.feedbackTextById.update((m) => {
+          const next = { ...m };
+          delete next[n.id];
+          return next;
+        });
+        this.submittingIds.update((s) => {
+          const next = new Set(s);
+          next.delete(n.id);
+          return next;
+        });
+      },
+      error: () => {
+        this.submittingIds.update((s) => {
+          const next = new Set(s);
+          next.delete(n.id);
+          return next;
+        });
+      },
+    });
   }
 }
