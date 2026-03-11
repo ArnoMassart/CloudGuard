@@ -122,7 +122,7 @@ public class NotificationAggregationService {
         MobileDeviceOverviewResponse devices = safeGet(() -> deviceService.getMobileDevicesPageOverview(adminEmail, true));
         GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail));
         OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail));
-        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, false));
+        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true));
 
         DnsRecordResponseDto dns = getDnsData(adminEmail);
 
@@ -176,7 +176,7 @@ public class NotificationAggregationService {
 
         // Groups
         if (groups != null && groups.groupsWithExternal() > 0) {
-            notifications.add(create(++id, "warning", "Groepen met externe leden",
+            notifications.add(create(++id, "info", "Groepen met externe leden",
                     groups.groupsWithExternal() + " groep(en) hebben externe leden.",
                     List.of("Controleer toegangsrechten van externe leden"),
                     "group-external", "users-groups", "Gebruikers & Groepen", "/users-groups"));
@@ -191,7 +191,7 @@ public class NotificationAggregationService {
                         "drive-orphan", "shared-drives", "Gedeelde Drives", "/shared-drives"));
             }
             if (drives.externalMembersDriveCount() > 0) {
-                notifications.add(create(++id, "warning", "Drives met externe leden",
+                notifications.add(create(++id, "info", "Drives met externe leden",
                         drives.externalMembersDriveCount() + " drive(s) hebben externe leden.",
                         List.of("Controleer externe toegang tot gedeelde drives"),
                         "drive-external", "shared-drives", "Gedeelde Drives", "/shared-drives"));
@@ -235,8 +235,8 @@ public class NotificationAggregationService {
         }
 
         // App passwords
-        if (appPasswords != null && appPasswords.allowed() && appPasswords.totalAppPasswords() > 0) {
-            notifications.add(create(++id, "critical", "App-wachtwoorden actief",
+        if (appPasswords != null && appPasswords.totalAppPasswords() > 0) {
+            notifications.add(create(++id, "info", "App-wachtwoorden actief",
                     appPasswords.totalAppPasswords() + " app-wachtwoord(en) actief. App-wachtwoorden omzeilen 2FA.",
                     List.of("Overweeg OAuth-gebaseerde authenticatie waar mogelijk"),
                     "app-password", "app-passwords", "App-wachtwoorden", "/app-passwords"));
