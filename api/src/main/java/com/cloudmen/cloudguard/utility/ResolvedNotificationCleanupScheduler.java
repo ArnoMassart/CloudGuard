@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.scheduler;
+package com.cloudmen.cloudguard.utility;
 
 import com.cloudmen.cloudguard.service.notification.ResolvedNotificationService;
 import org.slf4j.Logger;
