@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
-import { LucideAngularModule, Users } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import { UsersSection } from './users-section/users-section';
 import { GroupsSection } from './groups-section/groups-section';
 import { SectionType } from '../../../models/SectionType';

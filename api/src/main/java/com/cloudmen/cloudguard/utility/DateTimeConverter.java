@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.Locale;
 
 public class DateTimeConverter {
+    private DateTimeConverter(){}
+
     public static String convertToTimeAgo(DateTime timeAgo) {
         long epochMillis = timeAgo.getValue();
 

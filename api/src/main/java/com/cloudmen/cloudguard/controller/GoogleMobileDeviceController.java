@@ -16,12 +16,12 @@ public class GoogleMobileDeviceController {
     private final GoogleMobileDeviceService googleMobileDeviceService;
     private final JwtService jwtService;
 
+    private static final boolean IS_TESTMODE = true;
+
     public GoogleMobileDeviceController(GoogleMobileDeviceService googleMobileDeviceService, JwtService jwtService) {
         this.googleMobileDeviceService = googleMobileDeviceService;
         this.jwtService = jwtService;
     }
-
-    private final boolean isTestMode = true;
 
     @GetMapping()
     public ResponseEntity<MobileDevicePageResponse> getMobileDevices(
@@ -37,7 +37,7 @@ public class GoogleMobileDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPaged(loggedInEmail, pageToken, size, status, deviceType, isTestMode));
+        return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPaged(loggedInEmail, pageToken, size, status, deviceType, IS_TESTMODE));
     }
 
     @GetMapping("/types")
@@ -49,7 +49,7 @@ public class GoogleMobileDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleMobileDeviceService.getUniqueDeviceTypes(loggedInEmail, isTestMode));
+        return ResponseEntity.ok(googleMobileDeviceService.getUniqueDeviceTypes(loggedInEmail, IS_TESTMODE));
     }
 
     @GetMapping("/overview")
@@ -60,7 +60,7 @@ public class GoogleMobileDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, isTestMode));
+        return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, IS_TESTMODE));
     }
 
     @PostMapping("/refresh")

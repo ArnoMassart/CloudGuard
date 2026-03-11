@@ -15,8 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -76,7 +74,7 @@ public class GoogleMobileDeviceCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new RuntimeException("Fout bij ophalen Google Mobile Devices: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen Google Mobile Devices: " + e.getMessage());
         }
     }
 

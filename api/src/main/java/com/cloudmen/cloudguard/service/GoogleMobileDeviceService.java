@@ -77,7 +77,7 @@ public class GoogleMobileDeviceService {
         MobileDeviceCacheEntry cachedData = mobileDeviceCacheService.getOrFetchDeviceData(loggedInEmail, isTestMode);
         List<MobileDevice> allDevices = cachedData.allDevices();
 
-        int totalDevices = 0;
+        int totalDevices = allDevices.size();
         int approvedDevices = 0;
         int nonCompliantDevices = 0;
         int totalScoreSum = 0;
@@ -87,28 +87,22 @@ public class GoogleMobileDeviceService {
         int totalIntegrityCount = 0;
 
         for (MobileDevice device : allDevices) {
-            totalDevices++;
-
             if ("APPROVED".equalsIgnoreCase(device.getStatus())) {
                 approvedDevices++;
             }
 
-            boolean lockSecure = "PASSWORD_SET".equalsIgnoreCase(device.getDevicePasswordStatus());
-            boolean encSecure = "ENCRYPTED".equalsIgnoreCase(device.getEncryptionStatus()) ||
-                    "ENCRYPTING".equalsIgnoreCase(device.getEncryptionStatus());
-            boolean intSecure = "UNCOMPROMISED".equalsIgnoreCase(device.getDeviceCompromisedStatus());
-            boolean osSecure = checkOsVersion(device.getOs());
+            DeviceSecurityMetrics metrics = calculateDeviceMetrics(device);
 
-            int deviceScore = 0;
+            totalScoreSum += metrics.score();
 
-            if (lockSecure) deviceScore += 25; else totalLockScreenCount++;
-            if (encSecure) deviceScore += 25; else totalEncryptionCount++;
-            if (intSecure) deviceScore += 25; else totalIntegrityCount++;
-            if (osSecure) deviceScore += 25; else totalOsVersionCount++;
+            if (!metrics.lockSecure()) totalLockScreenCount++;
+            if (!metrics.encSecure()) totalEncryptionCount++;
+            if (!metrics.intSecure()) totalIntegrityCount++;
+            if (!metrics.osSecure()) totalOsVersionCount++;
 
-            totalScoreSum += deviceScore;
-
-            if (deviceScore < 75) nonCompliantDevices++;
+            if (metrics.score() < 75) {
+                nonCompliantDevices++;
+            }
         }
 
         int securityScore = totalDevices == 0 ? 0 : (int) Math.round((double) totalScoreSum / totalDevices);
@@ -170,4 +164,22 @@ public class GoogleMobileDeviceService {
         return os.contains("Android 14") || os.contains("Android 13") ||
                 os.contains("iOS 17") || os.contains("iOS 16");
     }
+
+    private DeviceSecurityMetrics calculateDeviceMetrics(MobileDevice device) {
+        boolean lockSecure = "PASSWORD_SET".equalsIgnoreCase(device.getDevicePasswordStatus());
+        boolean encSecure = "ENCRYPTED".equalsIgnoreCase(device.getEncryptionStatus()) ||
+                "ENCRYPTING".equalsIgnoreCase(device.getEncryptionStatus());
+        boolean intSecure = "UNCOMPROMISED".equalsIgnoreCase(device.getDeviceCompromisedStatus());
+        boolean osSecure = checkOsVersion(device.getOs());
+
+        int score = 0;
+        if (lockSecure) score += 25;
+        if (encSecure) score += 25;
+        if (intSecure) score += 25;
+        if (osSecure) score += 25;
+
+        return new DeviceSecurityMetrics(score, lockSecure, encSecure, intSecure, osSecure);
+    }
+
+    private record DeviceSecurityMetrics(int score, boolean lockSecure, boolean encSecure, boolean intSecure, boolean osSecure) {}
 }

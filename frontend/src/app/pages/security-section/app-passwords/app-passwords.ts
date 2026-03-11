@@ -1,14 +1,18 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { AppPasswordsService } from '../../../services/app-password-service';
 import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
-import { AppPassword, AppPasswordOverviewResponse, UserAppPasswords } from '../../../services/app-password-service';
+import {
+  AppPassword,
+  AppPasswordOverviewResponse,
+  AppPasswordsService,
+  UserAppPasswords,
+} from '../../../services/app-password-service';
 import { LucideAngularModule } from 'lucide-angular';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-app-passwords',
@@ -33,13 +37,12 @@ export class AppPasswords implements OnInit {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return users;
     return users.filter(
-      (u) =>
-        (u.name?.toLowerCase().includes(q)) ||
-        (u.email?.toLowerCase().includes(q))
+      (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
     );
   });
+  readonly #searchSubject = new Subject<string>();
+
   #tokenHistory: (string | null)[] = [null];
-  #searchSubject = new Subject<string>();
 
   ngOnInit(): void {
     this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
@@ -72,7 +75,7 @@ export class AppPasswords implements OnInit {
   prevPage() {
     if (this.currentPage() > 1) {
       this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      const prevToken = this.#tokenHistory.at(-1) ?? null;
       this.currentPage.update((p) => p - 1);
       this.#loadAppPasswords(prevToken);
     }
@@ -129,23 +132,32 @@ export class AppPasswords implements OnInit {
     this.isLoading.set(true);
     this.loadError.set(false);
     this.expandedAppPassword.set(null);
-    this.#appPasswordsService.getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery()).subscribe({
-      next: (response) => {
-        const data = response.users.map((u) => this.#mapToUserAppPasswords(u));
-        this.userAppPasswords.set(data);
-        this.nextPageToken.set(response.nextPageToken ?? null);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.userAppPasswords.set([]);
-        this.nextPageToken.set(null);
-        this.loadError.set(true);
-        this.isLoading.set(false);
-      },
-    });
+    this.#appPasswordsService
+      .getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery())
+      .subscribe({
+        next: (response) => {
+          const data = response.users.map((u) => this.#mapToUserAppPasswords(u));
+          this.userAppPasswords.set(data);
+          this.nextPageToken.set(response.nextPageToken ?? null);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.userAppPasswords.set([]);
+          this.nextPageToken.set(null);
+          this.loadError.set(true);
+          this.isLoading.set(false);
+        },
+      });
   }
 
-  #mapToUserAppPasswords(u: { id: string; name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }): UserAppPasswords {
+  #mapToUserAppPasswords(u: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    tsv: boolean;
+    passwords: AppPassword[];
+  }): UserAppPasswords {
     return {
       id: u.id ?? u.email,
       name: u.name,
@@ -159,14 +171,14 @@ export class AppPasswords implements OnInit {
   formatDate(value: Date | string | null): string {
     if (!value) return '–';
     const d = typeof value === 'string' ? new Date(Number(value) || value) : value;
-    if (isNaN(d.getTime())) return '–';
+    if (Number.isNaN(d.getTime())) return '–';
     return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric' });
   }
 
   formatLastUsed(value: Date | string | null): string {
     if (!value) return 'nooit';
     const d = typeof value === 'string' ? new Date(Number(value) || value) : value;
-    if (isNaN(d.getTime())) return 'nooit';
+    if (Number.isNaN(d.getTime())) return 'nooit';
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -176,5 +188,4 @@ export class AppPasswords implements OnInit {
     if (diffDays < 31) return `${Math.floor(diffDays / 7)} weken geleden`;
     return `${Math.floor(diffDays / 31)} maanden geleden`;
   }
-
 }

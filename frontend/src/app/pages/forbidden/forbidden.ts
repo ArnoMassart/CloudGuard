@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { AuthService } from '@auth0/auth0-angular';
-import { CircleX, LucideAngularModule, ShieldCheck } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
 

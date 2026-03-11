@@ -5,8 +5,6 @@ import com.cloudmen.cloudguard.dto.users.UserPageResponse;
 import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
 import com.cloudmen.cloudguard.service.GoogleUsersService;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.UserService;
-import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -2,7 +2,6 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
-import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -60,7 +57,7 @@ public class GoogleSharedDriveCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new RuntimeException("Fout bij ophalen Google Shared Drives, en geen cache beschikbaar: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen Google Shared Drives, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 
@@ -78,52 +75,7 @@ public class GoogleSharedDriveCacheService {
 
                 if (result.getDrives() != null) {
                     for (com.google.api.services.drive.model.Drive drive : result.getDrives()) {
-
-                        com.google.api.services.drive.model.Drive.Restrictions res = drive.getRestrictions();
-                        boolean domainOnly = res != null && Boolean.TRUE.equals(res.getDomainUsersOnly());
-                        boolean membersOnly = res != null && Boolean.TRUE.equals(res.getDriveMembersOnly());
-
-                        int totalMembers = 0;
-                        int externalMembers = 0;
-                        int totalOrganizers = 0;
-
-                        // Permissies ophalen per Drive (N+1, maar gelukkig nu alleen in de achtergrond!)
-                        try {
-                            PermissionList permissions = driveService.permissions().list(drive.getId())
-                                    .setSupportsAllDrives(true)
-                                    .setUseDomainAdminAccess(true)
-                                    .setFields("permissions(id, emailAddress, role)")
-                                    .execute();
-
-                            if (permissions.getPermissions() != null) {
-                                totalMembers = permissions.getPermissions().size();
-                                for (Permission p : permissions.getPermissions()) {
-                                    if (p.getEmailAddress() != null && !p.getEmailAddress().endsWith("@" + customerDomain)) {
-                                        externalMembers++;
-                                    }
-                                    if ("organizer".equals(p.getRole())) {
-                                        totalOrganizers++;
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.warn("Kon leden niet laden voor drive: {}", drive.getName());
-                        }
-
-                        String createdTime = drive.getCreatedTime() != null ? DateTimeConverter.convertToTimeAgo(drive.getCreatedTime()) : "Onbekend";
-                        String risk = calculateRisk(externalMembers, totalOrganizers, domainOnly, membersOnly);
-
-                        allDrivesData.add(new SharedDriveBasicDetail(
-                                drive.getId(),
-                                drive.getName(),
-                                totalMembers,
-                                externalMembers,
-                                totalOrganizers,
-                                createdTime,
-                                domainOnly,
-                                membersOnly,
-                                risk
-                        ));
+                        allDrivesData.add(processSingleDrive(driveService, drive, customerDomain));
                     }
                 }
                 pageToken = result.getNextPageToken();
@@ -132,9 +84,64 @@ public class GoogleSharedDriveCacheService {
             return allDrivesData;
 
         } catch (Exception e) {
-            throw new RuntimeException("Fout bij ophalen van alle Shared Drives: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen van alle Shared Drives: " + e.getMessage());
         }
     }
+
+    private SharedDriveBasicDetail processSingleDrive(Drive driveService, com.google.api.services.drive.model.Drive drive, String customerDomain) {
+        com.google.api.services.drive.model.Drive.Restrictions res = drive.getRestrictions();
+        boolean domainOnly = res != null && Boolean.TRUE.equals(res.getDomainUsersOnly());
+        boolean membersOnly = res != null && Boolean.TRUE.equals(res.getDriveMembersOnly());
+
+        DriveMetrics metrics = fetchDriveMetrics(driveService, drive, customerDomain);
+
+        String createdTime = drive.getCreatedTime() != null ? DateTimeConverter.convertToTimeAgo(drive.getCreatedTime()) : "Onbekend";
+        String risk = calculateRisk(metrics.externalMembers(), metrics.totalOrganizers(), domainOnly, membersOnly);
+
+        return new SharedDriveBasicDetail(
+                drive.getId(),
+                drive.getName(),
+                metrics.totalMembers(),
+                metrics.externalMembers(),
+                metrics.totalOrganizers(),
+                createdTime,
+                domainOnly,
+                membersOnly,
+                risk
+        );
+    }
+
+    private DriveMetrics fetchDriveMetrics(Drive driveService, com.google.api.services.drive.model.Drive drive, String customerDomain) {
+        int totalMembers = 0;
+        int externalMembers = 0;
+        int totalOrganizers = 0;
+
+        try {
+            PermissionList permissions = driveService.permissions().list(drive.getId())
+                    .setSupportsAllDrives(true)
+                    .setUseDomainAdminAccess(true)
+                    .setFields("permissions(id, emailAddress, role)")
+                    .execute();
+
+            if (permissions.getPermissions() != null) {
+                totalMembers = permissions.getPermissions().size();
+                for (Permission p : permissions.getPermissions()) {
+                    if (p.getEmailAddress() != null && !p.getEmailAddress().endsWith("@" + customerDomain)) {
+                        externalMembers++;
+                    }
+                    if ("organizer".equals(p.getRole())) {
+                        totalOrganizers++;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Kon leden niet laden voor drive: {}", drive.getName());
+        }
+
+        return new DriveMetrics(totalMembers, externalMembers, totalOrganizers);
+    }
+
+    private record DriveMetrics(int totalMembers, int externalMembers, int totalOrganizers) {}
 
     private String calculateRisk(int externalMembers, int totalOrganizers, boolean domainOnly, boolean membersOnly) {
         int riskCount = 0;

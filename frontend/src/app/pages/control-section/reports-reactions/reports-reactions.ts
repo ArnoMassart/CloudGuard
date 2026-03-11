@@ -14,7 +14,7 @@ import { ResolvedNotificationService } from '../../../services/resolved-notifica
 
 @Component({
   selector: 'app-reports-reactions',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, RouterLink],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
 })
@@ -27,7 +27,9 @@ export class ReportsReactions implements OnInit {
   readonly notifications = signal<Notification[]>([]);
   readonly resolvedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved' | 'in-behandeling'>('all');
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved' | 'in-behandeling'>(
+    'all'
+  );
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
@@ -48,17 +50,17 @@ export class ReportsReactions implements OnInit {
 
   readonly totalCount = computed(() => this.notifications().length);
   readonly resolvedCount = computed(() => this.resolvedNotifications().length);
-  readonly criticalCount = computed(() =>
-    this.notifications().filter((n) => n.severity === 'critical').length
+  readonly criticalCount = computed(
+    () => this.notifications().filter((n) => n.severity === 'critical').length
   );
-  readonly warningCount = computed(() =>
-    this.notifications().filter((n) => n.severity === 'warning').length
+  readonly warningCount = computed(
+    () => this.notifications().filter((n) => n.severity === 'warning').length
   );
-  readonly infoCount = computed(() =>
-    this.notifications().filter((n) => n.severity === 'info').length
+  readonly infoCount = computed(
+    () => this.notifications().filter((n) => n.severity === 'info').length
   );
-  readonly inBehandelingCount = computed(() =>
-    this.notifications().filter((n) => n.status === 'in_behandeling').length
+  readonly inBehandelingCount = computed(
+    () => this.notifications().filter((n) => n.status === 'in_behandeling').length
   );
 
   ngOnInit() {
@@ -163,7 +165,7 @@ export class ReportsReactions implements OnInit {
   getSeverityIcon(severity: NotificationSeverity) {
     if (severity === 'critical') return this.Icons.CircleX;
     if (severity === 'warning') return this.Icons.TriangleAlert;
-    return this.Icons.CircleHelp;
+    return this.Icons.CircleQuestionMark;
   }
 
   getSeverityLabel(severity: NotificationSeverity): string {

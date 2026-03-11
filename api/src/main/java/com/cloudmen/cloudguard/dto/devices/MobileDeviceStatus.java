@@ -1,5 +1,8 @@
 package com.cloudmen.cloudguard.dto.devices;
 
+import lombok.Getter;
+
+@Getter
 public enum MobileDeviceStatus {
     ALL("Alle statussen"),
     APPROVED("Approved"),
@@ -10,10 +13,6 @@ public enum MobileDeviceStatus {
 
     MobileDeviceStatus(String value) {
         this.value = value;
-    }
-
-    public String getValue() {
-        return value;
     }
 
     // Helper om veilig van String naar Enum te gaan

@@ -68,7 +68,7 @@ public class GoogleLicenseService {
         List<User> allDomainUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
 
         int riskyAccounts =0;
-        long unusedLicenses = cachedData.inactiveUsers() != null ? cachedData.inactiveUsers().size() : 0;
+        int unusedLicenses = cachedData.inactiveUsers() != null ? cachedData.inactiveUsers().size() : 0;
         int mfaActiveCount=0;
 
         if (allDomainUsers != null) {
@@ -83,11 +83,11 @@ public class GoogleLicenseService {
         }
 
         long totalUsers = allDomainUsers != null ? allDomainUsers.size() : 0;
-        long mfaPercentage = totalUsers == 0 ? 0 : Math.round(((double) mfaActiveCount / totalUsers) * 100);
+        int mfaPercentage = totalUsers == 0 ? 0 : (int) Math.round(((double) mfaActiveCount / totalUsers) * 100);
 
         return new LicenseOverviewResponse(
                 totalAssigned,
-                riskyAccounts + (int)unusedLicenses ,
+                riskyAccounts + unusedLicenses ,
                 unusedLicenses,
                 mfaPercentage
         );

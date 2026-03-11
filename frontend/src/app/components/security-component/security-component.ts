@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { AppIcons } from '../../shared/AppIcons';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 import { Router } from '@angular/router';

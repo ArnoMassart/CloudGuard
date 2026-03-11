@@ -34,9 +34,20 @@ export class DomainDns implements OnInit {
   /** Controls sorted by severity */
   readonly securityControlsRows = computed(() => {
     const r = this.rows();
-    const order = (s: string) =>
-      s === 'ACTION_REQUIRED' || s === 'ERROR' ? 0 : s === 'ATTENTION' ? 1 : 2;
-    return [...r].sort((a, b) => order(a.status) - order(b.status));
+
+    const getStatusPriority = (status: string): number => {
+      switch (status) {
+        case 'ACTION_REQUIRED':
+        case 'ERROR':
+          return 0;
+        case 'ATTENTION':
+          return 1;
+        default:
+          return 2;
+      }
+    };
+
+    return [...r].sort((a, b) => getStatusPriority(a.status) - getStatusPriority(b.status));
   });
 
   readonly hasCriticalProblems = computed(() =>
