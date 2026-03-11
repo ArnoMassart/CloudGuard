@@ -88,7 +88,7 @@
                     [class.bg-gray-100]="filterSeverity() !== 'resolved'"
                     [class.text-gray-700]="filterSeverity() !== 'resolved'"
                     [class.hover:bg-gray-200]="filterSeverity() !== 'resolved'">
-                    Opgelost (0)
+                    Opgelost ({{ resolvedCount() }})
                 </button>
             </div>
             <button
@@ -160,7 +160,7 @@
                         <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            Vandaag
+                            {{ filterSeverity() === 'resolved' ? 'Opgelost' : 'Vandaag' }}
                         </p>
                         @if (supportsDetails(n.notificationType)) {
                         <button
@@ -205,6 +205,7 @@
                             </ul>
                         </div>
                         }
+                        @if (filterSeverity() !== 'resolved') {
                         <div class="mt-4">
                             @if (feedbackSubmitted().has(n.id)) {
                             <p class="text-sm text-emerald-600 flex items-center gap-2">
@@ -247,21 +248,35 @@
                                     <i-lucide [img]="Icons.MessageCircle" size="16" />
                                     Stuur feedback
                                 </button>
-                                <a [routerLink]="n.sourceRoute"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                                <button
+                                    type="button"
+                                    (click)="markAsResolved(n)"
+                                    [disabled]="isResolving(n)"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                     <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                    Markeer als opgelost
-                                </a>
+                                    {{ isResolving(n) ? 'Bezig...' : 'Markeer als opgelost' }}
+                                </button>
                             </div>
                             }
                         </div>
-                        @if (feedbackSubmitted().has(n.id)) {
-                        <div class="flex flex-wrap gap-2 mt-6">
-                            <a [routerLink]="n.sourceRoute"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                        } @else {
+                        <div class="mt-4">
+                            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
                                 <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                Markeer als opgelost
-                            </a>
+                                Opgelost
+                            </span>
+                        </div>
+                        }
+                        @if (filterSeverity() !== 'resolved' && feedbackSubmitted().has(n.id)) {
+                        <div class="flex flex-wrap gap-2 mt-6">
+                            <button
+                                type="button"
+                                (click)="markAsResolved(n)"
+                                [disabled]="isResolving(n)"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                <i-lucide [img]="Icons.CircleCheck" size="16" />
+                                {{ isResolving(n) ? 'Bezig...' : 'Markeer als opgelost' }}
+                            </button>
                         </div>
                         }
                         

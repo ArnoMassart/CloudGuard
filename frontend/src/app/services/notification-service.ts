@@ -9,6 +9,10 @@ import { MobileDeviceService } from './mobile-device-service';
 import { AppPasswordsService } from './app-password-service';
 import { GroupService } from './group-service';
 import { OAuthService } from './o-auth-service';
+import {
+  ResolvedNotificationService,
+  ResolvedNotification,
+} from './resolved-notification-service';
 
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
 
@@ -36,6 +40,7 @@ export class NotificationService {
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly #groupService = inject(GroupService);
   readonly #oAuthService = inject(OAuthService);
+  readonly #resolvedService = inject(ResolvedNotificationService);
 
   getNotifications(): Observable<Notification[]> {
     return this.#domainService.getDomains().pipe(
@@ -65,7 +70,39 @@ export class NotificationService {
           oAuth: this.#oAuthService.getOAuthPageOverview().pipe(catchError(() => of(null))),
         });
       }),
-      map((data) => this.#aggregateNotifications(data))
+      switchMap((data) => {
+        const active = this.#aggregateNotifications(data);
+        return this.#resolvedService.getResolved().pipe(
+          map((resolved) => {
+            const resolvedKeys = new Set(
+              resolved.map((r) => `${r.source}:${r.notificationType}`)
+            );
+            return active.filter(
+              (n) => !resolvedKeys.has(`${n.source}:${n.notificationType}`)
+            );
+          }),
+          catchError(() => of(active))
+        );
+      })
+    );
+  }
+
+  getResolvedNotifications(): Observable<Notification[]> {
+    return this.#resolvedService.getResolved().pipe(
+      map((list) =>
+        list.map((r) => ({
+          id: r.id,
+          severity: r.severity as NotificationSeverity,
+          title: r.title,
+          description: r.description,
+          recommendedActions: r.recommendedActions,
+          notificationType: r.notificationType,
+          source: r.source,
+          sourceLabel: r.sourceLabel,
+          sourceRoute: r.sourceRoute,
+        }))
+      ),
+      catchError(() => of([]))
     );
   }
 

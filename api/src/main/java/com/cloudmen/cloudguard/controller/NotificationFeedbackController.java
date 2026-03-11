@@ -1,9 +1,8 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.domain.feedback.NotificationFeedback;
 import com.cloudmen.cloudguard.domain.feedback.NotificationFeedbackRequest;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.NotificationFeedbackService;
+import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

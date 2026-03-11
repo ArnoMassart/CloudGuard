@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
@@ -10,6 +11,7 @@ import {
   NotificationSeverity,
 } from '../../../services/notification-service';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
+import { ResolvedNotificationService } from '../../../services/resolved-notification-service';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -21,8 +23,10 @@ export class ReportsReactions implements OnInit {
   readonly Icons = AppIcons;
   readonly #notificationService = inject(NotificationService);
   readonly #notificationFeedbackService = inject(NotificationFeedbackService);
+  readonly #resolvedService = inject(ResolvedNotificationService);
 
   readonly notifications = signal<Notification[]>([]);
+  readonly resolvedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved'>('all');
   readonly expandedIds = signal<Set<string>>(new Set());
@@ -33,16 +37,18 @@ export class ReportsReactions implements OnInit {
   readonly feedbackSubmitted = signal<Set<string>>(new Set());
   readonly submittingIds = signal<Set<string>>(new Set());
   readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
+  readonly resolvingIds = signal<Set<string>>(new Set());
 
   readonly filteredNotifications = computed(() => {
-    const list = this.notifications();
     const filter = this.filterSeverity();
+    if (filter === 'resolved') return this.resolvedNotifications();
+    const list = this.notifications();
     if (filter === 'all') return list;
-    if (filter === 'resolved') return [];
     return list.filter((n) => n.severity === filter);
   });
 
   readonly totalCount = computed(() => this.notifications().length);
+  readonly resolvedCount = computed(() => this.resolvedNotifications().length);
   readonly criticalCount = computed(() =>
     this.notifications().filter((n) => n.severity === 'critical').length
   );
@@ -97,17 +103,60 @@ export class ReportsReactions implements OnInit {
     this.loadingDetailsIds.set(new Set());
     this.feedbackSubmitted.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
-    this.#notificationService.getNotifications().subscribe({
-      next: (list) => {
-        this.notifications.set(list);
-        this.#loadFeedbackStatus(list);
+    forkJoin({
+      active: this.#notificationService.getNotifications(),
+      resolved: this.#notificationService.getResolvedNotifications(),
+    }).subscribe({
+      next: ({ active, resolved }) => {
+        this.notifications.set(active);
+        this.resolvedNotifications.set(resolved);
+        this.#loadFeedbackStatus(active);
         this.isLoading.set(false);
       },
       error: () => {
         this.notifications.set([]);
+        this.resolvedNotifications.set([]);
         this.isLoading.set(false);
       },
     });
+  }
+
+  markAsResolved(n: Notification) {
+    const key = `${n.source}:${n.notificationType}`;
+    if (this.resolvingIds().has(key)) return;
+    this.resolvingIds.update((s) => new Set(s).add(key));
+    this.#resolvedService
+      .markAsResolved({
+        source: n.source,
+        notificationType: n.notificationType,
+        sourceLabel: n.sourceLabel,
+        sourceRoute: n.sourceRoute,
+        title: n.title,
+        description: n.description,
+        severity: n.severity,
+        recommendedActions: n.recommendedActions,
+      })
+      .subscribe({
+        next: () => {
+          this.resolvingIds.update((s) => {
+            const next = new Set(s);
+            next.delete(key);
+            return next;
+          });
+          this.refresh();
+        },
+        error: () => {
+          this.resolvingIds.update((s) => {
+            const next = new Set(s);
+            next.delete(key);
+            return next;
+          });
+        },
+      });
+  }
+
+  isResolving(n: Notification): boolean {
+    return this.resolvingIds().has(`${n.source}:${n.notificationType}`);
   }
 
   refresh() {

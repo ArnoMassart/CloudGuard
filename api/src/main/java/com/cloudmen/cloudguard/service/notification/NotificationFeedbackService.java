@@ -1,9 +1,7 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.domain.feedback.NotificationFeedback;
 import com.cloudmen.cloudguard.repository.NotificationFeedbackRepository;
-import com.cloudmen.cloudguard.repository.NotificationRepository;
-import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -12,11 +10,9 @@ import java.time.LocalDateTime;
 @Service
 public class NotificationFeedbackService {
 
-    private final GoogleApiFactory apiFactory;
     private final NotificationFeedbackRepository repository;
 
-    public NotificationFeedbackService(GoogleApiFactory apiFactory, NotificationFeedbackRepository repository) {
-        this.apiFactory = apiFactory;
+    public NotificationFeedbackService(NotificationFeedbackRepository repository) {
         this.repository = repository;
     }
 
