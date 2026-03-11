@@ -6,6 +6,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationFeedbackService {
@@ -47,5 +49,12 @@ public class NotificationFeedbackService {
         return repository.findByUserIdAndSourceAndNotificationType(userId,source,notificationType)
                 .map(f->f.getFeedbackText()!=null && !f.getFeedbackText().isBlank())
                 .orElse(false);
+    }
+
+    public Set<String> getFeedbackKeysForUser(String userId) {
+        return repository.findByUserId(userId).stream()
+                .filter(f -> f.getFeedbackText() != null && !f.getFeedbackText().isBlank())
+                .map(f -> f.getSource() + ":" + f.getNotificationType())
+                .collect(Collectors.toSet());
     }
 }

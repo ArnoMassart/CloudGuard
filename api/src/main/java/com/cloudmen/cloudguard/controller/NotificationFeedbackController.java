@@ -6,6 +6,8 @@ import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/notifications/feedback")
 public class NotificationFeedbackController {
@@ -15,6 +17,15 @@ public class NotificationFeedbackController {
     public NotificationFeedbackController(NotificationFeedbackService notificationFeedbackService, JwtService jwtService) {
         this.notificationFeedbackService = notificationFeedbackService;
         this.jwtService = jwtService;
+    }
+
+    @GetMapping("/keys")
+    public ResponseEntity<List<String>> getFeedbackKeys(
+            @CookieValue(name = "AuthToken") String token
+    ) {
+        String userId = jwtService.validateInternalToken(token);
+        List<String> keys = notificationFeedbackService.getFeedbackKeysForUser(userId).stream().toList();
+        return ResponseEntity.ok(keys);
     }
 
     @GetMapping

@@ -13,8 +13,11 @@ import {
   ResolvedNotificationService,
   ResolvedNotification,
 } from './resolved-notification-service';
+import { NotificationFeedbackService } from './notification-feedback-service';
 
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
+
+export type NotificationStatus = 'new' | 'in_behandeling' | 'resolved';
 
 export interface Notification {
   id: string;
@@ -26,6 +29,7 @@ export interface Notification {
   source: string;
   sourceLabel: string;
   sourceRoute: string;
+  status?: NotificationStatus;
 }
 
 @Injectable({
@@ -41,6 +45,7 @@ export class NotificationService {
   readonly #groupService = inject(GroupService);
   readonly #oAuthService = inject(OAuthService);
   readonly #resolvedService = inject(ResolvedNotificationService);
+  readonly #feedbackService = inject(NotificationFeedbackService);
 
   getNotifications(): Observable<Notification[]> {
     return this.#domainService.getDomains().pipe(
@@ -73,15 +78,25 @@ export class NotificationService {
       switchMap((data) => {
         const active = this.#aggregateNotifications(data);
         return this.#resolvedService.getResolved().pipe(
-          map((resolved) => {
+          switchMap((resolved) => {
             const resolvedKeys = new Set(
               resolved.map((r) => `${r.source}:${r.notificationType}`)
             );
-            return active.filter(
+            const filtered = active.filter(
               (n) => !resolvedKeys.has(`${n.source}:${n.notificationType}`)
             );
+            return this.#feedbackService.getFeedbackKeys().pipe(
+              map((feedbackKeys) => {
+                const keySet = new Set(feedbackKeys);
+                return filtered.map((n) => ({
+                  ...n,
+                  status: (keySet.has(`${n.source}:${n.notificationType}`) ? 'in_behandeling' : 'new') as NotificationStatus,
+                }));
+              }),
+              catchError(() => of(filtered.map((n) => ({ ...n, status: 'new' as const }))))
+            );
           }),
-          catchError(() => of(active))
+          catchError(() => of(active.map((n) => ({ ...n, status: 'new' as NotificationStatus }))))
         );
       })
     );
@@ -100,6 +115,7 @@ export class NotificationService {
           source: r.source,
           sourceLabel: r.sourceLabel,
           sourceRoute: r.sourceRoute,
+          status: 'resolved' as const,
         }))
       ),
       catchError(() => of([]))

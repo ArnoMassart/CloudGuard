@@ -12,7 +12,7 @@
                 [Icon]="Icons.CircleHelp" BackgroundColor="#dbeafe" IconColor="#155dfc" />
             <app-section-top-card class="flex-1" Title="Kritiek" [Value]="criticalCount()"
                 [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
-            <app-section-top-card class="flex-1" Title="In behandeling" [Value]="0"
+            <app-section-top-card class="flex-1" Title="In behandeling" [Value]="inBehandelingCount()"
                 [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad" TextColor="#3abfad" />
         </div>
 
@@ -81,6 +81,16 @@
                     Info ({{ infoCount() }})
                 </button>
                 <button
+                    (click)="setFilter('in-behandeling')"
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-teal-100]="filterSeverity() === 'in-behandeling'"
+                    [class.text-teal-800]="filterSeverity() === 'in-behandeling'"
+                    [class.bg-gray-100]="filterSeverity() !== 'in-behandeling'"
+                    [class.text-gray-700]="filterSeverity() !== 'in-behandeling'"
+                    [class.hover:bg-gray-200]="filterSeverity() !== 'in-behandeling'">
+                    In behandeling ({{ inBehandelingCount() }})
+                </button>
+                <button
                     (click)="setFilter('resolved')"
                     class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                     [class.bg-emerald-100]="filterSeverity() === 'resolved'"
@@ -116,6 +126,8 @@
                 Er zijn geen kritieke meldingen of waarschuwingen voor dit Workspace.
                 } @else if (filterSeverity() === 'resolved') {
                 Geen opgeloste meldingen.
+                } @else if (filterSeverity() === 'in-behandeling') {
+                Geen meldingen in behandeling.
                 } @else {
                 Geen meldingen met dit filter. Probeer een ander filter.
                 }
@@ -155,12 +167,18 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 {{ n.notificationType }}
                             </span>
+                            @if (n.status === 'in_behandeling' && filterSeverity() !== 'resolved') {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                                <i-lucide [img]="Icons.Clock" size="12" />
+                                In behandeling
+                            </span>
+                            }
                         </div>
                         <h3 class="font-medium text-gray-900 text-lg">{{ n.title }}</h3>
                         <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            {{ filterSeverity() === 'resolved' ? 'Opgelost' : 'Vandaag' }}
+                            {{ filterSeverity() === 'resolved' ? 'Opgelost' : n.status === 'in_behandeling' ? 'In behandeling' : 'Vandaag' }}
                         </p>
                         @if (supportsDetails(n.notificationType)) {
                         <button
@@ -207,10 +225,10 @@
                         }
                         @if (filterSeverity() !== 'resolved') {
                         <div class="mt-4">
-                            @if (feedbackSubmitted().has(n.id)) {
-                            <p class="text-sm text-emerald-600 flex items-center gap-2">
-                                <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                Feedback verzonden
+                            @if (n.status === 'in_behandeling') {
+                            <p class="text-sm text-teal-600 flex items-center gap-2">
+                                <i-lucide [img]="Icons.Clock" size="16" />
+                                In behandeling
                             </p>
                             } @else if (isFeedbackFormOpen(n.id)) {
                             <p class="font-medium text-gray-900 text-sm mb-2">Uw feedback of wensen</p>
@@ -267,7 +285,7 @@
                             </span>
                         </div>
                         }
-                        @if (filterSeverity() !== 'resolved' && feedbackSubmitted().has(n.id)) {
+                        @if (filterSeverity() !== 'resolved' && n.status === 'in_behandeling') {
                         <div class="flex flex-wrap gap-2 mt-6">
                             <button
                                 type="button"

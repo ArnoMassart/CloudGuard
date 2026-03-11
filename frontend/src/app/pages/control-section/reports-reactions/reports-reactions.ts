@@ -28,13 +28,12 @@ export class ReportsReactions implements OnInit {
   readonly notifications = signal<Notification[]>([]);
   readonly resolvedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved'>('all');
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved' | 'in-behandeling'>('all');
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
 
   readonly feedbackTextById = signal<Record<string, string>>({});
-  readonly feedbackSubmitted = signal<Set<string>>(new Set());
   readonly submittingIds = signal<Set<string>>(new Set());
   readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
   readonly resolvingIds = signal<Set<string>>(new Set());
@@ -43,6 +42,7 @@ export class ReportsReactions implements OnInit {
     const filter = this.filterSeverity();
     if (filter === 'resolved') return this.resolvedNotifications();
     const list = this.notifications();
+    if (filter === 'in-behandeling') return list.filter((n) => n.status === 'in_behandeling');
     if (filter === 'all') return list;
     return list.filter((n) => n.severity === filter);
   });
@@ -57,6 +57,9 @@ export class ReportsReactions implements OnInit {
   );
   readonly infoCount = computed(() =>
     this.notifications().filter((n) => n.severity === 'info').length
+  );
+  readonly inBehandelingCount = computed(() =>
+    this.notifications().filter((n) => n.status === 'in_behandeling').length
   );
 
   ngOnInit() {
@@ -92,7 +95,7 @@ export class ReportsReactions implements OnInit {
     return this.feedbackFormOpenIds().has(id);
   }
 
-  setFilter(filter: NotificationSeverity | 'all' | 'resolved') {
+  setFilter(filter: NotificationSeverity | 'all' | 'resolved' | 'in-behandeling') {
     this.filterSeverity.set(filter);
   }
 
@@ -101,7 +104,6 @@ export class ReportsReactions implements OnInit {
     this.expandedIds.set(new Set());
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
-    this.feedbackSubmitted.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
     forkJoin({
       active: this.#notificationService.getNotifications(),
@@ -110,7 +112,6 @@ export class ReportsReactions implements OnInit {
       next: ({ active, resolved }) => {
         this.notifications.set(active);
         this.resolvedNotifications.set(resolved);
-        this.#loadFeedbackStatus(active);
         this.isLoading.set(false);
       },
       error: () => {
@@ -235,18 +236,6 @@ export class ReportsReactions implements OnInit {
     return this.loadingDetailsIds().has(id);
   }
 
-  #loadFeedbackStatus(list: Notification[]) {
-    list.forEach((n) => {
-      this.#notificationFeedbackService.hasFeedback(n.source, n.notificationType).subscribe({
-        next: (has) => {
-          if (has) {
-            this.feedbackSubmitted.update((s) => new Set(s).add(n.id));
-          }
-        },
-      });
-    });
-  }
-
   submitFeedback(n: Notification) {
     const text = this.getFeedbackText(n.id).trim();
     if (!text) return;
@@ -254,7 +243,11 @@ export class ReportsReactions implements OnInit {
 
     this.#notificationFeedbackService.submitFeedback(n.source, n.notificationType, text).subscribe({
       next: () => {
-        this.feedbackSubmitted.update((s) => new Set(s).add(n.id));
+        this.notifications.update((list) =>
+          list.map((item) =>
+            item.id === n.id ? { ...item, status: 'in_behandeling' as const } : item
+          )
+        );
         this.feedbackFormOpenIds.update((s) => {
           const next = new Set(s);
           next.delete(n.id);

@@ -28,4 +28,9 @@ export class NotificationFeedbackService {
         });
     }
 
+    getFeedbackKeys(): Observable<string[]> {
+        return this.#http.get<string[]>(`${this.#API_URL}/keys`, {
+            withCredentials: true,
+        });
+    }
 }
