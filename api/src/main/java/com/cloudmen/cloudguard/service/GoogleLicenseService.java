@@ -1,10 +1,9 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.dto.licenses.LicenseCacheEntry;
-import com.cloudmen.cloudguard.dto.licenses.LicenseOverviewResponse;
-import com.cloudmen.cloudguard.dto.licenses.LicensePageResponse;
-import com.cloudmen.cloudguard.dto.licenses.LicenseType;
+import com.cloudmen.cloudguard.dto.licenses.*;
 import com.cloudmen.cloudguard.service.cache.GoogleLicenseCacheService;
+import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import com.google.api.services.admin.directory.model.User;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -13,9 +12,12 @@ import java.util.List;
 @Service
 public class GoogleLicenseService {
     private final GoogleLicenseCacheService licenseCacheService;
+    private final GoogleUsersCacheService usersCacheService;
 
-    public GoogleLicenseService(GoogleLicenseCacheService licenseCacheService) {
+
+    public GoogleLicenseService(GoogleLicenseCacheService licenseCacheService, GoogleUsersCacheService usersCacheService) {
         this.licenseCacheService = licenseCacheService;
+        this.usersCacheService = usersCacheService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -26,15 +28,33 @@ public class GoogleLicenseService {
         LicenseCacheEntry cachedData = licenseCacheService.getOrFetchLicenseData(loggedInEmail);
         List<LicenseType> types = cachedData.licenseTypes().stream().sorted(Comparator.comparing(LicenseType::skuName)).toList();
 
-        int maxLicenseAmount = types.stream().mapToInt(LicenseType::totalPurchased).max()
+        int maxLicenseAmount = types.stream().mapToInt(LicenseType::totalAssigned).max()
                 .orElse(0);
 
         int stepSize = getStepSize(maxLicenseAmount);
 
+        List<User> allDomainUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
+
+        int activeCount = 0;
+        int inactiveCount = 0;
+
+        if (allDomainUsers != null) {
+            for (User user: allDomainUsers) {
+                if (Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())) {
+                    activeCount++;
+                } else {
+                    inactiveCount++;
+                }
+            }
+        }
+
+        MfaStats mfaStats = new MfaStats(activeCount, inactiveCount);
+
         return new LicensePageResponse(
           types,
           cachedData.inactiveUsers(),
-                maxLicenseAmount,
+                mfaStats,
+                maxLicenseAmount + stepSize,
                 stepSize
         );
     }
@@ -43,14 +63,33 @@ public class GoogleLicenseService {
         LicenseCacheEntry cachedData = licenseCacheService.getOrFetchLicenseData(loggedInEmail);
         List<LicenseType> types = cachedData.licenseTypes();
 
-        int totalPurchased = types.stream().mapToInt(LicenseType::totalPurchased).sum();
         int totalAssigned =  types.stream().mapToInt(LicenseType::totalAssigned).sum();
 
-        int usagePercentage = totalPurchased == 0 ? 0 : (int) Math.round(((double) totalAssigned / totalPurchased) *100);
+        List<User> allDomainUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
+
+        int riskyAccounts =0;
+        long unusedLicenses = cachedData.inactiveUsers() != null ? cachedData.inactiveUsers().size() : 0;
+        int mfaActiveCount=0;
+
+        if (allDomainUsers != null) {
+            for (User user : allDomainUsers) {
+                if (Boolean.TRUE.equals(user.getSuspended())) {
+                    riskyAccounts++;
+                }
+                if (Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())) {
+                    mfaActiveCount++;
+                }
+            }
+        }
+
+        long totalUsers = allDomainUsers != null ? allDomainUsers.size() : 0;
+        long mfaPercentage = totalUsers == 0 ? 0 : Math.round(((double) mfaActiveCount / totalUsers) * 100);
 
         return new LicenseOverviewResponse(
-                totalPurchased,
-                usagePercentage
+                totalAssigned,
+                riskyAccounts + (int)unusedLicenses ,
+                unusedLicenses,
+                mfaPercentage
         );
     }
 

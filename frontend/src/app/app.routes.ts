@@ -10,10 +10,13 @@ import { MobileDevices } from './pages/security-section/mobile-devices/mobile-de
 import { AppAccess } from './pages/security-section/app-access/app-access';
 import { AppPasswords } from './pages/security-section/app-passwords/app-passwords';
 import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
-import { LicensesBilling } from './pages/control-section/licenses-billing/licenses-billing';
+import { Licenses } from './pages/control-section/licenses/licenses';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
 import { authGuard } from './auth/auth.guard';
 import { Forbidden } from './pages/forbidden/forbidden';
+import { TeamleaderAccessDenied } from './pages/teamleader-access-denied/teamleader-access-denied';
+import { ServerError } from './pages/server-error/server-error';
+import { accessGuard } from './access/access.guard';
 
 export const routes: Routes = [
   {
@@ -29,6 +32,14 @@ export const routes: Routes = [
     component: Callback,
   },
   {
+    path: 'access-denied',
+    component: TeamleaderAccessDenied,
+  },
+  {
+    path: 'server-error',
+    component: ServerError,
+  },
+  {
     path: '',
     redirectTo: 'home',
     pathMatch: 'full',
@@ -36,52 +47,52 @@ export const routes: Routes = [
   {
     path: 'home',
     component: Home,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'users-groups',
     component: UsersGroups,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'organizational-units',
     component: OrganizationalUnits,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'shared-drives',
     component: SharedDrives,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'mobile-devices',
     component: MobileDevices,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'app-access',
     component: AppAccess,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'app-passwords',
     component: AppPasswords,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'domain-dns',
     component: DomainDns,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
-    path: 'licenses-billing',
-    component: LicensesBilling,
-    canActivate: [authGuard],
+    path: 'licenses',
+    component: Licenses,
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'reports-reactions',
     component: ReportsReactions,
-    canActivate: [authGuard],
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'test',
