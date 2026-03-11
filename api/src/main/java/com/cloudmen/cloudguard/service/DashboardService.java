@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.dashboard.DashboardOverviewResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardPageResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardScores;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +24,9 @@ public class DashboardService {
     private final AppPasswordsService passwordsService;
     private final DnsRecordsService dnsRecordsService;
     private final GoogleDomainService domainService;
-    private final NotificationService notificationService;
+    private final NotificationAggregationService notificationService;
 
-    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleMobileDeviceService mobileDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationService notificationService) {
+    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleMobileDeviceService mobileDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService) {
         this.usersService = usersService;
         this.groupsService = groupsService;
         this.sharedDriveService = sharedDriveService;
@@ -51,9 +52,9 @@ public class DashboardService {
         );
     }
 
-    public DashboardOverviewResponse getDashboardOverview() {
-        int totalNotifications = (int) notificationService.getNotificationsCount();
-        int criticalNotifications = (int) notificationService.getNotificationsCriticalCount();
+    public DashboardOverviewResponse getDashboardOverview(String loggedInEmail) {
+        int totalNotifications = (int) notificationService.getNotificationsCount(loggedInEmail);
+        int criticalNotifications = (int) notificationService.getNotificationsCriticalCount(loggedInEmail);
 
         return new DashboardOverviewResponse(totalNotifications, criticalNotifications);
     }

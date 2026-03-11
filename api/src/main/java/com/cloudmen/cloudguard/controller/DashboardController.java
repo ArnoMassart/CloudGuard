@@ -39,8 +39,8 @@ public class DashboardController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        jwtService.validateInternalToken(token);
+        String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(dashboardService.getDashboardOverview());
+        return ResponseEntity.ok(dashboardService.getDashboardOverview(loggedInEmail));
     }
 }

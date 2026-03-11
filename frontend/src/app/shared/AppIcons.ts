@@ -25,6 +25,7 @@ import {
   LogOut,
   RefreshCw,
   Search,
+  Send,
   Settings,
   Shield,
   ShieldAlert,
@@ -70,6 +71,7 @@ export class AppIcons {
   static readonly MessageCircle = MessageCircle;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
+  static readonly Send = Send;
   static readonly ServerCrash = ServerCrash;
   static readonly Settings = Settings;
   static readonly Shield = Shield;
