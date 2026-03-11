@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LicensesBilling } from './licenses-billing';
+import { ServerError } from './server-error';
 
-describe('LicensesBilling', () => {
-  let component: LicensesBilling;
-  let fixture: ComponentFixture<LicensesBilling>;
+describe('ServerError', () => {
+  let component: ServerError;
+  let fixture: ComponentFixture<ServerError>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LicensesBilling]
-    })
-    .compileComponents();
+      imports: [ServerError],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(LicensesBilling);
+    fixture = TestBed.createComponent(ServerError);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

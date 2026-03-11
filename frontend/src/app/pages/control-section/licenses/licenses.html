@@ -1,0 +1,196 @@
+<div class="px-10 py-6">
+    <app-page-header Title="Licenties Overzicht" Description="Monitor uw Google Workspace licentiegebruik"
+        AdminLink="billing/subscriptions" />
+
+    <div class="w-full flex flex-col gap-5 pt-6">
+        <div class="w-full flex gap-4">
+            <app-section-top-card class="flex-1" Title="Totaal toegewezen" [Value]="pageOverview()?.totalAssigned"
+                [Icon]="Icons.Users" />
+            <app-section-top-card class="flex-1" Title="Risicovolle Accounts" [Value]="pageOverview()?.riskyAccounts"
+                BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="Icons.UserX" />
+            <app-section-top-card class="flex-1" Title="Ongebruikte Licenties" [Value]="pageOverview()?.unusedLicenses"
+                BackgroundColor="#fef9c2" IconColor="#d38700" TextColor="#d38700" [Icon]="Icons.Clock" />
+            <app-section-top-card class="flex-1" Title="2FA Dekking" [Icon]="Icons.Shield"
+                [Value]="pageOverview()?.mfaPercentage" [IsPercentage]="true" BackgroundColor="#fef9c2"
+                IconColor="#d69518" />
+        </div>
+
+        @if (hasWarnings() && !isLoading()){
+        <div class="bg-red-50 border border-red-200/50 rounded-lg p-4 transition-all duration-200">
+            <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
+                <div class="flex gap-3 items-center">
+                    <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-red-600" />
+                    <span class="text-red-800 font-medium text-[16px]">
+                        Risicovolle Accounts Gedetecteerd
+                    </span>
+                </div>
+
+                <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
+                    class="text-red-600 opacity-70 group-hover:opacity-100 transition-opacity" />
+            </div>
+
+            @if (isExpanded()) {
+            <div class="flex flex-col gap-2 mt-3 ml-8">
+                <div class="flex gap-2 items-center">
+                    <span class="text-[13px] text-red-700">
+                        Er {{pageOverview()?.riskyAccounts! > 1 ? 'zijn' :
+                        'is'}} {{pageOverview()?.riskyAccounts}} account{{pageOverview()?.riskyAccounts! > 1 ? 's' :
+                        ''}} met potentiële beveiligingsrisico's die aandacht vereisen. {{pageOverview()?.riskyAccounts!
+                        > 1 ? 'Deze accounts zijn' :
+                        'Dit account is'}} inactief of
+                        gesuspendeerd maar {{pageOverview()?.riskyAccounts!
+                        > 1 ? 'hebben' :
+                        'heeft'}} nog steeds licenties toegewezen.
+                    </span>
+                </div>
+            </div>
+            }
+        </div>
+        }
+
+        @if (!isLoading()) {
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl mx-auto">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-90">
+                <h2 class="text-lg font-medium text-gray-900 mb-6 px-4">
+                    Licentiegebruik per Type
+                </h2>
+
+                <div class="grow">
+                    <canvas baseChart [data]="barChartData" [options]="barChartOptions" [type]="barChartType">
+                    </canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-90">
+                <h2 class="text-xl font-medium mb-6 px-4">
+                    2FA Dekking
+                </h2>
+
+                <div class="relative grow flex items-center justify-center">
+
+                    <div class="w-2/3 h-2/3">
+                        <canvas baseChart [data]="pieChartData" [options]="pieChartOptions" [type]="pieChartType">
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="flex justify-between items-center mx-5.5">
+                <span class="font-medium text-lg">Licentietype Overzicht</span>
+            </div>
+
+            <table class="w-full text-left border-collapse mt-6">
+                <thead>
+                    <tr class="border-b border-t border-gray-200 bg-gray-50/50">
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Licentietype</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Toegewezen</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                    @for (license of licenseTypes(); track license.skuId) {
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-medium text-slate-900 text-sm">{{ license.skuName }}</span>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <span class="text-slate-900 text-sm">{{ license.totalAssigned }}</span>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="mx-5.5 flex flex-col gap-1">
+                <div class="flex gap-3 items-center">
+                    <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-orange-600" />
+                    <span class="font-medium text-lg">Inactieve Gebruikers met Licenties
+                        ({{inactiveUsers().length}})</span>
+                </div>
+                <span class="text-[13px] text-slate-600">Deze gebruikers hebben al meer dan 90 dagen niet
+                    ingelogd</span>
+            </div>
+
+            @if (inactiveUsers().length > 0) {
+
+
+            <table class="w-full text-left border-collapse mt-6">
+                <thead>
+                    <tr class="border-b border-t border-gray-200 bg-gray-50/50">
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste Login</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Licentie Type</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">2FA</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                    @for (user of inactiveUsers(); track user.email) {
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class=" text-sm">{{ user.email }}</span>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2 text-sm">
+                                <lucide-icon [img]="Icons.Clock" size="14"></lucide-icon>
+                                {{ user.lastLogin }}
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <span class="text-xs bg-gray-100 py-1.5 px-2 rounded-lg text-slate-800">{{ user.licenseType
+                                }}</span>
+                        </td>
+
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1.5 text-xs font-medium"
+                                [class.text-emerald-400]="user.isTwoFactorEnabled"
+                                [class.text-destructive]="!user.isTwoFactorEnabled">
+                                <lucide-icon [img]="user.isTwoFactorEnabled ? Icons.CircleCheck : Icons.CircleX"
+                                    size="14"></lucide-icon>
+                                {{ user.isTwoFactorEnabled ? 'Ingeschakeld' : 'Uit' }}
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            } @else {
+            <div class="flex items-center justify-center p-5">
+                <span class="text-lg font-medium text-slate-600">
+                    Geen inactieve gebruikers met licenties gevonden!
+                </span>
+
+            </div>
+            }
+        </div>
+        }@else {
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+
+            <div class="flex flex-col items-center p-3">
+                <div class="flex flex-col items-center space-y-4 p-8">
+                    <div class="relative flex items-center justify-center">
+                        <div class="h-12 w-12 rounded-full"></div>
+
+                        <div
+                            class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+                        </div>
+                    </div>
+
+                    <span class="text-sm font-medium text-slate-600 animate-pulse">
+                        Licenties worden geladen...
+                    </span>
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+</div>

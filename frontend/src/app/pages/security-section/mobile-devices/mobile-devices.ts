@@ -139,8 +139,6 @@ export class MobileDevices {
 
     this.#mobileDeviceService.refreshDeviceCache().subscribe({
       next: (res) => {
-        console.log(res);
-
         this.currentPage.set(1);
         this.#tokenHistory = [null];
 

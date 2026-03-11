@@ -77,14 +77,14 @@ public class GoogleMobileDeviceService {
         MobileDeviceCacheEntry cachedData = mobileDeviceCacheService.getOrFetchDeviceData(loggedInEmail, isTestMode);
         List<MobileDevice> allDevices = cachedData.allDevices();
 
-        long totalDevices = 0;
-        long approvedDevices = 0;
-        long nonCompliantDevices = 0;
-        long totalScoreSum = 0;
-        long totalLockScreenCount = 0;
-        long totalEncryptionCount = 0;
-        long totalOsVersionCount = 0;
-        long totalIntegrityCount = 0;
+        int totalDevices = 0;
+        int approvedDevices = 0;
+        int nonCompliantDevices = 0;
+        int totalScoreSum = 0;
+        int totalLockScreenCount = 0;
+        int totalEncryptionCount = 0;
+        int totalOsVersionCount = 0;
+        int totalIntegrityCount = 0;
 
         for (MobileDevice device : allDevices) {
             totalDevices++;

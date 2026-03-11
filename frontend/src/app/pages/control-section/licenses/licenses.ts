@@ -14,9 +14,10 @@ import { LicenseType } from '../../../models/licenses/LicenseType';
 import { InactiveUser } from '../../../models/licenses/InactiveUser';
 import { single, window } from 'rxjs';
 import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOverviewResponse';
+import { MfaStats } from '../../../models/licenses/MfaStats';
 
 @Component({
-  selector: 'app-licenses-billing',
+  selector: 'app-licenses',
   imports: [
     LucideAngularModule,
     PageHeader,
@@ -26,10 +27,10 @@ import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOvervie
     SectionTopCard,
     BaseChartDirective,
   ],
-  templateUrl: './licenses-billing.html',
-  styleUrl: './licenses-billing.css',
+  templateUrl: './licenses.html',
+  styleUrl: './licenses.css',
 })
-export class LicensesBilling {
+export class Licenses {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -52,6 +53,7 @@ export class LicensesBilling {
   readonly inactiveUsers = signal<InactiveUser[]>([]);
   readonly maxLicenseAmount = signal(0);
   readonly stepSize = signal(0);
+  readonly mfaStats = signal<MfaStats | null>(null);
 
   readonly pageOverview = signal<LicenseOverviewResponse | null>(null);
 
@@ -60,7 +62,7 @@ export class LicensesBilling {
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
 
-  readonly hasCostsSaved = signal(false);
+  readonly hasWarnings = signal(false);
 
   // Custom Colors Matching the Image
   private colors = {
@@ -83,14 +85,6 @@ export class LicensesBilling {
         borderColor: this.colors.toegewezenBlue,
         borderWidth: 0,
         borderRadius: 4, // Adds rounded corners to bars
-      },
-      {
-        data: [],
-        label: 'Beschikbaar',
-        backgroundColor: this.colors.beschikbaarGrey,
-        borderColor: this.colors.beschikbaarGrey,
-        borderWidth: 0,
-        borderRadius: 4,
       },
     ],
   };
@@ -141,15 +135,11 @@ export class LicensesBilling {
 
   readonly pieChartData: ChartData<'pie'> = {
     // Re-order labels to match the clockwise flow: Blue -> Green -> Orange
-    labels: ['Business Standard: 57%', 'Enterprise: 38%', 'Google Voice: 5%'],
+    labels: ['2FA Actief', '2FA Inactief'],
     datasets: [
       {
-        data: [57, 38, 5],
-        backgroundColor: [
-          '#3b82f6', // Blue
-          '#10b981', // Green
-          '#f59e0b', // Orange/Yellow
-        ],
+        data: [],
+        backgroundColor: ['#10b981', '#ef4444'],
         borderWidth: 2,
         borderColor: '#ffffff', // Adds the white gap between slices
       },
@@ -160,7 +150,13 @@ export class LicensesBilling {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxWidth: 15,
+          usePointStyle: false,
+        },
+      },
       tooltip: { enabled: true },
     },
   };
@@ -198,8 +194,12 @@ export class LicensesBilling {
         this.inactiveUsers.set(res.inactiveUsers);
         this.maxLicenseAmount.set(res.maxLicenseAmount);
         this.stepSize.set(res.chartStepSize);
+        this.mfaStats.set(res.mfaStats);
 
         this.#updateBarChart();
+        this.#updatePieChart();
+
+        console.log(this.pieChartData.datasets);
 
         this.isLoading.set(false);
       },
@@ -214,6 +214,10 @@ export class LicensesBilling {
     this.#licenseService.getLicensesPageOverview().subscribe({
       next: (res) => {
         this.pageOverview.set(res);
+
+        if (this.pageOverview()?.riskyAccounts) {
+          this.hasWarnings.set(true);
+        }
       },
       error: (err) => {
         console.error('Failed to load page overview', err);
@@ -225,7 +229,6 @@ export class LicensesBilling {
     this.barChartData.labels = this.licenseTypes().map((l) => l.skuName);
 
     this.barChartData.datasets[0].data = this.licenseTypes().map((l) => l.totalAssigned);
-    this.barChartData.datasets[1].data = this.licenseTypes().map((l) => l.totalAvailable);
 
     if (this.barChartOptions?.scales?.['y']) {
       const yScale = this.barChartOptions.scales['y'] as any;
@@ -238,5 +241,12 @@ export class LicensesBilling {
     }
 
     this.barChartData = { ...this.barChartData };
+  }
+
+  #updatePieChart() {
+    this.pieChartData.datasets[0].data = [
+      this.mfaStats()?.activeCount!,
+      this.mfaStats()?.inactiveCount!,
+    ];
   }
 }

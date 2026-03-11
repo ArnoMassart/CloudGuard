@@ -69,7 +69,32 @@ public class DnsRecordsService {
         String cnameName = "mail." + domain;
         rows.add(buildCname(cnameName));
 
-        return new DnsRecordResponseDto(domain, rows);
+        int securityScore = calculateSecurityScore(rows);
+
+        return new DnsRecordResponseDto(domain, rows, securityScore);
+    }
+
+    private int calculateSecurityScore(List<DnsRecordDto> rows) {
+        if (rows == null || rows.isEmpty()) return 0;
+
+        double score = 0;
+        for (DnsRecordDto row: rows) {
+            int weight = switch (row.importance()){
+                case REQUIRED -> 15;
+                case RECOMMENDED -> 10;
+                case OPTIONAL -> 5;
+            };
+
+            double mult = switch (row.status()) {
+                case VALID -> 1.0;
+                case OK,ATTENTION -> 0.5;
+                case ACTION_REQUIRED, ERROR -> 0.0;
+            };
+
+            score += weight * mult;
+        }
+
+        return (int) Math.round(Math.min(100.0, score));
     }
 
     private DnsRecordDto buildSpf(String domain) {

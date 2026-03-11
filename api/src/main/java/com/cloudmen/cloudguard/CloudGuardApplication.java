@@ -11,5 +11,7 @@ public class CloudGuardApplication {
         dotenv.entries().forEach(dotenvEntry -> System.setProperty(dotenvEntry.getKey(), dotenvEntry.getValue()));
 
         SpringApplication.run(CloudGuardApplication.class, args);
+
+
     }
 }

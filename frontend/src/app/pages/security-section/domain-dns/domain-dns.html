@@ -1,6 +1,5 @@
 <div class="px-10 py-6">
-    <app-page-header Title="Domein & DNS"
-        Description="Monitor domeinen en DNS-instellingen"
+    <app-page-header Title="Domein & DNS" Description="Monitor domeinen en DNS-instellingen"
         AdminLink="domains/manage" />
 
     <div class="w-full flex flex-col gap-5 pt-6">
@@ -9,8 +8,8 @@
                 [Icon]="Icons.Globe" />
             <app-section-top-card class="flex-1" Title="Geldige DNS records" [Value]="validDnsRecords()"
                 BackgroundColor="#dbfce7" IconColor="#17b04f" TextColor="#17b04f" [Icon]="Icons.CircleCheck" />
-            <app-section-top-card class="flex-1" Title="Security Score" [Value]="securityScore()"
-                [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+            <app-section-top-card class="flex-1" Title="Security Score" [Value]="securityScore()" [IsPercentage]="true"
+                BackgroundColor="#fef9c2" IconColor="#d69518" />
         </div>
 
         @if (!isLoading()) {
@@ -18,14 +17,15 @@
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
             <div class="flex justify-between items-center mx-5.5">
                 <div class="flex-1 min-w-0 flex items-center gap-3">
-                    <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#dbeafe] text-[#155dfc] shrink-0">
+                    <div
+                        class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#dbeafe] text-[#155dfc] shrink-0">
                         <i-lucide [img]="Icons.Globe" size="22" />
                     </div>
                     <div>
-                    <h2 class="text-lg font-medium text-gray-900">Alle domeinen</h2>
-                    <p class="text-sm text-gray-500 mt-0.5">
-                        Alle domeinen gekoppeld aan je Workspace
-                    </p>
+                        <h2 class="text-lg font-medium text-gray-900">Alle domeinen</h2>
+                        <p class="text-sm text-gray-500 mt-0.5">
+                            Alle domeinen gekoppeld aan je Workspace
+                        </p>
                     </div>
                 </div>
                 <button (click)="refreshData()" [disabled]="isRefreshing()"
@@ -50,7 +50,8 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3 justify-center">
-                                <span class="font-medium text-slate-900 text-sm text-center">{{ domain.domainName }}</span>
+                                <span class="font-medium text-slate-900 text-sm text-center">{{ domain.domainName
+                                    }}</span>
                             </div>
                         </td>
 
@@ -68,10 +69,8 @@
 
                         <td class="px-6 py-4">
                             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium"
-                                [class.text-emerald-600]="domain.isVerified"
-                                [class.bg-[#dbfce7]]="domain.isVerified"
-                                [class.text-amber-700]="!domain.isVerified"
-                                [class.bg-amber-100]="!domain.isVerified">
+                                [class.text-emerald-600]="domain.isVerified" [class.bg-[#dbfce7]]="domain.isVerified"
+                                [class.text-amber-700]="!domain.isVerified" [class.bg-amber-100]="!domain.isVerified">
                                 <lucide-icon [img]="domain.isVerified ? Icons.CircleCheck : Icons.TriangleAlert"
                                     size="14"></lucide-icon>
                                 {{ domain.isVerified ? 'Geverifieerd' : 'Niet geverifieerd' }}
@@ -102,7 +101,9 @@
                 <div class="flex flex-col items-center space-y-4 p-8">
                     <div class="relative flex items-center justify-center">
                         <div class="h-12 w-12 rounded-full"></div>
-                        <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                        <div
+                            class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+                        </div>
                     </div>
                     <span class="text-sm font-medium text-slate-600 animate-pulse">Domeinen worden geladen...</span>
                 </div>
@@ -112,227 +113,223 @@
     </div>
 
 
-        <!-- Beveiligingscontroles card -->
-        <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-8">
-            <div class="p-6 border-b border-gray-200 flex items-start gap-3">
-                <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#d8f2ef] text-[#3abfad] shrink-0">
-                    <i-lucide [img]="Icons.Shield" size="22" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <h2 class="text-lg font-medium text-gray-900">Beveiligingscontroles</h2>
-                    <p class="text-sm text-gray-500 mt-0.5">Status van authenticatie</p>
-                </div>
-                @if (domains().length > 0) {
-                <select
-                    [ngModel]="selectedDnsDomain() ?? ''"
-                    (ngModelChange)="selectDnsDomain($event)"
-                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                    <option value="" disabled>Selecteer domein</option>
-                    @for (d of domains(); track d.domainName) {
-                    <option [value]="d.domainName">{{ d.domainName }}</option>
-                    }
-                </select>
+    <!-- Beveiligingscontroles card -->
+    <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-8">
+        <div class="p-6 border-b border-gray-200 flex items-start gap-3">
+            <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#d8f2ef] text-[#3abfad] shrink-0">
+                <i-lucide [img]="Icons.Shield" size="22" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <h2 class="text-lg font-medium text-gray-900">Beveiligingscontroles</h2>
+                <p class="text-sm text-gray-500 mt-0.5">Status van authenticatie</p>
+            </div>
+            @if (domains().length > 0) {
+            <select [ngModel]="selectedDnsDomain() ?? ''" (ngModelChange)="selectDnsDomain($event)"
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                <option value="" disabled>Selecteer domein</option>
+                @for (d of domains(); track d.domainName) {
+                <option [value]="d.domainName">{{ d.domainName }}</option>
                 }
-            </div>
-
-            @if (isLoadingDns()) {
-            <div class="flex flex-col items-center p-8">
-                <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <span class="text-sm text-gray-500 mt-1">Beveiligingscontroles worden geladen...</span>
-            </div>
-            } @else if (rows().length > 0) {
-            @if (hasCriticalProblems() || hasWarnings()) {
-            <div class="mx-6 mt-6 mb-0 rounded-lg border p-4"
-                [class.bg-red-50]="hasCriticalProblems()"
-                [class.border-red-200]="hasCriticalProblems()"
-                [class.bg-amber-50]="!hasCriticalProblems() && hasWarnings()"
-                [class.border-amber-200]="!hasCriticalProblems() && hasWarnings()">
-                <div class="flex items-start gap-3">
-                    @if (hasCriticalProblems()) {
-                    <i-lucide [img]="Icons.CircleX" size="20" class="text-red-600 shrink-0 mt-0.5" />
-                    } @else {
-                    <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-amber-600 shrink-0 mt-0.5" />
-                    }
-                    <div>
-                        <p class="font-medium text-sm"
-                            [class.text-red-800]="hasCriticalProblems()"
-                            [class.text-amber-800]="!hasCriticalProblems() && hasWarnings()">
-                            @if (hasCriticalProblems()) {
-                            Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
-                            } @else {
-                            Er zijn waarschuwingen voor dit domein.
-                            }
-                        </p>
-                        <p class="text-sm mt-1"
-                            [class.text-red-700]="hasCriticalProblems()"
-                            [class.text-amber-700]="!hasCriticalProblems() && hasWarnings()">
-                            Raadpleeg de help-artikelen om deze te verhelpen.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            }
-            <div class="px-6 py-5">
-                <div class="space-y-0 divide-y divide-gray-100">
-                    @for (row of securityControlsRows(); track row.type + row.name) {
-                    <div class="flex items-start gap-4 py-4 first:pt-0">
-                        <div class="shrink-0 mt-0.5">
-                            @if (getDnsStatusClass(row.status, row.type) === 'valid') {
-                            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-[#d8f2ef] text-[#3abfad]">
-                                <i-lucide [img]="Icons.CircleCheck" size="18" />
-                            </div>
-                            } @else if (getDnsStatusClass(row.status, row.type) === 'error') {
-                            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 text-red-600">
-                                <i-lucide [img]="Icons.CircleX" size="18" />
-                            </div>
-                            } @else {
-                            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                                <i-lucide [img]="Icons.TriangleAlert" size="18" />
-                            </div>
-                            }
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-900 text-sm">{{ getControlTitle(row.type) }}</span>
-                                @if (getControlArticleUrl(row.type)) {
-                                <a [href]="getControlArticleUrl(row.type)!" target="_blank" rel="noopener noreferrer"
-                                    class="text-gray-400 hover:text-gray-600 transition-colors">
-                                    <i-lucide [img]="Icons.ExternalLink" size="14" />
-                                </a>
-                                }
-                            </div>
-                            <p class="text-sm text-gray-600 mt-1">{{ getControlStatusDescription(row) }}</p>
-                            @if (getControlTip(row.type, row.status)) {
-                            <p class="text-sm mt-2">
-                                <span class="text-gray-600">Tip: </span>
-                                <span [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
-                                    [class.text-red-600]="getDnsStatusClass(row.status, row.type) === 'error'">
-                                    {{ getControlTip(row.type, row.status) }}
-                                </span>
-                            </p>
-                            }
-                        </div>
-                        <div class="shrink-0">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
-                                [class.bg-emerald-100]="getDnsStatusClass(row.status, row.type) === 'valid'"
-                                [class.text-emerald-700]="getDnsStatusClass(row.status, row.type) === 'valid'"
-                                [class.bg-amber-100]="getDnsStatusClass(row.status, row.type) === 'attention'"
-                                [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
-                                [class.bg-red-100]="getDnsStatusClass(row.status, row.type) === 'error'"
-                                [class.text-red-700]="getDnsStatusClass(row.status, row.type) === 'error'"
-                                [class.bg-gray-100]="getDnsStatusClass(row.status, row.type) === 'neutral'"
-                                [class.text-gray-700]="getDnsStatusClass(row.status, row.type) === 'neutral'">
-                                <lucide-icon [img]="getDnsStatusClass(row.status, row.type) === 'valid' ? Icons.CircleCheck : (getDnsStatusClass(row.status, row.type) === 'error' ? Icons.CircleX : Icons.TriangleAlert)"
-                                    size="12"></lucide-icon>
-                                {{ getDnsStatusLabel(row.status) }}
-                            </span>
-                        </div>
-                    </div>
-                    }
-                </div>
-            </div>
-            } @else if (selectedDnsDomain()) {
-            <div class="flex flex-col items-center justify-center p-8">
-                <span class="text-sm text-gray-500">Geen beveiligingscontroles gevonden voor dit domein.</span>
-            </div>
-            } @else {
-            <div class="flex flex-col items-center justify-center p-8">
-                <span class="text-sm text-gray-500">Selecteer een domein om beveiligingscontroles te bekijken.</span>
-            </div>
+            </select>
             }
         </div>
 
-        <!-- DNS Records card -->
-        <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-8">
-            <div class="p-6 border-b border-gray-200 flex items-start gap-3">
-                <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
-                    <i-lucide [img]="Icons.FileText" size="22" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <h2 class="text-lg font-medium text-gray-900">DNS Records</h2>
-                    <p class="text-sm text-gray-500 mt-0.5">
-                        Belangrijke DNS records voor e-mail authenticatie en beveiliging
+        @if (isLoadingDns()) {
+        <div class="flex flex-col items-center p-8">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <span class="text-sm text-gray-500 mt-1">Beveiligingscontroles worden geladen...</span>
+        </div>
+        } @else if (rows().length > 0) {
+        @if (hasCriticalProblems() || hasWarnings()) {
+        <div class="mx-6 mt-6 mb-0 rounded-lg border p-4" [class.bg-red-50]="hasCriticalProblems()"
+            [class.border-red-200]="hasCriticalProblems()" [class.bg-amber-50]="!hasCriticalProblems() && hasWarnings()"
+            [class.border-amber-200]="!hasCriticalProblems() && hasWarnings()">
+            <div class="flex items-start gap-3">
+                @if (hasCriticalProblems()) {
+                <i-lucide [img]="Icons.CircleX" size="20" class="text-red-600 shrink-0 mt-0.5" />
+                } @else {
+                <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-amber-600 shrink-0 mt-0.5" />
+                }
+                <div>
+                    <p class="font-medium text-sm" [class.text-red-800]="hasCriticalProblems()"
+                        [class.text-amber-800]="!hasCriticalProblems() && hasWarnings()">
+                        @if (hasCriticalProblems()) {
+                        Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
+                        } @else {
+                        Er zijn waarschuwingen voor dit domein.
+                        }
+                    </p>
+                    <p class="text-sm mt-1" [class.text-red-700]="hasCriticalProblems()"
+                        [class.text-amber-700]="!hasCriticalProblems() && hasWarnings()">
+                        Raadpleeg de help-artikelen om deze te verhelpen.
                     </p>
                 </div>
-                @if (domains().length > 0) {
-                <select
-                    [ngModel]="selectedDnsDomain() ?? ''"
-                    (ngModelChange)="selectDnsDomain($event)"
-                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                    <option value="" disabled>Selecteer domein</option>
-                    @for (d of domains(); track d.domainName) {
-                    <option [value]="d.domainName">{{ d.domainName }}</option>
-                    }
-                </select>
+            </div>
+        </div>
+        }
+        <div class="px-6 py-5">
+            <div class="space-y-0 divide-y divide-gray-100">
+                @for (row of securityControlsRows(); track row.type + row.name) {
+                <div class="flex items-start gap-4 py-4 first:pt-0">
+                    <div class="shrink-0 mt-0.5">
+                        @if (getDnsStatusClass(row.status, row.type) === 'valid') {
+                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-[#d8f2ef] text-[#3abfad]">
+                            <i-lucide [img]="Icons.CircleCheck" size="18" />
+                        </div>
+                        } @else if (getDnsStatusClass(row.status, row.type) === 'error') {
+                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 text-red-600">
+                            <i-lucide [img]="Icons.CircleX" size="18" />
+                        </div>
+                        } @else {
+                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <i-lucide [img]="Icons.TriangleAlert" size="18" />
+                        </div>
+                        }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-gray-900 text-sm">{{ getControlTitle(row.type) }}</span>
+                            @if (getControlArticleUrl(row.type)) {
+                            <a [href]="getControlArticleUrl(row.type)!" target="_blank" rel="noopener noreferrer"
+                                class="text-gray-400 hover:text-gray-600 transition-colors">
+                                <i-lucide [img]="Icons.ExternalLink" size="14" />
+                            </a>
+                            }
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">{{ getControlStatusDescription(row) }}</p>
+                        @if (getControlTip(row.type, row.status)) {
+                        <p class="text-sm mt-2">
+                            <span class="text-gray-600">Tip: </span>
+                            <span [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
+                                [class.text-red-600]="getDnsStatusClass(row.status, row.type) === 'error'">
+                                {{ getControlTip(row.type, row.status) }}
+                            </span>
+                        </p>
+                        }
+                    </div>
+                    <div class="shrink-0">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+                            [class.bg-emerald-100]="getDnsStatusClass(row.status, row.type) === 'valid'"
+                            [class.text-emerald-700]="getDnsStatusClass(row.status, row.type) === 'valid'"
+                            [class.bg-amber-100]="getDnsStatusClass(row.status, row.type) === 'attention'"
+                            [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
+                            [class.bg-red-100]="getDnsStatusClass(row.status, row.type) === 'error'"
+                            [class.text-red-700]="getDnsStatusClass(row.status, row.type) === 'error'"
+                            [class.bg-gray-100]="getDnsStatusClass(row.status, row.type) === 'neutral'"
+                            [class.text-gray-700]="getDnsStatusClass(row.status, row.type) === 'neutral'">
+                            <lucide-icon
+                                [img]="getDnsStatusClass(row.status, row.type) === 'valid' ? Icons.CircleCheck : (getDnsStatusClass(row.status, row.type) === 'error' ? Icons.CircleX : Icons.TriangleAlert)"
+                                size="12"></lucide-icon>
+                            {{ getDnsStatusLabel(row.status) }}
+                        </span>
+                    </div>
+                </div>
                 }
             </div>
+        </div>
+        } @else if (selectedDnsDomain()) {
+        <div class="flex flex-col items-center justify-center p-8">
+            <span class="text-sm text-gray-500">Geen beveiligingscontroles gevonden voor dit domein.</span>
+        </div>
+        } @else {
+        <div class="flex flex-col items-center justify-center p-8">
+            <span class="text-sm text-gray-500">Selecteer een domein om beveiligingscontroles te bekijken.</span>
+        </div>
+        }
+    </div>
 
-            @if (isLoadingDns()) {
-            <div class="flex flex-col items-center p-8">
-                <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <span class="text-sm text-gray-500 mt-1">DNS records worden geladen...</span>
+    <!-- DNS Records card -->
+    <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-8">
+        <div class="p-6 border-b border-gray-200 flex items-start gap-3">
+            <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                <i-lucide [img]="Icons.FileText" size="22" />
             </div>
-            } @else if (rows().length > 0) {
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse table-fixed">
-                    <colgroup>
-                        <col style="width: 2.5rem" />
-                        <col style="width: 5rem" />
-                        <col style="width: 14rem" />
-                        <col style="width: 24rem" />
-                    </colgroup>
-                    <thead>
-                        <tr class="border-b border-t border-gray-200 bg-gray-50/80">
-                            <th class="px-4 py-4 text-left"></th>
-                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
-                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Naam</th>
-                            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (row of rows(); track row.type + row.name) {
-                        <tr (click)="toggleExpandDnsRow(row.type + row.name)"
-                            class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer">
-                            <td class="px-4 py-4 align-middle">
-                                <i-lucide [img]="expandedDnsRow() === row.type + row.name ? Icons.ChevronDown : Icons.ChevronRight"
-                                    size="16" class="text-gray-400" />
-                            </td>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900 align-middle">{{ row.type }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-700 align-middle">{{ row.name }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-600 align-middle overflow-hidden">
-                                <span class="block truncate" [title]="row.values?.[0] || ''">{{ row.values?.[0] || '-' }}</span>
-                            </td>
-                        </tr>
-                        @if (expandedDnsRow() === row.type + row.name) {
-                        <tr class="border-b border-gray-100 bg-gray-50/60">
-                            <td colspan="4" class="px-6 py-4 pl-14">
-                                <div class="flex flex-col gap-4">
-                                    <div>
-                                        <p class="font-medium text-gray-900 text-sm mb-1">Beschrijving</p>
-                                        <p class="text-sm text-gray-700">{{ getDnsRecordDescription(row.type) || '–' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium text-gray-900 text-sm mb-1">Volledige waarde</p>
-                                        <div class="text-sm text-gray-600 break-all font-mono bg-white rounded px-3 py-2 border border-gray-200">
-                                            {{ row.values?.join(' ') || row.message || '–' }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        }
-                        }
-                    </tbody>
-                </table>
+            <div class="flex-1 min-w-0">
+                <h2 class="text-lg font-medium text-gray-900">DNS Records</h2>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    Belangrijke DNS records voor e-mail authenticatie en beveiliging
+                </p>
             </div>
-            } @else if (selectedDnsDomain()) {
-            <div class="flex flex-col items-center justify-center p-8">
-                <span class="text-sm text-gray-500">Geen DNS records gevonden voor dit domein.</span>
-            </div>
-            } @else {
-            <div class="flex flex-col items-center justify-center p-8">
-                <span class="text-sm text-gray-500">Selecteer een domein om DNS records te bekijken.</span>
-            </div>
+            @if (domains().length > 0) {
+            <select [ngModel]="selectedDnsDomain() ?? ''" (ngModelChange)="selectDnsDomain($event)"
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                <option value="" disabled>Selecteer domein</option>
+                @for (d of domains(); track d.domainName) {
+                <option [value]="d.domainName">{{ d.domainName }}</option>
+                }
+            </select>
             }
         </div>
+
+        @if (isLoadingDns()) {
+        <div class="flex flex-col items-center p-8">
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <span class="text-sm text-gray-500 mt-1">DNS records worden geladen...</span>
+        </div>
+        } @else if (rows().length > 0) {
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse table-fixed">
+                <colgroup>
+                    <col style="width: 2.5rem" />
+                    <col style="width: 5rem" />
+                    <col style="width: 14rem" />
+                    <col style="width: 24rem" />
+                </colgroup>
+                <thead>
+                    <tr class="border-b border-t border-gray-200 bg-gray-50/80">
+                        <th class="px-4 py-4 text-left"></th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Naam</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of rows(); track row.type + row.name) {
+                    <tr (click)="toggleExpandDnsRow(row.type + row.name)"
+                        class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer">
+                        <td class="px-4 py-4 align-middle">
+                            <i-lucide
+                                [img]="expandedDnsRow() === row.type + row.name ? Icons.ChevronDown : Icons.ChevronRight"
+                                size="16" class="text-gray-400" />
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 align-middle">{{ row.type }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700 align-middle">{{ row.name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 align-middle overflow-hidden">
+                            <span class="block truncate" [title]="row.values[0] || ''">{{ row.values[0] || '-'
+                                }}</span>
+                        </td>
+                    </tr>
+                    @if (expandedDnsRow() === row.type + row.name) {
+                    <tr class="border-b border-gray-100 bg-gray-50/60">
+                        <td colspan="4" class="px-6 py-4 pl-14">
+                            <div class="flex flex-col gap-4">
+                                <div>
+                                    <p class="font-medium text-gray-900 text-sm mb-1">Beschrijving</p>
+                                    <p class="text-sm text-gray-700">{{ getDnsRecordDescription(row.type) || '–' }}</p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900 text-sm mb-1">Volledige waarde</p>
+                                    <div
+                                        class="text-sm text-gray-600 break-all font-mono bg-white rounded px-3 py-2 border border-gray-200">
+                                        {{ row.values.join(' ') || row.message || '–' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    }
+                </tbody>
+            </table>
+        </div>
+        } @else if (selectedDnsDomain()) {
+        <div class="flex flex-col items-center justify-center p-8">
+            <span class="text-sm text-gray-500">Geen DNS records gevonden voor dit domein.</span>
+        </div>
+        } @else {
+        <div class="flex flex-col items-center justify-center p-8">
+            <span class="text-sm text-gray-500">Selecteer een domein om DNS records te bekijken.</span>
+        </div>
+        }
+    </div>
 </div>

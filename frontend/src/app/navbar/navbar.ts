@@ -40,7 +40,7 @@ export class Navbar {
   ];
 
   readonly NavItemsControl = [
-    { Icon: this.Icons.CreditCard, Label: 'Licenties & Billing', Route: '/licenses-billing' },
+    { Icon: this.Icons.CreditCard, Label: 'Licenties', Route: '/licenses' },
     { Icon: this.Icons.Bell, Label: 'Meldingen & Feedback', Route: '/reports-reactions' },
   ];
 
