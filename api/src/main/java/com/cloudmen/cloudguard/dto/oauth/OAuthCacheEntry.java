@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto.o_Auth;
+package com.cloudmen.cloudguard.dto.oauth;
 
 import java.util.List;
 

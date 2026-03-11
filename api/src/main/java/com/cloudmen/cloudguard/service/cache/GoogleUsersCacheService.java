@@ -30,6 +30,8 @@ public class GoogleUsersCacheService {
             .maximumSize(100)
             .build();
 
+    private static final String MY_CUSTOMER_TEXT = "my_customer";
+
     public GoogleUsersCacheService(GoogleApiFactory googleApiFactory) {
         this.googleApiFactory = googleApiFactory;
     }
@@ -47,7 +49,7 @@ public class GoogleUsersCacheService {
             Directory service = googleApiFactory.getDirectoryService(
                     DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, email);
 
-            RoleAssignments assignments = service.roleAssignments().list("my_customer")
+            RoleAssignments assignments = service.roleAssignments().list(MY_CUSTOMER_TEXT)
                     .setUserKey(email)
                     .execute();
             List<RoleAssignment> items = assignments.getItems();
@@ -57,7 +59,7 @@ public class GoogleUsersCacheService {
             }
 
             List<com.google.api.services.admin.directory.model.Role> allRoles =
-                    service.roles().list("my_customer").execute().getItems();
+                    service.roles().list(MY_CUSTOMER_TEXT).execute().getItems();
 
             return items.stream()
                     .map(assignment -> allRoles.stream()
@@ -66,9 +68,9 @@ public class GoogleUsersCacheService {
                             .map(Role::getRoleName)
                             .orElse("Unknown Role (" + assignment.getRoleId() + ")"))
                     .distinct()
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch roles from Google: " + e.getMessage());
+            throw new IllegalArgumentException("Failed to fetch roles from Google: " + e.getMessage());
         }
     }
 
@@ -87,7 +89,7 @@ public class GoogleUsersCacheService {
             Map<Long, String> roleDictionary = getRoleDictionary(roleDirectory);
 
             // C. Haal ALLE role-assignments op
-            Map<String, Long> userRoleAssignments = roleDirectory.roleAssignments().list("my_customer")
+            Map<String, Long> userRoleAssignments = roleDirectory.roleAssignments().list(MY_CUSTOMER_TEXT)
                     .execute().getItems().stream()
                     .collect(Collectors.toMap(RoleAssignment::getAssignedTo, RoleAssignment::getRoleId, (e, r) -> e));
 
@@ -99,7 +101,7 @@ public class GoogleUsersCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new RuntimeException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 
@@ -109,7 +111,7 @@ public class GoogleUsersCacheService {
 
         do {
             Users result = service.users().list()
-                    .setCustomer("my_customer")
+                    .setCustomer(MY_CUSTOMER_TEXT)
                     .setProjection("full")
                     .setMaxResults(100)
                     .setPageToken(pageToken)
@@ -126,7 +128,7 @@ public class GoogleUsersCacheService {
     }
 
     private Map<Long, String> getRoleDictionary(Directory roleDirectory) throws IOException {
-        return roleDirectory.roles().list("my_customer")
+        return roleDirectory.roles().list(MY_CUSTOMER_TEXT)
                 .execute().getItems().stream()
                 .collect(Collectors.toMap(Role::getRoleId, Role::getRoleName, (e, r) -> e));
     }

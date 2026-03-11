@@ -38,7 +38,7 @@ public class JwtService {
         try {
             return googleJwtDecoder.decode(externalIdToken);
         } catch (Exception e) {
-            throw new RuntimeException("Invalid External Token: " + e.getMessage());
+            throw new IllegalArgumentException("Invalid External Token: " + e.getMessage());
         }
     }
 

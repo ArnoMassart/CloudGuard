@@ -32,6 +32,8 @@ public class TeamleaderAccessService {
     @Value("${teamleader.customfield.cloudguard.id}") private String cloudGuardFieldId;
     @Value("${teamleader.api.base}") private String teamleaderApiBase;
 
+    private static final String REFRESH_TOKEN_TEXT = "refresh_token";
+
     public TeamleaderAccessService(TeamleaderCredentialRepository repository) {
         this.repository = repository;
         this.restTemplate  = new RestTemplate();
@@ -178,8 +180,8 @@ public class TeamleaderAccessService {
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", clientId);
         map.add("client_secret", clientSecret);
-        map.add("refresh_token", credentials.getRefreshToken());
-        map.add("grant_type", "refresh_token");
+        map.add(REFRESH_TOKEN_TEXT, credentials.getRefreshToken());
+        map.add("grant_type", REFRESH_TOKEN_TEXT);
 
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
@@ -190,7 +192,7 @@ public class TeamleaderAccessService {
             Map<String, Object> body = response.getBody();
             assert body != null;
             credentials.setAccessToken((String) body.get("access_token"));
-            credentials.setRefreshToken((String) body.get("refresh_token"));
+            credentials.setRefreshToken((String) body.get(REFRESH_TOKEN_TEXT));
             credentials.setUpdatedAt(LocalDateTime.now());
 
             repository.save(credentials);

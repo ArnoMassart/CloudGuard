@@ -18,10 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -65,16 +62,7 @@ public class GoogleLicenseCacheService {
             List<LicenseAssignment> allItems = new ArrayList<>();
 
             for (String productId : productIds) {
-                try {
-                    LicenseAssignmentList assignments = licensingDirectory.licenseAssignments()
-                            .listForProduct(productId, domain).execute();
-
-                    if (assignments.getItems() != null) {
-                        allItems.addAll(assignments.getItems());
-                    }
-                } catch (Exception e) {
-                    log.warn("Kon geen data ophalen voor Product ID: {} - {}", productId, e.getMessage());
-                }
+                allItems.addAll(fetchAssignmentsForProduct(licensingDirectory, productId, domain));
             }
 
             List<User> allUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
@@ -89,8 +77,23 @@ public class GoogleLicenseCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallback;
             }
-            throw new RuntimeException("Fout bij ophalen Google licentie data: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen Google licentie data: " + e.getMessage());
         }
+    }
+
+    private List<LicenseAssignment> fetchAssignmentsForProduct(Licensing licensingDirectory, String productId, String domain) {
+        try {
+            LicenseAssignmentList assignments = licensingDirectory.licenseAssignments()
+                    .listForProduct(productId, domain).execute();
+
+            if (assignments.getItems() != null) {
+                return assignments.getItems();
+            }
+        } catch (Exception e) {
+            log.warn("Kon geen data ophalen voor Product ID: {} - {}", productId, e.getMessage());
+        }
+
+        return Collections.emptyList();
     }
 
     private List<LicenseType> mapAssignmentsToLicenseTypes(List<LicenseAssignment> assignments) {
@@ -131,18 +134,21 @@ public class GoogleLicenseCacheService {
         assignments.forEach(a -> userToSku.put(a.getUserId(), a.getSkuName()));
 
         for (User user : users) {
-            if (user.getLastLoginTime() == null || !userToSku.containsKey(user.getPrimaryEmail())) continue;
-            if (userToSku.get(user.getPrimaryEmail()).contains("Free")) continue;
+            String email = user.getPrimaryEmail();
+            String skuName = userToSku.get(email);
 
-            Instant lastLogin = Instant.parse(user.getLastLoginTime().toString());
-            if (lastLogin.isBefore(ninetyDaysAgo)) {
-                result.add(new InactiveUser(
-                        user.getPrimaryEmail(),
-                        DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()),
-                        userToSku.get(user.getPrimaryEmail()),
-                        user.getIsEnrolledIn2Sv(),
-                        ChronoUnit.DAYS.between(lastLogin, Instant.now())
-                ));
+            if (user.getLastLoginTime() != null && skuName != null && !skuName.contains("Free")) {
+                Instant lastLogin = Instant.parse(user.getLastLoginTime().toString());
+
+                if (lastLogin.isBefore(ninetyDaysAgo)) {
+                    result.add(new InactiveUser(
+                            user.getPrimaryEmail(),
+                            DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()),
+                            userToSku.get(user.getPrimaryEmail()),
+                            user.getIsEnrolledIn2Sv(),
+                            ChronoUnit.DAYS.between(lastLogin, Instant.now())
+                    ));
+                }
             }
         }
 

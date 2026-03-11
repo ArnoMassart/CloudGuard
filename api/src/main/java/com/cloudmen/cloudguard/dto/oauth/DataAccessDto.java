@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto.o_Auth;
+package com.cloudmen.cloudguard.dto.oauth;
 
 public record DataAccessDto(
         String name,

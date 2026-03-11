@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.service.cache;
 
-import com.cloudmen.cloudguard.dto.o_Auth.OAuthCacheEntry;
-import com.cloudmen.cloudguard.dto.o_Auth.RawUserToken;
+import com.cloudmen.cloudguard.dto.oauth.OAuthCacheEntry;
+import com.cloudmen.cloudguard.dto.oauth.RawUserToken;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -66,7 +65,7 @@ public class GoogleOAuthCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallback;
             }
-            throw new RuntimeException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 
@@ -92,7 +91,10 @@ public class GoogleOAuthCacheService {
                         ));
                     }
                 }
-            } catch (InterruptedException | IOException e) {
+            } catch (InterruptedException e) {
+                log.warn("OAuth token fetch interrupted for {}", userEmail);
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
                 log.warn("Kon OAuth tokens voor {} niet ophalen", user.getPrimaryEmail());
             }
         }

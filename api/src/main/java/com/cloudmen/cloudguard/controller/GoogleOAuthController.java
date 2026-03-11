@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.o_Auth.OAuthOverviewResponse;
-import com.cloudmen.cloudguard.dto.o_Auth.OAuthPagedResponse;
+import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
+import com.cloudmen.cloudguard.dto.oauth.OAuthPagedResponse;
 import com.cloudmen.cloudguard.service.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;

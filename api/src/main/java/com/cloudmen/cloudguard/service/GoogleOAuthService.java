@@ -1,10 +1,8 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.dto.o_Auth.*;
+import com.cloudmen.cloudguard.dto.oauth.*;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -12,11 +10,85 @@ import java.util.stream.Collectors;
 
 @Service
 public class GoogleOAuthService {
-    private static final Logger log = LoggerFactory.getLogger(GoogleOAuthService.class);
     private final GoogleOAuthCacheService oAuthCacheService;
 
     private static final List<String> INTERNAL_CLIENT_IDS = List.of(
             "1046230096039-0c4fqtecqs3fe7t762cn1922garmr4p5.apps.googleusercontent.com"
+    );
+
+    private static final String FULL_ACCESS_READ_WRITE_TEXT = "Volledige toegang (Lezen/Schrijven)";
+
+    private record ScopeMapping(String keyword, ScopeCategory category, String description, boolean isCritical) {}
+
+    private static final List<ScopeMapping> SCOPE_MAPPINGS = List.of(
+            // --- 1. IDENTITEIT & INLOGGEN (SSO) ---
+            new ScopeMapping("openid", ScopeCategory.SIGN_IN, "Basis profielgegevens", false),
+            new ScopeMapping("userinfo.profile", ScopeCategory.SIGN_IN, "Basis profielgegevens", false),
+            new ScopeMapping("userinfo.email", ScopeCategory.SIGN_IN, "E-mailadres inzien", false),
+
+            // --- 2. GMAIL ---
+            new ScopeMapping("/auth/gmail.readonly", ScopeCategory.GMAIL, "E-mails lezen", false),
+            new ScopeMapping("/auth/gmail.send", ScopeCategory.GMAIL, "Berichten verzenden", false),
+            new ScopeMapping("/auth/gmail.compose", ScopeCategory.GMAIL, "Concepten aanmaken", false),
+            new ScopeMapping("/auth/gmail.modify", ScopeCategory.GMAIL, "E-mails wijzigen/verwijderen", true),
+            new ScopeMapping("/auth/gmail.settings.basic", ScopeCategory.GMAIL_SETTINGS, "Mailbox instellingen inzien", false),
+            new ScopeMapping("/auth/gmail", ScopeCategory.GMAIL, FULL_ACCESS_READ_WRITE_TEXT, true),
+            new ScopeMapping("/mail.google.com", ScopeCategory.GMAIL, FULL_ACCESS_READ_WRITE_TEXT, true),
+
+            // --- 3. GOOGLE DRIVE ---
+            new ScopeMapping("/auth/drive.readonly", ScopeCategory.DRIVE, "Alle bestanden lezen", false),
+            new ScopeMapping("/auth/drive.file", ScopeCategory.DRIVE, "Alleen eigen gemaakte bestanden inzien", false),
+            new ScopeMapping("/auth/drive.appdata", ScopeCategory.DRIVE, "Verborgen app-data opslaan", false),
+            new ScopeMapping("/auth/drive.metadata", ScopeCategory.DRIVE, "Bestandsnamen & mappenstructuur inzien", false),
+            new ScopeMapping("/auth/drive", ScopeCategory.DRIVE, FULL_ACCESS_READ_WRITE_TEXT, true),
+
+            // --- 4. OFFICE APPS (Docs, Sheets, Forms) ---
+            new ScopeMapping("/auth/spreadsheets.readonly", ScopeCategory.SHEETS, "Spreadsheets inzien", false),
+            new ScopeMapping("/auth/spreadsheets", ScopeCategory.SHEETS, "Spreadsheets bewerken", true),
+            new ScopeMapping("/auth/documents.readonly", ScopeCategory.DOCS, "Documenten inzien", false),
+            new ScopeMapping("/auth/documents", ScopeCategory.DOCS, "Documenten bewerken", true),
+            new ScopeMapping("/auth/forms.responses.readonly", ScopeCategory.FORMS, "Ingevulde antwoorden inzien", false),
+            new ScopeMapping("/auth/forms", ScopeCategory.FORMS, "Formulieren beheren", true),
+
+            // --- 5. AGENDA & CONTACTEN ---
+            new ScopeMapping("/auth/calendar.readonly", ScopeCategory.CALENDAR, "Agenda lezen", false),
+            new ScopeMapping("/auth/calendar.events", ScopeCategory.CALENDAR, "Afspraken beheren", false),
+            new ScopeMapping("/auth/calendar", ScopeCategory.CALENDAR, "Volledige agenda-toegang", true),
+            new ScopeMapping("/auth/contacts.readonly", ScopeCategory.CONTACTS, "Contactpersonen inzien", false),
+            new ScopeMapping("/auth/contacts.other.readonly", ScopeCategory.CONTACTS, "Gedeelde contacten inzien", false),
+            new ScopeMapping("/auth/contacts", ScopeCategory.CONTACTS, "Contactpersonen beheren", true),
+
+            // --- 6. BEHEERDERS & DIRECTORY (KRITIEK!) ---
+            new ScopeMapping("/auth/admin.directory.user.readonly", ScopeCategory.ORG_STRUCTURE, "Gebruikerslijst inzien", false),
+            new ScopeMapping("/auth/admin.directory.user", ScopeCategory.ADMIN_DIRECTORY, "Gebruikers beheren (Kritiek)", true),
+            new ScopeMapping("/auth/admin.directory.group.readonly", ScopeCategory.ORG_STRUCTURE, "Groepen inzien", false),
+            new ScopeMapping("/auth/admin.directory.group", ScopeCategory.ADMIN_DIRECTORY, "Groepen beheren (Kritiek)", true),
+            new ScopeMapping("/auth/admin.directory.device", ScopeCategory.ADMIN_DIRECTORY, "Apparaten beheren", true),
+            new ScopeMapping("/auth/admin.directory", ScopeCategory.ADMIN_DIRECTORY, "Volledige beheerdersrechten", true),
+            new ScopeMapping("/auth/cloud-platform", ScopeCategory.GCP, "Infrastructuur beheren", true),
+
+            // --- 7. WORKSPACE EXTRA'S (Groups, Licensing, Chat) ---
+            new ScopeMapping("apps.groups.settings", ScopeCategory.GROUP_SETTINGS, "Beveiligingsinstellingen groepen inzien/wijzigen", false),
+            new ScopeMapping("apps.licensing", ScopeCategory.LICENSING, "Licenties toewijzen/verwijderen", false),
+            new ScopeMapping("/auth/chat.messages", ScopeCategory.CHAT, "Berichten lezen & sturen", true),
+            new ScopeMapping("/auth/chat.spaces", ScopeCategory.CHAT, "Kanalen beheren", false),
+
+            // --- 8. YOUTUBE ---
+            new ScopeMapping("/auth/youtube.readonly", ScopeCategory.YOUTUBE, "Kanaalgegevens inzien", false),
+            new ScopeMapping("/auth/youtube.upload", ScopeCategory.YOUTUBE, "Video's uploaden", false),
+            new ScopeMapping("/auth/youtube.force-ssl", ScopeCategory.YOUTUBE, "Kanaal volledig beheren", true),
+            new ScopeMapping("/auth/youtube", ScopeCategory.YOUTUBE, "Kanaal volledig beheren", true),
+
+            // --- 9. APPS SCRIPT, AUTOMATISERING & DATA TRANSFER ---
+            new ScopeMapping("external_request", ScopeCategory.EXTERNAL_API, "Data naar externe servers sturen (Risico op datalek)", true),
+            new ScopeMapping("send_mail", ScopeCategory.APPS_SCRIPT_MAIL, "Geautomatiseerde e-mails versturen", true),
+            new ScopeMapping("scriptapp", ScopeCategory.APPS_SCRIPT, "Aangepaste scripts uitvoeren", true),
+            new ScopeMapping("datatransfer", ScopeCategory.DATA_TRANSFER, "Bedrijfsdata en eigenaarschap migreren/overdragen", true),
+            new ScopeMapping("com/auth/flexible-api", ScopeCategory.FLEXIBLE_API, "Aangepaste API toegang", false),
+
+            // --- FALLBACK READONLY ---
+            new ScopeMapping("Readonly", ScopeCategory.READONLY, "Basis leesrechten (Specifiek domein onbekend)", false),
+            new ScopeMapping("readonly", ScopeCategory.READONLY, "Basis leesrechten (Specifiek domein onbekend)", false)
     );
 
     public GoogleOAuthService(GoogleOAuthCacheService oAuthCacheService) {
@@ -159,81 +231,29 @@ public class GoogleOAuthService {
     }
 
     private DataAccessDto translateScopeDetails(String scopeUrl) {
-        // --- 1. IDENTITEIT & INLOGGEN (SSO) ---
-        if (scopeUrl.contains("openid") || scopeUrl.contains("userinfo.profile")) return new DataAccessDto("Google Sign-In", "Basis profielgegevens", false);
-        if (scopeUrl.contains("userinfo.email")) return new DataAccessDto("Google Sign-In", "E-mailadres inzien", false);
+        if (scopeUrl == null) {
+            return new DataAccessDto("Onbekend", "Geen scope data beschikbaar", false);
+        }
 
-        // --- 2. GMAIL ---
-        if (scopeUrl.contains("/auth/gmail.readonly")) return new DataAccessDto("Gmail", "E-mails lezen", false);
-        if (scopeUrl.contains("/auth/gmail.send")) return new DataAccessDto("Gmail", "Berichten verzenden", false);
-        if (scopeUrl.contains("/auth/gmail.compose")) return new DataAccessDto("Gmail", "Concepten aanmaken", false);
-        if (scopeUrl.contains("/auth/gmail.modify")) return new DataAccessDto("Gmail", "E-mails wijzigen/verwijderen", true);
-        if (scopeUrl.contains("/auth/gmail.settings.basic")) return new DataAccessDto("Gmail Instellingen", "Mailbox instellingen inzien", false);
-        if (scopeUrl.contains("/auth/gmail") || scopeUrl.contains("/mail.google.com")) return new DataAccessDto("Gmail", "Volledige toegang (Lezen/Schrijven)", true);
+        for (ScopeMapping mapping : SCOPE_MAPPINGS) {
+            if (scopeUrl.contains(mapping.keyword())) {
+                return new DataAccessDto(mapping.category().getDisplayName(), mapping.description(), mapping.isCritical());
+            }
+        }
 
-        // --- 3. GOOGLE DRIVE ---
-        if (scopeUrl.contains("/auth/drive.readonly")) return new DataAccessDto("Google Drive", "Alle bestanden lezen", false);
-        if (scopeUrl.contains("/auth/drive.file")) return new DataAccessDto("Google Drive", "Alleen eigen gemaakte bestanden inzien", false);
-        if (scopeUrl.contains("/auth/drive.appdata")) return new DataAccessDto("Google Drive", "Verborgen app-data opslaan", false);
-        if (scopeUrl.contains("/auth/drive.metadata")) return new DataAccessDto("Google Drive", "Bestandsnamen & mappenstructuur inzien", false);
-        if (scopeUrl.contains("/auth/drive")) return new DataAccessDto("Google Drive", "Volledige toegang (Lezen/Schrijven)", true);
+        return generateFallbackDto(scopeUrl);
+    }
 
-        // --- 4. OFFICE APPS (Docs, Sheets, Forms) ---
-        if (scopeUrl.contains("/auth/spreadsheets.readonly")) return new DataAccessDto("Google Spreadsheets", "Spreadsheets inzien", false);
-        if (scopeUrl.contains("/auth/spreadsheets")) return new DataAccessDto("Google Spreadsheets", "Spreadsheets bewerken", true);
-        if (scopeUrl.contains("/auth/documents.readonly")) return new DataAccessDto("Google Documenten", "Documenten inzien", false);
-        if (scopeUrl.contains("/auth/documents")) return new DataAccessDto("Google Documenten", "Documenten bewerken", true);
-        if (scopeUrl.contains("/auth/forms.responses.readonly")) return new DataAccessDto("Google Formulieren", "Ingevulde antwoorden inzien", false);
-        if (scopeUrl.contains("/auth/forms")) return new DataAccessDto("Google Formulieren", "Formulieren beheren", true);
-
-        // --- 5. AGENDA & CONTACTEN ---
-        if (scopeUrl.contains("/auth/calendar.readonly")) return new DataAccessDto("Google Agenda", "Agenda lezen", false);
-        if (scopeUrl.contains("/auth/calendar.events")) return new DataAccessDto("Google Agenda", "Afspraken beheren", false);
-        if (scopeUrl.contains("/auth/calendar")) return new DataAccessDto("Google Agenda", "Volledige agenda-toegang", true);
-        if (scopeUrl.contains("/auth/contacts.readonly")) return new DataAccessDto("Google Contacten", "Contactpersonen inzien", false);
-        if (scopeUrl.contains("/auth/contacts.other.readonly")) return new DataAccessDto("Google Contacten", "Gedeelde contacten inzien", false);
-        if (scopeUrl.contains("/auth/contacts")) return new DataAccessDto("Google Contacten", "Contactpersonen beheren", true);
-
-        // --- 6. BEHEERDERS & DIRECTORY (KRITIEK!) ---
-        if (scopeUrl.contains("/auth/admin.directory.user.readonly")) return new DataAccessDto("Organisatiestructuur", "Gebruikerslijst inzien", false);
-        if (scopeUrl.contains("/auth/admin.directory.user")) return new DataAccessDto("Admin Directory", "Gebruikers beheren (Kritiek)", true);
-        if (scopeUrl.contains("/auth/admin.directory.group.readonly")) return new DataAccessDto("Organisatiestructuur", "Groepen inzien", false);
-        if (scopeUrl.contains("/auth/admin.directory.group")) return new DataAccessDto("Admin Directory", "Groepen beheren (Kritiek)", true);
-        if (scopeUrl.contains("/auth/admin.directory.device")) return new DataAccessDto("Admin Directory", "Apparaten beheren", true);
-        if (scopeUrl.contains("/auth/admin.directory")) return new DataAccessDto("Admin Directory", "Volledige beheerdersrechten", true);
-        if (scopeUrl.contains("/auth/cloud-platform")) return new DataAccessDto("Google Cloud (GCP)", "Infrastructuur beheren", true);
-
-        // --- 7. WORKSPACE EXTRA'S (Groups, Licensing, Chat) ---
-        if (scopeUrl.contains("apps.groups.settings")) return new DataAccessDto("Groepsinstellingen", "Beveiligingsinstellingen groepen inzien/wijzigen", false);
-        if (scopeUrl.contains("apps.licensing")) return new DataAccessDto("Google Workspace Licenties", "Licenties toewijzen/verwijderen", false);
-        if (scopeUrl.contains("/auth/chat.messages")) return new DataAccessDto("Google Chat", "Berichten lezen & sturen", true);
-        if (scopeUrl.contains("/auth/chat.spaces")) return new DataAccessDto("Google Chat", "Kanalen beheren", false);
-
-        // --- 8. YOUTUBE ---
-        if (scopeUrl.contains("/auth/youtube.readonly")) return new DataAccessDto("YouTube", "Kanaalgegevens inzien", false);
-        if (scopeUrl.contains("/auth/youtube.upload")) return new DataAccessDto("YouTube", "Video's uploaden", false);
-        if (scopeUrl.contains("/auth/youtube.force-ssl") || scopeUrl.contains("/auth/youtube")) return new DataAccessDto("YouTube", "Kanaal volledig beheren", true);
-
-        // --- 9. APPS SCRIPT, AUTOMATISERING & DATA TRANSFER (NIEUW!) ---
-        if (scopeUrl.contains("external_request")) return new DataAccessDto("Externe API Verbindingen", "Data naar externe servers sturen (Risico op datalek)", true);
-        if (scopeUrl.contains("send_mail")) return new DataAccessDto("Apps Script Mail", "Geautomatiseerde e-mails versturen", true);
-        if (scopeUrl.contains("scriptapp")) return new DataAccessDto("Google Apps Script", "Aangepaste scripts uitvoeren", true);
-        if (scopeUrl.contains("datatransfer")) return new DataAccessDto("Data Overdracht (Admin)", "Bedrijfsdata en eigenaarschap migreren/overdragen", true);
-        if (scopeUrl.contains("com/auth/flexible-api")) return new DataAccessDto("Google Flexible API", "Aangepaste API toegang", false);
-
-        // Specifieke afvanging voor "Readonly" (zonder dat we 'drive.readonly' of 'gmail.readonly' per ongeluk overschrijven)
-        // We zetten deze bewust hier onderaan, zodat de specifiekere Readonly's hierboven eerst worden afgevangen!
-        if (scopeUrl.contains("Readonly") || scopeUrl.contains("readonly")) return new DataAccessDto("Algemeen - Alleen Lezen", "Basis leesrechten (Specifiek domein onbekend)", false);
-
-
-        // --- FALLBACK ---
+    private DataAccessDto generateFallbackDto(String scopeUrl) {
         String fallbackName = scopeUrl.substring(scopeUrl.lastIndexOf('/') + 1);
 
         if (fallbackName.contains(".")) {
             fallbackName = fallbackName.substring(fallbackName.lastIndexOf('.') + 1);
         }
 
-        fallbackName = fallbackName.substring(0, 1).toUpperCase() + fallbackName.substring(1);
+        if (!fallbackName.isEmpty()) {
+            fallbackName = fallbackName.substring(0, 1).toUpperCase() + fallbackName.substring(1);
+        }
 
         return new DataAccessDto("Overige (" + fallbackName + ")", "Beperkte toegang", false);
     }

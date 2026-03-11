@@ -74,7 +74,7 @@ public class GoogleMobileDeviceCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new RuntimeException("Fout bij ophalen Google Mobile Devices: " + e.getMessage());
+            throw new IllegalArgumentException("Fout bij ophalen Google Mobile Devices: " + e.getMessage());
         }
     }
 
