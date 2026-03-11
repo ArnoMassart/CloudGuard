@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -50,6 +50,21 @@ export class GroupsSection implements OnInit {
   private tokenHistory: (string | null)[] = [null];
   private readonly pageSize = 2;
 
+  readonly isExpanded = signal(true);
+
+  hasWarnings = signal(false);
+
+  groupPageWarnings = signal({
+    externalMember: false,
+    highRisk: false,
+  });
+
+  hasMultipleWarnings = computed(() => {
+    const warnings = this.groupPageWarnings();
+    const activeCount = Object.values(warnings).filter((val) => val === true).length;
+    return activeCount > 1;
+  });
+
   ngOnInit(): void {
     this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged())
@@ -61,7 +76,10 @@ export class GroupsSection implements OnInit {
 
   private loadGroupsOverview(): void {
     this.#groupService.getGroupsOverview().subscribe({
-      next: (res) => this.pageOverview.set(res),
+      next: (res) => {
+        this.pageOverview.set(res);
+        this.loadWarnings();
+      },
       error: (err) => console.error('Failed to load groups overview', err),
     });
   }
@@ -93,6 +111,10 @@ export class GroupsSection implements OnInit {
       this.currentPage.update((p) => p - 1);
       this.loadGroups(prevToken);
     }
+  }
+
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
   }
 
   refreshData() {
@@ -158,5 +180,17 @@ export class GroupsSection implements OnInit {
       return 'https://admin.google.com/u/1/ac/groups';
     }
     return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
+  }
+
+  private loadWarnings() {
+    if (this.pageOverview()?.groupsWithExternal! > 0) {
+      this.groupPageWarnings().externalMember = true;
+      this.hasWarnings.set(true);
+    }
+
+    if (this.pageOverview()?.highRiskGroups! > 0) {
+      this.groupPageWarnings().highRisk = true;
+      this.hasWarnings.set(true);
+    }
   }
 }

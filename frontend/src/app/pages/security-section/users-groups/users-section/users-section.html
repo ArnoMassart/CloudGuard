@@ -13,8 +13,8 @@
   <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded-lg p-4 transition-all duration-200">
     <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
       <div class="flex gap-3 items-center">
-        <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
-        <span class="text-[#b7610a] font-medium text-[16px]">Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' :
+        <i-lucide [img]="Icons.ShieldAlert" size="20" class="text-[#d69518]" />
+        <span class="text-[#b7610a] font-medium text-base">Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' :
           '' }}
         </span>
       </div>
@@ -27,8 +27,9 @@
     <div class="flex flex-col gap-2 mt-3 ml-8">
       @if (userPageWarnings().twoFactorWarning) {
       <div class="flex gap-2 items-center text-center">
+        @if (hasMultipleWarnings()) {
         <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-        <span class="text-xs text-[#b7610a]">{{ pageOverview()?.withoutTwoFactor }} actieve
+        } <span class="text-sm text-[#b7610a]">{{ pageOverview()?.withoutTwoFactor }} actieve
           {{
           pageOverview()?.withoutTwoFactor === 1 ? 'gebruiker heeft' : 'gebruikers hebben'
           }}
@@ -38,8 +39,10 @@
       }
       @if (userPageWarnings().activeWithLongNoLogin) {
       <div class="flex gap-2 items-center text-center">
+        @if (hasMultipleWarnings()) {
         <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-        <span class="text-xs text-[#b7610a]">{{ pageOverview()?.activeLongNoLoginCount }} actieve
+        }
+        <span class="text-sm text-[#b7610a]">{{ pageOverview()?.activeLongNoLoginCount }} actieve
           {{ pageOverview()?.activeLongNoLoginCount === 1 ? 'gebruiker' : 'gebruikers' }}
           met een laatste login van meer dan 1 jaar geleden gedetecteerd</span>
       </div>
@@ -47,8 +50,10 @@
 
       @if (userPageWarnings().notActiveWithRecentLogin) {
       <div class="flex gap-2 items-center text-center">
+        @if (hasMultipleWarnings()) {
         <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-        <span class="text-xs text-[#b7610a]">{{ pageOverview()?.inactiveRecentLoginCount }} inactieve
+        }
+        <span class="text-sm text-[#b7610a]">{{ pageOverview()?.inactiveRecentLoginCount }} inactieve
           {{ pageOverview()?.inactiveRecentLoginCount === 1 ? 'gebruiker' : 'gebruikers' }}
           met een laatste login van minder dan 1 week geleden gedetecteerd</span>
       </div>
