@@ -81,13 +81,13 @@ public class GoogleUsersService {
         return new UserPageResponse(mappedUsers, nextTokenToReturn);
     }
 
+//for notifications
     public UsersWithoutTwoFactorResponse getUsersWithoutTwoFactor(String loggedInEmail) {
         UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
         List<UsersWithoutTwoFactorResponse.UserSummary> users = cachedData.allUsers().stream()
                 .filter(user -> !Boolean.TRUE.equals(user.getSuspended()) && !Boolean.TRUE.equals(user.getIsEnrolledIn2Sv()))
-                .sorted(Comparator.comparing(u -> u.getName() != null ? u.getName().getFullName() : ""))
                 .map(user -> new UsersWithoutTwoFactorResponse.UserSummary(
-                        user.getName() != null ? user.getName().getFullName() : "",
+                        user.getName() != null && user.getName().getFullName() != null ? user.getName().getFullName() : "",
                         user.getPrimaryEmail() != null ? user.getPrimaryEmail() : ""))
                 .toList();
         return new UsersWithoutTwoFactorResponse(users);
@@ -98,18 +98,20 @@ public class GoogleUsersService {
         List<User> googleUsers = cachedData.allUsers();
         LocalDate now = LocalDate.now();
 
-        int totalUsers = googleUsers.size();
-        int withoutTwoFactor = (int) googleUsers.stream().filter(user -> !user.getSuspended() && !user.getIsEnrolledIn2Sv()).count();
-        int adminUsers = (int) googleUsers.stream().filter(User::getIsAdmin).count();
-        int securityScore = calculateSecurityScore(googleUsers);
+        long totalUsers = googleUsers.size();
+        long withoutTwoFactor = googleUsers.stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getSuspended()) && !Boolean.TRUE.equals(user.getIsEnrolledIn2Sv()))
+                .count();
+        long adminUsers = googleUsers.stream().filter(User::getIsAdmin).count();
+        long securityScore = calculateSecurityScore(googleUsers);
 
-        int activeLongNoLoginCount = (int) googleUsers.stream().filter(user -> {
+        long activeLongNoLoginCount = googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
             LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
             return !Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.YEARS.between(loginDate, now) >= 1;
         }).count();
 
-        int inactiveRecentLoginCount = (int) googleUsers.stream().filter(user -> {
+        long inactiveRecentLoginCount = googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
             LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
             return Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) <= 7;

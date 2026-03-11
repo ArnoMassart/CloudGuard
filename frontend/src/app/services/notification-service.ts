@@ -1,19 +1,13 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable, forkJoin, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
-import { DnsService, DnsRecordResponse } from './dns-service';
-import { DomainService } from './domain-service';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { RouteService } from './route-service';
 import { UserService } from './user-service';
 import { DriveService } from './drive-service';
 import { MobileDeviceService } from './mobile-device-service';
-import { AppPasswordsService } from './app-password-service';
 import { GroupService } from './group-service';
 import { OAuthService } from './o-auth-service';
-import {
-  ResolvedNotificationService,
-  ResolvedNotification,
-} from './resolved-notification-service';
-import { NotificationFeedbackService } from './notification-feedback-service';
 
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
 
@@ -32,93 +26,40 @@ export interface Notification {
   status?: NotificationStatus;
 }
 
+interface NotificationsResponse {
+  active: Notification[];
+  resolved: Notification[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
-  readonly #domainService = inject(DomainService);
-  readonly #dnsService = inject(DnsService);
+  readonly #http = inject(HttpClient);
+  readonly #API_URL = RouteService.getBackendUrl('/notifications');
   readonly #userService = inject(UserService);
   readonly #driveService = inject(DriveService);
   readonly #mobileDeviceService = inject(MobileDeviceService);
-  readonly #appPasswordsService = inject(AppPasswordsService);
   readonly #groupService = inject(GroupService);
   readonly #oAuthService = inject(OAuthService);
-  readonly #resolvedService = inject(ResolvedNotificationService);
-  readonly #feedbackService = inject(NotificationFeedbackService);
 
   getNotifications(): Observable<Notification[]> {
-    return this.#domainService.getDomains().pipe(
-      switchMap((domains) => {
-        const primary = domains.find((d) => d.domainType === 'Primary Domain');
-        const primaryDomain = primary?.domainName;
-
-        const dns$ = primaryDomain
-          ? this.#dnsService
-              .getDnsRecords(primaryDomain)
-              .pipe(
-                catchError(() =>
-                  of<DnsRecordResponse>({ domain: primaryDomain, rows: [], securityScore: 0 })
-                )
-              )
-          : of<DnsRecordResponse>({ domain: '', rows: [], securityScore: 0 });
-
-        return forkJoin({
-          dns: dns$,
-          users: this.#userService.getUsersPageOverview().pipe(catchError(() => of(null))),
-          drives: this.#driveService.getDrivesPageOverview().pipe(catchError(() => of(null))),
-          devices: this.#mobileDeviceService
-            .getMobileDevicesPageOverview()
-            .pipe(catchError(() => of(null))),
-          appPasswords: this.#appPasswordsService.getOverview().pipe(catchError(() => of(null))),
-          groups: this.#groupService.getGroupsOverview().pipe(catchError(() => of(null))),
-          oAuth: this.#oAuthService.getOAuthPageOverview().pipe(catchError(() => of(null))),
-        });
-      }),
-      switchMap((data) => {
-        const active = this.#aggregateNotifications(data);
-        return this.#resolvedService.getResolved().pipe(
-          switchMap((resolved) => {
-            const resolvedKeys = new Set(
-              resolved.map((r) => `${r.source}:${r.notificationType}`)
-            );
-            const filtered = active.filter(
-              (n) => !resolvedKeys.has(`${n.source}:${n.notificationType}`)
-            );
-            return this.#feedbackService.getFeedbackKeys().pipe(
-              map((feedbackKeys) => {
-                const keySet = new Set(feedbackKeys);
-                return filtered.map((n) => ({
-                  ...n,
-                  status: (keySet.has(`${n.source}:${n.notificationType}`) ? 'in_behandeling' : 'new') as NotificationStatus,
-                }));
-              }),
-              catchError(() => of(filtered.map((n) => ({ ...n, status: 'new' as const }))))
-            );
-          }),
-          catchError(() => of(active.map((n) => ({ ...n, status: 'new' as NotificationStatus }))))
-        );
-      })
+    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
+      map((res) => res.active),
+      catchError(() => of([]))
     );
   }
 
   getResolvedNotifications(): Observable<Notification[]> {
-    return this.#resolvedService.getResolved().pipe(
-      map((list) =>
-        list.map((r) => ({
-          id: r.id,
-          severity: r.severity as NotificationSeverity,
-          title: r.title,
-          description: r.description,
-          recommendedActions: r.recommendedActions,
-          notificationType: r.notificationType,
-          source: r.source,
-          sourceLabel: r.sourceLabel,
-          sourceRoute: r.sourceRoute,
-          status: 'resolved' as const,
-        }))
-      ),
+    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
+      map((res) => res.resolved),
       catchError(() => of([]))
+    );
+  }
+
+  getNotificationsAndResolved(): Observable<{ active: Notification[]; resolved: Notification[] }> {
+    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
+      catchError(() => of({ active: [], resolved: [] }))
     );
   }
 
@@ -148,7 +89,9 @@ export class NotificationService {
         return this.#driveService.getDrives(100).pipe(
           map((r) => {
             if (notification.notificationType === 'drive-orphan') {
-              return r.drives.filter((d) => d.totalOrganizers <= 0).map((d) => d.name);
+              return r.drives
+                .filter((d) => d.totalOrganizers <= 0)
+                .map((d) => d.name);
             }
             return r.drives
               .filter((d) => d.externalMembers > 0)
@@ -195,259 +138,5 @@ export class NotificationService {
       }),
       catchError(() => of([]))
     );
-  }
-
-  #aggregateNotifications(data: {
-    dns: DnsRecordResponse;
-    users: {
-      withoutTwoFactor: number;
-      activeLongNoLoginCount: number;
-      inactiveRecentLoginCount: number;
-    } | null;
-    drives: {
-      orphanDrives: number;
-      notOnlyDomainUsersAllowedCount: number;
-      notOnlyMembersCanAccessCount: number;
-      externalMembersDriveCount: number;
-    } | null;
-    devices: {
-      lockScreenCount: number;
-      encryptionCount: number;
-      osVersionCount: number;
-      integrityCount: number;
-    } | null;
-    appPasswords: { totalAppPasswords: number; allowed: boolean } | null;
-    groups: { groupsWithExternal: number } | null;
-    oAuth: { totalHighRiskApps: number } | null;
-  }): Notification[] {
-    const notifications: Notification[] = [];
-    let id = 0;
-
-    const add = (n: Omit<Notification, 'id'>) => {
-      notifications.push({ ...n, id: `n-${++id}` });
-    };
-
-    const dnsTitles: Record<string, string> = {
-      SPF: 'SPF Record',
-      DKIM: 'DKIM',
-      DMARC: 'DMARC',
-      MX: 'MX Records',
-      DNSSEC: 'DNSSEC',
-      CAA: 'CAA Records',
-    };
-    const criticalDnsTypes = new Set<string>();
-    const attentionDnsTypes = new Set<string>();
-    for (const row of data.dns.rows) {
-      if (row.status === 'ACTION_REQUIRED' || row.status === 'ERROR') {
-        criticalDnsTypes.add(dnsTitles[row.type] ?? row.type);
-      } else if (
-        row.status === 'ATTENTION' &&
-        (row.importance === 'REQUIRED' || row.importance === 'RECOMMENDED')
-      ) {
-        attentionDnsTypes.add(dnsTitles[row.type] ?? row.type);
-      }
-    }
-    if (criticalDnsTypes.size > 0) {
-      const typesList = Array.from(criticalDnsTypes).join(', ');
-      add({
-        severity: 'critical',
-        title: 'DNS records ontbreken of niet correct',
-        description: `${typesList} ${criticalDnsTypes.size === 1 ? 'ontbreekt' : 'ontbreken'} of ${
-          criticalDnsTypes.size === 1 ? 'is niet' : 'zijn niet'
-        } correct geconfigureerd.`,
-        recommendedActions: ['Controleer en configureer alle DNS records via je DNS provider'],
-        notificationType: 'dns-critical',
-        source: 'domain-dns',
-        sourceLabel: 'Domein & DNS',
-        sourceRoute: '/domain-dns',
-      });
-    }
-    if (attentionDnsTypes.size > 0) {
-      const typesList = Array.from(attentionDnsTypes).join(', ');
-      add({
-        severity: 'warning',
-        title: 'DNS records vereisen aandacht',
-        description: `${typesList} ${
-          attentionDnsTypes.size === 1 ? 'kan' : 'kunnen'
-        } worden verbeterd.`,
-        recommendedActions: ['Controleer de DNS configuratie via je DNS provider'],
-        notificationType: 'dns-attention',
-        source: 'domain-dns',
-        sourceLabel: 'Domein & DNS',
-        sourceRoute: '/domain-dns',
-      });
-    }
-
-    if (data.users) {
-      if (data.users.withoutTwoFactor > 0) {
-        add({
-          severity: 'critical',
-          title: 'Gebruikers zonder tweestapsverificatie',
-          description: `${data.users.withoutTwoFactor} gebruiker(s) hebben geen 2FA ingeschakeld.`,
-          recommendedActions: [
-            'Schakel 2FA in voor deze gebruikers',
-            'Verwijder admin rechten totdat 2FA is ingeschakeld',
-          ],
-          notificationType: 'user-control',
-          source: 'users-groups',
-          sourceLabel: 'Gebruikers & Groepen',
-          sourceRoute: '/users-groups',
-        });
-      }
-      if (data.users.activeLongNoLoginCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Actieve gebruikers met lange inactiviteit',
-          description: `${data.users.activeLongNoLoginCount} actieve gebruiker(s) hebben lang niet ingelogd.`,
-          recommendedActions: ['Controleer of deze accounts nog actief moeten zijn'],
-          notificationType: 'user-activity',
-          source: 'users-groups',
-          sourceLabel: 'Gebruikers & Groepen',
-          sourceRoute: '/users-groups',
-        });
-      }
-      if (data.users.inactiveRecentLoginCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Inactieve gebruikers met recente login',
-          description: `${data.users.inactiveRecentLoginCount} inactieve gebruiker(s) hebben recent ingelogd.`,
-          recommendedActions: ['Controleer of deze accounts opnieuw geactiveerd moeten worden'],
-          notificationType: 'user-activity',
-          source: 'users-groups',
-          sourceLabel: 'Gebruikers & Groepen',
-          sourceRoute: '/users-groups',
-        });
-      }
-    }
-
-    if (data.groups && data.groups.groupsWithExternal > 0) {
-      add({
-        severity: 'warning',
-        title: 'Groepen met externe leden',
-        description: `${data.groups.groupsWithExternal} groep(en) hebben externe leden.`,
-        recommendedActions: ['Controleer toegangsrechten van externe leden'],
-        notificationType: 'group-external',
-        source: 'users-groups',
-        sourceLabel: 'Gebruikers & Groepen',
-        sourceRoute: '/users-groups',
-      });
-    }
-
-    if (data.drives) {
-      if (data.drives.orphanDrives > 0) {
-        add({
-          severity: 'warning',
-          title: 'Gedeelde drives zonder eigenaar',
-          description: `${data.drives.orphanDrives} drive(s) hebben geen actieve eigenaar.`,
-          recommendedActions: ['Wijs een nieuwe eigenaar toe aan deze drives'],
-          notificationType: 'drive-orphan',
-          source: 'shared-drives',
-          sourceLabel: 'Gedeelde Drives',
-          sourceRoute: '/shared-drives',
-        });
-      }
-      if (data.drives.externalMembersDriveCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Drives met externe leden',
-          description: `${data.drives.externalMembersDriveCount} drive(s) hebben externe leden.`,
-          recommendedActions: ['Controleer externe toegang tot gedeelde drives'],
-          notificationType: 'drive-external',
-          source: 'shared-drives',
-          sourceLabel: 'Gedeelde Drives',
-          sourceRoute: '/shared-drives',
-        });
-      }
-    }
-
-    if (data.devices) {
-      if (data.devices.lockScreenCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Apparaten zonder vergrendelscherm beveiliging',
-          description: `${data.devices.lockScreenCount} apparaat(en) hebben geen vergrendelscherm beveiliging.`,
-          recommendedActions: ['Vereis lockscreen voor alle apparaten'],
-          notificationType: 'device-lockscreen',
-          source: 'mobile-devices',
-          sourceLabel: 'Mobiele Apparaten',
-          sourceRoute: '/mobile-devices',
-        });
-      }
-      if (data.devices.encryptionCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Apparaten zonder encryptie',
-          description: `${data.devices.encryptionCount} apparaat(en) zijn niet versleuteld.`,
-          recommendedActions: ['Schakel apparaatencryptie in'],
-          notificationType: 'device-encryption',
-          source: 'mobile-devices',
-          sourceLabel: 'Mobiele Apparaten',
-          sourceRoute: '/mobile-devices',
-        });
-      }
-      if (data.devices.osVersionCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Apparaten met verouderde OS versie',
-          description: `${data.devices.osVersionCount} apparaat(en) hebben een verouderde besturingssysteemversie.`,
-          recommendedActions: ['Vereis minimale OS-versie voor alle apparaten'],
-          notificationType: 'device-os',
-          source: 'mobile-devices',
-          sourceLabel: 'Mobiele Apparaten',
-          sourceRoute: '/mobile-devices',
-        });
-      }
-      if (data.devices.integrityCount > 0) {
-        add({
-          severity: 'warning',
-          title: 'Apparaten met integriteitsproblemen',
-          description: `${data.devices.integrityCount} apparaat(en) hebben integriteitsproblemen (root/jailbreak).`,
-          recommendedActions: ['Blokkeer geroote of gejailbroken apparaten'],
-          notificationType: 'device-integrity',
-          source: 'mobile-devices',
-          sourceLabel: 'Mobiele Apparaten',
-          sourceRoute: '/mobile-devices',
-        });
-      }
-    }
-
-    if (data.oAuth && data.oAuth.totalHighRiskApps > 0) {
-      add({
-        severity: 'critical',
-        title: 'Third-party applicaties met te veel toegang',
-        description: `${data.oAuth.totalHighRiskApps} applicatie(s) hebben toegang tot gevoelige gegevens of admin-functies.`,
-        recommendedActions: [
-          'Controleer de toegangsrechten voor deze applicaties',
-          'Herroep toegang voor apps die niet meer nodig zijn',
-        ],
-        notificationType: 'oauth-high-risk',
-        source: 'app-access',
-        sourceLabel: 'App Toegang',
-        sourceRoute: '/app-access',
-      });
-    }
-
-    if (data.appPasswords) {
-      if (data.appPasswords.allowed && data.appPasswords.totalAppPasswords > 0) {
-        add({
-          severity: 'critical',
-          title: 'App-wachtwoorden actief',
-          description: `${data.appPasswords.totalAppPasswords} app-wachtwoord(en) actief. App-wachtwoorden omzeilen 2FA.`,
-          recommendedActions: ['Overweeg OAuth-gebaseerde authenticatie waar mogelijk'],
-          notificationType: 'app-password',
-          source: 'app-passwords',
-          sourceLabel: 'App-wachtwoorden',
-          sourceRoute: '/app-passwords',
-        });
-      }
-    }
-
-    const seen = new Set<string>();
-    return notifications.filter((n) => {
-      const key = `${n.source}-${n.notificationType}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
   }
 }

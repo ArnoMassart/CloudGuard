@@ -1,5 +1,4 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
@@ -105,10 +104,7 @@ export class ReportsReactions implements OnInit {
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
-    forkJoin({
-      active: this.#notificationService.getNotifications(),
-      resolved: this.#notificationService.getResolvedNotifications(),
-    }).subscribe({
+    this.#notificationService.getNotificationsAndResolved().subscribe({
       next: ({ active, resolved }) => {
         this.notifications.set(active);
         this.resolvedNotifications.set(resolved);
