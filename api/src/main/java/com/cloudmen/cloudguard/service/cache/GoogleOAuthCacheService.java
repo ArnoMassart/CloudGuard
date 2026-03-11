@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.service.cache;
 
-import com.cloudmen.cloudguard.dto.oAuth.OAuthCacheEntry;
-import com.cloudmen.cloudguard.dto.oAuth.RawUserToken;
+import com.cloudmen.cloudguard.dto.o_Auth.OAuthCacheEntry;
+import com.cloudmen.cloudguard.dto.o_Auth.RawUserToken;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -14,7 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -89,7 +92,7 @@ public class GoogleOAuthCacheService {
                         ));
                     }
                 }
-            } catch (Exception e) {
+            } catch (InterruptedException | IOException e) {
                 log.warn("Kon OAuth tokens voor {} niet ophalen", user.getPrimaryEmail());
             }
         }

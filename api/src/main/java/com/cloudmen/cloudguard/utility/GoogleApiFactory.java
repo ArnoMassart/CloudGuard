@@ -6,7 +6,6 @@ import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.licensing.Licensing;
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

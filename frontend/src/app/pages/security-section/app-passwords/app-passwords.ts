@@ -4,11 +4,15 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
-import { AppPassword, AppPasswordOverviewResponse, UserAppPasswords } from '../../../services/app-password-service';
+import {
+  AppPassword,
+  AppPasswordOverviewResponse,
+  UserAppPasswords,
+} from '../../../services/app-password-service';
 import { LucideAngularModule } from 'lucide-angular';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-app-passwords',
@@ -33,9 +37,7 @@ export class AppPasswords implements OnInit {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return users;
     return users.filter(
-      (u) =>
-        (u.name?.toLowerCase().includes(q)) ||
-        (u.email?.toLowerCase().includes(q))
+      (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
     );
   });
   #tokenHistory: (string | null)[] = [null];
@@ -129,23 +131,32 @@ export class AppPasswords implements OnInit {
     this.isLoading.set(true);
     this.loadError.set(false);
     this.expandedAppPassword.set(null);
-    this.#appPasswordsService.getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery()).subscribe({
-      next: (response) => {
-        const data = response.users.map((u) => this.#mapToUserAppPasswords(u));
-        this.userAppPasswords.set(data);
-        this.nextPageToken.set(response.nextPageToken ?? null);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.userAppPasswords.set([]);
-        this.nextPageToken.set(null);
-        this.loadError.set(true);
-        this.isLoading.set(false);
-      },
-    });
+    this.#appPasswordsService
+      .getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery())
+      .subscribe({
+        next: (response) => {
+          const data = response.users.map((u) => this.#mapToUserAppPasswords(u));
+          this.userAppPasswords.set(data);
+          this.nextPageToken.set(response.nextPageToken ?? null);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.userAppPasswords.set([]);
+          this.nextPageToken.set(null);
+          this.loadError.set(true);
+          this.isLoading.set(false);
+        },
+      });
   }
 
-  #mapToUserAppPasswords(u: { id: string; name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }): UserAppPasswords {
+  #mapToUserAppPasswords(u: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    tsv: boolean;
+    passwords: AppPassword[];
+  }): UserAppPasswords {
     return {
       id: u.id ?? u.email,
       name: u.name,
@@ -176,5 +187,4 @@ export class AppPasswords implements OnInit {
     if (diffDays < 31) return `${Math.floor(diffDays / 7)} weken geleden`;
     return `${Math.floor(diffDays / 31)} maanden geleden`;
   }
-
 }

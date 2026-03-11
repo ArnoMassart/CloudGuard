@@ -4,21 +4,18 @@ import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.api.services.admin.directory.model.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.OrgUnit;
 import com.google.api.services.admin.directory.model.OrgUnits;
+import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service

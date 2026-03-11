@@ -5,6 +5,8 @@ import com.google.api.client.util.DateTime;
 import java.security.PrivateKey;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.function.Function;
 
 public class GoogleServiceHelperMethods {
     public static PrivateKey decodePrivateKey(String pem) throws Exception {
@@ -46,5 +48,22 @@ public class GoogleServiceHelperMethods {
         }
 
         return page;
+    }
+
+    public static <T> List<T> filterByNameOrEmail(List<T> items, String query, Function<T, String> nameExtractor,
+                                                  Function<T, String> emailExtractor) {
+        if (query == null || query.trim().isEmpty()) {
+            return items;
+        }
+
+        String lowerQuery = query.toLowerCase().trim();
+        return items.stream()
+                .filter(item -> {
+                    String name = nameExtractor.apply(item);
+                    String email = emailExtractor.apply(item);
+                    return (name != null && name.toLowerCase().contains(lowerQuery)) ||
+                            (email != null && email.toLowerCase().contains(lowerQuery));
+                })
+                .toList();
     }
 }

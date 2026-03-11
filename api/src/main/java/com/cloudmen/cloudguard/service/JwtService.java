@@ -11,9 +11,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 @Service
 public class JwtService {

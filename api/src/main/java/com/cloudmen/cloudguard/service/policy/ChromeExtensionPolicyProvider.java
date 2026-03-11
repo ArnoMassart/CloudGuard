@@ -8,7 +8,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Policy provider for Chrome extension management.
@@ -81,12 +84,12 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
             description = hasForceInstalled
                     ? "Er zijn force-installed extensies"
                     : "Alleen specifieke extensies zijn toegestaan";
-        } else if (defaultBlocked && !hasAllowlist && hasBlocklist) {
+        } else if (defaultBlocked && hasBlocklist) {
             // Default block, blocklist only (block all) - treat as Managed
             status = "Managed";
             statusClass = "bg-amber-100 text-amber-800";
             description = "Alle extensies zijn standaard geblokkeerd";
-        } else if (!defaultBlocked && (hasBlocklist || hasForceInstalled)) {
+        } else if (!defaultBlocked && hasBlocklist) {
             status = "Restricted";
             statusClass = "bg-amber-100 text-amber-800";
             description = "Er is een blokkeerlijst of force-installed extensies";

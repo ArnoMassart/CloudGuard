@@ -14,7 +14,7 @@ public class AppPasswordController {
     private final AppPasswordsService appPasswordsService;
     private final JwtService jwtService;
 
-    private final boolean isTestMode = true;
+    private static final boolean isTestMode = true;
 
     public AppPasswordController(AppPasswordsService appPasswordsService, JwtService jwtService) {
         this.appPasswordsService = appPasswordsService;

@@ -1,27 +1,17 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
-import com.cloudmen.cloudguard.dto.users.UserOrgDetail;
-import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
-import com.cloudmen.cloudguard.dto.users.UserPageResponse;
-import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
+import com.cloudmen.cloudguard.dto.users.*;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
-import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.google.api.services.admin.directory.Directory;
-import com.google.api.services.admin.directory.DirectoryScopes;
-import com.google.api.services.admin.directory.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.api.services.admin.directory.model.User;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class GoogleUsersService {

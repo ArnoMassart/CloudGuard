@@ -16,10 +16,6 @@ public class ServiceStatusDto {
     private boolean inherited;
     private String fromOrgUnit;
 
-    public boolean isEnabled() {
-        return status == ServiceStatus.ENABLED;
-    }
-
     public boolean isUnknown() {
         return status == ServiceStatus.UNKNOWN;
     }

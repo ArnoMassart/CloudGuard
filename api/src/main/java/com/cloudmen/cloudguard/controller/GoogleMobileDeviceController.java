@@ -16,12 +16,12 @@ public class GoogleMobileDeviceController {
     private final GoogleMobileDeviceService googleMobileDeviceService;
     private final JwtService jwtService;
 
+    private static final boolean isTestMode = true;
+
     public GoogleMobileDeviceController(GoogleMobileDeviceService googleMobileDeviceService, JwtService jwtService) {
         this.googleMobileDeviceService = googleMobileDeviceService;
         this.jwtService = jwtService;
     }
-
-    private final boolean isTestMode = true;
 
     @GetMapping()
     public ResponseEntity<MobileDevicePageResponse> getMobileDevices(

@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto.oAuth;
+package com.cloudmen.cloudguard.dto.o_Auth;
 
 import lombok.Getter;
 

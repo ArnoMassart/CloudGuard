@@ -3,13 +3,10 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.groups.*;
 import com.cloudmen.cloudguard.service.cache.GoogleGroupsCacheService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.google.api.services.groupssettings.Groupssettings;
-import com.google.api.services.groupssettings.model.Groups;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 public class GoogleGroupsService {
@@ -27,14 +24,7 @@ public class GoogleGroupsService {
     public GroupPageResponse getGroupsPaged(String loggedInEmail, String query, String pageToken, int size) {
         GroupCacheEntry cachedData = groupsCacheService.getOrFetchGroupData(loggedInEmail);
 
-        List<CachedGroupItem> filteredList = cachedData.allGroups();
-        if (query != null && !query.trim().isEmpty()) {
-            String lowerQuery = query.toLowerCase().trim();
-            filteredList = filteredList.stream()
-                    .filter(g -> (g.email() != null && g.email().toLowerCase().contains(lowerQuery)) ||
-                            (g.name() != null && g.name().toLowerCase().contains(lowerQuery)))
-                    .toList();
-        }
+        List<CachedGroupItem> filteredList = GoogleServiceHelperMethods.filterByNameOrEmail(cachedData.allGroups(), query, CachedGroupItem::name, CachedGroupItem::email);
 
         int page = GoogleServiceHelperMethods.getPage(pageToken);
 

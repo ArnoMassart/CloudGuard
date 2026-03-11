@@ -6,6 +6,7 @@ import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.passwords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.dto.passwords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -46,15 +47,12 @@ public class AppPasswordsService {
 
     public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size, String query, boolean isTestMode) {
         AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(adminEmail, this::fetchAllAppPasswords);
-        List<UserAppPasswordsDto> allUsers = entry.users();
-
-        if (query != null && !query.trim().isEmpty()) {
-            String lowerQuery = query.toLowerCase().trim();
-            allUsers = allUsers.stream()
-                    .filter(u -> (u.name() != null && u.name().toLowerCase().contains(lowerQuery))
-                            || (u.email() != null && u.email().toLowerCase().contains(lowerQuery)))
-                    .toList();
-        }
+        List<UserAppPasswordsDto> allUsers = GoogleServiceHelperMethods.filterByNameOrEmail(
+                entry.users(),
+                query,
+                UserAppPasswordsDto::name,
+                UserAppPasswordsDto::email
+        );
 
         int page = 1;
         if (pageToken != null && !pageToken.isBlank()) {
@@ -62,6 +60,7 @@ public class AppPasswordsService {
                 int parsed = Integer.parseInt(pageToken);
                 if (parsed > 0) page = parsed;
             } catch (NumberFormatException ignored) {
+                log.warn("Invalid pageToken provided: '{}'. Defaulting to page 1.", pageToken);
             }
         }
         int pageSize = Math.max(1, Math.min(size, 100));

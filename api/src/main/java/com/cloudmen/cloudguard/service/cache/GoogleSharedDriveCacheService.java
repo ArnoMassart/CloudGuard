@@ -2,7 +2,6 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
-import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Service

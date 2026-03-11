@@ -30,7 +30,7 @@ public class PolicyApiCacheService {
     private static final Logger log = LoggerFactory.getLogger(PolicyApiCacheService.class);
     private static final String POLICY_API_SCOPE = "https://www.googleapis.com/auth/cloud-identity.policies.readonly";
     private static final String POLICY_API_BASE = "https://cloudidentity.googleapis.com/v1/policies";
-    private static final long CACHE_TTL_MS = 5 * 60 * 1000;
+    private static final long CACHE_TTL_MS = 5 * 60 * 1000L;
 
     private final GoogleApiFactory directoryFactory;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -42,20 +42,32 @@ public class PolicyApiCacheService {
     private volatile Map<String, String> cachedOuIdToPath;
     private volatile long ouCacheTimestamp;
 
+    private final Object policyLock = new Object();
+    private final Object ouLock = new Object();
+
     public PolicyApiCacheService(GoogleApiFactory directoryFactory) {
         this.directoryFactory = directoryFactory;
     }
 
     public List<JsonNode> getAllPolicies(String adminEmail) throws Exception {
         long now = System.currentTimeMillis();
+
         if (cachedPolicies != null && (now - policyCacheTimestamp) < CACHE_TTL_MS) {
             log.debug("Returning {} cached policies", cachedPolicies.size());
             return cachedPolicies;
         }
-        List<JsonNode> fresh = fetchAllPolicies(adminEmail);
-        cachedPolicies = fresh;
-        policyCacheTimestamp = now;
-        return fresh;
+
+        synchronized (policyLock) {
+            now = System.currentTimeMillis();
+            if (cachedPolicies != null && (now - policyCacheTimestamp) < CACHE_TTL_MS) {
+                return cachedPolicies;
+            }
+
+            List<JsonNode> fresh = fetchAllPolicies(adminEmail);
+            cachedPolicies = List.copyOf(fresh);
+            policyCacheTimestamp = System.currentTimeMillis();
+            return cachedPolicies;
+        }
     }
 
     /**
@@ -66,10 +78,18 @@ public class PolicyApiCacheService {
         if (cachedOuIdToPath != null && (now - ouCacheTimestamp) < CACHE_TTL_MS) {
             return cachedOuIdToPath;
         }
-        Map<String, String> fresh = fetchOuIdToPathMap(adminEmail);
-        cachedOuIdToPath = fresh;
-        ouCacheTimestamp = now;
-        return fresh;
+
+        synchronized (ouLock) {
+            now = System.currentTimeMillis();
+            if (cachedOuIdToPath != null && (now - ouCacheTimestamp) < CACHE_TTL_MS) {
+                return cachedOuIdToPath;
+            }
+
+            Map<String, String> fresh = fetchOuIdToPathMap(adminEmail);
+            cachedOuIdToPath = Map.copyOf(fresh);
+            ouCacheTimestamp = System.currentTimeMillis();
+            return cachedOuIdToPath;
+        }
     }
 
     /**

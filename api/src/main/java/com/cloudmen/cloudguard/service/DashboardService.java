@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 public class DashboardService {
-    private final boolean IsTestmode = true;
+    private static final boolean isTestmode = true;
 
     private final GoogleUsersService usersService;
     private final GoogleGroupsService groupsService;
@@ -69,13 +69,13 @@ public class DashboardService {
                 sharedDriveService.getDrivesPageOverview(loggedInEmail).securityScore());
 
         CompletableFuture<Integer> devicesFuture = CompletableFuture.supplyAsync(() ->
-                mobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, IsTestmode).securityScore());
+                mobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, isTestmode).securityScore());
 
         CompletableFuture<Integer> appAccessFuture = CompletableFuture.supplyAsync(() ->
                 oAuthService.getOAuthPageOverview(loggedInEmail).securityScore());
 
         CompletableFuture<Integer> appPasswordsFuture = CompletableFuture.supplyAsync(() ->
-                passwordsService.getOverview(loggedInEmail, IsTestmode).securityScore());
+                passwordsService.getOverview(loggedInEmail, isTestmode).securityScore());
         
 
         CompletableFuture<Integer> dnsAverageFuture = CompletableFuture.supplyAsync(() ->
