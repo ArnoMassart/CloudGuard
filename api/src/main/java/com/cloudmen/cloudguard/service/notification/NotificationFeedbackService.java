@@ -11,9 +11,11 @@ import java.time.LocalDateTime;
 public class NotificationFeedbackService {
 
     private final NotificationFeedbackRepository repository;
+    private final FeedbackEmailService emailService;
 
-    public NotificationFeedbackService(NotificationFeedbackRepository repository) {
+    public NotificationFeedbackService(NotificationFeedbackRepository repository,  FeedbackEmailService emailService) {
         this.repository = repository;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -25,6 +27,8 @@ public class NotificationFeedbackService {
                     }
                     existing.setFeedbackText(feedbackText);
                     existing.setCreatedAt(LocalDateTime.now());
+
+                    emailService.sendFeedbackEmail(userId, source, notificationType, feedbackText);
                     return repository.save(existing);
                 })
                 .orElseGet(()->{
@@ -33,6 +37,8 @@ public class NotificationFeedbackService {
                     notificationFeedback.setSource(source);
                     notificationFeedback.setNotificationType(notificationType);
                     notificationFeedback.setFeedbackText(feedbackText);
+
+                    emailService.sendFeedbackEmail(userId, source, notificationType, feedbackText);
                     return repository.save(notificationFeedback);
                 });
     }
