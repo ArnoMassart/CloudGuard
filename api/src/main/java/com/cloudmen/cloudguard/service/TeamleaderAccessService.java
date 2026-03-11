@@ -1,7 +1,5 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.domain.model.TeamleaderCredential;
-import com.cloudmen.cloudguard.repository.TeamleaderCredentialRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +11,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,17 +21,16 @@ import java.util.Objects;
 public class TeamleaderAccessService {
     private static final Logger log = LoggerFactory.getLogger(TeamleaderAccessService.class);
 
-    private final TeamleaderCredentialRepository repository;
-    private final RestTemplate restTemplate;
+private final SupabaseTokenService supabaseTokenService;
+private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${teamleader.client.id}") private String clientId;
     @Value("${teamleader.client.secret}") private String clientSecret;
     @Value("${teamleader.customfield.cloudguard.id}") private String cloudGuardFieldId;
     @Value("${teamleader.api.base}") private String teamleaderApiBase;
 
-    public TeamleaderAccessService(TeamleaderCredentialRepository repository) {
-        this.repository = repository;
-        this.restTemplate  = new RestTemplate();
+    public TeamleaderAccessService(SupabaseTokenService supabaseTokenService) {
+        this.supabaseTokenService = supabaseTokenService;
     }
 
     public void updateCredentials(String accessToken, String refreshToken) {
@@ -42,45 +38,36 @@ public class TeamleaderAccessService {
             throw new IllegalArgumentException("Access token and Refresh token cannot be empty.");
         }
 
-        TeamleaderCredential credentials = repository.findById("SINGLETON")
-                .orElse(new TeamleaderCredential());
-
-        credentials.setAccessToken(accessToken);
-        credentials.setRefreshToken(refreshToken);
-        credentials.setUpdatedAt(LocalDateTime.now());
-
-        repository.save(credentials);
-
-        log.info("Teamleader credentials manually updated via setup endpoint.");
+        // Sla de tokens direct op in Supabase
+        supabaseTokenService.updateTokens(accessToken, refreshToken);
+        log.info("Teamleader credentials manually updated via setup endpoint (Saved to Supabase).");
     }
 
     public boolean hasCloudGuardAccess(String loggedInEmail) {
         try {
             log.info("Checking CloudGuard Access");
             return executeAccessCheckFlow(loggedInEmail);
-        }catch (HttpClientErrorException.Unauthorized e) {
-        log.warn("Teamleader token verlopen (401), proberen te vernieuwen...");
 
-        // Als het token verlopen is, probeer het te vernieuwen
-        if (refreshTokens()) {
-            log.info("Token succesvol vernieuwd, API call opnieuw uitvoeren.");
-            try {
-                // Tweede poging met het nieuwe token
-                return executeAccessCheckFlow(loggedInEmail);
-            } catch (Exception ex) {
-                log.error("API Call faalde definitief na token refresh: {}", ex.getMessage());
-                return false;
+        } catch (HttpClientErrorException.Unauthorized e) {
+            log.warn("Teamleader token verlopen (401), proberen te vernieuwen via centrale Supabase...");
+
+            if (refreshTokens()) {
+                log.info("Token succesvol vernieuwd, API call opnieuw uitvoeren.");
+                try {
+                    return executeAccessCheckFlow(loggedInEmail);
+                } catch (Exception ex) {
+                    log.error("API Call faalde definitief na token refresh: {}", ex.getMessage());
+                    return false;
+                }
             }
+
+            log.error("Vernieuwen van Teamleader token is mislukt.");
+            return false;
+
+        } catch (Exception e) {
+            log.error("Onverwachte fout tijdens Teamleader API Call: {}", e.getMessage());
+            return false;
         }
-
-        log.error("Vernieuwen van Teamleader token is mislukt.");
-        return false;
-
-    } catch (Exception e) {
-        log.error("Onverwachte fout tijdens Teamleader API Call: {}", e.getMessage());
-        return false; // Veilige fallback voor de Gatekeeper
-    }
-
     }
 
     private boolean executeAccessCheckFlow(String domainEmail) {
@@ -113,7 +100,6 @@ public class TeamleaderAccessService {
                 }
             }
         }
-
         return false;
     }
 
@@ -125,11 +111,11 @@ public class TeamleaderAccessService {
                 teamleaderApiBase + "/companies.info",
                 HttpMethod.POST,
                 entity,
-                new ParameterizedTypeReference<>() {
-                }
+                new ParameterizedTypeReference<>() {}
         );
 
-        return (Map<String, Object>) Objects.requireNonNull(response.getBody()).get("data");    }
+        return (Map<String, Object>) Objects.requireNonNull(response.getBody()).get("data");
+    }
 
     private String getCompanyIdByEmail(String email, HttpHeaders headers) {
         String body = """
@@ -145,13 +131,11 @@ public class TeamleaderAccessService {
 
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
-
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 teamleaderApiBase + "/companies.list",
                 HttpMethod.POST,
                 entity,
-                new ParameterizedTypeReference<>() {
-                }
+                new ParameterizedTypeReference<>() {}
         );
 
         List<Map<String, Object>> data = (List<Map<String, Object>>) Objects.requireNonNull(response.getBody()).get("data");
@@ -163,44 +147,47 @@ public class TeamleaderAccessService {
     }
 
     private HttpHeaders createHeaders() {
-        TeamleaderCredential credentials = getCredentials();
+        // Haal altijd de meest verse token op uit Supabase!
+        SupabaseTokenService.TeamleaderTokens tokens = supabaseTokenService.getTokens();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(credentials.getAccessToken());
+        headers.setBearerAuth(tokens.accessToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         return headers;
     }
 
     private boolean refreshTokens() {
-        TeamleaderCredential credentials = getCredentials();
+        // Haal de refresh token centraal op
+        SupabaseTokenService.TeamleaderTokens tokens = supabaseTokenService.getTokens();
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", clientId);
         map.add("client_secret", clientSecret);
-        map.add("refresh_token", credentials.getRefreshToken());
+        map.add("refresh_token", tokens.refreshToken());
         map.add("grant_type", "refresh_token");
 
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     "https://focus.teamleader.eu/oauth2/access_token",
                     HttpMethod.POST,
-                    new HttpEntity<>(map, new HttpHeaders()), new ParameterizedTypeReference<>(){});
+                    new HttpEntity<>(map, new HttpHeaders()),
+                    new ParameterizedTypeReference<>() {}
+            );
 
             Map<String, Object> body = response.getBody();
             assert body != null;
-            credentials.setAccessToken((String) body.get("access_token"));
-            credentials.setRefreshToken((String) body.get("refresh_token"));
-            credentials.setUpdatedAt(LocalDateTime.now());
 
-            repository.save(credentials);
+            String newAccessToken = (String) body.get("access_token");
+            String newRefreshToken = (String) body.get("refresh_token");
+
+            // Schiet de nieuwe tokens direct door naar Supabase voor je collega
+            supabaseTokenService.updateTokens(newAccessToken, newRefreshToken);
             return true;
+
         } catch (Exception e) {
+            log.error("Fout tijdens ophalen nieuwe Teamleader tokens: {}", e.getMessage());
             return false;
         }
-    }
-
-    private TeamleaderCredential getCredentials() {
-        return repository.findById("SINGLETON").orElseThrow(() -> new RuntimeException("Geen Teamleader tokens gevonden in DB. Voer de initiële setup uit."));
     }
 }
