@@ -36,14 +36,14 @@ export class ReportsReactions implements OnInit {
   });
 
   readonly totalCount = computed(() => this.notifications().length);
-  readonly criticalCount = computed(() =>
-    this.notifications().filter((n) => n.severity === 'critical').length
+  readonly criticalCount = computed(
+    () => this.notifications().filter((n) => n.severity === 'critical').length
   );
-  readonly warningCount = computed(() =>
-    this.notifications().filter((n) => n.severity === 'warning').length
+  readonly warningCount = computed(
+    () => this.notifications().filter((n) => n.severity === 'warning').length
   );
-  readonly infoCount = computed(() =>
-    this.notifications().filter((n) => n.severity === 'info').length
+  readonly infoCount = computed(
+    () => this.notifications().filter((n) => n.severity === 'info').length
   );
 
   ngOnInit() {
@@ -78,7 +78,7 @@ export class ReportsReactions implements OnInit {
   getSeverityIcon(severity: NotificationSeverity) {
     if (severity === 'critical') return this.Icons.CircleX;
     if (severity === 'warning') return this.Icons.TriangleAlert;
-    return this.Icons.CircleHelp;
+    return this.Icons.CircleQuestionMark;
   }
 
   getSeverityLabel(severity: NotificationSeverity): string {

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +12,6 @@ import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
-import { delay } from 'rxjs';
 
 // ==========================================
 // CONSTANTS
@@ -32,7 +31,7 @@ const ITEMS_PER_PAGE = 4;
   templateUrl: './mobile-devices.html',
   styleUrl: './mobile-devices.css',
 })
-export class MobileDevices {
+export class MobileDevices implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -126,7 +125,7 @@ export class MobileDevices {
   prevPage() {
     if (this.currentPage() > 1) {
       this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      const prevToken = this.#tokenHistory.at(-1);
       this.currentPage.update((p) => p - 1);
       this.#loadMobileDevices(prevToken);
     }

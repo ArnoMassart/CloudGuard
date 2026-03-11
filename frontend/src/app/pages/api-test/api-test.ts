@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ApiService } from '../../services/api-service';
 import { firstValueFrom } from 'rxjs';
 
@@ -9,12 +9,12 @@ import { firstValueFrom } from 'rxjs';
   templateUrl: './api-test.html',
   styleUrl: './api-test.css',
 })
-export class ApiTest {
+export class ApiTest implements OnInit {
   readonly apiService: ApiService = inject(ApiService);
 
   readonly cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
 
-  result!: String;
+  result!: string;
 
   ngOnInit() {
     this.getTest();

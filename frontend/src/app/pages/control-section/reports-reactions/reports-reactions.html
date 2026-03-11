@@ -6,14 +6,14 @@
     <div class="w-full flex flex-col gap-5 pt-6">
         <!-- Summary cards -->
         <div class="w-full flex gap-4">
-            <app-section-top-card class="flex-1" Title="Totaal" [Value]="totalCount()"
-                [Icon]="Icons.Bell" BackgroundColor="#dbeafe" IconColor="#155dfc" />
-            <app-section-top-card class="flex-1" Title="Nieuwe meldingen" [Value]="0"
-                [Icon]="Icons.CircleHelp" BackgroundColor="#dbeafe" IconColor="#155dfc" />
-            <app-section-top-card class="flex-1" Title="Kritiek" [Value]="criticalCount()"
-                [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
-            <app-section-top-card class="flex-1" Title="In behandeling" [Value]="0"
-                [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad" TextColor="#3abfad" />
+            <app-section-top-card class="flex-1" Title="Totaal" [Value]="totalCount()" [Icon]="Icons.Bell"
+                BackgroundColor="#dbeafe" IconColor="#155dfc" />
+            <app-section-top-card class="flex-1" Title="Nieuwe meldingen" [Value]="0" [Icon]="Icons.CircleQuestionMark"
+                BackgroundColor="#dbeafe" IconColor="#155dfc" />
+            <app-section-top-card class="flex-1" Title="Kritiek" [Value]="criticalCount()" [Icon]="Icons.TriangleAlert"
+                BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
+            <app-section-top-card class="flex-1" Title="In behandeling" [Value]="0" [Icon]="Icons.Clock"
+                BackgroundColor="#d8f2ef" IconColor="#3abfad" TextColor="#3abfad" />
         </div>
 
         <!-- Critical warning banner -->
@@ -40,18 +40,13 @@
                 <span>Filter:</span>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button
-                    (click)="setFilter('all')"
-                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-primary]="filterSeverity() === 'all'"
-                    [class.text-white]="filterSeverity() === 'all'"
-                    [class.bg-gray-100]="filterSeverity() !== 'all'"
-                    [class.text-gray-700]="filterSeverity() !== 'all'"
+                <button (click)="setFilter('all')" class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                    [class.bg-primary]="filterSeverity() === 'all'" [class.text-white]="filterSeverity() === 'all'"
+                    [class.bg-gray-100]="filterSeverity() !== 'all'" [class.text-gray-700]="filterSeverity() !== 'all'"
                     [class.hover:bg-gray-200]="filterSeverity() !== 'all'">
                     Alle ({{ totalCount() }})
                 </button>
-                <button
-                    (click)="setFilter('critical')"
+                <button (click)="setFilter('critical')"
                     class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                     [class.bg-red-100]="filterSeverity() === 'critical'"
                     [class.text-red-800]="filterSeverity() === 'critical'"
@@ -60,8 +55,7 @@
                     [class.hover:bg-gray-200]="filterSeverity() !== 'critical'">
                     Kritiek ({{ criticalCount() }})
                 </button>
-                <button
-                    (click)="setFilter('warning')"
+                <button (click)="setFilter('warning')"
                     class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                     [class.bg-amber-100]="filterSeverity() === 'warning'"
                     [class.text-amber-800]="filterSeverity() === 'warning'"
@@ -70,9 +64,7 @@
                     [class.hover:bg-gray-200]="filterSeverity() !== 'warning'">
                     Waarschuwing ({{ warningCount() }})
                 </button>
-                <button
-                    (click)="setFilter('info')"
-                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                <button (click)="setFilter('info')" class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                     [class.bg-blue-100]="filterSeverity() === 'info'"
                     [class.text-blue-800]="filterSeverity() === 'info'"
                     [class.bg-gray-100]="filterSeverity() !== 'info'"
@@ -80,8 +72,7 @@
                     [class.hover:bg-gray-200]="filterSeverity() !== 'info'">
                     Info ({{ infoCount() }})
                 </button>
-                <button
-                    (click)="setFilter('resolved')"
+                <button (click)="setFilter('resolved')"
                     class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
                     [class.bg-emerald-100]="filterSeverity() === 'resolved'"
                     [class.text-emerald-800]="filterSeverity() === 'resolved'"
@@ -91,9 +82,7 @@
                     Opgelost (0)
                 </button>
             </div>
-            <button
-                (click)="refresh()"
-                [disabled]="isLoading()"
+            <button (click)="refresh()" [disabled]="isLoading()"
                 class="ml-auto flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                 <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isLoading()" />
                 {{ isLoading() ? 'Laden...' : 'Vernieuwen' }}
@@ -132,12 +121,13 @@
                             <i-lucide [img]="Icons.CircleX" size="20" />
                         </div>
                         } @else if (n.severity === 'warning') {
-                        <div class="w-10 h-10 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                        <div
+                            class="w-10 h-10 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
                             <i-lucide [img]="Icons.TriangleAlert" size="20" />
                         </div>
                         } @else {
                         <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                            <i-lucide [img]="Icons.CircleHelp" size="20" />
+                            <i-lucide [img]="Icons.CircleQuestionMark" size="20" />
                         </div>
                         }
                     </div>
@@ -152,7 +142,8 @@
                                 [class.text-blue-700]="n.severity === 'info'">
                                 {{ getSeverityLabel(n.severity) }}
                             </span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 {{ n.notificationType }}
                             </span>
                         </div>
@@ -163,8 +154,7 @@
                             Vandaag
                         </p>
                         @if (supportsDetails(n.notificationType)) {
-                        <button
-                            (click)="toggleExpand(n); $event.stopPropagation()"
+                        <button (click)="toggleExpand(n); $event.stopPropagation()"
                             class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
                             @if (isExpanded(n.id)) {
                             <i-lucide [img]="Icons.ChevronUp" size="16" />
@@ -178,7 +168,8 @@
                         <div class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
                             @if (isLoadingDetails(n.id)) {
                             <div class="flex items-center gap-2 text-sm text-gray-500">
-                                <span class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                                <span
+                                    class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                                 Details laden...
                             </div>
                             } @else {

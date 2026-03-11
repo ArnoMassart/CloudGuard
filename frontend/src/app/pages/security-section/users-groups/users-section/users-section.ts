@@ -40,23 +40,23 @@ export class UsersSection implements OnInit {
   // ==========================================
   readonly isExpanded = signal(true);
 
-  orgUsers = signal<UserOrgDetail[]>([]);
-  isLoading = signal(false);
-  isRefreshing = signal<boolean>(false);
-  searchQuery = signal('');
-  pageOverview = signal<UserOverviewResponse | null>(null);
+  readonly orgUsers = signal<UserOrgDetail[]>([]);
+  readonly isLoading = signal(false);
+  readonly isRefreshing = signal<boolean>(false);
+  readonly searchQuery = signal('');
+  readonly pageOverview = signal<UserOverviewResponse | null>(null);
 
-  currentPage = signal(1);
-  nextPageToken = signal<string | null>(null);
+  readonly currentPage = signal(1);
+  readonly nextPageToken = signal<string | null>(null);
 
-  hasWarnings = signal(false);
-  userPageWarnings = signal<UsersPageWarnings>({
+  readonly hasWarnings = signal(false);
+  readonly userPageWarnings = signal<UsersPageWarnings>({
     twoFactorWarning: false,
     activeWithLongNoLogin: false,
     notActiveWithRecentLogin: false,
   });
 
-  hasMultipleWarnings = computed(() => {
+  readonly hasMultipleWarnings = computed(() => {
     const warnings = this.userPageWarnings();
     const activeCount = Object.values(warnings).filter((val) => val === true).length;
     return activeCount > 1;
@@ -66,7 +66,7 @@ export class UsersSection implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
-  #searchSubject = new Subject<string>();
+  readonly #searchSubject = new Subject<string>();
 
   // ==========================================
   // LIFECYCLE HOOKS
@@ -110,7 +110,7 @@ export class UsersSection implements OnInit {
   prevPage() {
     if (this.currentPage() > 1) {
       this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      const prevToken = this.#tokenHistory.at(-1);
       this.currentPage.update((p) => p - 1);
       this.#loadUsers(prevToken);
     }

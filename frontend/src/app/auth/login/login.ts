@@ -14,7 +14,7 @@ import { AppIcons } from '../../shared/AppIcons';
 export class Login {
   readonly Icons = AppIcons;
 
-  private auth0 = inject(AuthService);
+  private readonly auth0 = inject(AuthService);
 
   loginWithGoogle() {
     sessionStorage.setItem('auth0_redirect_pending', '1');
@@ -23,7 +23,7 @@ export class Login {
       authorizationParams: {
         connection: 'google-oauth2',
         prompt: 'select_account',
-        redirect_uri: window.location.origin + '/callback',
+        redirect_uri: globalThis.location.origin + '/callback',
       },
     });
   }

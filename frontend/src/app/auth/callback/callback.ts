@@ -15,10 +15,10 @@ import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
   template: `<app-splash-screen></app-splash-screen>`,
 })
 export class Callback implements OnInit {
-  private auth0 = inject(AuthService);
-  private customAuth = inject(CustomAuthService);
-  private router = inject(Router);
-  private destroyRef = inject(DestroyRef);
+  private readonly auth0 = inject(AuthService);
+  private readonly customAuth = inject(CustomAuthService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     const returningFromAuth0 = sessionStorage.getItem('auth0_redirect_pending') === '1';
