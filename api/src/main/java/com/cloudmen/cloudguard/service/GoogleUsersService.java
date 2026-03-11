@@ -117,7 +117,7 @@ public class GoogleUsersService {
             return Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) <= 7;
         }).count();
 
-        return new UserOverviewResponse(totalUsers, withoutTwoFactor, adminUsers, securityScore, activeLongNoLoginCount, inactiveRecentLoginCount);
+        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, (int) securityScore, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount);
     }
 
     private int calculateSecurityScore(List<User> googleUsers) {

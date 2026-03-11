@@ -97,6 +97,18 @@ public class NotificationAggregationService {
         return new NotificationsResponse(filtered, resolvedDtos);
     }
 
+    public long getNotificationsCount(String userId) {
+        NotificationsResponse response = getNotifications(userId);
+        return response.active().size();
+    }
+
+    public long getNotificationsCriticalCount(String userId) {
+        NotificationsResponse response = getNotifications(userId);
+        return response.active().stream()
+                .filter(n -> "critical".equals(n.severity()))
+                .count();
+    }
+
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         String status = feedbackKeys.contains(n.source() + ":" + n.notificationType()) ? "in_behandeling" : "new";
         return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),
@@ -270,12 +282,12 @@ public class NotificationAggregationService {
                     .map(DomainDto::domainName)
                     .orElse(null);
             if (primaryDomain == null || primaryDomain.isBlank()) {
-                return new DnsRecordResponseDto("", List.of());
+                return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0);
             }
             return dnsRecordsService.getImportantRecords(primaryDomain, "google");
         } catch (Exception e) {
             log.warn("Failed to fetch DNS data for notifications: {}", e.getMessage());
-            return new DnsRecordResponseDto("", List.of());
+            return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0);
         }
     }
 
