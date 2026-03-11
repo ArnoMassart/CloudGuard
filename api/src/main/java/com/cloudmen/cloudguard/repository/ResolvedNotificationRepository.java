@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.repository;
 
-import com.cloudmen.cloudguard.domain.feedback.ResolvedNotification;
+import com.cloudmen.cloudguard.domain.model.feedback.ResolvedNotification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

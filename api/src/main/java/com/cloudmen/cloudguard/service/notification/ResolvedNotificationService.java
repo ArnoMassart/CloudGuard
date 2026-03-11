@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.notification;
 
-import com.cloudmen.cloudguard.domain.feedback.ResolvedNotification;
+import com.cloudmen.cloudguard.domain.model.feedback.ResolvedNotification;
 import com.cloudmen.cloudguard.dto.notifications.ResolveNotificationRequest;
 import com.cloudmen.cloudguard.repository.ResolvedNotificationRepository;
 import org.springframework.stereotype.Service;

@@ -172,20 +172,6 @@ export class ReportsReactions implements OnInit {
     return 'Info';
   }
 
-  supportsDetails(notificationType: string): boolean {
-    return [
-      'user-control',
-      'group-external',
-      'oauth-high-risk',
-      'drive-orphan',
-      'drive-external',
-      'device-lockscreen',
-      'device-encryption',
-      'device-os',
-      'device-integrity',
-    ].includes(notificationType);
-  }
-
   toggleExpand(n: Notification) {
     const id = n.id;
     const expanded = new Set(this.expandedIds());

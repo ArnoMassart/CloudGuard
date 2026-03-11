@@ -24,6 +24,7 @@ export interface Notification {
   sourceLabel: string;
   sourceRoute: string;
   status?: NotificationStatus;
+  supportsDetails?: boolean;
 }
 
 interface NotificationsResponse {
@@ -42,20 +43,6 @@ export class NotificationService {
   readonly #mobileDeviceService = inject(MobileDeviceService);
   readonly #groupService = inject(GroupService);
   readonly #oAuthService = inject(OAuthService);
-
-  getNotifications(): Observable<Notification[]> {
-    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
-      map((res) => res.active),
-      catchError(() => of([]))
-    );
-  }
-
-  getResolvedNotifications(): Observable<Notification[]> {
-    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
-      map((res) => res.resolved),
-      catchError(() => of([]))
-    );
-  }
 
   getNotificationsAndResolved(): Observable<{ active: Notification[]; resolved: Notification[] }> {
     return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(

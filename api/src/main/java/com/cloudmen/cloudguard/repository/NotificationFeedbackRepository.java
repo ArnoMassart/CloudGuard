@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.repository;
 
-import com.cloudmen.cloudguard.domain.feedback.NotificationFeedback;
+import com.cloudmen.cloudguard.domain.model.feedback.NotificationFeedback;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

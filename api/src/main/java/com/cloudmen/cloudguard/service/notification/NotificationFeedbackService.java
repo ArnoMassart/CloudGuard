@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.notification;
 
-import com.cloudmen.cloudguard.domain.feedback.NotificationFeedback;
+import com.cloudmen.cloudguard.domain.model.feedback.NotificationFeedback;
 import com.cloudmen.cloudguard.repository.NotificationFeedbackRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;

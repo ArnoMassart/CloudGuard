@@ -12,6 +12,7 @@ public record NotificationDto(
         String source,
         String sourceLabel,
         String sourceRoute,
-        String status
+        String status,
+        boolean supportsDetails
 ) {
 }

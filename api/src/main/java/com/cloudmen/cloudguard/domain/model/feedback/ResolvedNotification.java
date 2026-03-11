@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.domain.feedback;
+package com.cloudmen.cloudguard.domain.model.feedback;
 
 import jakarta.persistence.*;
 import lombok.Getter;

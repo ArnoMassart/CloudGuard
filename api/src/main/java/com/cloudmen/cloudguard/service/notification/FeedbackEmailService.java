@@ -41,7 +41,11 @@ public class FeedbackEmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(recipientEmails.toArray(new String[0]));
             helper.setSubject("CloudGuard: Nieuwe feedback – " + notificationType);
-            //helper.setFrom(fromEmail, "CloudGuard");
+            try{
+                helper.setFrom(fromEmail, "CloudGuard");
+            }catch(Exception e){
+                throw new MessagingException(e.getMessage());
+            }
             helper.setText(buildPlainText(userId, source, notificationType, feedbackText), buildHtmlContent(userId, source, notificationType, feedbackText));
             mailSender.send(message);
         } catch (MessagingException e) {

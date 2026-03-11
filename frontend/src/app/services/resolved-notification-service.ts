@@ -39,10 +39,4 @@ export class ResolvedNotificationService {
       withCredentials: true,
     });
   }
-
-  getResolved(): Observable<ResolvedNotification[]> {
-    return this.#http.get<ResolvedNotification[]>(this.#API_URL, {
-      withCredentials: true,
-    });
-  }
 }

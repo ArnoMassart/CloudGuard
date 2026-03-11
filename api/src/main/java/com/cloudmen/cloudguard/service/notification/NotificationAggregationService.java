@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.notification;
 
-import com.cloudmen.cloudguard.domain.feedback.ResolvedNotification;
+import com.cloudmen.cloudguard.domain.model.feedback.ResolvedNotification;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.dto.devices.MobileDeviceOverviewResponse;
@@ -36,6 +36,11 @@ public class NotificationAggregationService {
             "MX", "MX Records",
             "DNSSEC", "DNSSEC",
             "CAA", "CAA Records"
+    );
+
+    private static final Set<String> NOTIFICATION_TYPES_WITH_DETAILS = Set.of(
+            "user-control", "group-external", "oauth-high-risk", "drive-orphan", "drive-external",
+            "device-lockscreen", "device-encryption", "device-os", "device-integrity"
     );
 
     private final GoogleDomainService domainService;
@@ -95,10 +100,11 @@ public class NotificationAggregationService {
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         String status = feedbackKeys.contains(n.source() + ":" + n.notificationType()) ? "in_behandeling" : "new";
         return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),
-                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), status);
+                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), status, n.supportsDetails());
     }
 
     private NotificationDto toResolvedDto(ResolvedNotification r) {
+        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(r.getNotificationType());
         return new NotificationDto(
                 r.getId().toString(),
                 r.getSeverity(),
@@ -109,7 +115,8 @@ public class NotificationAggregationService {
                 r.getSource(),
                 r.getSourceLabel(),
                 r.getSourceRoute(),
-                "resolved"
+                "resolved",
+                supportsDetails
         );
     }
 
@@ -284,8 +291,9 @@ public class NotificationAggregationService {
     private NotificationDto create(int id, String severity, String title, String description,
                                   List<String> recommendedActions, String notificationType,
                                   String source, String sourceLabel, String sourceRoute) {
+        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(notificationType);
         return new NotificationDto("n-" + id, severity, title, description, recommendedActions,
-                notificationType, source, sourceLabel, sourceRoute, null);
+                notificationType, source, sourceLabel, sourceRoute, null, supportsDetails);
     }
 
 }

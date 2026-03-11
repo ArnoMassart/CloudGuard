@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.domain.feedback.NotificationFeedbackRequest;
+import com.cloudmen.cloudguard.dto.notifications.NotificationFeedbackRequest;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +11,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/notifications/feedback")
 public class NotificationFeedbackController {
-    private NotificationFeedbackService notificationFeedbackService;
-    private JwtService jwtService;
+    private final NotificationFeedbackService notificationFeedbackService;
+    private final JwtService jwtService;
 
     public NotificationFeedbackController(NotificationFeedbackService notificationFeedbackService, JwtService jwtService) {
         this.notificationFeedbackService = notificationFeedbackService;

@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { ApiService } from './api-service';
 import { RouteService } from './route-service';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -21,16 +20,4 @@ export class NotificationFeedbackService {
         });
     }
 
-    hasFeedback(source: string, notificationType: string): Observable<boolean> {
-        return this.#http.get<boolean>(this.#API_URL, {
-            params: { source, notificationType },
-            withCredentials: true,
-        });
-    }
-
-    getFeedbackKeys(): Observable<string[]> {
-        return this.#http.get<string[]>(`${this.#API_URL}/keys`, {
-            withCredentials: true,
-        });
-    }
 }
