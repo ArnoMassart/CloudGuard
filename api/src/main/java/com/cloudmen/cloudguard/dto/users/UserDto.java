@@ -14,13 +14,15 @@ public class UserDto {
     private String email;
     private String firstName;
     private String lastName;
+    private String pictureUrl;
     private List<String> roles;
     private LocalDateTime createdAt;
 
-    public UserDto(String email, String firstName, String lastName, LocalDateTime createdAt) {
+    public UserDto(String email, String firstName, String lastName, String pictureUrl, LocalDateTime createdAt) {
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.pictureUrl = pictureUrl;
         this.createdAt = createdAt;
     }
 }
