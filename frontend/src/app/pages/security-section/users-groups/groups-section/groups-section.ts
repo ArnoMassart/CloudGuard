@@ -11,6 +11,8 @@ import {
 } from '../../../../services/group-service';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -29,7 +31,14 @@ interface GroupSummary {
 @Component({
   selector: 'app-groups-section',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SectionTopCard, FormsModule],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    SectionTopCard,
+    FormsModule,
+    PageWarnings,
+    PageWarningsItem,
+  ],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })

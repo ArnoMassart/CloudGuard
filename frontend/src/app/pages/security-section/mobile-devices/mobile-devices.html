@@ -17,65 +17,38 @@
         </div>
 
         @if (hasWarnings() && !isLoading()) {
-        <div class="bg-[#fefce8] border border-[#fff086]/50 rounded-lg p-4 transition-all duration-200">
-            <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
-                <div class="flex gap-3 items-center">
-                    <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-[#d69518]" />
-                    <span class="text-[#b7610a] font-medium text-[16px]">
-                        Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' : '' }}
-                    </span>
-                </div>
-
-                <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
-                    class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
-            </div>
-
-            @if (isExpanded()) {
-            <div class="flex flex-col gap-2 mt-3 ml-8">
-
+        <app-page-warnings [hasMultipleWarnings]="hasMultipleWarnings()" [isExpanded]="isExpanded()"
+            (toggle)="toggleExpanded()">
+            <div body class="flex flex-col gap-2">
                 @if (this.devicePageWarnings().lockScreenWarning) {
-                <div class="flex gap-2 items-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
-                    <span class="text-[13px] text-[#b7610a]">
-                        {{pageOverview()?.lockScreenCount}} {{pageOverview()?.lockScreenCount === 1 ? "apparaat" :
-                        "apparaten"}} zonder vergrendelscherm beveiliging
-                    </span>
-                </div>
+                <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+                    {{pageOverview()?.lockScreenCount}} {{pageOverview()?.lockScreenCount === 1 ? "apparaat" :
+                    "apparaten"}} zonder vergrendelscherm beveiliging
+                </app-page-warnings-item>
                 }
 
                 @if (this.devicePageWarnings().encryptionWarning) {
-                <div class="flex gap-2 items-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
-                    <span class="text-[13px] text-[#b7610a]">
-                        {{pageOverview()?.encryptionCount}} {{pageOverview()?.encryptionCount === 1 ? "apparaat" :
-                        "apparaten"}} zonder encryptie geactiveerd
-                    </span>
-                </div>
+                <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+                    {{pageOverview()?.encryptionCount}} {{pageOverview()?.encryptionCount === 1 ? "apparaat" :
+                    "apparaten"}} zonder encryptie geactiveerd
+                </app-page-warnings-item>
                 }
 
                 @if (this.devicePageWarnings().osVersionWarning) {
-                <div class="flex gap-2 items-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
-                    <span class="text-[13px] text-[#b7610a]">
-                        {{pageOverview()?.osVersionCount}} {{pageOverview()?.osVersionCount === 1 ? "apparaat" :
-                        "apparaten"}} met verouderde OS versie
-                    </span>
-                </div>
+                <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+                    {{pageOverview()?.osVersionCount}} {{pageOverview()?.osVersionCount === 1 ? "apparaat" :
+                    "apparaten"}} met verouderde OS versie
+                </app-page-warnings-item>
                 }
 
                 @if (this.devicePageWarnings().integrityWarning) {
-                <div class="flex gap-2 items-center">
-                    <div class="w-1 h-1 bg-[#b7610a] rounded-full shrink-0"></div>
-                    <span class="text-[13px] text-[#b7610a]">
-                        {{pageOverview()?.integrityCount}} {{pageOverview()?.integrityCount === 1 ? "apparaat" :
-                        "apparaten"}} met integriteits problemen (root/jailbreak)
-                    </span>
-                </div>
+                <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+                    {{pageOverview()?.integrityCount}} {{pageOverview()?.integrityCount === 1 ? "apparaat" :
+                    "apparaten"}} met integriteits problemen (root/jailbreak)
+                </app-page-warnings-item>
                 }
-
             </div>
-            }
-        </div>
+        </app-page-warnings>
         }
 
         <div class="flex w-full items-center justify-end gap-3">

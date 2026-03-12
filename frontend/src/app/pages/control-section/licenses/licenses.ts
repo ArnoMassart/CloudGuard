@@ -14,6 +14,8 @@ import { LicenseType } from '../../../models/licenses/LicenseType';
 import { InactiveUser } from '../../../models/licenses/InactiveUser';
 import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOverviewResponse';
 import { MfaStats } from '../../../models/licenses/MfaStats';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 @Component({
   selector: 'app-licenses',
@@ -25,6 +27,8 @@ import { MfaStats } from '../../../models/licenses/MfaStats';
     MatProgressSpinnerModule,
     SectionTopCard,
     BaseChartDirective,
+    PageWarnings,
+    PageWarningsItem,
   ],
   templateUrl: './licenses.html',
   styleUrl: './licenses.css',

@@ -10,6 +10,8 @@ import { SharedDriveOverviewResponse } from '../../../models/drives/SharedDriveO
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 // ==========================================
 // CONSTANTS
@@ -18,7 +20,14 @@ const ITEMS_PER_PAGE = 2;
 
 @Component({
   selector: 'app-shared-drives',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule],
+  imports: [
+    PageHeader,
+    SectionTopCard,
+    LucideAngularModule,
+    FormsModule,
+    PageWarnings,
+    PageWarningsItem,
+  ],
   templateUrl: './shared-drives.html',
   styleUrl: './shared-drives.css',
 })

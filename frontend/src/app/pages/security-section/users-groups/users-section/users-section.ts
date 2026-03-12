@@ -10,6 +10,8 @@ import { UserOverviewResponse } from '../../../../models/UserOverviewResponse';
 import { UsersPageWarnings } from '../../../../models/UsersPageWarnings';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 // ==========================================
 // CONSTANTS
@@ -24,6 +26,8 @@ const ITEMS_PER_PAGE = 4;
     FormsModule,
     CommonModule,
     MatProgressSpinnerModule,
+    PageWarnings,
+    PageWarningsItem,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',

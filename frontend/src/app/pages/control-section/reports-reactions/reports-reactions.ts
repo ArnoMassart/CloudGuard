@@ -11,10 +11,12 @@ import {
 } from '../../../services/notification-service';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
 import { ResolvedNotificationService } from '../../../services/resolved-notification-service';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 @Component({
   selector: 'app-reports-reactions',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule, PageWarnings, PageWarningsItem],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
 })
@@ -62,6 +64,12 @@ export class ReportsReactions implements OnInit {
   readonly inBehandelingCount = computed(
     () => this.notifications().filter((n) => n.status === 'in_behandeling').length
   );
+
+  readonly isWarningExpanded = signal(true);
+
+  toggleExpanded() {
+    this.isWarningExpanded.update((v) => !v);
+  }
 
   ngOnInit() {
     this.#loadNotifications();

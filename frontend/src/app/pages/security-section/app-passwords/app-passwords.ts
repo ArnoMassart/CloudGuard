@@ -11,12 +11,21 @@ import {
 } from '../../../services/app-password-service';
 import { LucideAngularModule } from 'lucide-angular';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-app-passwords',
-  imports: [SectionTopCard, CommonModule, PageHeader, LucideAngularModule],
+  imports: [
+    SectionTopCard,
+    CommonModule,
+    PageHeader,
+    LucideAngularModule,
+    PageWarnings,
+    PageWarningsItem,
+  ],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
 })
@@ -41,6 +50,7 @@ export class AppPasswords implements OnInit {
     );
   });
   readonly #searchSubject = new Subject<string>();
+  readonly isExpanded = signal(true);
 
   #tokenHistory: (string | null)[] = [null];
 
@@ -61,6 +71,10 @@ export class AppPasswords implements OnInit {
     this.currentPage.set(1);
     this.#tokenHistory = [null];
     this.#loadAppPasswords(null);
+  }
+
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
   }
 
   nextPage() {

@@ -10,10 +10,20 @@ import { SecurityGauge } from '../../components/security-gauge/security-gauge';
 import { SecurityComponent } from '../../components/security-component/security-component';
 import { DashboardPageResponse } from '../../models/dashboard/DashboardPageResponse';
 import { DashboardOverviewResponse } from '../../models/dashboard/DashboardOverviewResponse';
+import { PageWarnings } from '../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 @Component({
   selector: 'app-home',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, SecurityGauge, SecurityComponent],
+  imports: [
+    PageHeader,
+    SectionTopCard,
+    LucideAngularModule,
+    SecurityGauge,
+    SecurityComponent,
+    PageWarnings,
+    PageWarningsItem,
+  ],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -54,9 +64,6 @@ export class Home implements OnInit {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
-  navigateToNotifications() {
-    this.#router.navigate(['/reports-reactions']);
-  }
 
   routeToPage(link: string) {
     this.#router.navigate([link]);

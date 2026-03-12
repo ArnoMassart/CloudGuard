@@ -1,0 +1,9 @@
+<div class="flex gap-2 items-center">
+    @if (showBullet) {
+    <div class="w-1 h-1 rounded-2xl" [class.bg-orange-800]="!isCritical" [class.bg-red-800]="isCritical">
+    </div>
+    }
+    <span class="text-sm" [class.text-red-700]="isCritical"
+        [class.text-orange-700]="!isCritical"><ng-content></ng-content>
+    </span>
+</div>
