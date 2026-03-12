@@ -5,10 +5,10 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LucideAngularModule } from 'lucide-angular';
 import {
-  GroupOrgDetail,
   GroupOverviewResponse,
   GroupService,
 } from '../../../../services/group-service';
+import { GroupOrgDetail } from '../../../../models/groups/GroupOrgDetail';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
 

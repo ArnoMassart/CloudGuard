@@ -27,24 +27,10 @@
                         class="focus:outline-none w-full" placeholder="Zoek verbonden apps op naam..." />
                 </div>
 
-                <div class="flex w-full items-center justify-end gap-3">
-                    <!-- Filters label with icon -->
-                    <div class="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                        <span>Filters:</span>
-                        <i-lucide [img]="Icons.Funnel" size="16" class="text-[#99a1af]/80"></i-lucide>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button (click)="setRiskFilter('all')" [class]="getRiskButtonClass('all')">
-                            Alle apps ({{allFilteredApps()}})
-                        </button>
-                        <button (click)="setRiskFilter('high')" [class]="getRiskButtonClass('high')">
-                            Hoog risico ({{allHighRiskApps()}})
-                        </button>
-                        <button (click)="setRiskFilter('not-high')" [class]="getRiskButtonClass('not-high')">
-                            Geen risico ({{allNotHighRiskApps()}})
-                        </button>
-                    </div>
+                <div class="flex w-full items-center justify-end">
+                    <app-filter-chips [options]="filterOptions()" [selectedValue]="riskFilter()"
+                        label="Filters:" variant="pilled" [showRefresh]="false"
+                        (filterChange)="setRiskFilter($event)" />
                 </div>
             </div>
 

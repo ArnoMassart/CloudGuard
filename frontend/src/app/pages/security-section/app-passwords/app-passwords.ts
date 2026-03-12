@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {
-  AppPassword,
-  AppPasswordOverviewResponse,
-  AppPasswordsService,
-  UserAppPasswords,
-} from '../../../services/app-password-service';
+import {AppPasswordsService} from '../../../services/app-password-service';
+import { AppPassword } from '../../../models/app-password/AppPassword';
+import { AppPasswordOverviewResponse } from '../../../models/app-password/AppPasswordOverviewResponse';
+import { UserAppPasswords } from '../../../models/app-password/UserAppPasswords';
+
 import { LucideAngularModule } from 'lucide-angular';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 

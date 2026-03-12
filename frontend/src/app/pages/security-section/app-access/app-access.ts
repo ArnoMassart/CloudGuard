@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
@@ -6,10 +6,12 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { FilterChips } from '../../../components/filter-chips/filter-chips';
 import { OAuthService } from '../../../services/o-auth-service';
 import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
 import { Risk } from '../../../models/o-auth/Risk';
+import { FilterOption } from '../../../models/FilterOption';
 
 // ==========================================
 // CONSTANTS
@@ -18,7 +20,7 @@ const ITEMS_PER_PAGE = 3;
 
 @Component({
   selector: 'app-app-access',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule],
+  imports: [PageHeader, SectionTopCard, FilterChips, LucideAngularModule, FormsModule],
   templateUrl: './app-access.html',
   styleUrl: './app-access.css',
 })
@@ -52,6 +54,30 @@ export class AppAccess implements OnInit {
   readonly allFilteredApps = signal(0);
   readonly allHighRiskApps = signal(0);
   readonly allNotHighRiskApps = signal(0);
+
+  readonly filterOptions = computed<FilterOption[]>(() => [
+    {
+      value: 'all',
+      label: 'Alle apps',
+      count: this.allFilteredApps(),
+      activeClass: 'bg-[#3ABFAD] text-white',
+      inactiveClass: '',
+    },
+    {
+      value: 'high',
+      label: 'Hoog risico',
+      count: this.allHighRiskApps(),
+      activeClass: 'bg-red-600 text-white',
+      inactiveClass: '',
+    },
+    {
+      value: 'not-high',
+      label: 'Geen risico',
+      count: this.allNotHighRiskApps(),
+      activeClass: 'bg-emerald-600 text-white',
+      inactiveClass: '',
+    },
+  ]);
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -134,25 +160,9 @@ export class AppAccess implements OnInit {
     });
   }
 
-  setRiskFilter(risk: Risk): void {
-    this.riskFilter.set(risk);
+  setRiskFilter(risk: string): void {
+    this.riskFilter.set(risk as Risk);
     this.#resetData();
-  }
-
-  getRiskButtonClass(risk: Risk): string {
-    let classNames = 'px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm';
-
-    if (risk === 'all' && this.riskFilter() === 'all') {
-      classNames += ' bg-[#3ABFAD] text-white';
-    } else if (risk === 'high' && this.riskFilter() === 'high') {
-      classNames += ' bg-red-600 text-white';
-    } else if (risk === 'not-high' && this.riskFilter() === 'not-high') {
-      classNames += ' bg-emerald-600 text-white';
-    } else {
-      classNames += ' bg-white border border-gray-300 text-gray-700 hover:bg-gray-50';
-    }
-
-    return classNames;
   }
 
   // ==========================================
