@@ -2,7 +2,6 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.groups.GroupPageResponse;
-import com.cloudmen.cloudguard.dto.groups.GroupSettingsDto;
 import com.cloudmen.cloudguard.service.GoogleGroupsService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;

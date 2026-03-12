@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +12,6 @@ import { Chart, ChartConfiguration, ChartData, ChartType, registerables } from '
 import { LicenseService } from '../../../services/license-service';
 import { LicenseType } from '../../../models/licenses/LicenseType';
 import { InactiveUser } from '../../../models/licenses/InactiveUser';
-import { single, window } from 'rxjs';
 import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOverviewResponse';
 import { MfaStats } from '../../../models/licenses/MfaStats';
 
@@ -30,7 +29,7 @@ import { MfaStats } from '../../../models/licenses/MfaStats';
   templateUrl: './licenses.html',
   styleUrl: './licenses.css',
 })
-export class Licenses {
+export class Licenses implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -64,8 +63,7 @@ export class Licenses {
 
   readonly hasWarnings = signal(false);
 
-  // Custom Colors Matching the Image
-  private colors = {
+  readonly #colors = {
     toegewezenBlue: '#3b82f6', // Tailwind blue-500
     beschikbaarGrey: '#e5e7eb', // Tailwind gray-200
     enterpriseGreen: '#10b981', // Tailwind emerald-500
@@ -81,8 +79,8 @@ export class Licenses {
       {
         data: [],
         label: 'Toegewezen',
-        backgroundColor: this.colors.toegewezenBlue,
-        borderColor: this.colors.toegewezenBlue,
+        backgroundColor: this.#colors.toegewezenBlue,
+        borderColor: this.#colors.toegewezenBlue,
         borderWidth: 0,
         borderRadius: 4, // Adds rounded corners to bars
       },

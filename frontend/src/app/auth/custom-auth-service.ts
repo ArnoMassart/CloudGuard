@@ -47,7 +47,7 @@ export class CustomAuthService {
       )
       .subscribe((res) => {
         // If res exists and status is 200-299, the user is authenticated
-        const isAuthenticated = res !== null && res.ok;
+        const isAuthenticated = res?.ok ?? false;
 
         this.#loggedInStatus.next(isAuthenticated);
         this.#initializedStatus.next(true);
@@ -59,7 +59,7 @@ export class CustomAuthService {
             this.#router.navigate(['/']);
           }
         } else {
-          const onCallbackPage = window.location.pathname.includes('/callback');
+          const onCallbackPage = globalThis.location.pathname.includes('/callback');
           const redirectPending = sessionStorage.getItem('auth0_redirect_pending') === '1';
 
           if (!onCallbackPage && !redirectPending) {
@@ -97,7 +97,7 @@ export class CustomAuthService {
 
     this.#auth0.logout({
       logoutParams: {
-        returnTo: window.location.origin + '/login',
+        returnTo: globalThis.location.origin + '/login',
       },
     });
   }
@@ -108,7 +108,7 @@ export class CustomAuthService {
     localStorage.clear();
     sessionStorage.removeItem('auth0_redirect_pending');
     sessionStorage.removeItem('user-group-section');
-    this.#tlService.clearCache();
+    // this.#tlService.clearCache();
   }
 
   get isLoggedIn$(): Observable<boolean> {

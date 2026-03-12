@@ -75,7 +75,7 @@ export class Navbar {
     });
 
     ref.afterClosed().subscribe((result) => {
-      if (result == true) {
+      if (result) {
         this.onLogout();
       }
     });

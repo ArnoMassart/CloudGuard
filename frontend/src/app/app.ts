@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Navbar } from './navbar/navbar';
 import { CustomAuthService } from './auth/custom-auth-service';
@@ -12,7 +12,7 @@ import { SplashScreen } from './components/splash-screen/splash-screen';
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
+export class App implements OnInit {
   protected readonly title = signal('CloudGuard');
   readonly #router = inject(Router);
   readonly #auth0 = inject(AuthService);
@@ -23,7 +23,7 @@ export class App {
 
   hasSeenSplash = signal(
     sessionStorage.getItem('has_seen_splash') === 'true' ||
-      window.location.pathname.includes('/callback')
+      globalThis.location.pathname.includes('/callback')
   );
 
   onSplashEnded() {

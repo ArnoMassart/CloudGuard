@@ -1,0 +1,6 @@
+projectKey=cloudguard-frontend
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=cloudguard-frontend
+ceTaskId=81bb142c-7761-445b-b192-79c93fc26ee3
+ceTaskUrl=http://localhost:9000/api/ce/task?id=81bb142c-7761-445b-b192-79c93fc26ee3

@@ -62,8 +62,8 @@ export class SharedDrives implements OnInit {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
+  readonly #searchSubject = new Subject<string>();
   #tokenHistory: (string | null)[] = [null];
-  #searchSubject = new Subject<string>();
 
   // ==========================================
   // LIFECYCLE HOOKS
@@ -107,7 +107,7 @@ export class SharedDrives implements OnInit {
   prevPage() {
     if (this.currentPage() > 1) {
       this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      const prevToken = this.#tokenHistory.at(-1);
       this.currentPage.update((p) => p - 1);
       this.#loadDrives(prevToken);
     }

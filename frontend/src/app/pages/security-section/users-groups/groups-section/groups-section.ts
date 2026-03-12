@@ -8,7 +8,6 @@ import {
   GroupOrgDetail,
   GroupOverviewResponse,
   GroupService,
-  GroupSettingsDto,
 } from '../../../../services/group-service';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
@@ -107,7 +106,7 @@ export class GroupsSection implements OnInit {
   prevPage(): void {
     if (this.currentPage() > 1) {
       this.tokenHistory.pop();
-      const prevToken = this.tokenHistory[this.tokenHistory.length - 1];
+      const prevToken = this.tokenHistory.at(-1) ?? null;
       this.currentPage.update((p) => p - 1);
       this.loadGroups(prevToken);
     }

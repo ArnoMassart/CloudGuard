@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -26,12 +26,10 @@ public class CacheWarmupController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-            String adminEmail = jwtService.validateInternalToken(token);
+        String adminEmail = jwtService.validateInternalToken(token);
 
-            // Start het achtergrondproces!
-            warmupService.warmupAllCachesAsync(adminEmail);
+        warmupService.warmupAllCachesAsync(adminEmail);
 
-            // 202 ACCEPTED betekent: "Ik heb je verzoek ontvangen en ga er op de achtergrond mee aan de slag"
-            return ResponseEntity.accepted().build();
+        return ResponseEntity.accepted().build();
     }
 }

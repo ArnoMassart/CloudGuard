@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
+import { Component, EventEmitter, inject, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
@@ -11,10 +11,10 @@ import { AppIcons } from '../../shared/AppIcons';
   templateUrl: './splash-screen.html',
   styleUrl: './splash-screen.css',
 })
-export class SplashScreen {
+export class SplashScreen implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
 
-  #authService: CustomAuthService = inject(CustomAuthService);
+  readonly #authService: CustomAuthService = inject(CustomAuthService);
 
   @Output() animationFinished = new EventEmitter<void>();
 

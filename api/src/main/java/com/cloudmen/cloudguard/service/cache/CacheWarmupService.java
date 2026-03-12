@@ -41,54 +41,39 @@ public class CacheWarmupService {
         this.domainCacheService = domainCacheService;
     }
 
-    public void warmupAllCachesAsync(String loggedInEmail) {
-        CompletableFuture<Void> usersTask = CompletableFuture.runAsync(() -> {
-            try { usersCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Users warmup failed", e); }
-        });
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
+    }
 
-        CompletableFuture<Void> groupsTask = CompletableFuture.runAsync(() -> {
-            try { groupsCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Groups warmup failed", e); }
-        });
-
-        CompletableFuture<Void> orgUnitsTask = CompletableFuture.runAsync(() -> {
-            try { orgUnitCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Org units warmup failed", e); }
-        });
-
-        CompletableFuture<Void> drivesTask = CompletableFuture.runAsync(() -> {
-            try { sharedDriveCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Drives warmup failed", e); }
-        });
-
-        CompletableFuture<Void> devicesTask = CompletableFuture.runAsync(() -> {
-            try { mobileDeviceCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Devices warmup failed", e); }
-        });
-
-        CompletableFuture<Void> appPasswordsTask = CompletableFuture.runAsync(() -> {
-            try { appPasswordsService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("App passwords warmup failed", e); }
-        });
-
-        CompletableFuture<Void> tsvTask = CompletableFuture.runAsync(() -> {
-            try { tsvPolicyProvider.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("TSV Policy warmup failed", e); }
-        });
-
-        CompletableFuture<Void> policyApiTask = CompletableFuture.runAsync(() -> {
+    private CompletableFuture<Void> runSafeAsync(ThrowingRunnable task, String taskName) {
+        return CompletableFuture.runAsync(() -> {
             try {
-                policyApiCacheService.getAllPolicies(loggedInEmail);
-                policyApiCacheService.getOuIdToPathMap(loggedInEmail);
-            } catch (Exception e) { log.warn("Policy API warmup failed", e); }
+                task.run();
+            } catch (Exception e) {
+                log.warn("{} warmup failed",taskName, e);
+            }
         });
+    }
 
-        CompletableFuture<Void> licensesTask = CompletableFuture.runAsync(() -> {
-            try { licenseCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Licenses warmup failed", e); }
-        });
+    public void warmupAllCachesAsync(String loggedInEmail) {
+        CompletableFuture<?>[] tasks = new CompletableFuture<?>[] {
+          runSafeAsync(() -> usersCacheService.forceRefreshCache(loggedInEmail), "Users"),
+          runSafeAsync(() -> groupsCacheService.forceRefreshCache(loggedInEmail), "Groups"),
+          runSafeAsync(() -> orgUnitCacheService.forceRefreshCache(loggedInEmail), "Org units"),
+          runSafeAsync(() -> sharedDriveCacheService.forceRefreshCache(loggedInEmail), "Drives"),
+          runSafeAsync(() -> mobileDeviceCacheService.forceRefreshCache(loggedInEmail), "Devices"),
+          runSafeAsync(() -> appPasswordsService.forceRefreshCache(loggedInEmail), "App passwords"),
+          runSafeAsync(() -> tsvPolicyProvider.forceRefreshCache(loggedInEmail), "TSV Policy"),
+          runSafeAsync(() -> {
+              policyApiCacheService.getAllPolicies(loggedInEmail);
+              policyApiCacheService.getOuIdToPathMap(loggedInEmail);
+          }, "Policy API"),
+                runSafeAsync(() -> licenseCacheService.forceRefreshCache(loggedInEmail), "Licenses"),
+                runSafeAsync(() -> oAuthCacheService.forceRefreshCache(loggedInEmail), "OAuth"),
+                runSafeAsync(() -> domainCacheService.forceRefreshCache(loggedInEmail), "Domain"),
+        };
 
-        CompletableFuture<Void> oAuthTask = CompletableFuture.runAsync(() -> {
-            try { oAuthCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("OAuth warmup failed", e); }
-        });
-
-        CompletableFuture<Void> domainTask = CompletableFuture.runAsync(() -> {
-            try { domainCacheService.forceRefreshCache(loggedInEmail); } catch (Exception e) { log.warn("Domain warmup failed", e); }
-        });
-
-        CompletableFuture.allOf(usersTask, groupsTask, orgUnitsTask, drivesTask, devicesTask, appPasswordsTask, tsvTask, policyApiTask, licensesTask, oAuthTask, domainTask).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
+        CompletableFuture.allOf(tasks).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
     }
 }

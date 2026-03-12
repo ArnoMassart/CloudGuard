@@ -1,8 +1,4 @@
-import {
-  ApplicationConfig,
-  provideBrowserGlobalErrorListeners,
-  provideZoneChangeDetection,
-} from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAuth0 } from '@auth0/auth0-angular';
 
@@ -19,11 +15,11 @@ export const appConfig: ApplicationConfig = {
       domain: 'dev-x2l40e775g2q2ot3.eu.auth0.com',
       clientId: '6RChZH73eEvLLEhwrk8DjTgDETGYTe4u',
       authorizationParams: {
-        redirect_uri: window.location.origin + '/callback',
+        redirect_uri: globalThis.location.origin + '/callback',
         audience: 'https://cloudguard-api',
       },
       cacheLocation: 'memory',
-      skipRedirectCallback: window.location.pathname.includes('/callback'),
+      skipRedirectCallback: globalThis.location.pathname.includes('/callback'),
     }),
   ],
 };

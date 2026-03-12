@@ -1,7 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { RouteService } from './route-service';
-import { UserOrgDetail } from '../models/UserOrgDetails';
 import { Observable } from 'rxjs';
 import { UserPageResponse } from '../models/UserPageResponse';
 import { UserOverviewResponse } from '../models/UserOverviewResponse';
@@ -23,7 +22,11 @@ export class UserService {
   }
 
   getRole(user: { roles: string[] }): string {
-    return user.roles ? (user.roles.length > 0 ? user.roles[0] : 'Admin') : '';
+    const roles = user.roles;
+
+    if (!roles) return '';
+
+    return roles.at(0) ?? 'Admin';
   }
 
   getOrgUsers(size: number, pageToken?: string, query?: string): Observable<UserPageResponse> {

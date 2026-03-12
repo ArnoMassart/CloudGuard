@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { TeamleaderService } from '../services/teamleader-service';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 export const accessGuard: CanActivateFn = (route, state): Observable<boolean | UrlTree> => {
   const tlService = inject(TeamleaderService);

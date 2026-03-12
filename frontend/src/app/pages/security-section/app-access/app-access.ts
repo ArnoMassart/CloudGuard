@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 3;
   templateUrl: './app-access.html',
   styleUrl: './app-access.css',
 })
-export class AppAccess {
+export class AppAccess implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -35,7 +35,7 @@ export class AppAccess {
   // ==========================================
   readonly isExpanded = signal(true);
 
-  apps = signal<AggregatedAppDto[]>([]);
+  readonly apps = signal<AggregatedAppDto[]>([]);
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
 
@@ -57,7 +57,7 @@ export class AppAccess {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
-  #searchSubject = new Subject<string>();
+  readonly #searchSubject = new Subject<string>();
 
   // ==========================================
   // LIFECYCLE HOOKS
@@ -99,7 +99,7 @@ export class AppAccess {
   prevPage(): void {
     if (this.currentPage() > 1) {
       this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory[this.#tokenHistory.length - 1];
+      const prevToken = this.#tokenHistory.at(-1);
       this.currentPage.update((p) => p - 1);
       this.#loadApps(prevToken);
     }

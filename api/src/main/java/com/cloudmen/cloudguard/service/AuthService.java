@@ -97,7 +97,7 @@ public class AuthService {
                 .httpOnly(true)     // Crucial: JS cannot read this
                 .secure(true)       // HTTPS only
                 .path("/")          // Available for the whole app
-                .maxAge(24 * 60 * 60) // 1 Day (in seconds)
+                .maxAge(24 * 60 * 60L) // 1 Day (in seconds)
                 .sameSite("Strict") // CSRF Protection
                 .build();
     }
