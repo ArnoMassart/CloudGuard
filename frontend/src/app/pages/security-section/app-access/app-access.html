@@ -20,14 +20,11 @@
                     [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
             </div>
 
-            <div class="flex items-center justify-center">
-                <div class="p-3 border-2 border-muted/50 rounded-md flex gap-5 w-full items-center bg-white">
-                    <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-                    <input type="text" #searchInput (input)="onKeyup(searchInput.value)"
-                        class="focus:outline-none w-full" placeholder="Zoek verbonden apps op naam..." />
-                </div>
+            <div class="flex flex-wrap items-center gap-10">
+                <app-search-bar placeholder="Zoek verbonden apps op naam..."
+                    class="flex-1 min-w-[200px]" (searchChange)="onSearch($event)" />
 
-                <div class="flex w-full items-center justify-end">
+                <div class="flex items-center justify-end">
                     <app-filter-chips [options]="filterOptions()" [selectedValue]="riskFilter()"
                         label="Filters:" variant="pilled" [showRefresh]="false"
                         (filterChange)="setRiskFilter($event)" />

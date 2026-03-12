@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { FilterChips } from '../../../components/filter-chips/filter-chips';
+import { SearchBar } from '../../../components/search-bar/search-bar';
 import { OAuthService } from '../../../services/o-auth-service';
 import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
@@ -20,7 +20,7 @@ const ITEMS_PER_PAGE = 3;
 
 @Component({
   selector: 'app-app-access',
-  imports: [PageHeader, SectionTopCard, FilterChips, LucideAngularModule, FormsModule],
+  imports: [PageHeader, SectionTopCard, FilterChips, SearchBar, LucideAngularModule, FormsModule],
   templateUrl: './app-access.html',
   styleUrl: './app-access.css',
 })
@@ -83,16 +83,11 @@ export class AppAccess implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
-  readonly #searchSubject = new Subject<string>();
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
-      this.onSearch(value);
-    });
-
     this.#loadPageOverview();
     this.#loadApps();
   }
@@ -102,10 +97,6 @@ export class AppAccess implements OnInit {
   // ==========================================
   toggleExpanded(): void {
     this.isExpanded.update((v) => !v);
-  }
-
-  onKeyup(value: string): void {
-    this.#searchSubject.next(value);
   }
 
   onSearch(value: string): void {
