@@ -1,25 +1,39 @@
 <div class="profile-popup">
   <header class="profile-header">
-    <h3>Profiel</h3>
-    <button type="button" (click)="close()" aria-label="Sluiten">×</button>
+    <div class="profile-header-content">
+      <h3 class="profile-title">Profiel</h3>
+      <p class="profile-description">Beheer uw profielinformatie en account instellingen.</p>
+    </div>
+    <button type="button" class="profile-close" (click)="close()" aria-label="Sluiten">×</button>
   </header>
+
   @if (currentUser(); as user) {
   <div class="profile-body">
     <div class="profile-avatar">
       <span>{{ userService.getInitials(user) }}</span>
     </div>
     <p class="profile-name">{{ user.firstName }} {{ user.lastName }}</p>
-    @if (user.email) {
-    <p class="profile-email">{{ user.email }}</p>
-    }
     <p class="profile-role">{{ userService.getRole(user) }}</p>
-    <button type="button" class="profile-link"><a href="https://myaccount.google.com">Mijn Google account
-        beheren</a></button>
-    <button type="button" class="profile-logout" (click)="logout()">Uitloggen</button>
+
+    <div class="profile-email-section">
+      <span class="profile-email-label">E-MAILADRES</span>
+      <span class="profile-email-value">{{ user.email }}</span>
+    </div>
+
+    <div class="profile-actions">
+      <a href="https://myaccount.google.com" target="_blank" rel="noopener noreferrer" class="profile-link">
+        <i-lucide [img]="Icons.ExternalLink" size="18" />
+        Mijn Google Account beheren
+      </a>
+      <button type="button" class="profile-logout" (click)="logout()">
+        <i-lucide [img]="Icons.LogOut" size="18" />
+        Uitloggen
+      </button>
+    </div>
   </div>
   } @else {
   <div class="profile-body">
-    <p class="profile-role">Bezig met laden...</p>
+    <p class="profile-loading">Bezig met laden...</p>
   </div>
   }
 </div>
