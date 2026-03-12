@@ -67,14 +67,14 @@ export class AppAccess implements OnInit {
       value: 'high',
       label: 'Hoog risico',
       count: this.allHighRiskApps(),
-      activeClass: 'bg-red-600 text-white',
+      activeClass: 'bg-red-100 text-red-800',
       inactiveClass: '',
     },
     {
       value: 'not-high',
       label: 'Geen risico',
       count: this.allNotHighRiskApps(),
-      activeClass: 'bg-emerald-600 text-white',
+      activeClass: 'bg-emerald-100 text-emerald-800',
       inactiveClass: '',
     },
   ]);
