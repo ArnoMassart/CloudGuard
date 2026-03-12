@@ -1,14 +1,10 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../shared/AppIcons';
-import {
-  NotificationService,
-  Notification,
-  NotificationSeverity,
-} from '../../../services/notification-service';
+import {NotificationService} from '../../../services/notification-service';
+import { Notification, NotificationSeverity } from '../../../models/notification/Notification';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
 import { ResolvedNotificationService } from '../../../services/resolved-notification-service';
 

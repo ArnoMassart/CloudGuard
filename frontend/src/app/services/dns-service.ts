@@ -1,21 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { RouteService } from './route-service';
 import { HttpClient } from '@angular/common/http';
-
-export interface DnsRecord {
-  type: string;
-  name: string;
-  values: string[];
-  status: string;
-  importance?: string;
-  message?: string;
-}
-
-export interface DnsRecordResponse {
-  domain: string;
-  rows: DnsRecord[];
-  securityScore: number;
-}
+import { DnsRecordResponse } from '../models/dns/DnsRecordResponse';
 
 @Injectable({
   providedIn: 'root',

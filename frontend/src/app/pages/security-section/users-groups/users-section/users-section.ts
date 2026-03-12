@@ -2,12 +2,12 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UserOrgDetail } from '../../../../models/UserOrgDetails';
+import { UserOrgDetail } from '../../../../models/users/UserOrgDetails';
 import { UserService } from '../../../../services/user-service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { UserOverviewResponse } from '../../../../models/UserOverviewResponse';
-import { UsersPageWarnings } from '../../../../models/UsersPageWarnings';
+import { UserOverviewResponse } from '../../../../models/users/UserOverviewResponse';
+import { UsersPageWarnings } from '../../../../models/users/UsersPageWarnings';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
 

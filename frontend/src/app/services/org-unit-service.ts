@@ -3,31 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { RouteService } from './route-service';
 import { OrgUnitNode } from '../pages/security-section/organizational-units/organizational-units';
-
-export interface OrgUnitNodeDto {
-  id: string;
-  name: string;
-  orgUnitPath?: string;
-  userCount: number;
-  children?: OrgUnitNodeDto[];
-  root?: boolean;
-  isRoot?: boolean;
-}
-
-export interface OrgUnitPolicyDto {
-    key: string;
-    title: string;
-    description: string;
-    status: string;
-    statusClass: string;
-    baseExplanation?: string;
-    inheritanceExplanation?: string;
-    inherited: boolean;
-    source: string;
-    settingsLinkText?: string;
-    adminLink?: string;
-    details?: string;
-}
+import { OrgUnitPolicyDto } from '../models/org-unit/OrgUnitPolicyDto';
 
 @Injectable({
   providedIn: 'root',
