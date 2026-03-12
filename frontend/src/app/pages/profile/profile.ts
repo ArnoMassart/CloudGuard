@@ -9,7 +9,6 @@ import { AppIcons } from '../../shared/AppIcons';
   selector: 'app-profile',
   imports: [CommonModule, LucideAngularModule],
   templateUrl: './profile.html',
-  styleUrl: './profile.css',
 })
 export class Profile {
   readonly Icons = AppIcons;
