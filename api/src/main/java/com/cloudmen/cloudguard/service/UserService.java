@@ -20,6 +20,7 @@ public class UserService {
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
+                user.getPictureUrl(),
                 user.getCreatedAt()
         );
     }

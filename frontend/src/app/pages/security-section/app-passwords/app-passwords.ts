@@ -3,20 +3,19 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {
-  AppPassword,
-  AppPasswordOverviewResponse,
-  AppPasswordsService,
-  UserAppPasswords,
-} from '../../../services/app-password-service';
+import {AppPasswordsService} from '../../../services/app-password-service';
+import { AppPassword } from '../../../models/app-password/AppPassword';
+import { AppPasswordOverviewResponse } from '../../../models/app-password/AppPasswordOverviewResponse';
+import { UserAppPasswords } from '../../../models/app-password/UserAppPasswords';
+
 import { LucideAngularModule } from 'lucide-angular';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { SearchBar } from '../../../components/search-bar/search-bar';
 
 const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-app-passwords',
-  imports: [SectionTopCard, CommonModule, PageHeader, LucideAngularModule],
+  imports: [SectionTopCard, CommonModule, PageHeader, SearchBar, LucideAngularModule],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
 })
@@ -40,20 +39,12 @@ export class AppPasswords implements OnInit {
       (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
     );
   });
-  readonly #searchSubject = new Subject<string>();
 
   #tokenHistory: (string | null)[] = [null];
 
   ngOnInit(): void {
-    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
-      this.onSearch(value);
-    });
     this.#loadOverview();
     this.#loadAppPasswords(null);
-  }
-
-  onKeyup(value: string) {
-    this.#searchSubject.next(value);
   }
 
   onSearch(value: string) {

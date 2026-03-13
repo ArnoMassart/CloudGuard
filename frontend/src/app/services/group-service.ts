@@ -2,18 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { RouteService } from './route-service';
 import { Observable } from 'rxjs';
-
-export interface GroupOrgDetail {
-  name: string;
-  adminId: string;
-  risk: string;
-  tags: string[];
-  totalMembers: number;
-  externalMembers: number;
-  externalAllowed: boolean;
-  whoCanJoin: string;
-  whoCanView: string;
-}
+import { GroupOrgDetail } from '../models/groups/GroupOrgDetail';
 
 @Injectable({
   providedIn: 'root',

@@ -2,9 +2,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { RouteService } from './route-service';
 import { Observable } from 'rxjs';
-import { UserPageResponse } from '../models/UserPageResponse';
-import { UserOverviewResponse } from '../models/UserOverviewResponse';
-import { UsersWithoutTwoFactorResponse } from '../models/UsersWithoutTwoFactorResponse';
+import { UserPageResponse } from '../models/users/UserPageResponse';
+import { UserOverviewResponse } from '../models/users/UserOverviewResponse';
+import { UsersWithoutTwoFactorResponse } from '../models/users/UsersWithoutTwoFactorResponse';
 
 @Injectable({
   providedIn: 'root',
