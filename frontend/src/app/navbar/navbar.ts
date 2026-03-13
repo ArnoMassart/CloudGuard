@@ -33,7 +33,7 @@ export class Navbar {
     { Icon: this.Icons.Users, Label: 'Gebruikers & Groepen', Route: '/users-groups' },
     { Icon: this.Icons.Building2, Label: 'Organisatie-eenheden', Route: '/organizational-units' },
     { Icon: this.Icons.FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
-    { Icon: this.Icons.SmartPhone, Label: 'Mobiele Apparaten', Route: '/mobile-devices' },
+    { Icon: this.Icons.SmartPhone, Label: 'Apparaten', Route: '/devices' },
     { Icon: this.Icons.Key, Label: 'App Toegang', Route: '/app-access' },
     { Icon: this.Icons.Lock, Label: 'App-wachtwoorden', Route: '/app-passwords' },
     { Icon: this.Icons.Globe, Label: 'Domein & DNS', Route: '/domain-dns' },

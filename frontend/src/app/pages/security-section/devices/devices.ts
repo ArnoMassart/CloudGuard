@@ -19,7 +19,7 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 const ITEMS_PER_PAGE = 4;
 
 @Component({
-  selector: 'app-mobile-devices',
+  selector: 'app-devices',
   imports: [
     PageHeader,
     LucideAngularModule,
@@ -28,10 +28,10 @@ const ITEMS_PER_PAGE = 4;
     MatProgressSpinnerModule,
     SectionTopCard,
   ],
-  templateUrl: './mobile-devices.html',
-  styleUrl: './mobile-devices.css',
+  templateUrl: './devices.html',
+  styleUrl: './devices.css',
 })
-export class MobileDevices implements OnInit {
+export class Devices implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -166,7 +166,7 @@ export class MobileDevices implements OnInit {
         token || undefined,
         this.selectedStatus(),
         this.selectedDeviceType(),
-        ITEMS_PER_PAGE
+        ITEMS_PER_PAGE,
       )
       .subscribe({
         next: (res) => {
