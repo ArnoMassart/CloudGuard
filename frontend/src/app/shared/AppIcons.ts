@@ -40,6 +40,7 @@ import {
   UsersRound,
   UserX,
   ServerCrash,
+  X,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -84,4 +85,5 @@ export class AppIcons {
   static readonly Users = Users;
   static readonly UsersRound = UsersRound;
   static readonly UserX = UserX;
+  static readonly X = X;
 }

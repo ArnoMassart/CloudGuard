@@ -2,14 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
-import {
-  GroupOverviewResponse,
-  GroupService,
-} from '../../../../services/group-service';
+import { GroupOverviewResponse, GroupService } from '../../../../services/group-service';
 import { GroupOrgDetail } from '../../../../models/groups/GroupOrgDetail';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -28,7 +27,15 @@ interface GroupSummary {
 @Component({
   selector: 'app-groups-section',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SectionTopCard, SearchBar, FormsModule],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    SectionTopCard,
+    SearchBar,
+    FormsModule,
+    PageWarnings,
+    PageWarningsItem,
+  ],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })

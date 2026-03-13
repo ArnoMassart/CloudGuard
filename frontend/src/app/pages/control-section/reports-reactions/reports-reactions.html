@@ -18,19 +18,12 @@
 
         <!-- Critical warning banner -->
         @if (criticalCount() > 0) {
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 shrink-0">
-                <i-lucide [img]="Icons.CircleX" size="20" />
-            </div>
-            <div>
-                <p class="font-medium text-red-800">
-                    {{ criticalCount() }} kritieke beveiligingswaarschuwing{{ criticalCount() > 1 ? 'en' : '' }}
-                </p>
-                <p class="text-sm text-red-700 mt-0.5">
-                    Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.
-                </p>
-            </div>
-        </div>
+        <app-page-warnings [isCritical]="true" [isExpanded]="isWarningExpanded()" (toggle)="toggleExpanded()"
+            [title]="`${criticalCount()} kritieke beveiligingswaarschuwing${criticalCount() > 1 ? 'en' : '' }`">
+            <app-page-warnings-item [isCritical]="true" body>
+                Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.
+            </app-page-warnings-item>
+        </app-page-warnings>
         }
 
         <!-- Filter section -->

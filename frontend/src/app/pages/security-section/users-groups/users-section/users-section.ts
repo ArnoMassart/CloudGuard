@@ -9,6 +9,8 @@ import { UserOverviewResponse } from '../../../../models/users/UserOverviewRespo
 import { UsersPageWarnings } from '../../../../models/users/UsersPageWarnings';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
 
 // ==========================================
@@ -24,7 +26,9 @@ const ITEMS_PER_PAGE = 4;
     FormsModule,
     CommonModule,
     MatProgressSpinnerModule,
-    SearchBar
+    PageWarnings,
+    PageWarningsItem,
+    SearchBar,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',

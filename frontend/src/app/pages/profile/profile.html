@@ -1,50 +1,75 @@
-<div class="bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] min-w-[360px] max-w-[440px] overflow-hidden">
+<div
+  class="bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] min-w-90 max-w-110 overflow-hidden"
+>
   <header class="flex justify-between items-start p-6 pt-4 gap-4">
     <div class="flex-1">
-      <h3 class="m-0 text-2xl font-semibold text-gray-800">Profiel</h3>
-      <p class="mt-1 text-sm text-gray-500 leading-snug">Bekijk uw profielinformatie en account instellingen.</p>
+      <h3 class="m-0 text-2xl font-medium text-gray-800">Profiel</h3>
+      <p class="mt-1 text-sm text-gray-500 leading-snug">
+        Bekijk uw profielinformatie en account instellingen.
+      </p>
     </div>
-    <button type="button"
+    <button
+      type="button"
       class="bg-transparent border-none text-2xl leading-none text-gray-600 cursor-pointer p-1 shrink-0 hover:text-gray-900"
-      (click)="close()" aria-label="Sluiten">×</button>
+      (click)="close()"
+      aria-label="Sluiten"
+    >
+      <i-lucide [img]="Icons.X" size="18" />
+    </button>
   </header>
 
   @if (currentUser(); as user) {
-  <div class="px-6 pb-6 flex flex-col items-center">
-    <div class="w-20 h-20 rounded-full bg-teal-500 flex items-center justify-center overflow-hidden shrink-0">
-      @if (user.pictureUrl && !profileImageError()) {
-        <img [src]="user.pictureUrl" alt="" class="w-full h-full object-cover"
-          (error)="profileImageError.set(true)" />
-      }
-      @if (!user.pictureUrl || profileImageError()) {
-        <span class="text-white text-2xl font-semibold">{{ userService.getInitials(user) }}</span>
-      }
-    </div>
-    <p class="mt-4 mb-1 font-medium text-xl text-gray-800 text-center">{{ user.firstName }} {{ user.lastName }}</p>
-    <p class="m-0 text-sm text-gray-500 text-center">{{ userService.getRole(user) }}</p>
+    <div class="px-6 pb-6 flex flex-col items-center">
+      <div
+        class="w-20 h-20 rounded-full bg-teal-500 flex items-center justify-center overflow-hidden shrink-0"
+      >
+        @if (user.pictureUrl && !profileImageError()) {
+          <img
+            [src]="user.pictureUrl"
+            alt=""
+            class="w-full h-full object-cover"
+            (error)="profileImageError.set(true)"
+          />
+        }
+        @if (!user.pictureUrl || profileImageError()) {
+          <span class="text-white text-2xl font-semibold">{{ userService.getInitials(user) }}</span>
+        }
+      </div>
+      <p class="mt-4 mb-1 font-medium text-xl text-gray-800 text-center">
+        {{ user.firstName }} {{ user.lastName }}
+      </p>
+      <p class="m-0 text-sm text-gray-500 text-center">{{ userService.getRole(user) }}</p>
 
-    <div class="w-full mt-6 py-4 border-t border-b border-gray-200 flex flex-col gap-1">
-      <span class="text-[11px] font-medium tracking-wider text-gray-400 uppercase">E-MAILADRES</span>
-      <span class="text-[15px] text-gray-800">{{ user.email }}</span>
-    </div>
+      <div class="w-full mt-6 py-4 border-t border-b border-gray-200 flex flex-col gap-1">
+        <span class="text-[11px] font-medium tracking-wider text-gray-400 uppercase"
+          >E-MAILADRES</span
+        >
+        <span class="text-[15px] text-gray-800">{{ user.email }}</span>
+      </div>
 
-    <div class="w-full mt-6 flex flex-col gap-3">
-      <a href="https://myaccount.google.com" target="_blank" rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#3abfad] text-white hover:opacity-90 transition-opacity">
-        <i-lucide [img]="Icons.ExternalLink" size="18" />
-        Mijn Google Account beheren
-      </a>
-      <button type="button"
-        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#FF3B3B] text-white hover:opacity-90 transition-opacity"
-        (click)="logout()">
-        <i-lucide [img]="Icons.LogOut" size="18" />
-        Uitloggen
-      </button>
+      <div class="w-full mt-6 flex flex-col gap-3">
+        <a
+          href="https://myaccount.google.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#3abfad] text-white hover:opacity-90 transition-opacity"
+        >
+          <i-lucide [img]="Icons.ExternalLink" size="18" />
+          Mijn Google Account beheren
+        </a>
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#FF3B3B] text-white hover:opacity-90 transition-opacity cursor-pointer"
+          (click)="logout()"
+        >
+          <i-lucide [img]="Icons.LogOut" size="18" />
+          Uitloggen
+        </button>
+      </div>
     </div>
-  </div>
   } @else {
-  <div class="px-6 pb-6 flex flex-col items-center">
-    <p class="my-8 text-sm text-gray-500">Bezig met laden...</p>
-  </div>
+    <div class="px-6 pb-6 flex flex-col items-center">
+      <p class="my-8 text-sm text-gray-500">Bezig met laden...</p>
+    </div>
   }
 </div>

@@ -3,19 +3,30 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {AppPasswordsService} from '../../../services/app-password-service';
+import { AppPasswordsService } from '../../../services/app-password-service';
 import { AppPassword } from '../../../models/app-password/AppPassword';
 import { AppPasswordOverviewResponse } from '../../../models/app-password/AppPasswordOverviewResponse';
 import { UserAppPasswords } from '../../../models/app-password/UserAppPasswords';
 
 import { LucideAngularModule } from 'lucide-angular';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../components/search-bar/search-bar';
 
 const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-app-passwords',
-  imports: [SectionTopCard, CommonModule, PageHeader, SearchBar, LucideAngularModule],
+  imports: [
+    SectionTopCard,
+    CommonModule,
+    PageHeader,
+    SearchBar,
+    LucideAngularModule,
+    PageWarnings,
+    PageWarningsItem,
+  ],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
 })
@@ -36,9 +47,11 @@ export class AppPasswords implements OnInit {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return users;
     return users.filter(
-      (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
+      (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q),
     );
   });
+  readonly #searchSubject = new Subject<string>();
+  readonly isExpanded = signal(true);
 
   #tokenHistory: (string | null)[] = [null];
 
@@ -52,6 +65,10 @@ export class AppPasswords implements OnInit {
     this.currentPage.set(1);
     this.#tokenHistory = [null];
     this.#loadAppPasswords(null);
+  }
+
+  toggleExpanded() {
+    this.isExpanded.update((v) => !v);
   }
 
   nextPage() {
