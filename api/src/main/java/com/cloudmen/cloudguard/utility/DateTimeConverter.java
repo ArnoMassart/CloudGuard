@@ -17,11 +17,11 @@ public class DateTimeConverter {
     public static String convertToTimeAgo(DateTime timeAgo) {
         long epochMillis = timeAgo.getValue();
 
-        Date date = new Date(epochMillis);
+        return convertTimeToPretty(epochMillis);
+    }
 
-        PrettyTime p = new PrettyTime(new Locale("nl"));
-
-        return p.format(date);
+    public static String convertToTimeAgo(long epochMillis) {
+        return convertTimeToPretty(epochMillis);
     }
 
     public static LocalDate convertGoogleDateTime(DateTime googleDateTime) {
@@ -36,5 +36,13 @@ public class DateTimeConverter {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern).withLocale(new Locale("nl", "BE"));
 
         return value.format(formatter);
+    }
+
+    private static String convertTimeToPretty(long epochMillis) {
+        Date date = new Date(epochMillis);
+
+        PrettyTime p = new PrettyTime(new Locale("nl"));
+
+        return p.format(date);
     }
 }

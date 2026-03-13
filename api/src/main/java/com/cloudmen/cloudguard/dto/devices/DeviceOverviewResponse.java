@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.dto.devices;
 
-public record MobileDeviceOverviewResponse(
+public record DeviceOverviewResponse(
         int totalDevices,
         int totalNonCompliant,
         int totalApprovedDevices,

@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.dto.devices;
 import lombok.Getter;
 
 @Getter
-public enum MobileDeviceStatus {
+public enum DeviceStatus {
     ALL("Alle statussen"),
     APPROVED("Approved"),
     PENDING("Pending"),
@@ -11,13 +11,13 @@ public enum MobileDeviceStatus {
 
     private final String value;
 
-    MobileDeviceStatus(String value) {
+    DeviceStatus(String value) {
         this.value = value;
     }
 
     // Helper om veilig van String naar Enum te gaan
-    public static MobileDeviceStatus fromString(String text) {
-        for (MobileDeviceStatus b : MobileDeviceStatus.values()) {
+    public static DeviceStatus fromString(String text) {
+        for (DeviceStatus b : DeviceStatus.values()) {
             if (b.value.equalsIgnoreCase(text)) {
                 return b;
             }

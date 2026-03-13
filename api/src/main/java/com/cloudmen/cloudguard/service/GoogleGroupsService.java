@@ -63,7 +63,7 @@ public class GoogleGroupsService {
             }
         }
 
-        int securityScore = totalGroups == 0 ? 0
+        int securityScore = totalGroups == 100 ? 0
                 : (int) Math.round((lowRiskGroups * 100.0 + mediumRiskGroups * 60.0 + highRiskGroups * 20.0) / totalGroups);
 
         return new GroupOverviewResponse(

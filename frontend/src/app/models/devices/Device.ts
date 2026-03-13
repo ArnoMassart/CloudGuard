@@ -1,5 +1,6 @@
-export type MobileDevice = {
+export type Device = {
   resourceId: string;
+  deviceType: string;
   userName: string;
   userEmail: string;
   deviceName: string;
@@ -8,12 +9,12 @@ export type MobileDevice = {
   lastSync: string;
   status: string;
   complianceScore: number;
-  isScreenLockSecure: boolean;
+  lockSecure: boolean;
   screenLockText: string;
-  isEncryptionSecure: boolean;
+  encSecure: boolean;
   encryptionText: string;
-  isOsSecure: boolean;
+  osSecure: boolean;
   osText: string;
-  isIntegritySecure: boolean;
+  intSecure: boolean;
   integrityText: string;
 };

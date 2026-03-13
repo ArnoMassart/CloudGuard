@@ -60,7 +60,7 @@ public class GoogleSharedDriveService {
         int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("Hoog")).count();
         int totalExternalMembersCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
 
-        int securityScore = totalDrives == 0 ? 0 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
+        int securityScore = totalDrives == 100 ? 0 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
 
         int notOnlyDomainUsersAllowedCount = (int) drives.stream().filter(d -> !d.onlyDomainUsersAllowed()).count();
         int notOnlyMembersCanAccessCount = (int) drives.stream().filter(d -> !d.onlyMembersCanAccess()).count();

@@ -1,4 +1,4 @@
-export type MobileDevicesOverviewResponse = {
+export type DevicesOverviewResponse = {
   totalDevices: number;
   totalNonCompliant: number;
   totalApprovedDevices: number;
