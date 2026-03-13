@@ -43,11 +43,10 @@
   </app-page-warnings>
   }
 
-  <div class="p-3 border-2 border-muted/50 rounded-md flex gap-5 w-full items-center bg-white">
-    <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-    <input type="text" #searchInput (input)="onKeyup(searchInput.value)" class="focus:outline-none w-full"
-      placeholder="Zoek gebruikers op naam..." />
-  </div>
+  <app-search-bar 
+    placeholder="Zoek gebruikers op naam..."
+    (searchChange)="onSearch($event)"
+  />
 
   @if (!isLoading()) {
   @if (orgUsers().length > 0) {

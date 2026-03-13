@@ -2,13 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { RouteService } from './route-service';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface Domain {
-    domainName: string;
-    domainType: string;
-    isVerified: boolean;
-    totalUsers?: number;
-}
+import { Domain } from '../models/domain/Domain';
 
 @Injectable({
   providedIn: 'root',

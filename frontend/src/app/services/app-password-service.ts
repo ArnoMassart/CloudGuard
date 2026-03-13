@@ -2,34 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { RouteService } from './route-service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface AppPassword {
-    codeId: number;
-    name: string;
-    creationTime: string | null;
-    lastTimeUsed: string | null;
-}
-
-export interface AppPasswordOverviewResponse {
-    allowed: boolean;
-    totalAppPasswords: number;
-    totalHighRiskAppPasswords: number;
-    securityScore: number;
-}
-
-export interface AppPasswordPageResponse {
-    users: Array<{ id: string; name: string; email: string; role: string; tsv: boolean; passwords: AppPassword[] }>;
-    nextPageToken: string | null;
-}
-
-export interface UserAppPasswords {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    twoFactorEnabled: boolean;
-    appPasswords: AppPassword[];
-}
+import { AppPasswordPageResponse } from '../models/app-password/AppPasswordPageResponse';
+import { AppPasswordOverviewResponse } from '../models/app-password/AppPasswordOverviewResponse';
 
 @Injectable({
   providedIn: 'root',

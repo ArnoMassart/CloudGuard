@@ -2,10 +2,12 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
-import { Domain, DomainService } from '../../../services/domain-service';
+import { DomainService } from '../../../services/domain-service';
+import { Domain } from '../../../models/domain/Domain';
 import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
-import { DnsRecord, DnsService } from '../../../services/dns-service';
+import { DnsRecord } from '../../../models/dns/DnsRecord';
+import { DnsService } from '../../../services/dns-service';
 
 @Component({
   selector: 'app-domain-dns',

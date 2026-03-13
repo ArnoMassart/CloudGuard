@@ -1,15 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LucideAngularModule } from 'lucide-angular';
-import {
-  GroupOrgDetail,
-  GroupOverviewResponse,
-  GroupService,
-} from '../../../../services/group-service';
+import { GroupOverviewResponse, GroupService } from '../../../../services/group-service';
+import { GroupOrgDetail } from '../../../../models/groups/GroupOrgDetail';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
+import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
@@ -35,6 +31,7 @@ interface GroupSummary {
     CommonModule,
     LucideAngularModule,
     SectionTopCard,
+    SearchBar,
     FormsModule,
     PageWarnings,
     PageWarningsItem,
@@ -51,7 +48,6 @@ export class GroupsSection implements OnInit {
   readonly isRefreshing = signal<boolean>(false);
   readonly pageOverview = signal<GroupOverviewResponse | null>(null);
   readonly searchQuery = signal('');
-  private readonly searchSubject = new Subject<string>();
 
   readonly nextPageToken = signal<string | null>(null);
   readonly currentPage = signal(1);
@@ -74,10 +70,6 @@ export class GroupsSection implements OnInit {
   });
 
   ngOnInit(): void {
-    this.searchSubject
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe((value) => this.onSearch(value));
-
     this.loadGroupsOverview();
     this.loadGroups(null);
   }
@@ -92,12 +84,8 @@ export class GroupsSection implements OnInit {
     });
   }
 
-  onKeyup(value: string): void {
-    this.searchQuery.set(value);
-    this.searchSubject.next(value);
-  }
-
   onSearch(value: string): void {
+    this.searchQuery.set(value);
     this.currentPage.set(1);
     this.tokenHistory = [null];
     this.loadGroups(null);

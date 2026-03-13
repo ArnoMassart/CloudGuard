@@ -2,11 +2,9 @@ import { Component, OnInit, effect, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {
-  OrgUnitNodeDto,
-  OrgUnitPolicyDto,
-  OrgUnitService,
-} from '../../../services/org-unit-service';
+import {OrgUnitService} from '../../../services/org-unit-service';
+import { OrgUnitNodeDto } from '../../../models/org-unit/OrgUnitNodeDto';
+import { OrgUnitPolicyDto } from '../../../models/org-unit/OrgUnitPolicyDto';
 import { AppIcons } from '../../../shared/AppIcons';
 
 export interface OrgUnitNode {

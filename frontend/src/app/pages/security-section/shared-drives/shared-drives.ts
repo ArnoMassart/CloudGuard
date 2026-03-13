@@ -2,8 +2,8 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { DriveService } from '../../../services/drive-service';
+import { SearchBar } from '../../../components/search-bar/search-bar';
 import { SharedDrive } from '../../../models/drives/SharedDrive';
 import { SharedDrivesPageWarnings } from '../../../models/drives/SharedDrivesPageWarnings';
 import { SharedDriveOverviewResponse } from '../../../models/drives/SharedDriveOverviewResponse';
@@ -23,6 +23,7 @@ const ITEMS_PER_PAGE = 2;
   imports: [
     PageHeader,
     SectionTopCard,
+    SearchBar,
     LucideAngularModule,
     FormsModule,
     PageWarnings,
@@ -71,17 +72,12 @@ export class SharedDrives implements OnInit {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  readonly #searchSubject = new Subject<string>();
   #tokenHistory: (string | null)[] = [null];
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
-      this.onSearch(value);
-    });
-
     this.#loadPageOverview();
     this.#loadDrives();
   }
@@ -91,10 +87,6 @@ export class SharedDrives implements OnInit {
   // ==========================================
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
-  }
-
-  onKeyup(value: string) {
-    this.#searchSubject.next(value);
   }
 
   onSearch(value: string) {
