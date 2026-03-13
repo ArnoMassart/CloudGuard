@@ -18,85 +18,18 @@
 
         <!-- Critical warning banner -->
         @if (criticalCount() > 0) {
-        <div class="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 text-red-600 shrink-0">
-                <i-lucide [img]="Icons.CircleX" size="20" />
-            </div>
-            <div>
-                <p class="font-medium text-red-800">
-                    {{ criticalCount() }} kritieke beveiligingswaarschuwing{{ criticalCount() > 1 ? 'en' : '' }}
-                </p>
-                <p class="text-sm text-red-700 mt-0.5">
-                    Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.
-                </p>
-            </div>
-        </div>
+        <app-page-warnings [isCritical]="true" [isExpanded]="isWarningExpanded()" (toggle)="toggleExpanded()"
+            [title]="`${criticalCount()} kritieke beveiligingswaarschuwing${criticalCount() > 1 ? 'en' : '' }`">
+            <app-page-warnings-item [isCritical]="true" body>
+                Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.
+            </app-page-warnings-item>
+        </app-page-warnings>
         }
 
         <!-- Filter section -->
-        <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-2 text-sm text-gray-600">
-                <i-lucide [img]="Icons.Funnel" size="18" />
-                <span>Filter:</span>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button (click)="setFilter('all')" class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-primary]="filterSeverity() === 'all'" [class.text-white]="filterSeverity() === 'all'"
-                    [class.bg-gray-100]="filterSeverity() !== 'all'" [class.text-gray-700]="filterSeverity() !== 'all'"
-                    [class.hover:bg-gray-200]="filterSeverity() !== 'all'">
-                    Alle ({{ totalCount() }})
-                </button>
-                <button (click)="setFilter('critical')"
-                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-red-100]="filterSeverity() === 'critical'"
-                    [class.text-red-800]="filterSeverity() === 'critical'"
-                    [class.bg-gray-100]="filterSeverity() !== 'critical'"
-                    [class.text-gray-700]="filterSeverity() !== 'critical'"
-                    [class.hover:bg-gray-200]="filterSeverity() !== 'critical'">
-                    Kritiek ({{ criticalCount() }})
-                </button>
-                <button (click)="setFilter('warning')"
-                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-amber-100]="filterSeverity() === 'warning'"
-                    [class.text-amber-800]="filterSeverity() === 'warning'"
-                    [class.bg-gray-100]="filterSeverity() !== 'warning'"
-                    [class.text-gray-700]="filterSeverity() !== 'warning'"
-                    [class.hover:bg-gray-200]="filterSeverity() !== 'warning'">
-                    Waarschuwing ({{ warningCount() }})
-                </button>
-                <button (click)="setFilter('info')" class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-blue-100]="filterSeverity() === 'info'"
-                    [class.text-blue-800]="filterSeverity() === 'info'"
-                    [class.bg-gray-100]="filterSeverity() !== 'info'"
-                    [class.text-gray-700]="filterSeverity() !== 'info'"
-                    [class.hover:bg-gray-200]="filterSeverity() !== 'info'">
-                    Info ({{ infoCount() }})
-                </button>
-                <button (click)="setFilter('in-behandeling')"
-                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-teal-100]="filterSeverity() === 'in-behandeling'"
-                    [class.text-teal-800]="filterSeverity() === 'in-behandeling'"
-                    [class.bg-gray-100]="filterSeverity() !== 'in-behandeling'"
-                    [class.text-gray-700]="filterSeverity() !== 'in-behandeling'"
-                    [class.hover:bg-gray-200]="filterSeverity() !== 'in-behandeling'">
-                    In behandeling ({{ inBehandelingCount() }})
-                </button>
-                <button (click)="setFilter('resolved')"
-                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                    [class.bg-emerald-100]="filterSeverity() === 'resolved'"
-                    [class.text-emerald-800]="filterSeverity() === 'resolved'"
-                    [class.bg-gray-100]="filterSeverity() !== 'resolved'"
-                    [class.text-gray-700]="filterSeverity() !== 'resolved'"
-                    [class.hover:bg-gray-200]="filterSeverity() !== 'resolved'">
-                    Opgelost ({{ resolvedCount() }})
-                </button>
-            </div>
-            <button (click)="refresh()" [disabled]="isLoading()"
-                class="ml-auto flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-                <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isLoading()" />
-                {{ isLoading() ? 'Laden...' : 'Vernieuwen' }}
-            </button>
-        </div>
+        <app-filter-chips [options]="filterOptions()" [selectedValue]="filterSeverity()"
+            variant="pilled" [showRefresh]="true" [isRefreshing]="isLoading()"
+            (filterChange)="setFilter($event)" (refresh)="refresh()" />
 
         @if (isLoading()) {
         <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">

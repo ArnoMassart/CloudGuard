@@ -16,36 +16,18 @@
         </div>
 
         @if (hasWarnings() && !isLoading()){
-        <div class="bg-red-50 border border-red-200/50 rounded-lg p-4 transition-all duration-200">
-            <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
-                <div class="flex gap-3 items-center">
-                    <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-red-600" />
-                    <span class="text-red-800 font-medium text-[16px]">
-                        Risicovolle Accounts Gedetecteerd
-                    </span>
-                </div>
-
-                <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
-                    class="text-red-600 opacity-70 group-hover:opacity-100 transition-opacity" />
-            </div>
-
-            @if (isExpanded()) {
-            <div class="flex flex-col gap-2 mt-3 ml-8">
-                <div class="flex gap-2 items-center">
-                    <span class="text-[13px] text-red-700">
-                        Er {{pageOverview()?.riskyAccounts! > 1 ? 'zijn' :
-                        'is'}} {{pageOverview()?.riskyAccounts}} account{{pageOverview()?.riskyAccounts! > 1 ? 's' :
-                        ''}} met potentiële beveiligingsrisico's die aandacht vereisen. {{pageOverview()?.riskyAccounts!
-                        > 1 ? 'Deze accounts zijn' :
-                        'Dit account is'}} inactief of
-                        gesuspendeerd maar {{pageOverview()?.riskyAccounts!
-                        > 1 ? 'hebben' :
-                        'heeft'}} nog steeds licenties toegewezen.
-                    </span>
-                </div>
-            </div>
-            }
-        </div>
+        <app-page-warnings [isExpanded]="isExpanded()" (toggle)="toggleExpanded()">
+            <app-page-warnings-item body>
+                Er {{pageOverview()?.riskyAccounts! > 1 ? 'zijn' :
+                'is'}} {{pageOverview()?.riskyAccounts}} account{{pageOverview()?.riskyAccounts! > 1 ? 's' :
+                ''}} met potentiële beveiligingsrisico's die aandacht vereisen. {{pageOverview()?.riskyAccounts!
+                > 1 ? 'Deze accounts zijn' :
+                'Dit account is'}} inactief of
+                gesuspendeerd maar {{pageOverview()?.riskyAccounts!
+                > 1 ? 'hebben' :
+                'heeft'}} nog steeds licenties toegewezen.
+            </app-page-warnings-item>
+        </app-page-warnings>
         }
 
         @if (!isLoading()) {

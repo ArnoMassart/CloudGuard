@@ -42,6 +42,13 @@ public class AuthService {
         User user = userService.findByEmail(email)
                 .orElseGet(() -> registerNewUser(jwt)); // <--- The Magic Logic
 
+        // Update profile picture from JWT if available (for existing users)
+        String pictureUrl = jwt.getClaimAsString("picture");
+        if (pictureUrl != null && !pictureUrl.isBlank() && !pictureUrl.equals(user.getPictureUrl())) {
+            user.setPictureUrl(pictureUrl);
+            userService.save(user);
+        }
+
         // 3. Generate Session Token (Same as before)
         String sessionToken = jwtService.generateToken(user);
         ResponseCookie cookie = createSessionCookie(sessionToken);
@@ -58,6 +65,7 @@ public class AuthService {
         newUser.setEmail(jwt.getClaimAsString("email"));
         newUser.setFirstName(jwt.getClaimAsString("given_name")); // Google standard field
         newUser.setLastName(jwt.getClaimAsString("family_name")); // Google standard field
+        newUser.setPictureUrl(jwt.getClaimAsString("picture")); // Google profile photo URL
 
         // Set Defaults
         newUser.setCreatedAt(java.time.LocalDateTime.now());

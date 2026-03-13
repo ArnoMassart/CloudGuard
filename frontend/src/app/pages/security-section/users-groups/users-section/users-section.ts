@@ -2,14 +2,16 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UserOrgDetail } from '../../../../models/UserOrgDetails';
+import { UserOrgDetail } from '../../../../models/users/UserOrgDetails';
 import { UserService } from '../../../../services/user-service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
-import { UserOverviewResponse } from '../../../../models/UserOverviewResponse';
-import { UsersPageWarnings } from '../../../../models/UsersPageWarnings';
+import { UserOverviewResponse } from '../../../../models/users/UserOverviewResponse';
+import { UsersPageWarnings } from '../../../../models/users/UsersPageWarnings';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { SearchBar } from '../../../../components/search-bar/search-bar';
 
 // ==========================================
 // CONSTANTS
@@ -24,6 +26,9 @@ const ITEMS_PER_PAGE = 4;
     FormsModule,
     CommonModule,
     MatProgressSpinnerModule,
+    PageWarnings,
+    PageWarningsItem,
+    SearchBar,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
@@ -66,16 +71,11 @@ export class UsersSection implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
-  readonly #searchSubject = new Subject<string>();
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((value) => {
-      this.onSearch(value);
-    });
-
     this.#loadPageOverview();
     this.#loadUsers();
   }
@@ -85,10 +85,6 @@ export class UsersSection implements OnInit {
   // ==========================================
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
-  }
-
-  onKeyup(value: string) {
-    this.#searchSubject.next(value);
   }
 
   onSearch(value: string) {

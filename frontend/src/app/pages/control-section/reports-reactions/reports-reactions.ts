@@ -1,20 +1,27 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { FilterChips } from '../../../components/filter-chips/filter-chips';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../shared/AppIcons';
-import {
-  NotificationService,
-  Notification,
-  NotificationSeverity,
-} from '../../../services/notification-service';
+import { FilterOption } from '../../../models/FilterOption';
+import { NotificationService } from '../../../services/notification-service';
+import { Notification, NotificationSeverity } from '../../../models/notification/Notification';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
 import { ResolvedNotificationService } from '../../../services/resolved-notification-service';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 @Component({
   selector: 'app-reports-reactions',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule],
+  imports: [
+    PageHeader,
+    SectionTopCard,
+    LucideAngularModule,
+    PageWarnings,
+    PageWarningsItem,
+    FilterChips,
+  ],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
 })
@@ -28,7 +35,7 @@ export class ReportsReactions implements OnInit {
   readonly resolvedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved' | 'in-behandeling'>(
-    'all'
+    'all',
   );
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
@@ -51,17 +58,67 @@ export class ReportsReactions implements OnInit {
   readonly totalCount = computed(() => this.notifications().length);
   readonly resolvedCount = computed(() => this.resolvedNotifications().length);
   readonly criticalCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'critical').length
+    () => this.notifications().filter((n) => n.severity === 'critical').length,
   );
   readonly warningCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'warning').length
+    () => this.notifications().filter((n) => n.severity === 'warning').length,
   );
   readonly infoCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'info').length
+    () => this.notifications().filter((n) => n.severity === 'info').length,
   );
   readonly inBehandelingCount = computed(
-    () => this.notifications().filter((n) => n.status === 'in_behandeling').length
+    () => this.notifications().filter((n) => n.status === 'in_behandeling').length,
   );
+
+  readonly isWarningExpanded = signal(true);
+
+  toggleExpanded() {
+    this.isWarningExpanded.update((v) => !v);
+  }
+  readonly filterOptions = computed<FilterOption[]>(() => [
+    {
+      value: 'all',
+      label: 'Alle',
+      count: this.totalCount(),
+      activeClass: 'bg-primary text-white',
+      inactiveClass: '',
+    },
+    {
+      value: 'critical',
+      label: 'Kritiek',
+      count: this.criticalCount(),
+      activeClass: 'bg-red-100 text-red-800',
+      inactiveClass: '',
+    },
+    {
+      value: 'warning',
+      label: 'Waarschuwing',
+      count: this.warningCount(),
+      activeClass: 'bg-amber-100 text-amber-800',
+      inactiveClass: '',
+    },
+    {
+      value: 'info',
+      label: 'Info',
+      count: this.infoCount(),
+      activeClass: 'bg-blue-100 text-blue-800',
+      inactiveClass: '',
+    },
+    {
+      value: 'in-behandeling',
+      label: 'In behandeling',
+      count: this.inBehandelingCount(),
+      activeClass: 'bg-teal-100 text-teal-800',
+      inactiveClass: '',
+    },
+    {
+      value: 'resolved',
+      label: 'Opgelost',
+      count: this.resolvedCount(),
+      activeClass: 'bg-emerald-100 text-emerald-800',
+      inactiveClass: '',
+    },
+  ]);
 
   ngOnInit() {
     this.#loadNotifications();
@@ -96,8 +153,8 @@ export class ReportsReactions implements OnInit {
     return this.feedbackFormOpenIds().has(id);
   }
 
-  setFilter(filter: NotificationSeverity | 'all' | 'resolved' | 'in-behandeling') {
-    this.filterSeverity.set(filter);
+  setFilter(filter: string) {
+    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'resolved' | 'in-behandeling');
   }
 
   #loadNotifications() {
@@ -229,8 +286,8 @@ export class ReportsReactions implements OnInit {
       next: () => {
         this.notifications.update((list) =>
           list.map((item) =>
-            item.id === n.id ? { ...item, status: 'in_behandeling' as const } : item
-          )
+            item.id === n.id ? { ...item, status: 'in_behandeling' as const } : item,
+          ),
         );
         this.feedbackFormOpenIds.update((s) => {
           const next = new Set(s);

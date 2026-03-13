@@ -1,0 +1,39 @@
+<div class="border-2 rounded-lg p-4 transition-all duration-200" [class.bg-orange-50]="!isCritical"
+    [class.bg-red-50]="isCritical" [class.border-orange-200/30]="!isCritical" [class.border-red-200/30]="isCritical"
+    [class.flex]="isDashboard" [class.items-center]="isDashboard" [class.justify-between]="isDashboard">
+
+    <div class="flex flex-col gap-1 w-full">
+        <div class="flex items-start justify-between" [class.cursor-pointer]="!isDashboard" [class.group]="!isDashboard"
+            (click)="!isDashboard ? toggle.emit() : null">
+
+            <div class="flex gap-3 items-center">
+                <i-lucide [img]="isCritical ? Icons.TriangleAlert : Icons.ShieldAlert" size="20"
+                    [class.text-orange-600]="!isCritical" [class.text-red-600]="isCritical" />
+
+                <span [class.text-orange-700]="!isCritical" [class.text-red-700]="isCritical"
+                    class="font-medium text-base">
+                    {{ title || (hasMultipleWarnings ? 'Beveiligingswaarschuwingen' : 'Beveiligingswaarschuwing') }}
+                </span>
+            </div>
+
+            @if (!isDashboard) {
+            <i-lucide [img]="isExpanded ? Icons.ChevronUp : Icons.ChevronDown" size="20"
+                [class.text-orange-600]="!isCritical" [class.text-red-600]="isCritical"
+                class="opacity-70 group-hover:opacity-100 transition-opacity" />
+            }
+        </div>
+
+        @if (isDashboard || isExpanded) {
+        <div class="flex flex-col gap-2 mt-1 mx-8">
+            <ng-content select="[body]"></ng-content>
+        </div>
+        }
+    </div>
+
+    @if (isDashboard) {
+    <button (click)="navigateToNotifications()"
+        class="cursor-pointer bg-red-600 text-white hover:bg-red-600/80 py-2 px-4 rounded-lg flex gap-2 items-center text-[13px] shrink-0 ml-4">
+        <span>Bekijk meldingen</span>
+    </button>
+    }
+</div>

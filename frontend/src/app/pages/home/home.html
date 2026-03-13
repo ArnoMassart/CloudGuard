@@ -18,27 +18,15 @@
             </div>
 
             @if (hasWarnings() && !isLoading()) {
-            <div
-                class="bg-red-50 border-2 border-red-300/30 rounded-lg p-4 transition-all duration-200 flex items-center justify-between">
-                <div class="flex flex-col gap-1">
-                    <div class="flex gap-3 items-center">
-                        <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-red-600" />
-                        <span class="text-red-800 font-medium text-base">{{pageOverview()?.criticalNotifications}}
-                            kritieke beveiligingswaarschuwing{{
+            <app-page-warnings [isCritical]="true" [isDashboard]="true" [title]="`${pageOverview()?.criticalNotifications}
+                            kritieke beveiligingswaarschuwing${
                             pageOverview()?.criticalNotifications ? 'en'
-                            : '' }}
-                        </span>
-                    </div>
-                    <span class="text-sm text-red-600 ml-8">
-                        Er zijn urgente beveiligingsproblemen die onmiddelijk aandacht vereisen.
-                    </span>
-                </div>
-
-                <button (click)="navigateToNotifications()"
-                    class="cursor-pointer bg-red-600 text-white hover:bg-red-600/80 py-2 px-4 rounded-lg flex gap-2 items-center text-[13px]"><span>Bekijk
-                        meldingen</span>
-                </button>
-            </div>
+                            : '' }
+`">
+                <app-page-warnings-item body [isCritical]="true">
+                    Er zijn urgente beveiligingsproblemen die onmiddelijk aandacht vereisen.
+                </app-page-warnings-item>
+            </app-page-warnings>
             }
 
             @if (!isLoading()) {

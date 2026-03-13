@@ -4,7 +4,7 @@ import { RouteService } from '../services/route-service';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { catchError, tap, timeout } from 'rxjs/operators';
-import { User } from '../models/User';
+import { User } from '../models/users/User';
 import { AuthService } from '@auth0/auth0-angular';
 import { WarmupCacheService } from '../services/warmup-cache-service';
 import { TeamleaderService } from '../services/teamleader-service';

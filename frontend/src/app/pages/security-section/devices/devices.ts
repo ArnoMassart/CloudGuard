@@ -12,6 +12,8 @@ import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
 // ==========================================
 // CONSTANTS
@@ -27,6 +29,8 @@ const ITEMS_PER_PAGE = 4;
     CommonModule,
     MatProgressSpinnerModule,
     SectionTopCard,
+    PageWarnings,
+    PageWarningsItem,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.css',

@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="w-full flex flex-col gap-5">
   <!-- KPI cards -->
   <div class="w-full flex gap-4">
     <app-section-top-card class="flex-1" Title="Totaal groepen" [Value]="pageOverview()?.totalGroups"
@@ -16,55 +16,35 @@
 
   <!-- Alert banner -->
   @if (hasWarnings()) {
-  <div class="bg-[#fefce8] border-2 border-[#fff086]/30 rounded-lg p-4 transition-all duration-200">
-    <div class="flex items-start justify-between cursor-pointer group" (click)="toggleExpanded()">
-      <div class="flex gap-3 items-center">
-        <i-lucide [img]="Icons.ShieldAlert" size="20" class="text-[#d69518]" />
-        <span class="text-[#b7610a] font-medium text-base">Beveiligingswaarschuwing{{ hasMultipleWarnings() ? 'en' :
-          '' }}
-        </span>
-      </div>
+  <app-page-warnings [hasMultipleWarnings]="hasMultipleWarnings()" [isExpanded]="isExpanded()"
+    (toggle)="toggleExpanded()">
+    <div body class="flex flex-col gap-2">
 
-      <i-lucide [img]="isExpanded() ? Icons.ChevronUp : Icons.ChevronDown" size="20"
-        class="text-[#b7610a] opacity-70 group-hover:opacity-100 transition-opacity" />
-    </div>
-
-    @if (isExpanded()) {
-    <div class="flex flex-col gap-2 mt-3 ml-8">
-      @if (this.groupPageWarnings().externalMember) {
-      <div class="flex gap-2 items-center text-center">
-        @if (hasMultipleWarnings()) {
-        <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-        } <span class="text-sm text-[#b7610a]">
-          {{ pageOverview()?.groupsWithExternal }} groep(en) met externe leden gedetecteerd
-        </span>
-      </div>
+      @if (groupPageWarnings().externalMember) {
+      <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+        {{ pageOverview()?.groupsWithExternal }} groep{{pageOverview()?.groupsWithExternal! > 1 ? "en" : ""}} met
+        externe
+        leden gedetecteerd
+      </app-page-warnings-item>
       }
 
-      @if (this.groupPageWarnings().highRisk) {
-      <div class="flex gap-2 items-center text-center" *ngIf="(pageOverview()?.highRiskGroups ?? 0) > 0">
-        @if (hasMultipleWarnings()) {
-        <div class="w-1 h-1 bg-[#b7610a] rounded-2xl"></div>
-        } <span class="text-sm text-[#b7610a]">
-          {{ pageOverview()?.highRiskGroups }} groep(en) met hoog risico door open of externe
-          instellingen
-        </span>
-      </div>
+      @if (groupPageWarnings().highRisk) {
+      <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+        {{ pageOverview()?.highRiskGroups }} groep{{pageOverview()?.highRiskGroups! > 1 ? "en" : ""}} met hoog risico
+        door open of externe
+        instellingen
+      </app-page-warnings-item>
       }
     </div>
-    }
-  </div>
+  </app-page-warnings>
   }
 
   <!-- Search -->
-  <div class="p-3 border-2 border-muted/50 rounded-md flex gap-5 w-full items-center bg-white">
-    <i-lucide [img]="Icons.Search" size="20" class="text-[#99a1af]/70" />
-    <input type="text" class="focus:outline-none w-full" placeholder="Zoek groepen op naam..." [value]="searchQuery()"
-      (input)="onKeyup($any($event.target).value)" />
-  </div>
+  <app-search-bar placeholder="Zoek groepen op naam..." [value]="searchQuery()"
+    (searchChange)="onSearch($event)" />
 
   <!-- Groups list -->
-  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-5">
     <div class="flex justify-between items-center mx-6 pb-5">
       <span class="font-medium text-lg">Alle groepen</span>
       <button (click)="refreshData()" [disabled]="isRefreshing()"

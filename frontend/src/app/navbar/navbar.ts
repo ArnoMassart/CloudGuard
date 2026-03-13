@@ -53,7 +53,8 @@ export class Navbar {
     return '?';
   }
 
-  openProfilePopup() {
+  openProfilePopup(event: MouseEvent) {
+    event.stopPropagation();
     this.profilePopupOpen.set(true);
   }
 
@@ -67,7 +68,8 @@ export class Navbar {
 
   readonly router = inject(Router);
 
-  openLogoutDialog(): void {
+  openLogoutDialog(event: MouseEvent): void {
+    event.stopPropagation();
     const ref = this.dialog.open(LogOutDialog, {
       width: '500px',
       panelClass: 'logout-dialog-panel',
