@@ -15,9 +15,6 @@ public record OuPasswordPolicyDto(
         Integer expirationDays,
         Boolean strongPasswordRequired,
         Integer reusePreventionCount,
-        boolean inherited,
-        Boolean securityKeyRequired,
-        Boolean adminStrongPasswordEnforced,
-        Integer adminMinLength
+        boolean inherited
 ) {
 }

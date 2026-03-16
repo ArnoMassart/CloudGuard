@@ -93,10 +93,6 @@ public class PasswordSettingsService {
         Integer reuseCount = null;
         boolean inherited = true;
 
-        Boolean securityKeyRequired = null;
-        Boolean adminStrongPasswordEnforced = null;
-        Integer adminMinLength = null;
-
         try {
             List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
             JsonNode best = null;
@@ -147,11 +143,6 @@ public class PasswordSettingsService {
                 if (!reuse.isMissingNode() && !reuse.isNull()) {
                     reuseCount = reuse.asBoolean() ? 0 : 1;
                 }
-
-                JsonNode enforce = value.path("enforceRequirementsAtLogin");
-                if (!enforce.isMissingNode() && !enforce.isNull()) {
-                    adminStrongPasswordEnforced = enforce.asBoolean();
-                }
             }
         } catch (Exception e) {
             log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
@@ -160,8 +151,7 @@ public class PasswordSettingsService {
         int problemCount = countProblems(minLength, expirationDays, strongPassword, reuseCount);
 
         return new OuPasswordPolicyDto(orgUnitPath, displayName, userCount, score, problemCount,
-                minLength, expirationDays, strongPassword, reuseCount, inherited,
-                securityKeyRequired, adminStrongPasswordEnforced, adminMinLength);
+                minLength, expirationDays, strongPassword, reuseCount, inherited);
     }
 
     private static int calculateScore(Integer minLength, Integer expirationDays, Boolean strongPassword, Integer reuseCount) {

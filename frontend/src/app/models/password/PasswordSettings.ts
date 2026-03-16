@@ -16,9 +16,6 @@ export interface OuPasswordPolicy {
   strongPasswordRequired: boolean | null;
   reusePreventionCount: number | null;
   inherited: boolean;
-  securityKeyRequired: boolean | null;
-  adminStrongPasswordEnforced: boolean | null;
-  adminMinLength: number | null;
 }
 
 export interface TwoStepVerification {
