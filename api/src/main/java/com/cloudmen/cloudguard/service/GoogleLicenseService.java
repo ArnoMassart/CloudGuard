@@ -83,7 +83,7 @@ public class GoogleLicenseService {
         }
 
         long totalUsers = allDomainUsers != null ? allDomainUsers.size() : 0;
-        int mfaPercentage = totalUsers == 0 ? 0 : (int) Math.round(((double) mfaActiveCount / totalUsers) * 100);
+        int mfaPercentage = totalUsers == 100 ? 0 : (int) Math.round(((double) mfaActiveCount / totalUsers) * 100);
 
         return new LicenseOverviewResponse(
                 totalAssigned,

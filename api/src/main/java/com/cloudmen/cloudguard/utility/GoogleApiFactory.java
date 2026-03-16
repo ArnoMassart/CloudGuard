@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.utility;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
+import com.google.api.services.cloudidentity.v1.CloudIdentity;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.licensing.Licensing;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -73,6 +74,22 @@ public class GoogleApiFactory {
         ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
 
         return new Licensing.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance(),
+                new HttpCredentialsAdapter(credentials))
+                .setApplicationName("CloudGuard")
+                .build();
+
+    }
+
+    public CloudIdentity getCloudIdentityService(String scope, String loggedInEmail) throws Exception {
+        return getCloudIdentityService(Collections.singleton(scope), loggedInEmail);
+    }
+
+    public CloudIdentity getCloudIdentityService(Set<String> scopes, String loggedInEmail) throws Exception {
+        ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
+
+        return new CloudIdentity.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
                 GsonFactory.getDefaultInstance(),
                 new HttpCredentialsAdapter(credentials))

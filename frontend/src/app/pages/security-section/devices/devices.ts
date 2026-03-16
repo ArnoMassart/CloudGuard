@@ -4,11 +4,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule } from 'lucide-angular';
-import { MobileDeviceService } from '../../../services/mobile-device-service';
-import { MobileDevice } from '../../../models/devices/MobileDevice';
-import { MobileDevicesOverviewResponse } from '../../../models/devices/MobileDevicesOverviewResponse';
-import { MobileDevicesPageWarnings } from '../../../models/devices/MobileDevicesPageWarnings';
-import { MobileDeviceStatus } from '../../../models/devices/MobileDeviceStatus';
+import { DeviceService } from '../../../services/device-service';
+import { Device } from '../../../models/devices/Device';
+import { DevicesOverviewResponse } from '../../../models/devices/DevicesOverviewResponse';
+import { DevicesPageWarnings } from '../../../models/devices/DevicesPageWarnings';
+import { DeviceStatus } from '../../../models/devices/DeviceStatus';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
@@ -18,10 +18,10 @@ import { PageWarningsItem } from '../../../components/page-warnings/page-warning
 // ==========================================
 // CONSTANTS
 // ==========================================
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 5;
 
 @Component({
-  selector: 'app-mobile-devices',
+  selector: 'app-devices',
   imports: [
     PageHeader,
     LucideAngularModule,
@@ -32,32 +32,32 @@ const ITEMS_PER_PAGE = 4;
     PageWarnings,
     PageWarningsItem,
   ],
-  templateUrl: './mobile-devices.html',
-  styleUrl: './mobile-devices.css',
+  templateUrl: './devices.html',
+  styleUrl: './devices.css',
 })
-export class MobileDevices implements OnInit {
+export class Devices implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
   readonly Icons = AppIcons;
-  readonly statusEnum = MobileDeviceStatus;
+  readonly statusEnum = DeviceStatus;
   readonly UtilityMethods = UtilityMethods;
-  readonly #mobileDeviceService = inject(MobileDeviceService);
+  readonly #deviceService = inject(DeviceService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
 
-  readonly devices = signal<MobileDevice[]>([]);
-  readonly pageOverview = signal<MobileDevicesOverviewResponse | null>(null);
+  readonly devices = signal<Device[]>([]);
+  readonly pageOverview = signal<DevicesOverviewResponse | null>(null);
   readonly expandedDevice = signal<string | null>(null);
 
   readonly uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
   readonly selectedDeviceType = signal<string>('Alle apparaat typen');
 
-  readonly selectedStatus = signal<MobileDeviceStatus>(MobileDeviceStatus.All);
-  readonly statusOptions = Object.values(MobileDeviceStatus);
+  readonly selectedStatus = signal<DeviceStatus>(DeviceStatus.All);
+  readonly statusOptions = Object.values(DeviceStatus);
 
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
@@ -65,7 +65,7 @@ export class MobileDevices implements OnInit {
   readonly isRefreshing = signal<boolean>(false);
 
   readonly hasWarnings = signal(false);
-  readonly devicePageWarnings = signal<MobileDevicesPageWarnings>({
+  readonly devicePageWarnings = signal<DevicesPageWarnings>({
     lockScreenWarning: false,
     encryptionWarning: false,
     osVersionWarning: false,
@@ -89,7 +89,7 @@ export class MobileDevices implements OnInit {
   ngOnInit(): void {
     this.#loadDeviceTypes();
     this.#loadPageOverview();
-    this.#loadMobileDevices();
+    this.#loadDevices();
   }
 
   // ==========================================
@@ -107,7 +107,7 @@ export class MobileDevices implements OnInit {
     }
   }
 
-  onStatusChange(newStatus: MobileDeviceStatus) {
+  onStatusChange(newStatus: DeviceStatus) {
     this.selectedStatus.set(newStatus);
     this.#resetAndLoad();
   }
@@ -122,7 +122,7 @@ export class MobileDevices implements OnInit {
     if (token) {
       this.#tokenHistory.push(token);
       this.currentPage.update((p) => p + 1);
-      this.#loadMobileDevices(token);
+      this.#loadDevices(token);
     }
   }
 
@@ -131,7 +131,7 @@ export class MobileDevices implements OnInit {
       this.#tokenHistory.pop();
       const prevToken = this.#tokenHistory.at(-1);
       this.currentPage.update((p) => p - 1);
-      this.#loadMobileDevices(prevToken);
+      this.#loadDevices(prevToken);
     }
   }
 
@@ -140,12 +140,12 @@ export class MobileDevices implements OnInit {
 
     this.isRefreshing.set(true);
 
-    this.#mobileDeviceService.refreshDeviceCache().subscribe({
+    this.#deviceService.refreshDeviceCache().subscribe({
       next: (res) => {
         this.currentPage.set(1);
         this.#tokenHistory = [null];
 
-        this.#loadMobileDevices(null);
+        this.#loadDevices(null);
         this.#loadPageOverview();
       },
       error: (err) => {
@@ -162,15 +162,15 @@ export class MobileDevices implements OnInit {
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
-  #loadMobileDevices(token: string | null = null) {
+  #loadDevices(token: string | null = null) {
     this.isLoading.set(true);
 
-    this.#mobileDeviceService
+    this.#deviceService
       .getDevices(
         token || undefined,
         this.selectedStatus(),
         this.selectedDeviceType(),
-        ITEMS_PER_PAGE
+        ITEMS_PER_PAGE,
       )
       .subscribe({
         next: (res) => {
@@ -179,14 +179,14 @@ export class MobileDevices implements OnInit {
           this.isLoading.set(false);
         },
         error: (err) => {
-          console.error('Failed to load mobile devices', err);
+          console.error('Failed to load devices', err);
           this.isLoading.set(false);
         },
       });
   }
 
   #loadPageOverview() {
-    this.#mobileDeviceService.getMobileDevicesPageOverview().subscribe({
+    this.#deviceService.getDevicesPageOverview().subscribe({
       next: (res) => {
         this.pageOverview.set(res);
         this.#loadWarnings();
@@ -220,7 +220,7 @@ export class MobileDevices implements OnInit {
   }
 
   #loadDeviceTypes() {
-    this.#mobileDeviceService.getUniqueDeviceTypes().subscribe({
+    this.#deviceService.getUniqueDeviceTypes().subscribe({
       next: (types) => {
         this.uniqueDeviceTypes.set(['Alle apparaat typen', ...types]);
       },
@@ -234,6 +234,6 @@ export class MobileDevices implements OnInit {
     this.currentPage.set(1);
     this.#tokenHistory = [null];
     this.expandedDevice.set(null);
-    this.#loadMobileDevices(null);
+    this.#loadDevices(null);
   }
 }

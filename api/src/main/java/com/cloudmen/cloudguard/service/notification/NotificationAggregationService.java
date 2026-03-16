@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.service.notification;
 import com.cloudmen.cloudguard.domain.model.feedback.ResolvedNotification;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
-import com.cloudmen.cloudguard.dto.devices.MobileDeviceOverviewResponse;
+import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
 import com.cloudmen.cloudguard.dto.domain.DomainDto;
@@ -47,7 +47,7 @@ public class NotificationAggregationService {
     private final DnsRecordsService dnsRecordsService;
     private final GoogleUsersService usersService;
     private final GoogleSharedDriveService driveService;
-    private final GoogleMobileDeviceService deviceService;
+    private final GoogleDeviceService deviceService;
     private final AppPasswordsService appPasswordsService;
     private final GoogleGroupsService groupsService;
     private final GoogleOAuthService oAuthService;
@@ -59,7 +59,7 @@ public class NotificationAggregationService {
             DnsRecordsService dnsRecordsService,
             GoogleUsersService usersService,
             GoogleSharedDriveService driveService,
-            GoogleMobileDeviceService deviceService,
+            GoogleDeviceService deviceService,
             AppPasswordsService appPasswordsService,
             GoogleGroupsService groupsService,
             GoogleOAuthService oAuthService,
@@ -138,7 +138,7 @@ public class NotificationAggregationService {
 
         UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail));
         SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail));
-        MobileDeviceOverviewResponse devices = safeGet(() -> deviceService.getMobileDevicesPageOverview(adminEmail, true));
+        DeviceOverviewResponse devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail));
         GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail));
         OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail));
         AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true));

@@ -19,18 +19,18 @@ public class DashboardService {
     private final GoogleUsersService usersService;
     private final GoogleGroupsService groupsService;
     private final GoogleSharedDriveService sharedDriveService;
-    private final GoogleMobileDeviceService mobileDeviceService;
+    private final GoogleDeviceService googleDeviceService;
     private final GoogleOAuthService oAuthService;
     private final AppPasswordsService passwordsService;
     private final DnsRecordsService dnsRecordsService;
     private final GoogleDomainService domainService;
     private final NotificationAggregationService notificationService;
 
-    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleMobileDeviceService mobileDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService) {
+    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService) {
         this.usersService = usersService;
         this.groupsService = groupsService;
         this.sharedDriveService = sharedDriveService;
-        this.mobileDeviceService = mobileDeviceService;
+        this.googleDeviceService = googleDeviceService;
         this.oAuthService = oAuthService;
         this.passwordsService = passwordsService;
         this.dnsRecordsService = dnsRecordsService;
@@ -70,7 +70,7 @@ public class DashboardService {
                 sharedDriveService.getDrivesPageOverview(loggedInEmail).securityScore());
 
         CompletableFuture<Integer> devicesFuture = CompletableFuture.supplyAsync(() ->
-                mobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, IS_TESTMODE).securityScore());
+                googleDeviceService.getDevicesPageOverview(loggedInEmail).securityScore());
 
         CompletableFuture<Integer> appAccessFuture = CompletableFuture.supplyAsync(() ->
                 oAuthService.getOAuthPageOverview(loggedInEmail).securityScore());

@@ -1,7 +1,8 @@
 package com.cloudmen.cloudguard.dto.devices;
 
-public record MobileDeviceDetail(
+public record DeviceDetail(
         String resourceId,
+        String deviceType,
         String userName,
         String userEmail,
         String deviceName,
@@ -10,13 +11,13 @@ public record MobileDeviceDetail(
         String lastSync,
         String status,
         int complianceScore,
-        boolean isScreenLockSecure,
+        boolean lockSecure,
         String screenLockText,
-        boolean isEncryptionSecure,
+        boolean encSecure,
         String encryptionText,
-        boolean isOsSecure,
+        boolean osSecure,
         String osText,
-        boolean isIntegritySecure,
+        boolean intSecure,
         String integrityText
 ) {
 }

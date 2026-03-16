@@ -1,8 +1,8 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.devices.MobileDeviceOverviewResponse;
-import com.cloudmen.cloudguard.dto.devices.MobileDevicePageResponse;
-import com.cloudmen.cloudguard.service.GoogleMobileDeviceService;
+import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
+import com.cloudmen.cloudguard.dto.devices.DevicePageResponse;
+import com.cloudmen.cloudguard.service.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,19 +12,17 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/google/devices")
-public class GoogleMobileDeviceController {
-    private final GoogleMobileDeviceService googleMobileDeviceService;
+public class GoogleDeviceController {
+    private final GoogleDeviceService googleDeviceService;
     private final JwtService jwtService;
 
-    private static final boolean IS_TESTMODE = true;
-
-    public GoogleMobileDeviceController(GoogleMobileDeviceService googleMobileDeviceService, JwtService jwtService) {
-        this.googleMobileDeviceService = googleMobileDeviceService;
+    public GoogleDeviceController(GoogleDeviceService googleDeviceService, JwtService jwtService) {
+        this.googleDeviceService = googleDeviceService;
         this.jwtService = jwtService;
     }
 
     @GetMapping()
-    public ResponseEntity<MobileDevicePageResponse> getMobileDevices(
+    public ResponseEntity<DevicePageResponse> getDevices(
             @CookieValue(name = "AuthToken", required = false) String token,
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "5") int size,
@@ -37,7 +35,7 @@ public class GoogleMobileDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPaged(loggedInEmail, pageToken, size, status, deviceType, IS_TESTMODE));
+        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType));
     }
 
     @GetMapping("/types")
@@ -49,22 +47,22 @@ public class GoogleMobileDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleMobileDeviceService.getUniqueDeviceTypes(loggedInEmail, IS_TESTMODE));
+        return ResponseEntity.ok(googleDeviceService.getUniqueDeviceTypes(loggedInEmail));
     }
 
     @GetMapping("/overview")
-    public ResponseEntity<MobileDeviceOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
+    public ResponseEntity<DeviceOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleMobileDeviceService.getMobileDevicesPageOverview(loggedInEmail, IS_TESTMODE));
+        return ResponseEntity.ok(googleDeviceService.getDevicesPageOverview(loggedInEmail));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<String> refreshUsersCache(
+    public ResponseEntity<String> refreshDevicesCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
         if (token == null || token.isEmpty()) {
@@ -72,7 +70,7 @@ public class GoogleMobileDeviceController {
         }
 
         String adminEmail = jwtService.validateInternalToken(token);
-        googleMobileDeviceService.forceRefreshCache(adminEmail);
+        googleDeviceService.forceRefreshCache(adminEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

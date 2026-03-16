@@ -17,7 +17,7 @@ public class CacheWarmupService {
     private final GoogleGroupsCacheService groupsCacheService;
     private final GoogleOrgUnitCacheService orgUnitCacheService;
     private final GoogleSharedDriveCacheService sharedDriveCacheService;
-    private final GoogleMobileDeviceCacheService mobileDeviceCacheService;
+    private final GoogleDeviceCacheService mobileDeviceCacheService;
     private final AppPasswordsService appPasswordsService;
     private final GoogleOAuthCacheService oAuthCacheService;
 
@@ -27,7 +27,7 @@ public class CacheWarmupService {
     private final GoogleLicenseCacheService licenseCacheService;
     private final GoogleDomainCacheService domainCacheService;
 
-    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleMobileDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, GoogleOAuthCacheService oAuthCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
+    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, GoogleOAuthCacheService oAuthCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
         this.usersCacheService = usersCacheService;
         this.groupsCacheService = groupsCacheService;
         this.orgUnitCacheService = orgUnitCacheService;
