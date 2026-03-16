@@ -8,6 +8,9 @@ package com.cloudmen.cloudguard.dto.password;
 public record OuPasswordPolicyDto(
         String orgUnitPath,
         String orgUnitName,
+        int userCount,
+        int score,
+        int problemCount,
         int minLength,
         int expirationDays,
         boolean strongPasswordRequired,

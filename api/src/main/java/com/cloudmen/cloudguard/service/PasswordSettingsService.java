@@ -49,7 +49,24 @@ public class PasswordSettingsService {
     }
 
     private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String adminEmail) {
-        List<String> ouPaths = collectAllOuPaths(adminEmail);
+        Map<String, Integer> userCounts = new HashMap<>();
+        List<String> ouPaths = new ArrayList<>();
+        try {
+            var ouEntry = orgUnitCache.getOrFetchOrgUnitData(adminEmail);
+            userCounts.putAll(ouEntry.userCounts());
+            Set<String> pathSet = new LinkedHashSet<>();
+            pathSet.add("/");
+            for (OrgUnit ou : ouEntry.allOrgUnits()) {
+                String path = ou.getOrgUnitPath();
+                if (path != null && !path.isBlank()) {
+                    pathSet.add(path.trim());
+                }
+            }
+            ouPaths.addAll(pathSet);
+        } catch (Exception e) {
+            log.warn("Could not fetch OUs: {}", e.getMessage());
+        }
+
         Map<String, String> ouIdToPath = Collections.emptyMap();
         try {
             ouIdToPath = policyCache.getOuIdToPathMap(adminEmail);
@@ -59,32 +76,23 @@ public class PasswordSettingsService {
 
         List<OuPasswordPolicyDto> result = new ArrayList<>();
         for (String path : ouPaths) {
-            OuPasswordPolicyDto policy = resolvePasswordPolicyForOu(adminEmail, path, ouIdToPath);
+            OuPasswordPolicyDto policy = resolvePasswordPolicyForOu(adminEmail, path, ouIdToPath,
+                    userCounts.getOrDefault(path, 0));
             result.add(policy);
         }
         result.sort(Comparator.comparing(OuPasswordPolicyDto::orgUnitPath));
         return result;
     }
 
-    private List<String> collectAllOuPaths(String adminEmail) {
-        Set<String> paths = new LinkedHashSet<>();
-        paths.add("/");
-        try {
-            var ouEntry = orgUnitCache.getOrFetchOrgUnitData(adminEmail);
-            for (OrgUnit ou : ouEntry.allOrgUnits()) {
-                String path = ou.getOrgUnitPath();
-                if (path != null && !path.isBlank()) {
-                    paths.add(path.trim());
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Could not fetch OUs: {}", e.getMessage());
-        }
-        return new ArrayList<>(paths);
-    }
-
-    private OuPasswordPolicyDto resolvePasswordPolicyForOu(String adminEmail, String orgUnitPath, Map<String, String> ouIdToPath) {
+    private OuPasswordPolicyDto resolvePasswordPolicyForOu(String adminEmail, String orgUnitPath, Map<String, String> ouIdToPath, int userCount) {
         String displayName = "/".equals(orgUnitPath) ? "Root" : orgUnitPath.substring(orgUnitPath.lastIndexOf('/') + 1);
+
+        int minLength = 8;
+        int expirationDays = 0;
+        boolean strongPassword = false;
+        boolean blockCommon = false;
+        int reuseCount = 0;
+        boolean inherited = true;
 
         try {
             List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
@@ -118,25 +126,44 @@ public class PasswordSettingsService {
                 boolean reqUpper = value.path("requireUppercase").asBoolean(false);
                 boolean reqNumeric = value.path("requireNumeric").asBoolean(false);
                 boolean reqSpecial = value.path("requireSpecialChar").asBoolean(false);
-                boolean strongPassword = reqLower || reqUpper || reqNumeric || reqSpecial
+                strongPassword = reqLower || reqUpper || reqNumeric || reqSpecial
                         || value.path("strongPasswordRequired").asBoolean(false);
-
-                return new OuPasswordPolicyDto(
-                        orgUnitPath,
-                        displayName,
-                        value.path("minLength").asInt(8),
-                        value.path("expirationDays").asInt(0),
-                        strongPassword,
-                        value.path("blockCommonPasswords").asBoolean(false),
-                        value.path("reusePreventionCount").asInt(0),
-                        !orgUnitPath.equals(bestOuPath)
-                );
+                minLength = value.path("minLength").asInt(8);
+                expirationDays = value.path("expirationDays").asInt(0);
+                blockCommon = value.path("blockCommonPasswords").asBoolean(false);
+                reuseCount = value.path("reusePreventionCount").asInt(0);
+                inherited = !orgUnitPath.equals(bestOuPath);
             }
         } catch (Exception e) {
             log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
         }
 
-        return new OuPasswordPolicyDto(orgUnitPath, displayName, 8, 0, false, false, 0, true);
+        int score = calculateScore(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
+        int problemCount = countProblems(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
+
+        return new OuPasswordPolicyDto(orgUnitPath, displayName, userCount, score, problemCount,
+                minLength, expirationDays, strongPassword, blockCommon, reuseCount, inherited);
+    }
+
+    private static int calculateScore(int minLength, int expirationDays, boolean strongPassword, boolean blockCommon, int reuseCount) {
+        int s = 0;
+        if (strongPassword) s += 25;
+        if (blockCommon) s += 25;
+        if (expirationDays > 0) s += 25;
+        if (reuseCount > 0) s += 25;
+        if (minLength >= 12) s += 20;
+        else if (minLength >= 8) s += 10;
+        return Math.min(100, s);
+    }
+
+    private static int countProblems(int minLength, int expirationDays, boolean strongPassword, boolean blockCommon, int reuseCount) {
+        int p = 0;
+        if (!strongPassword) p++;
+        if (!blockCommon) p++;
+        if (expirationDays == 0) p++;
+        if (reuseCount == 0) p++;
+        if (minLength < 8) p++;
+        return p;
     }
 
     private static int depthOf(String ouPath) {
