@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -78,7 +79,8 @@ public class GoogleUsersCacheService {
         try {
             log.info("Ophalen LIVE Gebruiker data van Google voor: {}", adminEmail);
             Directory userDirectory = googleApiFactory.getDirectoryService(
-                    DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, adminEmail);
+                    Set.of(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY),
+                    adminEmail);
             Directory roleDirectory = googleApiFactory.getDirectoryService(
                     DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, adminEmail);
 

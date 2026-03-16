@@ -1,9 +1,11 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.password.*;
+import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.api.services.admin.directory.model.OrgUnit;
 import com.google.api.services.admin.directory.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,18 +20,21 @@ public class PasswordSettingsService {
 
     private final PolicyApiCacheService policyCache;
     private final GoogleUsersCacheService usersCache;
+    private final GoogleOrgUnitCacheService orgUnitCache;
 
     public PasswordSettingsService(PolicyApiCacheService policyCache,
-                                  GoogleUsersCacheService usersCache) {
+                                  GoogleUsersCacheService usersCache,
+                                  GoogleOrgUnitCacheService orgUnitCache) {
         this.policyCache = policyCache;
         this.usersCache = usersCache;
+        this.orgUnitCache = orgUnitCache;
     }
 
     public PasswordSettingsDto getPasswordSettings(String adminEmail) {
         var entry = usersCache.getOrFetchUsersData(adminEmail);
         List<User> allUsers = entry.allUsers();
 
-        PasswordPolicyDto policy = extractPasswordPolicy(adminEmail);
+        List<OuPasswordPolicyDto> passwordPoliciesByOu = buildPasswordPoliciesPerOu(adminEmail);
         TwoStepVerificationDto twoStepVerification = buildTwoStepVerification(adminEmail, allUsers);
         List<PasswordChangeRequirementDto> forcedChange = getUsersWithForcedPasswordChange(allUsers);
 
@@ -40,42 +45,105 @@ public class PasswordSettingsService {
         PasswordSettingsSummaryDto summary = new PasswordSettingsSummaryDto(
                 forcedChange.size(), enrolled, enforced, total);
 
-        return new PasswordSettingsDto(policy, twoStepVerification, forcedChange, summary);
+        return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary);
     }
 
-    private PasswordPolicyDto extractPasswordPolicy(String adminEmail) {
+    private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String adminEmail) {
+        List<String> ouPaths = collectAllOuPaths(adminEmail);
+        Map<String, String> ouIdToPath = Collections.emptyMap();
+        try {
+            ouIdToPath = policyCache.getOuIdToPathMap(adminEmail);
+        } catch (Exception e) {
+            log.warn("Could not fetch OU map: {}", e.getMessage());
+        }
+
+        List<OuPasswordPolicyDto> result = new ArrayList<>();
+        for (String path : ouPaths) {
+            OuPasswordPolicyDto policy = resolvePasswordPolicyForOu(adminEmail, path, ouIdToPath);
+            result.add(policy);
+        }
+        result.sort(Comparator.comparing(OuPasswordPolicyDto::orgUnitPath));
+        return result;
+    }
+
+    private List<String> collectAllOuPaths(String adminEmail) {
+        Set<String> paths = new LinkedHashSet<>();
+        paths.add("/");
+        try {
+            var ouEntry = orgUnitCache.getOrFetchOrgUnitData(adminEmail);
+            for (OrgUnit ou : ouEntry.allOrgUnits()) {
+                String path = ou.getOrgUnitPath();
+                if (path != null && !path.isBlank()) {
+                    paths.add(path.trim());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch OUs: {}", e.getMessage());
+        }
+        return new ArrayList<>(paths);
+    }
+
+    private OuPasswordPolicyDto resolvePasswordPolicyForOu(String adminEmail, String orgUnitPath, Map<String, String> ouIdToPath) {
+        String displayName = "/".equals(orgUnitPath) ? "Root" : orgUnitPath.substring(orgUnitPath.lastIndexOf('/') + 1);
+
         try {
             List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
+            JsonNode best = null;
+            String bestOuPath = null;
+            int bestDepth = -1;
+
             for (JsonNode p : policies) {
                 JsonNode setting = p.get("setting");
                 if (setting == null) continue;
                 String type = setting.path("type").asText("");
                 if (!type.contains("password")) continue;
 
-                JsonNode value = setting.get("value");
-                if (value == null) return defaultPolicy();
+                JsonNode query = p.get("policyQuery");
+                if (query == null) continue;
+                String ouRef = query.path("orgUnit").asText("");
+                String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouIdToPath);
+                if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
 
-                return new PasswordPolicyDto(
+                int depth = depthOf(policyOuPath);
+                if (depth > bestDepth) {
+                    best = p;
+                    bestOuPath = policyOuPath;
+                    bestDepth = depth;
+                }
+            }
+
+            if (best != null) {
+                JsonNode value = best.path("setting").path("value");
+                boolean reqLower = value.path("requireLowercase").asBoolean(false);
+                boolean reqUpper = value.path("requireUppercase").asBoolean(false);
+                boolean reqNumeric = value.path("requireNumeric").asBoolean(false);
+                boolean reqSpecial = value.path("requireSpecialChar").asBoolean(false);
+                boolean strongPassword = reqLower || reqUpper || reqNumeric || reqSpecial
+                        || value.path("strongPasswordRequired").asBoolean(false);
+
+                return new OuPasswordPolicyDto(
+                        orgUnitPath,
+                        displayName,
                         value.path("minLength").asInt(8),
-                        value.path("maxLength").asInt(100),
-                        value.path("requireLowercase").asBoolean(false),
-                        value.path("requireUppercase").asBoolean(false),
-                        value.path("requireNumeric").asBoolean(false),
-                        value.path("requireSpecialChar").asBoolean(false),
                         value.path("expirationDays").asInt(0),
+                        strongPassword,
+                        value.path("blockCommonPasswords").asBoolean(false),
                         value.path("reusePreventionCount").asInt(0),
-                        "Beleid van Policy API"
+                        !orgUnitPath.equals(bestOuPath)
                 );
             }
         } catch (Exception e) {
-            log.warn("Could not parse password policy: {}", e.getMessage());
+            log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
         }
-        return defaultPolicy();
+
+        return new OuPasswordPolicyDto(orgUnitPath, displayName, 8, 0, false, false, 0, true);
     }
 
-    private static PasswordPolicyDto defaultPolicy() {
-        return new PasswordPolicyDto(8, 100, false, false, false, false, 0, 0,
-                "Geen specifiek beleid gevonden of niet via API beschikbaar.");
+    private static int depthOf(String ouPath) {
+        if (ouPath == null || "/".equals(ouPath)) return 0;
+        int count = 0;
+        for (char c : ouPath.toCharArray()) if (c == '/') count++;
+        return count;
     }
 
     private TwoStepVerificationDto buildTwoStepVerification(String adminEmail, List<User> allUsers) {
