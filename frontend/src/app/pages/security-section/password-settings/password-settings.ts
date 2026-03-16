@@ -59,12 +59,6 @@ export class PasswordSettings implements OnInit {
     this.expandedOu.update((v) => (v === policy ? null : policy));
   }
 
-  getLockBoxClasses(problemCount: number): string {
-    if (problemCount === 0) return 'bg-[#E6F8F3] text-[#33D6A7]';
-    if (problemCount <= 2) return 'bg-[#FFF3DD] text-[#FFC107]';
-    return 'bg-[#FFECEC] text-[#FF3B3B]';
-  }
-
   openAdminPasswordSettings(): void {
     UtilityMethods.openAdminPage('https://admin.google.com/ac/security/password');
   }
