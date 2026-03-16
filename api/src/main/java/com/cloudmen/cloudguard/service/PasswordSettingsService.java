@@ -103,12 +103,13 @@ public class PasswordSettingsService {
             JsonNode best = null;
             String bestOuPath = null;
             int bestDepth = -1;
+            double bestSort = Double.NEGATIVE_INFINITY;
 
             for (JsonNode p : policies) {
                 JsonNode setting = p.get("setting");
                 if (setting == null) continue;
                 String type = setting.path("type").asText("");
-                if (!type.contains("password")) continue;
+                if (!"settings/security.password".equals(type)) continue;
 
                 JsonNode query = p.get("policyQuery");
                 if (query == null) continue;
@@ -117,10 +118,12 @@ public class PasswordSettingsService {
                 if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
 
                 int depth = depthOf(policyOuPath);
-                if (depth > bestDepth) {
+                double sortOrder = query.path("sortOrder").asDouble(0.0);
+                if (depth > bestDepth || (depth == bestDepth && sortOrder > bestSort)) {
                     best = p;
                     bestOuPath = policyOuPath;
                     bestDepth = depth;
+                    bestSort = sortOrder;
                 }
             }
 
@@ -128,45 +131,32 @@ public class PasswordSettingsService {
                 JsonNode value = best.path("setting").path("value");
                 inherited = !orgUnitPath.equals(bestOuPath);
 
-                if (value.has("minLength") && !value.get("minLength").isNull()) {
-                    minLength = value.get("minLength").asInt();
+                JsonNode ml = value.path("minimumLength");
+                if (!ml.isMissingNode() && !ml.isNull()) minLength = ml.asInt();
+
+                JsonNode ed = value.path("expirationDuration");
+                if (!ed.isMissingNode() && !ed.isNull()) {
+                    expirationDays = parseDurationToDays(ed.asText("0s"));
                 }
-                if (value.has("expirationDays") && !value.get("expirationDays").isNull()) {
-                    expirationDays = value.get("expirationDays").asInt();
+
+                JsonNode strength = value.path("allowedStrength");
+                if (!strength.isMissingNode() && !strength.isNull()) {
+                    strongPassword = "STRONG".equals(strength.asText());
                 }
-                if (value.has("strongPasswordRequired") && !value.get("strongPasswordRequired").isNull()) {
-                    strongPassword = value.get("strongPasswordRequired").asBoolean();
-                } else if (value.has("requireLowercase") || value.has("requireUppercase") || value.has("requireNumeric") || value.has("requireSpecialChar")) {
-                    boolean reqLower = value.path("requireLowercase").asBoolean(false);
-                    boolean reqUpper = value.path("requireUppercase").asBoolean(false);
-                    boolean reqNumeric = value.path("requireNumeric").asBoolean(false);
-                    boolean reqSpecial = value.path("requireSpecialChar").asBoolean(false);
-                    strongPassword = reqLower || reqUpper || reqNumeric || reqSpecial;
+
+                JsonNode reuse = value.path("allowReuse");
+                if (!reuse.isMissingNode() && !reuse.isNull()) {
+                    reuseCount = reuse.asBoolean() ? 0 : 1;
                 }
-                if (value.has("blockCommonPasswords") && !value.get("blockCommonPasswords").isNull()) {
-                    blockCommon = value.get("blockCommonPasswords").asBoolean();
-                }
-                if (value.has("reusePreventionCount") && !value.get("reusePreventionCount").isNull()) {
-                    reuseCount = value.get("reusePreventionCount").asInt();
-                }
-                if (value.has("securityKeyRequired") && !value.get("securityKeyRequired").isNull()) {
-                    securityKeyRequired = value.get("securityKeyRequired").asBoolean();
-                }
-                if (value.has("adminStrongPasswordEnforced") && !value.get("adminStrongPasswordEnforced").isNull()) {
-                    adminStrongPasswordEnforced = value.get("adminStrongPasswordEnforced").asBoolean();
-                } else if (value.has("enforceStrongPasswordForAdmin") && !value.get("enforceStrongPasswordForAdmin").isNull()) {
-                    adminStrongPasswordEnforced = value.get("enforceStrongPasswordForAdmin").asBoolean();
-                }
-                if (value.has("adminMinLength") && !value.get("adminMinLength").isNull()) {
-                    adminMinLength = value.get("adminMinLength").asInt();
-                } else if (value.has("minLengthForAdmin") && !value.get("minLengthForAdmin").isNull()) {
-                    adminMinLength = value.get("minLengthForAdmin").asInt();
+
+                JsonNode enforce = value.path("enforceRequirementsAtLogin");
+                if (!enforce.isMissingNode() && !enforce.isNull()) {
+                    adminStrongPasswordEnforced = enforce.asBoolean();
                 }
             }
         } catch (Exception e) {
             log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
         }
-
         int score = calculateScore(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
         int problemCount = countProblems(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
 
@@ -196,6 +186,17 @@ public class PasswordSettingsService {
         if (reuseCount != null && reuseCount == 0) p++;
         if (minLength != null && minLength < 8) p++;
         return p;
+    }
+
+    private static int parseDurationToDays(String duration) {
+        if (duration == null || duration.isBlank()) return 0;
+        try {
+            String stripped = duration.replace("s", "");
+            long seconds = Long.parseLong(stripped);
+            return (int) (seconds / 86400);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static int depthOf(String ouPath) {
