@@ -51,6 +51,14 @@ public class PolicyApiCacheService {
         this.directoryFactory = directoryFactory;
     }
 
+    /**
+     * Invalidates the policy cache so the next request fetches fresh data.
+     */
+    public void forceRefreshCache() {
+        policyCacheTimestamp.set(0);
+        ouCacheTimestamp.set(0);
+    }
+
     public List<JsonNode> getAllPolicies(String adminEmail) throws Exception {
         long now = System.currentTimeMillis();
         List<JsonNode> currentPolicies = cachedPolicies.get();

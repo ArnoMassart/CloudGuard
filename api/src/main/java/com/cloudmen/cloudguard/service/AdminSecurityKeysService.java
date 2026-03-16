@@ -3,6 +3,8 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminSecurityKeysResponse;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.admin.directory.Directory;
@@ -23,6 +25,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AdminSecurityKeysService {
@@ -36,11 +39,24 @@ public class AdminSecurityKeysService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
+    private final Cache<String, AdminSecurityKeysResponse> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
+
     public AdminSecurityKeysService(GoogleApiFactory apiFactory) {
         this.apiFactory = apiFactory;
     }
 
     public AdminSecurityKeysResponse getAdminsWithSecurityKeys(String adminEmail) {
+        return cache.get(adminEmail, this::fetchAdminsWithoutSecurityKeys);
+    }
+
+    public void forceRefreshCache(String adminEmail) {
+        cache.asMap().compute(adminEmail, (email, existing) -> fetchAdminsWithoutSecurityKeys(email));
+    }
+
+    private AdminSecurityKeysResponse fetchAdminsWithoutSecurityKeys(String adminEmail) {
         try {
             Set<String> directoryScopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
@@ -81,6 +97,8 @@ public class AdminSecurityKeysService {
                 String orgUnitPath = user.getOrgUnitPath() != null ? user.getOrgUnitPath() : "/";
                 boolean twoFactorEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
 
+                int numSecurityKeys = counts != null ? counts.numSecurityKeys : 0;
+                int numPasskeysEnrolled = counts != null ? counts.numPasskeysEnrolled : 0;
                 result.add(new AdminWithSecurityKeyDto(
                         id,
                         name,
@@ -88,8 +106,7 @@ public class AdminSecurityKeysService {
                         "Admin",
                         orgUnitPath,
                         twoFactorEnabled,
-                        counts.numSecurityKeys,
-                        counts.numPasskeysEnrolled
+                        numSecurityKeys
                 ));
             }
 

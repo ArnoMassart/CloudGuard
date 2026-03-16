@@ -33,6 +33,7 @@ export class PasswordSettings implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly expandedOu = signal<string | null>(null);
+  readonly isRefreshing = signal(false);
 
   ngOnInit(): void {
     this.#load();
@@ -73,6 +74,40 @@ export class PasswordSettings implements OnInit {
 
   retry(): void {
     this.#load();
+  }
+
+  refreshData(): void {
+    if (this.isRefreshing()) return;
+    this.isRefreshing.set(true);
+    this.#passwordSettingsService.refreshCache().subscribe({
+      next: () => {
+        let pending = 2;
+        const onDone = () => {
+          pending--;
+          if (pending === 0) this.isRefreshing.set(false);
+        };
+        this.#passwordSettingsService.getPasswordSettings().subscribe({
+          next: (settings) => {
+            this.data.set(settings);
+            onDone();
+          },
+          error: () => onDone(),
+        });
+        this.#adminSecurityKeysService.getAdminsWithSecurityKeys().subscribe({
+          next: (response) => {
+            this.adminsWithSecurityKeys.set(response.admins ?? []);
+            this.adminsWarning.set(response.errorMessage ?? null);
+            this.adminsError.set(null);
+            onDone();
+          },
+          error: () => onDone(),
+        });
+      },
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+    });
   }
 
   retryAdmins(): void {

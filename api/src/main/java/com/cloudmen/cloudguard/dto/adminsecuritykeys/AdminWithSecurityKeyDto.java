@@ -7,7 +7,6 @@ public record AdminWithSecurityKeyDto(
         String role,
         String orgUnitPath,
         boolean twoFactorEnabled,
-        int numSecurityKeys,
-        int numPasskeysEnrolled
+        int numSecurityKeys
 ) {
 }

@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.api.services.admin.directory.model.OrgUnit;
 import com.google.api.services.admin.directory.model.User;
@@ -21,13 +22,23 @@ public class PasswordSettingsService {
     private final PolicyApiCacheService policyCache;
     private final GoogleUsersCacheService usersCache;
     private final GoogleOrgUnitCacheService orgUnitCache;
+    private final AdminSecurityKeysService adminSecurityKeysService;
 
     public PasswordSettingsService(PolicyApiCacheService policyCache,
                                   GoogleUsersCacheService usersCache,
-                                  GoogleOrgUnitCacheService orgUnitCache) {
+                                  GoogleOrgUnitCacheService orgUnitCache,
+                                  AdminSecurityKeysService adminSecurityKeysService) {
         this.policyCache = policyCache;
         this.usersCache = usersCache;
         this.orgUnitCache = orgUnitCache;
+        this.adminSecurityKeysService = adminSecurityKeysService;
+    }
+
+    public void forceRefreshCache(String adminEmail) {
+        usersCache.forceRefreshCache(adminEmail);
+        orgUnitCache.forceRefreshCache(adminEmail);
+        policyCache.forceRefreshCache();
+        adminSecurityKeysService.forceRefreshCache(adminEmail);
     }
 
     public PasswordSettingsDto getPasswordSettings(String adminEmail) {
