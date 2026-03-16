@@ -65,8 +65,7 @@ export class PasswordSettings implements OnInit {
 
   hasPolicyData(policy: OuPasswordPolicy): boolean {
     return policy.minLength != null || policy.expirationDays != null ||
-      policy.strongPasswordRequired != null || policy.blockCommonPasswords != null ||
-      policy.reusePreventionCount != null;
+      policy.strongPasswordRequired != null || policy.reusePreventionCount != null;
   }
 
   openAdminPasswordSettings(): void {

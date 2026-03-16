@@ -14,7 +14,6 @@ export interface OuPasswordPolicy {
   minLength: number | null;
   expirationDays: number | null;
   strongPasswordRequired: boolean | null;
-  blockCommonPasswords: boolean | null;
   reusePreventionCount: number | null;
   inherited: boolean;
   securityKeyRequired: boolean | null;

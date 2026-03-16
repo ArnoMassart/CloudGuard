@@ -90,7 +90,6 @@ public class PasswordSettingsService {
         Integer minLength = null;
         Integer expirationDays = null;
         Boolean strongPassword = null;
-        Boolean blockCommon = null;
         Integer reuseCount = null;
         boolean inherited = true;
 
@@ -157,18 +156,17 @@ public class PasswordSettingsService {
         } catch (Exception e) {
             log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
         }
-        int score = calculateScore(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
-        int problemCount = countProblems(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
+        int score = calculateScore(minLength, expirationDays, strongPassword, reuseCount);
+        int problemCount = countProblems(minLength, expirationDays, strongPassword, reuseCount);
 
         return new OuPasswordPolicyDto(orgUnitPath, displayName, userCount, score, problemCount,
-                minLength, expirationDays, strongPassword, blockCommon, reuseCount, inherited,
+                minLength, expirationDays, strongPassword, reuseCount, inherited,
                 securityKeyRequired, adminStrongPasswordEnforced, adminMinLength);
     }
 
-    private static int calculateScore(Integer minLength, Integer expirationDays, Boolean strongPassword, Boolean blockCommon, Integer reuseCount) {
+    private static int calculateScore(Integer minLength, Integer expirationDays, Boolean strongPassword, Integer reuseCount) {
         int s = 0;
         if (Boolean.TRUE.equals(strongPassword)) s += 25;
-        if (Boolean.TRUE.equals(blockCommon)) s += 25;
         if (expirationDays != null && expirationDays > 0) s += 25;
         if (reuseCount != null && reuseCount > 0) s += 25;
         if (minLength != null) {
@@ -178,10 +176,9 @@ public class PasswordSettingsService {
         return Math.min(100, s);
     }
 
-    private static int countProblems(Integer minLength, Integer expirationDays, Boolean strongPassword, Boolean blockCommon, Integer reuseCount) {
+    private static int countProblems(Integer minLength, Integer expirationDays, Boolean strongPassword, Integer reuseCount) {
         int p = 0;
         if (strongPassword != null && !strongPassword) p++;
-        if (blockCommon != null && !blockCommon) p++;
         if (expirationDays != null && expirationDays == 0) p++;
         if (reuseCount != null && reuseCount == 0) p++;
         if (minLength != null && minLength < 8) p++;

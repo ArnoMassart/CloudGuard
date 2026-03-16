@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.dto.password;
 /**
  * Password policy for a specific Organizational Unit.
  * Matches the Admin Console layout: minimale lengte, wachtwoordverloop,
- * sterke wachtwoorden, algemene wachtwoorden blokkeren, wachtwoordgeschiedenis.
+ * sterke wachtwoorden, wachtwoordgeschiedenis.
  */
 public record OuPasswordPolicyDto(
         String orgUnitPath,
@@ -14,7 +14,6 @@ public record OuPasswordPolicyDto(
         Integer minLength,
         Integer expirationDays,
         Boolean strongPasswordRequired,
-        Boolean blockCommonPasswords,
         Integer reusePreventionCount,
         boolean inherited,
         Boolean securityKeyRequired,
