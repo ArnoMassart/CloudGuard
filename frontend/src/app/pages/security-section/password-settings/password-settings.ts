@@ -27,7 +27,12 @@ export class PasswordSettings implements OnInit {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly expandedOu = signal<string | null>(null);
+  readonly securityKeysExpanded = signal(true);
   readonly isRefreshing = signal(false);
+
+  toggleSecurityKeys(): void {
+    this.securityKeysExpanded.update((v) => !v);
+  }
 
   ngOnInit(): void {
     this.#load();
