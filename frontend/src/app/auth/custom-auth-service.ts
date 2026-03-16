@@ -7,7 +7,6 @@ import { catchError, tap, timeout } from 'rxjs/operators';
 import { User } from '../models/users/User';
 import { AuthService } from '@auth0/auth0-angular';
 import { WarmupCacheService } from '../services/warmup-cache-service';
-import { TeamleaderService } from '../services/teamleader-service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +15,6 @@ export class CustomAuthService {
   readonly #API_URL = RouteService.getBackendUrl('/auth');
   readonly #http = inject(HttpClient);
   readonly #router = inject(Router);
-  readonly #tlService = inject(TeamleaderService);
 
   // BehaviorSubject(false): app start altijd op login tot sessie bevestigd is
   readonly #loggedInStatus = new ReplaySubject<boolean>(1);

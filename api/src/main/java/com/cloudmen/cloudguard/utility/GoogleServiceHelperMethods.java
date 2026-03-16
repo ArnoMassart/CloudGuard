@@ -34,10 +34,9 @@ public class GoogleServiceHelperMethods {
         LocalDate now = LocalDate.now();
 
         long daysSinceLogin = ChronoUnit.DAYS.between(loginDate, now);
-        long yearsSinceLogin = ChronoUnit.YEARS.between(loginDate, now);
 
         if (isActive && !isTwoFactorEnabled) return false;
-        if (isActive && yearsSinceLogin >= 1) return false;
+        if (isActive && daysSinceLogin >= 90) return false;
         return isActive || daysSinceLogin > 7;
     }
 

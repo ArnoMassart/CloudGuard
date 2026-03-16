@@ -12,6 +12,7 @@ import { DashboardPageResponse } from '../../models/dashboard/DashboardPageRespo
 import { DashboardOverviewResponse } from '../../models/dashboard/DashboardOverviewResponse';
 import { PageWarnings } from '../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { ReportService } from '../../services/report-service';
 
 @Component({
   selector: 'app-home',
@@ -34,13 +35,14 @@ export class Home implements OnInit {
   readonly Icons = AppIcons;
   readonly UtilityMethods = UtilityMethods;
   readonly #dashboardService = inject(DashboardService);
+  readonly #reportService = inject(ReportService);
   readonly #router = inject(Router);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isLoading = signal(false);
-  readonly isRefreshing = signal<boolean>(false);
+  readonly isGenerating = signal<boolean>(false);
 
   readonly hasWarnings = signal(false);
 
@@ -69,15 +71,14 @@ export class Home implements OnInit {
     this.#router.navigate([link]);
   }
 
-  refreshData() {
-    if (this.isRefreshing()) return;
+  generateRapport() {
+    if (this.isGenerating()) return;
 
-    this.isRefreshing.set(true);
+    this.isGenerating.set(true);
 
-    this.#loadDashboardData();
-    this.#loadPageOverview();
+    this.#createSecurityRapport();
 
-    this.isRefreshing.set(false);
+    this.isGenerating.set(false);
   }
 
   // ==========================================
@@ -115,5 +116,25 @@ export class Home implements OnInit {
     if (this.pageOverview()?.criticalNotifications! > 0) {
       this.hasWarnings.set(true);
     }
+  }
+
+  #createSecurityRapport() {
+    this.#reportService.downloadSecurityRapport().subscribe({
+      next: (blob: Blob) => {
+        const url = globalThis.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Security_Report_${'CLOUDMEN_Labo'}.pdf`;
+
+        link.click();
+
+        globalThis.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Download failed', err);
+        alert('Could not generate PDF. Please try again.');
+      },
+    });
   }
 }
