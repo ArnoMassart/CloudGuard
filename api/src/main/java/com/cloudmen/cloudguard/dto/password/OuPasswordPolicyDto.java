@@ -11,14 +11,14 @@ public record OuPasswordPolicyDto(
         int userCount,
         int score,
         int problemCount,
-        int minLength,
-        int expirationDays,
-        boolean strongPasswordRequired,
-        boolean blockCommonPasswords,
-        int reusePreventionCount,
+        Integer minLength,
+        Integer expirationDays,
+        Boolean strongPasswordRequired,
+        Boolean blockCommonPasswords,
+        Integer reusePreventionCount,
         boolean inherited,
-        boolean securityKeyRequired,
-        boolean adminStrongPasswordEnforced,
-        int adminMinLength
+        Boolean securityKeyRequired,
+        Boolean adminStrongPasswordEnforced,
+        Integer adminMinLength
 ) {
 }

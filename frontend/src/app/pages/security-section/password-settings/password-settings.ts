@@ -63,6 +63,12 @@ export class PasswordSettings implements OnInit {
     return this.data()?.twoStepVerification.byOrgUnit.find((ou) => ou.orgUnitPath === orgUnitPath);
   }
 
+  hasPolicyData(policy: OuPasswordPolicy): boolean {
+    return policy.minLength != null || policy.expirationDays != null ||
+      policy.strongPasswordRequired != null || policy.blockCommonPasswords != null ||
+      policy.reusePreventionCount != null;
+  }
+
   openAdminPasswordSettings(): void {
     UtilityMethods.openAdminPage('https://admin.google.com/ac/security/password');
   }

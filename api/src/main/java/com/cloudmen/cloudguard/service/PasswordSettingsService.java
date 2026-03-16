@@ -87,15 +87,16 @@ public class PasswordSettingsService {
     private OuPasswordPolicyDto resolvePasswordPolicyForOu(String adminEmail, String orgUnitPath, Map<String, String> ouIdToPath, int userCount) {
         String displayName = "/".equals(orgUnitPath) ? "Root" : orgUnitPath.substring(orgUnitPath.lastIndexOf('/') + 1);
 
-        int minLength = 8;
-        int expirationDays = 0;
-        boolean strongPassword = false;
-        boolean blockCommon = false;
-        int reuseCount = 0;
+        Integer minLength = null;
+        Integer expirationDays = null;
+        Boolean strongPassword = null;
+        Boolean blockCommon = null;
+        Integer reuseCount = null;
         boolean inherited = true;
-        boolean securityKeyRequired = false;
-        boolean adminStrongPasswordEnforced = false;
-        int adminMinLength = 8;
+
+        Boolean securityKeyRequired = null;
+        Boolean adminStrongPasswordEnforced = null;
+        Integer adminMinLength = null;
 
         try {
             List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
@@ -125,22 +126,42 @@ public class PasswordSettingsService {
 
             if (best != null) {
                 JsonNode value = best.path("setting").path("value");
-                boolean reqLower = value.path("requireLowercase").asBoolean(false);
-                boolean reqUpper = value.path("requireUppercase").asBoolean(false);
-                boolean reqNumeric = value.path("requireNumeric").asBoolean(false);
-                boolean reqSpecial = value.path("requireSpecialChar").asBoolean(false);
-                strongPassword = reqLower || reqUpper || reqNumeric || reqSpecial
-                        || value.path("strongPasswordRequired").asBoolean(false);
-                minLength = value.path("minLength").asInt(8);
-                expirationDays = value.path("expirationDays").asInt(0);
-                blockCommon = value.path("blockCommonPasswords").asBoolean(false);
-                reuseCount = value.path("reusePreventionCount").asInt(0);
                 inherited = !orgUnitPath.equals(bestOuPath);
-                securityKeyRequired = value.path("securityKeyRequired").asBoolean(false);
-                adminStrongPasswordEnforced = value.path("adminStrongPasswordEnforced").asBoolean(false)
-                        || value.path("enforceStrongPasswordForAdmin").asBoolean(false);
-                int adminMin = value.path("adminMinLength").asInt(-1);
-                adminMinLength = adminMin >= 0 ? adminMin : value.path("minLengthForAdmin").asInt(minLength);
+
+                if (value.has("minLength") && !value.get("minLength").isNull()) {
+                    minLength = value.get("minLength").asInt();
+                }
+                if (value.has("expirationDays") && !value.get("expirationDays").isNull()) {
+                    expirationDays = value.get("expirationDays").asInt();
+                }
+                if (value.has("strongPasswordRequired") && !value.get("strongPasswordRequired").isNull()) {
+                    strongPassword = value.get("strongPasswordRequired").asBoolean();
+                } else if (value.has("requireLowercase") || value.has("requireUppercase") || value.has("requireNumeric") || value.has("requireSpecialChar")) {
+                    boolean reqLower = value.path("requireLowercase").asBoolean(false);
+                    boolean reqUpper = value.path("requireUppercase").asBoolean(false);
+                    boolean reqNumeric = value.path("requireNumeric").asBoolean(false);
+                    boolean reqSpecial = value.path("requireSpecialChar").asBoolean(false);
+                    strongPassword = reqLower || reqUpper || reqNumeric || reqSpecial;
+                }
+                if (value.has("blockCommonPasswords") && !value.get("blockCommonPasswords").isNull()) {
+                    blockCommon = value.get("blockCommonPasswords").asBoolean();
+                }
+                if (value.has("reusePreventionCount") && !value.get("reusePreventionCount").isNull()) {
+                    reuseCount = value.get("reusePreventionCount").asInt();
+                }
+                if (value.has("securityKeyRequired") && !value.get("securityKeyRequired").isNull()) {
+                    securityKeyRequired = value.get("securityKeyRequired").asBoolean();
+                }
+                if (value.has("adminStrongPasswordEnforced") && !value.get("adminStrongPasswordEnforced").isNull()) {
+                    adminStrongPasswordEnforced = value.get("adminStrongPasswordEnforced").asBoolean();
+                } else if (value.has("enforceStrongPasswordForAdmin") && !value.get("enforceStrongPasswordForAdmin").isNull()) {
+                    adminStrongPasswordEnforced = value.get("enforceStrongPasswordForAdmin").asBoolean();
+                }
+                if (value.has("adminMinLength") && !value.get("adminMinLength").isNull()) {
+                    adminMinLength = value.get("adminMinLength").asInt();
+                } else if (value.has("minLengthForAdmin") && !value.get("minLengthForAdmin").isNull()) {
+                    adminMinLength = value.get("minLengthForAdmin").asInt();
+                }
             }
         } catch (Exception e) {
             log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
@@ -154,24 +175,26 @@ public class PasswordSettingsService {
                 securityKeyRequired, adminStrongPasswordEnforced, adminMinLength);
     }
 
-    private static int calculateScore(int minLength, int expirationDays, boolean strongPassword, boolean blockCommon, int reuseCount) {
+    private static int calculateScore(Integer minLength, Integer expirationDays, Boolean strongPassword, Boolean blockCommon, Integer reuseCount) {
         int s = 0;
-        if (strongPassword) s += 25;
-        if (blockCommon) s += 25;
-        if (expirationDays > 0) s += 25;
-        if (reuseCount > 0) s += 25;
-        if (minLength >= 12) s += 20;
-        else if (minLength >= 8) s += 10;
+        if (Boolean.TRUE.equals(strongPassword)) s += 25;
+        if (Boolean.TRUE.equals(blockCommon)) s += 25;
+        if (expirationDays != null && expirationDays > 0) s += 25;
+        if (reuseCount != null && reuseCount > 0) s += 25;
+        if (minLength != null) {
+            if (minLength >= 12) s += 20;
+            else if (minLength >= 8) s += 10;
+        }
         return Math.min(100, s);
     }
 
-    private static int countProblems(int minLength, int expirationDays, boolean strongPassword, boolean blockCommon, int reuseCount) {
+    private static int countProblems(Integer minLength, Integer expirationDays, Boolean strongPassword, Boolean blockCommon, Integer reuseCount) {
         int p = 0;
-        if (!strongPassword) p++;
-        if (!blockCommon) p++;
-        if (expirationDays == 0) p++;
-        if (reuseCount == 0) p++;
-        if (minLength < 8) p++;
+        if (strongPassword != null && !strongPassword) p++;
+        if (blockCommon != null && !blockCommon) p++;
+        if (expirationDays != null && expirationDays == 0) p++;
+        if (reuseCount != null && reuseCount == 0) p++;
+        if (minLength != null && minLength < 8) p++;
         return p;
     }
 

@@ -11,15 +11,15 @@ export interface OuPasswordPolicy {
   userCount: number;
   score: number;
   problemCount: number;
-  minLength: number;
-  expirationDays: number;
-  strongPasswordRequired: boolean;
-  blockCommonPasswords: boolean;
-  reusePreventionCount: number;
+  minLength: number | null;
+  expirationDays: number | null;
+  strongPasswordRequired: boolean | null;
+  blockCommonPasswords: boolean | null;
+  reusePreventionCount: number | null;
   inherited: boolean;
-  securityKeyRequired: boolean;
-  adminStrongPasswordEnforced: boolean;
-  adminMinLength: number;
+  securityKeyRequired: boolean | null;
+  adminStrongPasswordEnforced: boolean | null;
+  adminMinLength: number | null;
 }
 
 export interface TwoStepVerification {
