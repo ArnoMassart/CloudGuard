@@ -6,5 +6,4 @@ export interface AdminWithSecurityKey {
   orgUnitPath: string;
   twoFactorEnabled: boolean;
   numSecurityKeys: number;
-  numPasskeysEnrolled: number;
 }

@@ -98,7 +98,6 @@ public class AdminSecurityKeysService {
                 boolean twoFactorEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
 
                 int numSecurityKeys = counts != null ? counts.numSecurityKeys : 0;
-                int numPasskeysEnrolled = counts != null ? counts.numPasskeysEnrolled : 0;
                 result.add(new AdminWithSecurityKeyDto(
                         id,
                         name,
