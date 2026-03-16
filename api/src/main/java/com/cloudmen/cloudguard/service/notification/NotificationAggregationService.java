@@ -12,7 +12,7 @@ import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.notifications.NotificationsResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
-import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
+import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
