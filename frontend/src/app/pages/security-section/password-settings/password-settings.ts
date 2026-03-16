@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { PasswordSettingsService } from '../../../services/password-settings-service';
-import { OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
+import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { LucideAngularModule } from 'lucide-angular';
@@ -57,6 +57,10 @@ export class PasswordSettings implements OnInit {
 
   toggleOu(policy: string): void {
     this.expandedOu.update((v) => (v === policy ? null : policy));
+  }
+
+  get2SvForOu(orgUnitPath: string): OrgUnit2Sv | undefined {
+    return this.data()?.twoStepVerification.byOrgUnit.find((ou) => ou.orgUnitPath === orgUnitPath);
   }
 
   openAdminPasswordSettings(): void {
