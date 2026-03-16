@@ -1,85 +1,57 @@
 <div class="px-10 py-6">
-  <app-page-header
-    Title="Apparaten Controle"
+  <app-page-header Title="Apparaten Controle"
     Description="Controleer apparaten die zijn verbonden met Google Workspace op naleving van beveiligingsvereisten"
-    AdminLink="devices/list"
-  />
+    AdminLink="devices/list" />
 
   <div class="w-full flex flex-col gap-5 pt-6">
     <div class="w-full flex gap-4">
-      <app-section-top-card
-        class="flex-1"
-        Title="Totaal apparaten"
-        [Value]="pageOverview()?.totalDevices"
-        [Icon]="Icons.SmartPhone"
-      />
-      <app-section-top-card
-        class="flex-1"
-        Title="Non-compliant"
-        [Value]="pageOverview()?.totalNonCompliant"
-        BackgroundColor="#ffe2e2"
-        IconColor="#e7000b"
-        TextColor="#e7000b"
-        [Icon]="Icons.TriangleAlert"
-      />
-      <app-section-top-card
-        class="flex-1"
-        Title="Goedgekeurde apparaten"
-        [Value]="pageOverview()?.totalApprovedDevices"
-        BackgroundColor="#dbfce7"
-        IconColor="#17b04f"
-        [Icon]="Icons.CircleCheck"
-      />
-      <app-section-top-card
-        class="flex-1"
-        Title="Security Score"
-        [Value]="pageOverview()?.securityScore"
-        [IsPercentage]="true"
-        BackgroundColor="#fef9c2"
-        IconColor="#d69518"
-      />
+      <app-section-top-card class="flex-1" Title="Totaal apparaten" [Value]="pageOverview()?.totalDevices"
+        [Icon]="Icons.SmartPhone" />
+      <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
+        BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+      <app-section-top-card class="flex-1" Title="Goedgekeurde apparaten" [Value]="pageOverview()?.totalApprovedDevices"
+        BackgroundColor="#dbfce7" IconColor="#17b04f" [Icon]="Icons.CircleCheck" />
+      <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
+        [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
     </div>
 
     @if (hasWarnings() && !isLoading()) {
-      <app-page-warnings
-        [hasMultipleWarnings]="hasMultipleWarnings()"
-        [isExpanded]="isExpanded()"
-        (toggle)="toggleExpanded()"
-      >
-        <div body class="flex flex-col gap-2">
-          @if (this.devicePageWarnings().lockScreenWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.lockScreenCount }}
-              {{ pageOverview()?.lockScreenCount === 1 ? 'apparaat' : 'apparaten' }} zonder
-              vergrendelscherm beveiliging
-            </app-page-warnings-item>
-          }
+    <app-page-warnings [hasMultipleWarnings]="hasMultipleWarnings()" [isExpanded]="isExpanded()"
+      (toggle)="toggleExpanded()">
+      <div body class="flex flex-col gap-2">
+        @if (this.devicePageWarnings().lockScreenWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.lockScreenCount }}
+          {{ pageOverview()?.lockScreenCount === 1 ? 'apparaat' : 'apparaten' }} zonder
+          vergrendelscherm beveiliging
+        </app-page-warnings-item>
+        }
 
-          @if (this.devicePageWarnings().encryptionWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.encryptionCount }}
-              {{ pageOverview()?.encryptionCount === 1 ? 'apparaat' : 'apparaten' }} zonder
-              encryptie geactiveerd
-            </app-page-warnings-item>
-          }
+        @if (this.devicePageWarnings().encryptionWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.encryptionCount }}
+          {{ pageOverview()?.encryptionCount === 1 ? 'apparaat' : 'apparaten' }} zonder
+          encryptie geactiveerd
+        </app-page-warnings-item>
+        }
 
-          @if (this.devicePageWarnings().osVersionWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.osVersionCount }}
-              {{ pageOverview()?.osVersionCount === 1 ? 'apparaat' : 'apparaten' }} met verouderde
-              OS versie
-            </app-page-warnings-item>
-          }
+        @if (this.devicePageWarnings().osVersionWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.osVersionCount }}
+          {{ pageOverview()?.osVersionCount === 1 ? 'apparaat' : 'apparaten' }} met verouderde
+          OS versie
+        </app-page-warnings-item>
+        }
 
-          @if (this.devicePageWarnings().integrityWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.integrityCount }}
-              {{ pageOverview()?.integrityCount === 1 ? 'apparaat' : 'apparaten' }} met integriteits
-              problemen (root/jailbreak)
-            </app-page-warnings-item>
-          }
-        </div>
-      </app-page-warnings>
+        @if (this.devicePageWarnings().integrityWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.integrityCount }}
+          {{ pageOverview()?.integrityCount === 1 ? 'apparaat' : 'apparaten' }} met integriteits
+          problemen (root/jailbreak)
+        </app-page-warnings-item>
+        }
+      </div>
+    </app-page-warnings>
     }
 
     <div class="flex w-full items-center justify-end gap-3">
@@ -92,413 +64,303 @@
       <div class="flex gap-3 flex-wrap">
         <!-- Status filter -->
         <div class="relative">
-          <select
-            [ngModel]="selectedStatus()"
-            (ngModelChange)="onStatusChange($event)"
+          <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
             class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
             [class.border-primary]="selectedStatus() !== statusEnum.All"
             [class.ring-1]="selectedStatus() !== statusEnum.All"
-            [class.ring-primary]="selectedStatus() !== statusEnum.All"
-          >
+            [class.ring-primary]="selectedStatus() !== statusEnum.All">
             @for (status of statusOptions; track status) {
-              <option [value]="status">{{ status }}</option>
+            <option [value]="status">{{ status }}</option>
             }
           </select>
-          <i-lucide
-            [img]="Icons.ChevronDown"
-            size="18"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-          >
+          <i-lucide [img]="Icons.ChevronDown" size="18"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
           </i-lucide>
         </div>
 
         <!-- Device type filter -->
         <div class="relative">
-          <select
-            [ngModel]="selectedDeviceType()"
-            (ngModelChange)="onDeviceTypeChange($event)"
+          <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
             class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
             [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
             [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
-            [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
-          >
+            [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">
             @for (type of uniqueDeviceTypes(); track type) {
-              <option [value]="type">{{ type }}</option>
+            <option [value]="type">{{ type }}</option>
             }
           </select>
-          <i-lucide
-            [img]="Icons.ChevronDown"
-            size="18"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-          >
+          <i-lucide [img]="Icons.ChevronDown" size="18"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
           </i-lucide>
         </div>
       </div>
     </div>
 
     @if (!isLoading()) {
-      @if (devices().length > 0) {
-        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-          <div class="flex justify-between items-center mx-5.5">
-            <span class="font-medium text-lg">Alle mobiele apparaten</span>
-            <button
-              (click)="refreshData()"
-              [disabled]="isRefreshing()"
-              class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-            >
-              <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-              </i-lucide>
+    @if (devices().length > 0) {
+    <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+      <div class="flex justify-between items-center mx-5.5">
+        <span class="font-medium text-lg">Alle apparaten</span>
+        <button (click)="refreshData()" [disabled]="isRefreshing()"
+          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+          <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+          </i-lucide>
 
-              {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
-            </button>
-          </div>
+          {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+        </button>
+      </div>
 
-          <table class="w-full text-left border-collapse mt-6">
-            <thead>
-              <tr class="border-b border-t border-gray-200 bg-gray-50/50">
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase"></th>
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Gebruiker</th>
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Apparaat</th>
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">OS & Model</th>
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste sync</th>
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Compliance</th>
-                <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
+      <table class="w-full text-left border-collapse mt-6">
+        <thead>
+          <tr class="border-b border-t border-gray-200 bg-gray-50/50">
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase"></th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Gebruiker</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Apparaat</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">OS & Model</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste sync</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Compliance</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
+          </tr>
+        </thead>
 
-            <tbody class="divide-y divide-gray-200">
-              @for (device of devices(); track device.resourceId) {
-                <tr
-                  class="hover:bg-gray-50 transition-colors cursor-pointer"
-                  (click)="toggleExpand(device.resourceId)"
-                >
-                  <td class="px-6 py-4">
-                    <i-lucide
-                      [img]="
+        <tbody class="divide-y divide-gray-200">
+          @for (device of devices(); track device.resourceId) {
+          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="toggleExpand(device.resourceId)">
+            <td class="px-6 py-4">
+              <i-lucide [img]="
                         expandedDevice() === device.resourceId
                           ? Icons.ChevronDown
                           : Icons.ChevronRight
-                      "
-                      class="text-gray-500 transition-transform"
-                      size="20"
-                    />
-                  </td>
+                      " class="text-gray-500 transition-transform" size="20" />
+            </td>
 
-                  <td class="px-6 py-4">
-                    <div class="flex flex-col">
-                      <span class="font-medium text-slate-900 text-sm">{{ device.userName }}</span>
-                      <span class="text-xs text-gray-500">{{ device.userEmail }}</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <span class="text-[13px]">{{ device.deviceName }}</span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex gap-2">
-                      <i-lucide [img]="Icons.SmartPhone" class="text-primary" size="20" />
-                      <div class="flex flex-col">
-                        <span class="text-[13px] font-medium">{{ device.os }}</span>
-                        <span class="text-[13px] text-muted-foreground">{{ device.model }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex gap-1 items-center">
-                      <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
-                      <span class="text-[13px] text-muted-foreground font-light">{{
-                        device.lastSync
-                      }}</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div
-                      class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
-                      [class.text-emerald-600]="device.complianceScore >= 75"
-                      [class.bg-[#dbfce7]]="device.complianceScore >= 75"
-                      [class.text-[#d69518]]="
+            <td class="px-6 py-4">
+              <div class="flex flex-col">
+                <span class="font-medium text-slate-900 text-sm">{{ device.userName }}</span>
+                <span class="text-xs text-gray-500">{{ device.userEmail }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="text-[13px]">{{ device.deviceName }}</span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex gap-2">
+                <i-lucide [img]="Icons.SmartPhone" class="text-primary" size="20" />
+                <div class="flex flex-col">
+                  <span class="text-[13px] font-medium">{{ device.os }}</span>
+                  <span class="text-[13px] text-muted-foreground">{{ device.model }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex gap-1 items-center">
+                <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
+                <span class="text-[13px] text-muted-foreground font-light">{{
+                  device.lastSync
+                  }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+                [class.text-emerald-600]="device.complianceScore >= 75"
+                [class.bg-[#dbfce7]]="device.complianceScore >= 75" [class.text-[#d69518]]="
                         device.complianceScore < 75 && device.complianceScore >= 50
-                      "
-                      [class.bg-[#fef9c2]]="
+                      " [class.bg-[#fef9c2]]="
                         device.complianceScore < 75 && device.complianceScore >= 50
-                      "
-                      [class.text-[#e7000b]]="device.complianceScore < 50"
-                      [class.bg-[#ffe2e2]]="device.complianceScore < 50"
-                    >
-                      <lucide-icon
-                        [img]="device.complianceScore >= 75 ? Icons.CircleCheck : Icons.CircleX"
-                        size="14"
-                      ></lucide-icon>
-                      <span>{{ device.complianceScore }}%</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div
-                      class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
-                      [class.text-emerald-600]="device.status === 'Approved'"
-                      [class.bg-[#dbfce7]]="device.status === 'Approved'"
-                      [class.text-[#d69518]]="device.status === 'Pending'"
-                      [class.bg-[#fef9c2]]="device.status === 'Pending'"
-                      [class.text-[#e7000b]]="device.status === 'Blocked'"
-                      [class.bg-[#ffe2e2]]="device.status === 'Blocked'"
-                    >
-                      <lucide-icon
-                        [img]="
+                      " [class.text-[#e7000b]]="device.complianceScore < 50"
+                [class.bg-[#ffe2e2]]="device.complianceScore < 50">
+                <lucide-icon [img]="device.complianceScore >= 75 ? Icons.CircleCheck : Icons.CircleX"
+                  size="14"></lucide-icon>
+                <span>{{ device.complianceScore }}%</span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+                [class.text-emerald-600]="device.status === 'Approved'"
+                [class.bg-[#dbfce7]]="device.status === 'Approved'" [class.text-[#d69518]]="device.status === 'Pending'"
+                [class.bg-[#fef9c2]]="device.status === 'Pending'" [class.text-[#e7000b]]="device.status === 'Blocked'"
+                [class.bg-[#ffe2e2]]="device.status === 'Blocked'">
+                <lucide-icon [img]="
                           device.status === 'Approved'
                             ? Icons.Shield
                             : device.status === 'Pending'
                               ? Icons.Clock
                               : Icons.ShieldAlert
-                        "
-                        size="14"
-                      ></lucide-icon>
-                      {{
-                        device.status === 'Approved'
-                          ? 'Approved'
-                          : device.status === 'Pending'
-                            ? 'Pending'
-                            : 'Blocked'
-                      }}
-                    </div>
-                  </td>
-                </tr>
+                        " size="14"></lucide-icon>
+                {{
+                device.status === 'Approved'
+                ? 'Approved'
+                : device.status === 'Pending'
+                ? 'Pending'
+                : 'Blocked'
+                }}
+              </div>
+            </td>
+          </tr>
 
-                @if (expandedDevice() === device.resourceId) {
-                  <tr class="bg-[#f9fafb] border-b border-gray-200">
-                    <td colspan="7" class="px-12 py-6">
-                      <div class="grid grid-cols-2 gap-4">
-                        <div
-                          class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm"
-                        >
-                          <div
-                            class="p-2.5 rounded-lg"
-                            [ngClass]="
+          @if (expandedDevice() === device.resourceId) {
+          <tr class="bg-[#f9fafb] border-b border-gray-200">
+            <td colspan="7" class="px-12 py-6">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
+                  <div class="p-2.5 rounded-lg" [ngClass]="
                               device.lockSecure
                                 ? 'bg-[#dbfce7] text-emerald-600'
                                 : 'bg-[#ffe2e2] text-[#e7000b]'
-                            "
-                          >
-                            <lucide-icon [img]="Icons.Lock" size="22"></lucide-icon>
-                          </div>
-                          <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                              <span
-                                class="font-medium text-sm"
-                                [ngClass]="
+                            ">
+                    <lucide-icon [img]="Icons.Lock" size="22"></lucide-icon>
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-sm" [ngClass]="
                                   device.lockSecure ? 'text-emerald-700' : 'text-[#e7000b]'
-                                "
-                                >Vergrendelscherm</span
-                              >
-                              @if (!device.lockSecure) {
-                                <i-lucide
-                                  [img]="Icons.ExternalLink"
-                                  size="14"
-                                  class="text-[#e7000b] cursor-pointer"
-                                  (click)="
+                                ">Vergrendelscherm</span>
+                      @if (!device.lockSecure) {
+                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
                                       'https://admin.google.com/ac/devices/list'
                                     )
-                                  "
-                                ></i-lucide>
-                              }
-                              <i-lucide
-                                [img]="device.lockSecure ? Icons.CircleCheck : Icons.TriangleAlert"
-                                size="14"
-                                [class]="device.lockSecure ? 'text-emerald-600' : 'text-[#e7000b]'"
-                              ></i-lucide>
-                            </div>
-                            <span class="text-sm text-gray-500">{{ device.screenLockText }}</span>
-                          </div>
-                        </div>
+                                  "></i-lucide>
+                      }
+                      <i-lucide [img]="device.lockSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
+                        [class]="device.lockSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></i-lucide>
+                    </div>
+                    <span class="text-sm text-gray-500">{{ device.screenLockText }}</span>
+                  </div>
+                </div>
 
-                        <div
-                          class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm"
-                        >
-                          <div
-                            class="p-2.5 rounded-lg"
-                            [ngClass]="
+                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
+                  <div class="p-2.5 rounded-lg" [ngClass]="
                               device.encSecure
                                 ? 'bg-[#dbfce7] text-emerald-600'
                                 : 'bg-[#ffe2e2] text-[#e7000b]'
-                            "
-                          >
-                            <lucide-icon [img]="Icons.HardDrive" size="22"></lucide-icon>
-                          </div>
-                          <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                              <span
-                                class="font-medium text-sm"
-                                [ngClass]="device.encSecure ? 'text-emerald-700' : 'text-[#e7000b]'"
-                                >Encryptie</span
-                              >
-                              @if (!device.encSecure) {
-                                <i-lucide
-                                  [img]="Icons.ExternalLink"
-                                  size="14"
-                                  class="text-[#e7000b] cursor-pointer"
-                                  (click)="
+                            ">
+                    <lucide-icon [img]="Icons.HardDrive" size="22"></lucide-icon>
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-sm"
+                        [ngClass]="device.encSecure ? 'text-emerald-700' : 'text-[#e7000b]'">Encryptie</span>
+                      @if (!device.encSecure) {
+                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
                                       'https://admin.google.com/ac/devices/list'
                                     )
-                                  "
-                                ></i-lucide>
-                              }
-                              <lucide-icon
-                                [img]="device.encSecure ? Icons.CircleCheck : Icons.TriangleAlert"
-                                size="14"
-                                [class]="device.encSecure ? 'text-emerald-600' : 'text-[#e7000b]'"
-                              ></lucide-icon>
-                            </div>
-                            <span class="text-sm text-gray-500">{{ device.encryptionText }}</span>
-                          </div>
-                        </div>
+                                  "></i-lucide>
+                      }
+                      <lucide-icon [img]="device.encSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
+                        [class]="device.encSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
+                    </div>
+                    <span class="text-sm text-gray-500">{{ device.encryptionText }}</span>
+                  </div>
+                </div>
 
-                        <div
-                          class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm"
-                        >
-                          <div
-                            class="p-2.5 rounded-lg"
-                            [ngClass]="
+                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
+                  <div class="p-2.5 rounded-lg" [ngClass]="
                               device.osSecure
                                 ? 'bg-[#dbfce7] text-emerald-600'
                                 : 'bg-[#ffe2e2] text-[#e7000b]'
-                            "
-                          >
-                            <lucide-icon [img]="Icons.Cpu" size="22"></lucide-icon>
-                          </div>
-                          <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                              <span
-                                class="font-medium text-sm"
-                                [ngClass]="device.osSecure ? 'text-emerald-700' : 'text-[#e7000b]'"
-                                >OS Versie</span
-                              >
-                              @if (!device.osSecure) {
-                                <i-lucide
-                                  [img]="Icons.ExternalLink"
-                                  size="14"
-                                  class="text-[#e7000b] cursor-pointer"
-                                  (click)="
+                            ">
+                    <lucide-icon [img]="Icons.Cpu" size="22"></lucide-icon>
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-sm"
+                        [ngClass]="device.osSecure ? 'text-emerald-700' : 'text-[#e7000b]'">OS Versie</span>
+                      @if (!device.osSecure) {
+                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
                                       'https://admin.google.com/ac/devices/list'
                                     )
-                                  "
-                                ></i-lucide>
-                              }
+                                  "></i-lucide>
+                      }
 
-                              <lucide-icon
-                                [img]="device.osSecure ? Icons.CircleCheck : Icons.TriangleAlert"
-                                size="14"
-                                [class]="device.osSecure ? 'text-emerald-600' : 'text-[#e7000b]'"
-                              ></lucide-icon>
-                            </div>
-                            <span class="text-sm text-gray-500">{{ device.osText }}</span>
-                          </div>
-                        </div>
+                      <lucide-icon [img]="device.osSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
+                        [class]="device.osSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
+                    </div>
+                    <span class="text-sm text-gray-500">{{ device.osText }}</span>
+                  </div>
+                </div>
 
-                        <div
-                          class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm"
-                        >
-                          <div
-                            class="p-2.5 rounded-lg"
-                            [ngClass]="
+                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
+                  <div class="p-2.5 rounded-lg" [ngClass]="
                               device.intSecure
                                 ? 'bg-[#dbfce7] text-emerald-600'
                                 : 'bg-[#ffe2e2] text-[#e7000b]'
-                            "
-                          >
-                            <lucide-icon [img]="Icons.ShieldCheck" size="22"></lucide-icon>
-                          </div>
-                          <div class="flex flex-col">
-                            <div class="flex items-center gap-2">
-                              <span
-                                class="font-medium text-sm"
-                                [ngClass]="device.intSecure ? 'text-emerald-700' : 'text-[#e7000b]'"
-                                >Integriteit</span
-                              >
-                              @if (!device.intSecure) {
-                                <i-lucide
-                                  [img]="Icons.ExternalLink"
-                                  size="14"
-                                  class="text-[#e7000b] cursor-pointer"
-                                  (click)="
+                            ">
+                    <lucide-icon [img]="Icons.ShieldCheck" size="22"></lucide-icon>
+                  </div>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-sm"
+                        [ngClass]="device.intSecure ? 'text-emerald-700' : 'text-[#e7000b]'">Integriteit</span>
+                      @if (!device.intSecure) {
+                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
                                       'https://admin.google.com/ac/devices/list'
                                     )
-                                  "
-                                ></i-lucide>
-                              }
-                              <lucide-icon
-                                [img]="device.intSecure ? Icons.CircleCheck : Icons.TriangleAlert"
-                                size="14"
-                                [class]="device.intSecure ? 'text-emerald-600' : 'text-[#e7000b]'"
-                              ></lucide-icon>
-                            </div>
-                            <span class="text-sm text-gray-500">{{ device.integrityText }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              }
-            </tbody>
-          </table>
+                                  "></i-lucide>
+                      }
+                      <lucide-icon [img]="device.intSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
+                        [class]="device.intSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
+                    </div>
+                    <span class="text-sm text-gray-500">{{ device.integrityText }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          }
+          }
+        </tbody>
+      </table>
 
-          <div
-            class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
-          >
-            <span class="text-sm text-gray-500">
-              Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
-            </span>
+      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+        <span class="text-sm text-gray-500">
+          Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
+        </span>
 
-            <div class="flex gap-2">
-              <button
-                (click)="prevPage()"
-                [disabled]="currentPage() === 1"
-                class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer"
-              >
-                <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
-                Vorige
-              </button>
+        <div class="flex gap-2">
+          <button (click)="prevPage()" [disabled]="currentPage() === 1"
+            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
+            <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
+            Vorige
+          </button>
 
-              <button
-                (click)="nextPage()"
-                [disabled]="!nextPageToken()"
-                class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer"
-              >
-                Volgende
-                <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
-              </button>
-            </div>
-          </div>
-        </div>
-      } @else {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-          <div class="flex items-center justify-center p-5">
-            <span class="text-lg font-medium text-slate-600">
-              Geen mobiele apparaten gevonden!
-            </span>
-          </div>
-        </div>
-      }
-    } @else {
-      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-        <div class="flex flex-col items-center p-3">
-          <div class="flex flex-col items-center space-y-4 p-8">
-            <div class="relative flex items-center justify-center">
-              <div class="h-12 w-12 rounded-full"></div>
-
-              <div
-                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
-              ></div>
-            </div>
-
-            <span class="text-sm font-medium text-slate-600 animate-pulse">
-              Mobiele apparaten worden geladen...
-            </span>
-          </div>
+          <button (click)="nextPage()" [disabled]="!nextPageToken()"
+            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
+            Volgende
+            <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
+          </button>
         </div>
       </div>
+    </div>
+    } @else {
+    <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+      <div class="flex items-center justify-center p-5">
+        <span class="text-lg font-medium text-slate-600">
+          Geen apparaten gevonden!
+        </span>
+      </div>
+    </div>
+    }
+    } @else {
+    <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
+      <div class="flex flex-col items-center p-3">
+        <div class="flex flex-col items-center space-y-4 p-8">
+          <div class="relative flex items-center justify-center">
+            <div class="h-12 w-12 rounded-full"></div>
+
+            <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+            </div>
+          </div>
+
+          <span class="text-sm font-medium text-slate-600 animate-pulse">
+            Apparaten worden geladen...
+          </span>
+        </div>
+      </div>
+    </div>
     }
   </div>
 </div>
