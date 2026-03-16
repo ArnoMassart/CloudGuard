@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { PasswordSettingsService } from '../../../services/password-settings-service';
-import { AdminSecurityKeysService } from '../../../services/admin-security-keys-service';
 import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
 import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminWithSecurityKey';
 import { AppIcons } from '../../../shared/AppIcons';
@@ -23,13 +22,8 @@ import { LucideAngularModule } from 'lucide-angular';
 export class PasswordSettings implements OnInit {
   readonly Icons = AppIcons;
   readonly #passwordSettingsService = inject(PasswordSettingsService);
-  readonly #adminSecurityKeysService = inject(AdminSecurityKeysService);
 
   readonly data = signal<PasswordSettingsData | null>(null);
-  readonly adminsWithSecurityKeys = signal<AdminWithSecurityKey[]>([]);
-  readonly adminsLoading = signal(true);
-  readonly adminsError = signal<string | null>(null);
-  readonly adminsWarning = signal<string | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly expandedOu = signal<string | null>(null);
@@ -37,7 +31,6 @@ export class PasswordSettings implements OnInit {
 
   ngOnInit(): void {
     this.#load();
-    this.#loadAdminsWithSecurityKeys();
   }
 
   #load(): void {
@@ -55,23 +48,6 @@ export class PasswordSettings implements OnInit {
     });
   }
 
-  #loadAdminsWithSecurityKeys(): void {
-    this.adminsLoading.set(true);
-    this.adminsError.set(null);
-    this.adminsWarning.set(null);
-    this.#adminSecurityKeysService.getAdminsWithSecurityKeys().subscribe({
-      next: (response) => {
-        this.adminsWithSecurityKeys.set(response.admins ?? []);
-        this.adminsWarning.set(response.errorMessage ?? null);
-        this.adminsLoading.set(false);
-      },
-      error: (err) => {
-        this.adminsError.set(err?.message || 'Kon admins zonder security keys niet laden.');
-        this.adminsLoading.set(false);
-      },
-    });
-  }
-
   retry(): void {
     this.#load();
   }
@@ -80,43 +56,13 @@ export class PasswordSettings implements OnInit {
     if (this.isRefreshing()) return;
     this.isRefreshing.set(true);
     this.#passwordSettingsService.refreshCache().subscribe({
-      next: () => {
-        let pending = 2;
-        const onDone = () => {
-          pending--;
-          if (pending === 0) this.isRefreshing.set(false);
-        };
-        this.#passwordSettingsService.getPasswordSettings().subscribe({
-          next: (settings) => {
-            this.data.set(settings);
-            onDone();
-          },
-          error: () => onDone(),
-        });
-        this.#adminSecurityKeysService.getAdminsWithSecurityKeys().subscribe({
-          next: (response) => {
-            this.adminsWithSecurityKeys.set(response.admins ?? []);
-            this.adminsWarning.set(response.errorMessage ?? null);
-            this.adminsError.set(null);
-            onDone();
-          },
-          error: () => onDone(),
-        });
-      },
+      next: () => this.#load(),
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
         this.isRefreshing.set(false);
       },
+      complete: () => this.isRefreshing.set(false),
     });
-  }
-
-  retryAdmins(): void {
-    this.#loadAdminsWithSecurityKeys();
-  }
-
-  get2SvPercentage(enrolled: number, total: number): number {
-    if (total === 0) return 0;
-    return Math.round((enrolled / total) * 100);
   }
 
   toggleOu(policy: string): void {

@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ public class CacheWarmupService {
     private final GoogleSharedDriveCacheService sharedDriveCacheService;
     private final GoogleDeviceCacheService mobileDeviceCacheService;
     private final AppPasswordsService appPasswordsService;
+    private final AdminSecurityKeysService adminSecurityKeysService;
     private final GoogleOAuthCacheService oAuthCacheService;
 
     private final TSVPolicyProvider tsvPolicyProvider;
@@ -27,13 +29,14 @@ public class CacheWarmupService {
     private final GoogleLicenseCacheService licenseCacheService;
     private final GoogleDomainCacheService domainCacheService;
 
-    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, GoogleOAuthCacheService oAuthCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
+    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, AdminSecurityKeysService adminSecurityKeysService, GoogleOAuthCacheService oAuthCacheService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
         this.usersCacheService = usersCacheService;
         this.groupsCacheService = groupsCacheService;
         this.orgUnitCacheService = orgUnitCacheService;
         this.sharedDriveCacheService = sharedDriveCacheService;
         this.mobileDeviceCacheService = mobileDeviceCacheService;
         this.appPasswordsService = appPasswordsService;
+        this.adminSecurityKeysService = adminSecurityKeysService;
         this.oAuthCacheService = oAuthCacheService;
         this.tsvPolicyProvider = tsvPolicyProvider;
         this.policyApiCacheService = policyApiCacheService;

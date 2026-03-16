@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
@@ -56,7 +57,13 @@ public class PasswordSettingsService {
         PasswordSettingsSummaryDto summary = new PasswordSettingsSummaryDto(
                 forcedChange.size(), enrolled, enforced, total);
 
-        return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary);
+        var adminSecurityKeysResponse = adminSecurityKeysService.getAdminsWithSecurityKeys(adminEmail);
+        List<AdminWithSecurityKeyDto> adminsWithoutSecurityKeys = adminSecurityKeysResponse.admins() != null
+                ? adminSecurityKeysResponse.admins() : List.of();
+        String adminsSecurityKeysErrorMessage = adminSecurityKeysResponse.errorMessage();
+
+        return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
+                adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage);
     }
 
     private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String adminEmail) {

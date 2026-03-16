@@ -1,8 +1,12 @@
+import { AdminWithSecurityKey } from '../admin-security-keys/AdminWithSecurityKey';
+
 export interface PasswordSettings {
   passwordPoliciesByOu: OuPasswordPolicy[];
   twoStepVerification: TwoStepVerification;
   usersWithForcedChange: PasswordChangeRequirement[];
   summary: PasswordSettingsSummary;
+  adminsWithoutSecurityKeys: AdminWithSecurityKey[];
+  adminsSecurityKeysErrorMessage?: string;
 }
 
 export interface OuPasswordPolicy {
