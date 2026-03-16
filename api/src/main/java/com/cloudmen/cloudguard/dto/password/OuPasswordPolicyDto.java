@@ -16,6 +16,9 @@ public record OuPasswordPolicyDto(
         boolean strongPasswordRequired,
         boolean blockCommonPasswords,
         int reusePreventionCount,
-        boolean inherited
+        boolean inherited,
+        boolean securityKeyRequired,
+        boolean adminStrongPasswordEnforced,
+        int adminMinLength
 ) {
 }

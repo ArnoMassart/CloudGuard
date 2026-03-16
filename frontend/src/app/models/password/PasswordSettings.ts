@@ -17,6 +17,9 @@ export interface OuPasswordPolicy {
   blockCommonPasswords: boolean;
   reusePreventionCount: number;
   inherited: boolean;
+  securityKeyRequired: boolean;
+  adminStrongPasswordEnforced: boolean;
+  adminMinLength: number;
 }
 
 export interface TwoStepVerification {

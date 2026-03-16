@@ -93,6 +93,9 @@ public class PasswordSettingsService {
         boolean blockCommon = false;
         int reuseCount = 0;
         boolean inherited = true;
+        boolean securityKeyRequired = false;
+        boolean adminStrongPasswordEnforced = false;
+        int adminMinLength = 8;
 
         try {
             List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
@@ -133,6 +136,11 @@ public class PasswordSettingsService {
                 blockCommon = value.path("blockCommonPasswords").asBoolean(false);
                 reuseCount = value.path("reusePreventionCount").asInt(0);
                 inherited = !orgUnitPath.equals(bestOuPath);
+                securityKeyRequired = value.path("securityKeyRequired").asBoolean(false);
+                adminStrongPasswordEnforced = value.path("adminStrongPasswordEnforced").asBoolean(false)
+                        || value.path("enforceStrongPasswordForAdmin").asBoolean(false);
+                int adminMin = value.path("adminMinLength").asInt(-1);
+                adminMinLength = adminMin >= 0 ? adminMin : value.path("minLengthForAdmin").asInt(minLength);
             }
         } catch (Exception e) {
             log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
@@ -142,7 +150,8 @@ public class PasswordSettingsService {
         int problemCount = countProblems(minLength, expirationDays, strongPassword, blockCommon, reuseCount);
 
         return new OuPasswordPolicyDto(orgUnitPath, displayName, userCount, score, problemCount,
-                minLength, expirationDays, strongPassword, blockCommon, reuseCount, inherited);
+                minLength, expirationDays, strongPassword, blockCommon, reuseCount, inherited,
+                securityKeyRequired, adminStrongPasswordEnforced, adminMinLength);
     }
 
     private static int calculateScore(int minLength, int expirationDays, boolean strongPassword, boolean blockCommon, int reuseCount) {
