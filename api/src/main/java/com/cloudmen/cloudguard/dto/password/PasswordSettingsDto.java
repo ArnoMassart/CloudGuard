@@ -10,6 +10,7 @@ public record PasswordSettingsDto(
         List<PasswordChangeRequirementDto> usersWithForcedChange,
         PasswordSettingsSummaryDto summary,
         List<AdminWithSecurityKeyDto> adminsWithoutSecurityKeys,
-        String adminsSecurityKeysErrorMessage
+        String adminsSecurityKeysErrorMessage,
+        int securityScore
 ) {
 }

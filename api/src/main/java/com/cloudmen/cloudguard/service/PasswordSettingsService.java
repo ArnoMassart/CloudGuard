@@ -62,8 +62,15 @@ public class PasswordSettingsService {
                 ? adminSecurityKeysResponse.admins() : List.of();
         String adminsSecurityKeysErrorMessage = adminSecurityKeysResponse.errorMessage();
 
+        int securityScore = calculateSecurityScore(
+                adminSecurityKeysResponse.totalAdmins(),
+                adminsWithoutSecurityKeys.size(),
+                summary,
+                twoStepVerification,
+                passwordPoliciesByOu);
+
         return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
-                adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage);
+                adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, securityScore);
     }
 
     private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String adminEmail) {
@@ -289,5 +296,79 @@ public class PasswordSettingsService {
                         "changePasswordAtNextLogin"
                 ))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Calculates weighted security score (0-100) based on:
+     * - Admin security keys (15%): more admins with keys = better
+     * - Users needing password change (15%): fewer = better
+     * - 2FA enforcement (30%): per OU, weighted by users (enforced→100, optional→50, disabled→0)
+     * - Password length (15%): ≥14→100, 12-13→90, 10-11→70, 8-9→40, <8→0
+     * - Password expiration (10%): never expires→0, else→100 (null excluded)
+     * - Password strength (10%): true→100, false→0
+     * - Password history (5%): not used for score, always 100
+     */
+    private int calculateSecurityScore(
+            int totalAdmins,
+            int adminsWithoutKeys,
+            PasswordSettingsSummaryDto summary,
+            TwoStepVerificationDto twoStepVerification,
+            List<OuPasswordPolicyDto> passwordPoliciesByOu) {
+
+        double adminKeysScore = totalAdmins == 0 ? 100.0
+                : (totalAdmins - adminsWithoutKeys) * 100.0 / totalAdmins;
+
+        double usersNeedChangeScore = summary.totalUsers() == 0 ? 100.0
+                : Math.max(0, 100.0 - summary.usersWithForcedChange() * 100.0 / summary.totalUsers());
+
+        double twoFaScore = 100.0;
+        List<OrgUnit2SvDto> ou2Sv = twoStepVerification.byOrgUnit();
+        int totalUsers2Fa = ou2Sv.stream().mapToInt(OrgUnit2SvDto::totalCount).sum();
+        if (totalUsers2Fa > 0) {
+            double weightedSum = 0;
+            for (OrgUnit2SvDto ou : ou2Sv) {
+                int score = ou.enforced() ? 100 : 50; // enforced→100, optional→50 (disabled not distinguished)
+                weightedSum += score * ou.totalCount();
+            }
+            twoFaScore = weightedSum / totalUsers2Fa;
+        }
+
+        double lengthScore = 100.0;
+        double expirationScore = 100.0;
+        double strengthScore = 100.0;
+        int totalPolicyUsers = passwordPoliciesByOu.stream().mapToInt(OuPasswordPolicyDto::userCount).sum();
+        if (totalPolicyUsers > 0) {
+            double lengthSum = 0, expirationSum = 0, strengthSum = 0;
+            int totalExpirationUsers = 0;
+            for (OuPasswordPolicyDto p : passwordPoliciesByOu) {
+                int len = p.minLength() != null ? p.minLength() : 0;
+                int lenScore = len >= 14 ? 100 : len >= 12 ? 90 : len >= 10 ? 70 : len >= 8 ? 40 : 0;
+                lengthSum += lenScore * p.userCount();
+
+                if (p.expirationDays() != null) {
+                    int expScore = p.expirationDays() > 0 ? 100 : 0;
+                    expirationSum += expScore * p.userCount();
+                    totalExpirationUsers += p.userCount();
+                }
+
+                int strScore = Boolean.TRUE.equals(p.strongPasswordRequired()) ? 100 : 0;
+                strengthSum += strScore * p.userCount();
+            }
+            lengthScore = lengthSum / totalPolicyUsers;
+            expirationScore = totalExpirationUsers > 0 ? expirationSum / totalExpirationUsers : 100.0;
+            strengthScore = strengthSum / totalPolicyUsers;
+        }
+
+        double historyScore = 100.0; // not used for security score
+
+        double weighted = adminKeysScore * 0.15
+                + usersNeedChangeScore * 0.15
+                + twoFaScore * 0.30
+                + lengthScore * 0.15
+                + expirationScore * 0.10
+                + strengthScore * 0.10
+                + historyScore * 0.05;
+
+        return (int) Math.round(Math.max(0, Math.min(100, weighted)));
     }
 }

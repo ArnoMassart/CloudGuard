@@ -66,7 +66,7 @@ public class AdminSecurityKeysService {
             // 1. Fetch all admin users from Directory API
             List<User> adminUsers = fetchAdminUsers(directory);
             if (adminUsers.isEmpty()) {
-                return new AdminSecurityKeysResponse(Collections.emptyList());
+                return new AdminSecurityKeysResponse(Collections.emptyList(), 0);
             }
 
             Set<String> adminEmails = new HashSet<>();
@@ -110,7 +110,7 @@ public class AdminSecurityKeysService {
             }
 
             result.sort(Comparator.comparing(AdminWithSecurityKeyDto::name, String.CASE_INSENSITIVE_ORDER));
-            return new AdminSecurityKeysResponse(result);
+            return new AdminSecurityKeysResponse(result, adminUsers.size());
 
         } catch (Exception e) {
             String errMsg = e.getMessage();
@@ -118,7 +118,7 @@ public class AdminSecurityKeysService {
             if (isAuthError) {
                 String userMsg = "Reports API scope niet geautoriseerd. Voeg https://www.googleapis.com/auth/admin.reports.usage.readonly toe aan domain-wide delegation in Google Admin Console (Security → API Controls → Domain-wide delegation).";
                 log.warn("{} Cause: {}", userMsg, errMsg);
-                return new AdminSecurityKeysResponse(Collections.emptyList(), userMsg);
+                return new AdminSecurityKeysResponse(Collections.emptyList(), 0, userMsg);
             }
             log.error("Failed to fetch admins without security keys", e);
             throw new RuntimeException("Kon admins zonder security keys niet ophalen: " + e.getMessage(), e);

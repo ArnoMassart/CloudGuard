@@ -7,6 +7,7 @@ export interface PasswordSettings {
   summary: PasswordSettingsSummary;
   adminsWithoutSecurityKeys: AdminWithSecurityKey[];
   adminsSecurityKeysErrorMessage?: string;
+  securityScore: number;
 }
 
 export interface OuPasswordPolicy {

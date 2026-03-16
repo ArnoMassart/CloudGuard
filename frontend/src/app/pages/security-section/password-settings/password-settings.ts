@@ -28,10 +28,15 @@ export class PasswordSettings implements OnInit {
   readonly error = signal<string | null>(null);
   readonly expandedOu = signal<string | null>(null);
   readonly securityKeysExpanded = signal(true);
+  readonly forcedChangeExpanded = signal(true);
   readonly isRefreshing = signal(false);
 
   toggleSecurityKeys(): void {
     this.securityKeysExpanded.update((v) => !v);
+  }
+
+  toggleForcedChange(): void {
+    this.forcedChangeExpanded.update((v) => !v);
   }
 
   ngOnInit(): void {
@@ -96,5 +101,15 @@ export class PasswordSettings implements OnInit {
   formatOrgUnit(path: string): string {
     if (!path || path === '/') return 'Hoofdorganisatie';
     return path.startsWith('/') ? path.slice(1) : path;
+  }
+
+  getUserUrl(email: string): string {
+    if (!email?.trim()) return 'https://admin.google.com/u/1/ac/users';
+    return `https://admin.google.com/u/1/ac/users/${encodeURIComponent(email.trim())}`;
+  }
+
+  formatForcedChangeReason(reason: string): string {
+    if (reason === 'changePasswordAtNextLogin') return 'Verplicht bij volgende login';
+    return reason || 'Onbekend';
   }
 }
