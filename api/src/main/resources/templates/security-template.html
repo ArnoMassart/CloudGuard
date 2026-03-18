@@ -195,13 +195,11 @@
             padding: 12px 20px;
             font-size: 14pt;
             font-weight: bold;
-            border-radius: 6px;
         }
 
         .domain-critical-alert {
             background-color: #fef2f2;
             border-bottom: 1px solid #fca5a5;
-            border-top: 1px solid #fca5a5;
             color: #991b1b;
             padding: 12px 20px;
             font-weight: bold;
@@ -750,13 +748,13 @@
                     Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
                 </div>
 
-                <table class="check-table">
+                <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">
                     <tr>
-                        <td style="padding: 15px 20px; width: 75%; vertical-align: middle;">
-                            <div style="font-weight: bold; font-size: 11pt; color: #0f172a; margin-bottom: 4px;">Domein Security Score</div>
+                        <td style="padding: 15px 20px; width: 75%; vertical-align: middle; border-bottom: 1px solid #e2e8f0;">
+                            <div style="font-weight: bold; font-size: 11pt; color: #0f172a; margin-bottom: 4px;">Security Score</div>
                             <div style="font-size: 9.5pt; color: #475569;">Bepaald op basis van actieve e-mailauthenticatie (SPF, DKIM, DMARC) en overige DNS-beveiliging.</div>
                         </td>
-                        <td style="padding: 15px 20px; width: 25%; text-align: right; vertical-align: middle;">
+                        <td style="padding: 15px 20px; width: 25%; text-align: right; vertical-align: middle; border-bottom: 1px solid #e2e8f0;">
                             <div style="font-size: 16pt; font-weight: bold; line-height: 1;"
                                  th:classappend="${domain.score < 50 ? 'text-red' : (domain.score < 75 ? 'text-orange' : 'text-green')}"
                                  th:text="${domain.score} + '/100'">0/100</div>
