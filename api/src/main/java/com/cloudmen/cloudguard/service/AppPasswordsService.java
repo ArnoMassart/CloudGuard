@@ -82,7 +82,8 @@ public class AppPasswordsService {
         int totalUserCount = entry.totalUserCount();
         int securityScore = totalUserCount == 0 ? 100
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
-        return new AppPasswordOverviewResponse(true, totalAppPasswords, totalAppPasswords, securityScore);
+
+        return new AppPasswordOverviewResponse(true, totalAppPasswords, totalAppPasswords, usersWithAppPasswords ,securityScore);
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -159,7 +160,7 @@ public class AppPasswordsService {
                 new UserAppPasswordsDto("demo-1", "Pieter de Vries", "pieter.devries@bedrijf.nl", "User", false, List.of(p1)),
                 new UserAppPasswordsDto("demo-2", "Thomas Mulder", "thomas.mulder@bedrijf.nl", "User", true, List.of(p2)),
                 new UserAppPasswordsDto("demo-3", "Lisa van Berg", "lisa.vanberg@bedrijf.nl", "Admin", true, List.of(p3a, p3b)),
-                new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, List.of(p4)),
+                new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, new ArrayList<>()),
                 new UserAppPasswordsDto("demo-5", "Sophie Jansen", "sophie.jansen@bedrijf.nl", "User", false, List.of(p5a, p5b))
         );
         return new AppPasswordCacheEntry(users, 5);

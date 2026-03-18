@@ -4,6 +4,7 @@ public record AppPasswordOverviewResponse(
         boolean allowed,
         int totalAppPasswords,
         int totalHighRiskAppPasswords,
+        int usersWithAppPasswords,
         int securityScore
 ) {
 }

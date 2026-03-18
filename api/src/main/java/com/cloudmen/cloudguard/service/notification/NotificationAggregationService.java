@@ -109,6 +109,11 @@ public class NotificationAggregationService {
                 .count();
     }
 
+    public List<NotificationDto> getCriticalNotifications(String userId) {
+        NotificationsResponse response = getNotifications(userId);
+        return response.active().stream().filter(n -> n.severity().equals("critical")).toList();
+    }
+
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         String status = feedbackKeys.contains(n.source() + ":" + n.notificationType()) ? "in_behandeling" : "new";
         return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),

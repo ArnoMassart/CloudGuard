@@ -76,9 +76,25 @@ export class Home implements OnInit {
 
     this.isGenerating.set(true);
 
-    this.#createSecurityRapport();
+    this.#reportService.downloadSecurityRapport().subscribe({
+      next: (blob: Blob) => {
+        const url = globalThis.URL.createObjectURL(blob);
 
-    this.isGenerating.set(false);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Security_Report_${'CLOUDMEN_Labo'}.pdf`;
+
+        link.click();
+
+        globalThis.URL.revokeObjectURL(url);
+        this.isGenerating.set(false);
+      },
+      error: (err) => {
+        console.error('Download failed', err);
+        alert('Could not generate PDF. Please try again.');
+        this.isGenerating.set(false);
+      },
+    });
   }
 
   // ==========================================
@@ -116,25 +132,5 @@ export class Home implements OnInit {
     if (this.pageOverview()?.criticalNotifications! > 0) {
       this.hasWarnings.set(true);
     }
-  }
-
-  #createSecurityRapport() {
-    this.#reportService.downloadSecurityRapport().subscribe({
-      next: (blob: Blob) => {
-        const url = globalThis.URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Security_Report_${'CLOUDMEN_Labo'}.pdf`;
-
-        link.click();
-
-        globalThis.URL.revokeObjectURL(url);
-      },
-      error: (err) => {
-        console.error('Download failed', err);
-        alert('Could not generate PDF. Please try again.');
-      },
-    });
   }
 }

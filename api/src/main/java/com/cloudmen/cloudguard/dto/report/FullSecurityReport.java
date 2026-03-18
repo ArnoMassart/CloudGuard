@@ -6,7 +6,7 @@ public record FullSecurityReport(
         int overallScore,
         List<RiskItem> criticalRisks,
         UsersMetrics users,
-        OrgUnitMetrics orgUnits,
+        GroupsMetrics groups,
         DriveMetrics drives,
         DeviceMetrics devices,
         AppAccessMetrics appAccess,
@@ -17,7 +17,10 @@ public record FullSecurityReport(
 
     public record UsersMetrics(int total, int mfaPct, int admins, int inactive, int securityScore) {}
 
-    public record OrgUnitMetrics(int total, int withCustomPolicies, int unprotected) {}
+    public record GroupsMetrics(int total,
+                                int withExternalMembers,
+                                int highRisk,
+                                int securityScore) {}
 
     public record DriveMetrics(int total, int externallyShared, int noManagers, int securityScore) {}
 
@@ -33,6 +36,7 @@ public record FullSecurityReport(
 
     public record DomainData(
             String name,
+            int score,
             boolean hasCriticalIssues,
             List<SecurityCheck> checks,
             List<DnsRecord> records

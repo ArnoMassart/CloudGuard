@@ -100,7 +100,7 @@
             margin-bottom: 15px;
         }
 
-        h1 { color: #0f172a; font-size: 22pt; padding-bottom: 10px; margin-bottom: 20px; }
+        h1 { color: #0f172a; font-size: 22pt; margin-bottom: 20px; }
         h2 { color: #334155; font-size: 14pt; margin-top: 20px; margin-bottom: 10px; }
         p { line-height: 1.6; font-size: 10.5pt; color: #475569; }
 
@@ -164,55 +164,14 @@
         .fill-red { background-color: #ef4444; }
 
         /* --- RISKS & LISTS --- */
-        .risk-item { background-color: #fff7ed; border-left: 4px solid #f97316; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
-        .risk-title { font-weight: bold; color: #c2410c; font-size: 11pt; margin-bottom: 5px; }
+        .risk-item { background-color: #fef2f2; border-left: 4px solid #c10007; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+        .risk-title { font-weight: bold; color: #c10007; font-size: 11pt; margin-bottom: 5px; }
         .risk-desc { font-size: 10pt; color: #475569; }
 
         .status-table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
         .status-table th, .status-table td { padding: 10px; text-align: left; word-wrap: break-word; }
         .status-table th { background-color: #f1f5f9; font-size: 10pt; color: #475569; border-bottom: 2px solid #cbd5e1; }
         .status-table td { border-bottom: 1px solid #e2e8f0; font-size: 10pt; color: #334155; }
-
-
-        /* --- DOMEIN & DNS SECTIES --- */
-        .domain-container { margin-top: 30px; page-break-inside: avoid; }
-        .domain-header {
-            background-color: #0f172a;
-            color: white;
-            padding: 12px 20px;
-            font-size: 14pt;
-            font-weight: bold;
-            border-radius: 6px 6px 0 0;
-        }
-
-        /* Waarschuwingsblok voor kritieke domeinproblemen */
-        .domain-critical-alert {
-            background-color: #fef2f2;
-            border: 1px solid #fca5a5;
-            color: #991b1b;
-            padding: 15px;
-            font-weight: bold;
-            font-size: 10pt;
-        }
-
-        /* Tabel voor de Beveiligingscontroles */
-        .check-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 20px; }
-        .check-table td { padding: 15px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-        .check-table tr:last-child td { border-bottom: none; }
-
-        .check-title { font-weight: bold; font-size: 10.5pt; color: #0f172a; margin-bottom: 4px; }
-        .check-desc { font-size: 9.5pt; color: #475569; }
-        .check-tip { margin-top: 6px; font-size: 9pt; display: block; }
-
-        /* Status Badges */
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 8.5pt;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
 
         /* DNS Ruwe Records Tabel */
         .dns-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 30px; }
@@ -222,6 +181,58 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
+
+        .domain-card {
+            border-radius: 6px;
+            margin-bottom: 30px;
+            page-break-inside: avoid; /* Dwingt PDF om de hele kaart op 1 pagina te houden! */
+            overflow: hidden; /* Zorgt dat de ronde hoeken netjes blijven */
+        }
+
+        .domain-header {
+            background-color: #0f172a;
+            color: white;
+            padding: 12px 20px;
+            font-size: 14pt;
+            font-weight: bold;
+            border-radius: 6px;
+        }
+
+        .domain-critical-alert {
+            background-color: #fef2f2;
+            border-bottom: 1px solid #fca5a5;
+            border-top: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        /* --- CONTROLE TABEL BINNEN DE KAART --- */
+        .check-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .check-table td { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .check-table tr:last-child td { border-bottom: none; }
+
+        .check-title { font-weight: bold; font-size: 10.5pt; color: #0f172a; margin-bottom: 4px; }
+        .check-desc { font-size: 9.5pt; color: #475569; }
+        .check-tip { margin-top: 6px; font-size: 9pt; display: block; }
+
+        /* --- BULLETPROOF BADGES --- */
+        .status-badge {
+            display: block; /* PDF Engine werkt veel beter met block elementen! */
+            width: 130px;
+            text-align: center;
+            padding: 8px 10px;
+            border-radius: 20px;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: auto; /* Drukt de badge strak naar de rechterkant */
+        }
+        .badge-red { background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+        .badge-orange { background-color: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+        .badge-green { background-color: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+        .badge-gray { background-color: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; }
     </style>
 </head>
 <body>
@@ -258,7 +269,7 @@
         <h1>Dashboard</h1>
         <p>Dit dashboard geeft een helder en centraal overzicht van de digitale weerbaarheid van uw organisatie. Waar de volgende hoofdstukken dieper ingaan op specifieke technische configuraties, biedt dit overzicht een snelle en strategische samenvatting van de algemene beveiligingsstatus van uw IT-omgeving.
         </p>
-        <p>De algemene <strong>Security Score</strong> vormt een samenvattende indicator van de beveiligingsstatus. Deze score is gebaseerd op een gewogen evaluatie van meerdere beveiligingspijlers, waaronder identiteits- en toegangsbeheer (IAM), endpointbeveiliging en gegevensbescherming binnen cloudopslag. Een score van 80 of hoger wijst op een volwassen en goed geïmplementeerd beveiligingsniveau, terwijl een lagere score kan duiden op mogelijke kwetsbaarheden of verbeterpunten binnen het huidige beveiligingsbeleid.
+        <p>De algemene <strong>Security Score</strong> vormt een samenvattende indicator van de beveiligingsstatus. Deze score is gebaseerd op een gewogen evaluatie van meerdere beveiligingspijlers, waaronder identiteits- en toegangsbeheer (IAM), endpointbeveiliging en gegevensbescherming binnen cloudopslag. Een score van 75 of hoger wijst op een volwassen en goed geïmplementeerd beveiligingsniveau, terwijl een lagere score kan duiden op mogelijke kwetsbaarheden of verbeterpunten binnen het huidige beveiligingsbeleid.
         </p>
         <p style="margin-bottom: 25px;">Daarnaast worden in dit dashboard ook de meest kritieke aandachtspunten weergegeven. Dit zijn geïdentificeerde risico’s met de hoogste prioriteit die onmiddellijke aandacht vereisen. Door deze punten zichtbaar te maken, kunnen organisaties gericht actie ondernemen om potentiële datalekken, ongeautoriseerde toegang en andere beveiligingsincidenten te voorkomen.
         </p>
@@ -270,7 +281,7 @@
                  th:text="${report.overallScore} + '/100'">0/100</div>
         </div>
 
-        <h2>Kritieke Aandachtspunten</h2>
+        <h2 style="margin-bottom: 15px;">Kritieke Aandachtspunten</h2>
         <div th:each="risk : ${report.criticalRisks}" class="risk-item">
             <div class="risk-title" th:text="${risk.title}">Risico</div>
             <div class="risk-desc" th:text="${risk.description}">Beschrijving</div>
@@ -282,7 +293,7 @@
     </div>
 
     <div class="section-break">
-        <h1>Gebruikers & Groepen</h1>
+        <h1>Gebruikers</h1>
         <p>Inzicht in de beveiliging van werknemersaccounts. Het afdwingen van sterke authenticatie en het beperken van beheerdersrechten is essentieel om identiteitsfraude te voorkomen.</p>
 
         <table class="full-card-table">
@@ -293,6 +304,21 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
                     <div class="fw-desc">Deze score weerspiegelt de veiligheid van uw gebruikersaccounts. Een hoge score betekent dat vrijwel alle accounts zijn afgeschermd met Multi-Factor Authenticatie (MFA), dat er weinig overbodige beheerders zijn en dat inactieve accounts netjes worden opgeruimd. Dit is uw belangrijkste verdedigingslinie tegen hackers.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.users.total}">0</div>
+                    <div class="metric-lbl">TOTAAL GEBRUIKERS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Actieve Gebruikersaccounts</div>
+                    <div class="fw-desc">
+                        Het totale aantal actieve werknemersaccounts (inclusief service-accounts) binnen de Google Workspace omgeving. Een accuraat beheer van actieve accounts is essentieel voor licentiebeheer en geeft direct de schaal aan van het te beveiligen oppervlak.
                     </div>
                 </td>
             </tr>
@@ -337,6 +363,69 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Inactieve Accounts (Spookaccounts)</div>
                     <div class="fw-desc">Accounts waarop langer dan 90 dagen niet is ingelogd. Deze vormen een risico omdat ze vaak niet meer actief beheerd worden, maar wel toegang bieden tot bedrijfsdata.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>Groepen</h1>
+        <p>Inzicht in de configuratie van uw Google Groups. Slecht beheerde groepen kunnen leiden tot datalekken (bijvoorbeeld als externe personen ongemerkt in een interne mailinglijst zitten) of spam-problemen.</p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.groups.securityScore < 50 ? 'text-red' : (report.groups.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.groups.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">Deze score weerspiegelt de algemene veiligheid van uw distributielijsten. Een hoge score betekent dat groepen actief gemonitord worden, externe toegang strikt beperkt is, en dat er geen configuraties zijn die uw organisatie blootstellen aan ongewenste e-mails of datalekken.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.groups.total}">6</div>
+                    <div class="metric-lbl">TOTAAL GROEPEN</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Actieve E-mailgroepen</div>
+                    <div class="fw-desc">
+                        Het totale aantal aangemaakte distributielijsten en samenwerkingsgroepen (bijv. <em>info@</em>, <em>sales@</em>). Een overzichtelijk aantal voorkomt verwarring en maakt het beheer van toegangsrechten eenvoudiger.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.groups.withExternalMembers > 0 ? 'text-orange' : 'text-green'}" th:text="${report.groups.withExternalMembers}">2</div>
+                    <div class="metric-lbl">MET EXTERNE LEDEN</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Groepen met Externe Deelnemers</div>
+                    <div class="fw-desc">
+                        Het aantal groepen waarbij e-mailadressen van buiten uw eigen organisatie zijn toegevoegd als lid. E-mails die naar deze interne groepen worden gestuurd, worden automatisch doorgestuurd naar deze externe mailboxen.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.groups.highRisk > 0 ? 'text-red' : 'text-green'}" th:text="${report.groups.highRisk}">2</div>
+                    <div class="metric-lbl">HOOG RISICO</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Groepen met Hoog Risico Instellingen</div>
+                    <div class="fw-desc">
+                        Dit zijn groepen met kwetsbare configuraties, zoals lijsten waarbij iedereen op het internet e-mails mag insturen, of waarbij de ledenlijst publiekelijk inzichtelijk is. Dit type instelling is vaak de oorzaak van phishing en ongewenste spam.
                     </div>
                 </td>
             </tr>
@@ -652,52 +741,68 @@
         <h1>Domein & DNS Beveiliging</h1>
         <p>DNS-records beschermen uw domeinen tegen spoofing, phishing en misbruik. Zonder de juiste configuratie (zoals SPF, DKIM en DMARC) kunnen kwaadwillenden e-mails versturen uit naam van uw organisatie. Hieronder volgt een gedetailleerde analyse per gekoppeld domein.</p>
 
-        <div th:each="domain : ${report.domains}" class="domain-container">
+        <div th:each="domain : ${report.domains}">
 
-            <div class="domain-header" th:text="${domain.name}">nl.cloudmen.net</div>
+            <div class="domain-card">
+                <div class="domain-header" th:text="${domain.name}">labo.cloudmen.com</div>
 
-            <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">
-                ⊗ Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
-            </div>
+                <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">
+                    Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
+                </div>
 
-            <div style="border: 1px solid #e2e8f0; border-top: none; background-color: #ffffff;">
                 <table class="check-table">
-                    <tr th:each="check : ${domain.checks}">
+                    <tr>
+                        <td style="padding: 15px 20px; width: 75%; vertical-align: middle;">
+                            <div style="font-weight: bold; font-size: 11pt; color: #0f172a; margin-bottom: 4px;">Domein Security Score</div>
+                            <div style="font-size: 9.5pt; color: #475569;">Bepaald op basis van actieve e-mailauthenticatie (SPF, DKIM, DMARC) en overige DNS-beveiliging.</div>
+                        </td>
+                        <td style="padding: 15px 20px; width: 25%; text-align: right; vertical-align: middle;">
+                            <div style="font-size: 16pt; font-weight: bold; line-height: 1;"
+                                 th:classappend="${domain.score < 50 ? 'text-red' : (domain.score < 75 ? 'text-orange' : 'text-green')}"
+                                 th:text="${domain.score} + '/100'">0/100</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="check-table">
+                    <tr th:each="check : ${domain.checks}" style="background-color: #f8fafc;">
                         <td style="width: 75%;">
                             <div class="check-title" th:text="${check.title}">SPF Record</div>
-                            <div class="check-desc" th:text="${check.description}">SPF record ontbreekt...</div>
-                            <div th:if="${check.tip != null}" class="check-tip"
+                            <div class="check-desc" th:text="${check.description}">Beschrijving...</div>
+
+                            <div th:if="${check.tip != null and !check.tip.isBlank()}" class="check-tip"
                                  th:classappend="${check.status == 'RED' ? 'tip-red' : (check.status == 'ORANGE' ? 'tip-orange' : 'tip-gray')}"
                                  th:text="'Tip: ' + ${check.tip}">
-                                Tip: Configureer dit in Google Admin
+                                Tip: tekst
                             </div>
                         </td>
-                        <td style="width: 25%; text-align: right;">
-                            <span class="badge"
-                                  th:classappend="${check.status == 'RED' ? 'badge-red' : (check.status == 'ORANGE' ? 'badge-orange' : (check.status == 'GREEN' ? 'badge-green' : 'badge-gray'))}"
-                                  th:text="${check.badgeText}">Actie vereist</span>
+                        <td style="width: 25%;">
+                            <div class="status-badge"
+                                 th:classappend="${check.status == 'RED' ? 'badge-red' : (check.status == 'ORANGE' ? 'badge-orange' : (check.status == 'GREEN' ? 'badge-green' : 'badge-gray'))}"
+                                 th:text="${check.badgeText}">ACTIE VEREIST</div>
                         </td>
                     </tr>
                 </table>
             </div>
-
-            <h2 style="font-size: 12pt; margin-top: 25px; margin-bottom: 10px;">Actieve DNS Records</h2>
-            <table class="dns-table" style="border: 1px solid #e2e8f0;">
-                <thead>
-                <tr>
-                    <th style="width: 15%;">TYPE</th>
-                    <th style="width: 35%;">NAAM</th>
-                    <th style="width: 50%;">WAARDE</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="record : ${domain.records}">
-                    <td style="font-weight: bold;" th:text="${record.type}">SPF</td>
-                    <td th:text="${record.name}">nl.cloudmen.net</td>
-                    <td class="break-text" th:text="${record.value}">v=spf1 include:_spf.google.com ~all</td>
-                </tr>
-                </tbody>
-            </table>
+            <div style="page-break-inside: avoid; margin-bottom: 40px;">
+                <h2 style="font-size: 12pt; margin-bottom: 10px;">Actieve DNS Records (<span th:text="${domain.name}"></span>)</h2>
+                <table class="dns-table" style="border: 1px solid #e2e8f0; margin-bottom: 0;">
+                    <thead>
+                    <tr>
+                        <th style="width: 15%;">TYPE</th>
+                        <th style="width: 35%;">NAAM</th>
+                        <th style="width: 50%;">WAARDE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="record : ${domain.records}">
+                        <td style="font-weight: bold;" th:text="${record.type}">SPF</td>
+                        <td th:text="${record.name}">labo.cloudmen.com</td>
+                        <td class="break-text" th:text="${record.value}">waarde</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
         </div>
     </div>

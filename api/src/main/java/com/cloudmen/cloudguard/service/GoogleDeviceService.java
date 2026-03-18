@@ -8,6 +8,8 @@ import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import com.google.api.services.admin.directory.model.ChromeOsDevice;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import com.google.api.services.cloudidentity.v1.model.GoogleAppsCloudidentityDevicesV1Device;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -15,6 +17,7 @@ import java.util.*;
 @Service
 public class GoogleDeviceService {
 
+    private static final Logger log = LoggerFactory.getLogger(GoogleDeviceService.class);
     private final GoogleDeviceCacheService deviceCacheService;
 
     public GoogleDeviceService(GoogleDeviceCacheService deviceCacheService) {
