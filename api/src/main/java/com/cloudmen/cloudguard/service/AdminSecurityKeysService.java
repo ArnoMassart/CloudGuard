@@ -156,8 +156,8 @@ public class AdminSecurityKeysService {
         String token = creds.getAccessToken().getTokenValue();
 
         Map<String, SecurityKeyCounts> result = new HashMap<>();
-        // Reports API data can lag up to 48 hours; use 2 days ago to avoid "data not yet available"
-        String date = LocalDate.now().minusDays(2).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        // Reports API data can lag 48+ hours; use 3 days ago to avoid "data not yet available"
+        String date = LocalDate.now().minusDays(3).format(DateTimeFormatter.ISO_LOCAL_DATE);
         String pageToken = null;
 
         do {

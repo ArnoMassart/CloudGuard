@@ -1,7 +1,9 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { PageHeader } from '../../../components/page-header/page-header';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { PasswordSettingsService } from '../../../services/password-settings-service';
 import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
 import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminWithSecurityKey';
@@ -15,6 +17,8 @@ import { LucideAngularModule } from 'lucide-angular';
     CommonModule,
     PageHeader,
     SectionTopCard,
+    PageWarnings,
+    PageWarningsItem,
     LucideAngularModule,
   ],
   templateUrl: './password-settings.html',
@@ -30,6 +34,51 @@ export class PasswordSettings implements OnInit {
   readonly securityKeysExpanded = signal(true);
   readonly forcedChangeExpanded = signal(true);
   readonly isRefreshing = signal(false);
+  readonly warningsExpanded = signal(true);
+  readonly criticalWarningsExpanded = signal(true);
+
+  readonly hasAdminsWithoutSecurityKeys = computed(() =>
+    (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0
+  );
+  readonly hasPasswordLengthWeak = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.minLength != null && p.minLength < 12
+    )
+  );
+  readonly hasStrongPasswordNotRequired = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.strongPasswordRequired === false
+    )
+  );
+  readonly hasPasswordNeverExpires = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.expirationDays == null || p.expirationDays === 0
+    )
+  );
+  readonly has2SvNotEnforced = computed(() =>
+    (this.data()?.twoStepVerification.byOrgUnit ?? []).some((ou) => !ou.enforced)
+  );
+
+  readonly hasWarnings = computed(
+    () =>
+      this.hasAdminsWithoutSecurityKeys() ||
+      this.hasPasswordLengthWeak() ||
+      this.hasStrongPasswordNotRequired() ||
+      this.hasPasswordNeverExpires()
+  );
+  readonly hasCriticalWarnings = computed(() => this.has2SvNotEnforced());
+  readonly hasMultipleWarnings = computed(
+    () =>
+      [this.hasAdminsWithoutSecurityKeys(), this.hasPasswordLengthWeak(), this.hasStrongPasswordNotRequired(), this.hasPasswordNeverExpires()].filter(Boolean).length > 1
+  );
+
+  toggleWarnings(): void {
+    this.warningsExpanded.update((v) => !v);
+  }
+
+  toggleCriticalWarnings(): void {
+    this.criticalWarningsExpanded.update((v) => !v);
+  }
 
   toggleSecurityKeys(): void {
     this.securityKeysExpanded.update((v) => !v);
