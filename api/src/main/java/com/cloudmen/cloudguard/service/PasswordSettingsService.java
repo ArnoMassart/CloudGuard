@@ -45,9 +45,9 @@ public class PasswordSettingsService {
 
     public void forceRefreshCache(String adminEmail) {
         cache.invalidate(adminEmail);
+        policyCache.forceRefreshCache();
         usersCache.forceRefreshCache(adminEmail);
         orgUnitCache.forceRefreshCache(adminEmail);
-        policyCache.forceRefreshCache();
         adminSecurityKeysService.forceRefreshCache(adminEmail);
     }
 
@@ -112,9 +112,16 @@ public class PasswordSettingsService {
             log.warn("Could not fetch OU map: {}", e.getMessage());
         }
 
+        List<JsonNode> policies = Collections.emptyList();
+        try {
+            policies = policyCache.getAllPolicies(adminEmail);
+        } catch (Exception e) {
+            log.warn("Could not fetch policies: {}", e.getMessage());
+        }
+
         List<OuPasswordPolicyDto> result = new ArrayList<>();
         for (String path : ouPaths) {
-            OuPasswordPolicyDto policy = resolvePasswordPolicyForOu(adminEmail, path, ouIdToPath,
+            OuPasswordPolicyDto policy = resolvePasswordPolicyForOu(path, policies, ouIdToPath,
                     userCounts.getOrDefault(path, 0));
             result.add(policy);
         }
@@ -122,7 +129,7 @@ public class PasswordSettingsService {
         return result;
     }
 
-    private OuPasswordPolicyDto resolvePasswordPolicyForOu(String adminEmail, String orgUnitPath, Map<String, String> ouIdToPath, int userCount) {
+    private OuPasswordPolicyDto resolvePasswordPolicyForOu(String orgUnitPath, List<JsonNode> policies, Map<String, String> ouIdToPath, int userCount) {
         String displayName = "/".equals(orgUnitPath) ? "Root" : orgUnitPath.substring(orgUnitPath.lastIndexOf('/') + 1);
 
         Integer minLength = null;
@@ -131,60 +138,59 @@ public class PasswordSettingsService {
         Integer reuseCount = null;
         boolean inherited = true;
 
-        try {
-            List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
-            JsonNode best = null;
-            String bestOuPath = null;
-            int bestDepth = -1;
-            double bestSort = Double.NEGATIVE_INFINITY;
+        JsonNode best = null;
+        String bestOuPath = null;
+        int bestDepth = -1;
+        double bestSort = Double.NEGATIVE_INFINITY;
 
-            for (JsonNode p : policies) {
-                JsonNode setting = p.get("setting");
-                if (setting == null) continue;
-                String type = setting.path("type").asText("");
-                if (!"settings/security.password".equals(type)) continue;
+        for (JsonNode p : policies) {
+            JsonNode setting = p.get("setting");
+            if (setting == null) continue;
+            String type = setting.path("type").asText("");
+            if (!"settings/security.password".equals(type)) continue;
 
-                JsonNode query = p.get("policyQuery");
-                if (query == null) continue;
-                String ouRef = query.path("orgUnit").asText("");
-                String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouIdToPath);
-                if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
+            JsonNode query = p.get("policyQuery");
+            if (query == null) continue;
+            String ouRef = query.path("orgUnit").asText("");
+            String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouIdToPath);
+            if (!isAncestorOrSelf(orgUnitPath, policyOuPath)) continue;
 
-                int depth = depthOf(policyOuPath);
-                double sortOrder = query.path("sortOrder").asDouble(0.0);
-                if (depth > bestDepth || (depth == bestDepth && sortOrder > bestSort)) {
-                    best = p;
-                    bestOuPath = policyOuPath;
-                    bestDepth = depth;
-                    bestSort = sortOrder;
-                }
+            int depth = depthOf(policyOuPath);
+            double sortOrder = query.path("sortOrder").asDouble(0.0);
+            if (depth > bestDepth || (depth == bestDepth && sortOrder > bestSort)) {
+                best = p;
+                bestOuPath = policyOuPath;
+                bestDepth = depth;
+                bestSort = sortOrder;
             }
-
-            if (best != null) {
-                JsonNode value = best.path("setting").path("value");
-                inherited = !orgUnitPath.equals(bestOuPath);
-
-                JsonNode ml = value.path("minimumLength");
-                if (!ml.isMissingNode() && !ml.isNull()) minLength = ml.asInt();
-
-                JsonNode ed = value.path("expirationDuration");
-                if (!ed.isMissingNode() && !ed.isNull()) {
-                    expirationDays = parseDurationToDays(ed.asText("0s"));
-                }
-
-                JsonNode strength = value.path("allowedStrength");
-                if (!strength.isMissingNode() && !strength.isNull()) {
-                    strongPassword = "STRONG".equals(strength.asText());
-                }
-
-                JsonNode reuse = value.path("allowReuse");
-                if (!reuse.isMissingNode() && !reuse.isNull()) {
-                    reuseCount = reuse.asBoolean() ? 0 : 1;
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Could not resolve password policy for OU {}: {}", orgUnitPath, e.getMessage());
         }
+
+        if (best != null) {
+            log.info("OU [{}]: matched policy from OU [{}] (inherited={}). Raw value: {}",
+                    orgUnitPath, bestOuPath, !orgUnitPath.equals(bestOuPath),
+                    best.path("setting").path("value"));
+            JsonNode value = best.path("setting").path("value");
+            inherited = !orgUnitPath.equals(bestOuPath);
+
+            JsonNode ml = value.path("minimumLength");
+            if (!ml.isMissingNode() && !ml.isNull()) minLength = ml.asInt();
+
+            JsonNode ed = value.path("expirationDuration");
+            if (!ed.isMissingNode() && !ed.isNull()) {
+                expirationDays = parseDurationToDays(ed.asText("0s"));
+            }
+
+            JsonNode strength = value.path("allowedStrength");
+            if (!strength.isMissingNode() && !strength.isNull()) {
+                strongPassword = "STRONG".equals(strength.asText());
+            }
+
+            JsonNode reuse = value.path("allowReuse");
+            if (!reuse.isMissingNode() && !reuse.isNull()) {
+                reuseCount = reuse.asBoolean() ? 0 : 1;
+            }
+        }
+
         int score = calculateScore(minLength, expirationDays, strongPassword, reuseCount);
         int problemCount = countProblems(minLength, expirationDays, strongPassword, reuseCount);
 
@@ -239,6 +245,13 @@ public class PasswordSettingsService {
             log.warn("Could not fetch OU map: {}", e.getMessage());
         }
 
+        List<JsonNode> policies = Collections.emptyList();
+        try {
+            policies = policyCache.getAllPolicies(adminEmail);
+        } catch (Exception e) {
+            log.warn("Could not fetch policies for 2SV: {}", e.getMessage());
+        }
+
         Map<String, List<User>> byOu = allUsers.stream()
                 .collect(Collectors.groupingBy(u -> {
                     String path = u.getOrgUnitPath();
@@ -254,7 +267,7 @@ public class PasswordSettingsService {
             int total = users.size();
             int enrolled = (int) users.stream().filter(u -> Boolean.TRUE.equals(u.getIsEnrolledIn2Sv())).count();
             int enforced = (int) users.stream().filter(u -> Boolean.TRUE.equals(u.getIsEnforcedIn2Sv())).count();
-            boolean enforcedByPolicy = is2SvEnforcedForOu(adminEmail, path, ouIdToPath);
+            boolean enforcedByPolicy = is2SvEnforcedForOu(path, policies, ouIdToPath);
 
             String displayName = path.equals("/") ? "Root" : path.substring(path.lastIndexOf('/') + 1);
 
@@ -269,26 +282,21 @@ public class PasswordSettingsService {
         return new TwoStepVerificationDto(ouList, totalEnrolled, totalEnforced, allUsers.size());
     }
 
-    private boolean is2SvEnforcedForOu(String adminEmail, String orgUnitPath, Map<String, String> ouIdToPath) {
-        try {
-            List<JsonNode> policies = policyCache.getAllPolicies(adminEmail);
-            for (JsonNode p : policies) {
-                JsonNode setting = p.get("setting");
-                if (setting == null) continue;
-                String type = setting.path("type").asText("");
-                if (!type.contains("two_step") && !type.contains("2sv") && !type.contains("two_step_verification")) continue;
+    private boolean is2SvEnforcedForOu(String orgUnitPath, List<JsonNode> policies, Map<String, String> ouIdToPath) {
+        for (JsonNode p : policies) {
+            JsonNode setting = p.get("setting");
+            if (setting == null) continue;
+            String type = setting.path("type").asText("");
+            if (!type.contains("two_step") && !type.contains("2sv") && !type.contains("two_step_verification")) continue;
 
-                JsonNode query = p.get("policyQuery");
-                if (query == null) continue;
-                String ouRef = query.path("orgUnit").asText("");
-                String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouIdToPath);
-                if (isAncestorOrSelf(orgUnitPath, policyOuPath)) {
-                    JsonNode value = setting.get("value");
-                    if (value != null && value.path("enforced").asBoolean(false)) return true;
-                }
+            JsonNode query = p.get("policyQuery");
+            if (query == null) continue;
+            String ouRef = query.path("orgUnit").asText("");
+            String policyOuPath = policyCache.resolveOuIdToPath(ouRef, ouIdToPath);
+            if (isAncestorOrSelf(orgUnitPath, policyOuPath)) {
+                JsonNode value = setting.get("value");
+                if (value != null && value.path("enforced").asBoolean(false)) return true;
             }
-        } catch (Exception e) {
-            log.warn("Could not check 2SV policy for OU {}: {}", orgUnitPath, e.getMessage());
         }
         return false;
     }

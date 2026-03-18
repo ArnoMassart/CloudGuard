@@ -156,7 +156,7 @@ public class PolicyApiCacheService {
     private Map<String, String> fetchOuIdToPathMap(String adminEmail) throws Exception {
         Directory directory = directoryFactory.getDirectoryService(
                 Set.of(DirectoryScopes.ADMIN_DIRECTORY_ORGUNIT_READONLY), adminEmail);
-        OrgUnits response = directory.orgunits().list("my_customer").setType("all").execute();
+        OrgUnits response = directory.orgunits().list("my_customer").setType("ALL_INCLUDING_PARENT").execute();
 
         Map<String, String> map = new HashMap<>();
         if (response != null && response.getOrganizationUnits() != null) {
@@ -178,33 +178,44 @@ public class PolicyApiCacheService {
         List<JsonNode> out = new ArrayList<>();
         String pageToken = null;
 
-        try {
-            do {
-                UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(POLICY_API_BASE)
-                        .queryParam("pageSize", 100);
-                if (pageToken != null) builder.queryParam("pageToken", pageToken);
-                URI uri = builder.build().encode().toUri();
+        do {
+            int maxRetries = 3;
+            ResponseEntity<String> resp = null;
+            for (int attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(POLICY_API_BASE)
+                            .queryParam("pageSize", 100);
+                    if (pageToken != null) builder.queryParam("pageToken", pageToken);
+                    URI uri = builder.build().encode().toUri();
 
-                HttpHeaders headers = new HttpHeaders();
-                headers.setBearerAuth(token);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setBearerAuth(token);
 
-                ResponseEntity<String> resp = restTemplate.exchange(
-                        uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-
-                if (resp.getBody() == null) break;
-                JsonNode root = mapper.readTree(resp.getBody());
-                JsonNode policiesNode = root.get("policies");
-                if (policiesNode != null && policiesNode.isArray()) {
-                    for (JsonNode p : policiesNode) out.add(p);
+                    resp = restTemplate.exchange(
+                            uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+                    break;
+                } catch (HttpStatusCodeException e) {
+                    if (e.getStatusCode().value() == 429 && attempt < maxRetries) {
+                        long backoff = (long) Math.pow(2, attempt + 1) * 1000L;
+                        log.warn("Policy API 429 rate-limited, retrying in {}ms (attempt {}/{})", backoff, attempt + 1, maxRetries);
+                        Thread.sleep(backoff);
+                    } else {
+                        throw new RuntimeException("Policy API fetch failed: HTTP " +
+                                e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
+                    }
                 }
+            }
 
-                JsonNode next = root.get("nextPageToken");
-                pageToken = (next != null && !next.isNull() && !next.asText().isBlank()) ? next.asText() : null;
-            } while (pageToken != null);
-        } catch (HttpStatusCodeException e) {
-            throw new RuntimeException("Policy API fetch failed: HTTP " +
-                    e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
-        }
+            if (resp == null || resp.getBody() == null) break;
+            JsonNode root = mapper.readTree(resp.getBody());
+            JsonNode policiesNode = root.get("policies");
+            if (policiesNode != null && policiesNode.isArray()) {
+                for (JsonNode p : policiesNode) out.add(p);
+            }
+
+            JsonNode next = root.get("nextPageToken");
+            pageToken = (next != null && !next.isNull() && !next.asText().isBlank()) ? next.asText() : null;
+        } while (pageToken != null);
 
         log.info("Fetched {} policies from Policy API (cached for {}s)", out.size(), CACHE_TTL_MS / 1000);
         return out;
