@@ -163,7 +163,7 @@ public class AppPasswordsService {
                 new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, new ArrayList<>()),
                 new UserAppPasswordsDto("demo-5", "Sophie Jansen", "sophie.jansen@bedrijf.nl", "User", false, List.of(p5a, p5b))
         );
-        return new AppPasswordCacheEntry(users, 5);
+        return new AppPasswordCacheEntry(users, 15);
     }
 
     private AppPasswordDto mapToDto(Asp asp) {
