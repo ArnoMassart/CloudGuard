@@ -14,6 +14,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 
 // ==========================================
 // CONSTANTS
@@ -43,6 +44,8 @@ export class Devices implements OnInit {
   readonly statusEnum = DeviceStatus;
   readonly UtilityMethods = UtilityMethods;
   readonly #deviceService = inject(DeviceService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -133,6 +136,14 @@ export class Devices implements OnInit {
       this.currentPage.update((p) => p - 1);
       this.#loadDevices(prevToken);
     }
+  }
+
+  openSecurityScoreDetail() {
+    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
+      this.pageOverview()?.securityScore ?? 0,
+      'Apparaten'
+    );
+    this.#securityScoreDetail.open(breakdown, 'Apparaten');
   }
 
   refreshData() {

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserOrgDetail } from '../../../../models/users/UserOrgDetails';
 import { UserService } from '../../../../services/user-service';
+import { SecurityScoreDetailService } from '../../../../services/security-score-detail.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UserOverviewResponse } from '../../../../models/users/UserOverviewResponse';
 import { UsersPageWarnings } from '../../../../models/users/UsersPageWarnings';
@@ -39,6 +40,7 @@ export class UsersSection implements OnInit {
   // ==========================================
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -125,6 +127,15 @@ export class UsersSection implements OnInit {
       default:
         return 'bg-gray-100 text-gray-600';
     }
+  }
+
+  openSecurityScoreDetail() {
+    const overview = this.pageOverview();
+    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
+      'Gebruikers'
+    );
+    this.#securityScoreDetail.open(breakdown, 'Gebruikers');
   }
 
   refreshData() {

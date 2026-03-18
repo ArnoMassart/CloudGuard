@@ -8,6 +8,7 @@ import { SectionTopCard } from '../../../components/section-top-card/section-top
 import { FilterChips } from '../../../components/filter-chips/filter-chips';
 import { SearchBar } from '../../../components/search-bar/search-bar';
 import { OAuthService } from '../../../services/o-auth-service';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
 import { Risk } from '../../../models/o-auth/Risk';
@@ -31,6 +32,7 @@ export class AppAccess implements OnInit {
   readonly Icons = AppIcons;
   readonly UtilityMethods = UtilityMethods;
   readonly #oAuthService = inject(OAuthService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -154,6 +156,12 @@ export class AppAccess implements OnInit {
   setRiskFilter(risk: string): void {
     this.riskFilter.set(risk as Risk);
     this.#resetData();
+  }
+
+  openSecurityScoreDetail(): void {
+    const score = this.pageOverview()?.securityScore ?? 0;
+    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(score, 'App Toegang');
+    this.#securityScoreDetail.open(breakdown, 'App Toegang');
   }
 
   // ==========================================

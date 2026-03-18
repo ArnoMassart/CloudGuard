@@ -8,6 +8,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
 import { DnsRecord } from '../../../models/dns/DnsRecord';
 import { DnsService } from '../../../services/dns-service';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 
 @Component({
   selector: 'app-domain-dns',
@@ -21,6 +22,7 @@ export class DomainDns implements OnInit {
   readonly isRefreshing = signal(false);
   readonly #domainService = inject(DomainService);
   readonly Icons = AppIcons;
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
 
   private readonly dnsService = inject(DnsService);
   readonly rows = signal<DnsRecord[]>([]);
@@ -180,6 +182,14 @@ export class DomainDns implements OnInit {
       CNAME: 'Configureer CNAME voor mail subdomein indien gewenst',
     };
     return tips[type] ?? null;
+  }
+
+  openSecurityScoreDetail() {
+    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
+      this.securityScore(),
+      'DNS'
+    );
+    this.#securityScoreDetail.open(breakdown, 'DNS');
   }
 
   getControlArticleUrl(type: string): string | null {

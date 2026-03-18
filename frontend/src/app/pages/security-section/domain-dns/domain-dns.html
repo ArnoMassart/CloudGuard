@@ -8,8 +8,22 @@
                 [Icon]="Icons.Globe" />
             <app-section-top-card class="flex-1" Title="Geldige DNS records" [Value]="validDnsRecords()"
                 BackgroundColor="#dbfce7" IconColor="#17b04f" TextColor="#17b04f" [Icon]="Icons.CircleCheck" />
-            <app-section-top-card class="flex-1" Title="Security Score" [Value]="securityScore()" [IsPercentage]="true"
-                BackgroundColor="#fef9c2" IconColor="#d69518" />
+            <div
+                class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+                (click)="openSecurityScoreDetail()"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="openSecurityScoreDetail()"
+                (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
+            >
+                <app-section-top-card
+                    Title="Security Score"
+                    [Value]="securityScore()"
+                    [IsPercentage]="true"
+                    BackgroundColor="#fef9c2"
+                    IconColor="#d69518"
+                />
+            </div>
         </div>
 
         @if (!isLoading()) {

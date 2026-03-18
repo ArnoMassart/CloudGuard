@@ -12,6 +12,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 
 // ==========================================
 // CONSTANTS
@@ -39,6 +40,7 @@ export class SharedDrives implements OnInit {
   readonly Icons = AppIcons;
   readonly UtilityMethods = UtilityMethods;
   readonly #driveService = inject(DriveService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -112,6 +114,14 @@ export class SharedDrives implements OnInit {
       this.currentPage.update((p) => p - 1);
       this.#loadDrives(prevToken);
     }
+  }
+
+  openSecurityScoreDetail() {
+    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
+      this.pageOverview()?.securityScore ?? 0,
+      'Drives'
+    );
+    this.#securityScoreDetail.open(breakdown, 'Drives');
   }
 
   refreshData() {
