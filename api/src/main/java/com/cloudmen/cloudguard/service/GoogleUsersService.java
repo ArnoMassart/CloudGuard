@@ -98,7 +98,7 @@ public class GoogleUsersService {
         long activeLongNoLoginCount = googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
             LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
-            return !Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.YEARS.between(loginDate, now) >= 1;
+            return !Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) >= 90;
         }).count();
 
         long inactiveRecentLoginCount = googleUsers.stream().filter(user -> {

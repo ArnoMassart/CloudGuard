@@ -37,3 +37,11 @@ canvas {
 .mat-mdc-progress-spinner {
   --mdc-circular-progress-active-indicator-color: currentColor;
 }
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}

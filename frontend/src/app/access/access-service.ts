@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { RouteService } from './route-service';
+import { RouteService } from '../services/route-service';
 import { catchError, map, Observable, of, shareReplay } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
-export class TeamleaderService {
+export class AccessService {
   readonly #API_URL = RouteService.getBackendUrl('/teamleader');
   readonly #http = inject(HttpClient);
 

@@ -5,5 +5,6 @@ export type DashboardScores = {
   devicesScore: number;
   appAccessScore: number;
   appPasswordsScore: number;
+  passwordSettingsScore: number;
   dnsScore: number;
 };

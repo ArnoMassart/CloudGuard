@@ -7,6 +7,7 @@ public record DashboardScores(
         int devicesScore,
         int appAccessScore,
         int appPasswordsScore,
+        int passwordSettingsScore,
         int dnsScore
 ) {
 }

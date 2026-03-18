@@ -10,6 +10,7 @@ import com.google.api.services.admin.directory.model.ChromeOsDevice;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import com.google.api.services.cloudidentity.v1.CloudIdentity;
 import com.google.api.services.cloudidentity.v1.CloudIdentityScopes;
+import com.google.api.services.cloudidentity.v1.model.GoogleAppsCloudidentityDevicesV1ListDevicesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -136,7 +137,7 @@ public class GoogleDeviceCacheService {
                     .setPageToken(pageToken)
                     .setPageSize(100);
 
-            var result = request.execute();
+            GoogleAppsCloudidentityDevicesV1ListDevicesResponse result = request.execute();
 
             if (result.getDevices() != null) {
                 for (var d : result.getDevices()) {
