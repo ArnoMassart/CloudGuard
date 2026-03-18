@@ -92,35 +92,38 @@ export class PasswordSettings implements OnInit {
     this.#load();
   }
 
-  #load(): void {
-    this.loading.set(true);
+  #load(showLoadingScreen = true, onComplete?: () => void): void {
+    if (showLoadingScreen) {
+      this.loading.set(true);
+    }
     this.error.set(null);
     this.#passwordSettingsService.getPasswordSettings().subscribe({
       next: (settings: PasswordSettingsData) => {
         this.data.set(settings);
         this.loading.set(false);
+        onComplete?.();
       },
       error: (err) => {
         this.error.set(err?.message || 'Kon gegevens niet laden.');
         this.loading.set(false);
+        onComplete?.();
       },
     });
   }
 
   retry(): void {
-    this.#load();
+    this.#load(true);
   }
 
   refreshData(): void {
     if (this.isRefreshing()) return;
     this.isRefreshing.set(true);
     this.#passwordSettingsService.refreshCache().subscribe({
-      next: () => this.#load(),
+      next: () => this.#load(false, () => this.isRefreshing.set(false)),
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
         this.isRefreshing.set(false);
       },
-      complete: () => this.isRefreshing.set(false),
     });
   }
 
