@@ -9,6 +9,7 @@ import { SharedDrives } from './pages/security-section/shared-drives/shared-driv
 import { Devices } from './pages/security-section/devices/devices';
 import { AppAccess } from './pages/security-section/app-access/app-access';
 import { AppPasswords } from './pages/security-section/app-passwords/app-passwords';
+import { PasswordSettings } from './pages/security-section/password-settings/password-settings';
 import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
 import { Licenses } from './pages/control-section/licenses/licenses';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
@@ -77,6 +78,11 @@ export const routes: Routes = [
   {
     path: 'app-passwords',
     component: AppPasswords,
+    canActivate: [authGuard, accessGuard],
+  },
+  {
+    path: 'password-settings',
+    component: PasswordSettings,
     canActivate: [authGuard, accessGuard],
   },
   {

@@ -1,0 +1,167 @@
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
+import { PageHeader } from '../../../components/page-header/page-header';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { PasswordSettingsService } from '../../../services/password-settings-service';
+import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
+import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminWithSecurityKey';
+import { AppIcons } from '../../../shared/AppIcons';
+import { UtilityMethods } from '../../../shared/UtilityMethods';
+import { LucideAngularModule } from 'lucide-angular';
+
+@Component({
+  selector: 'app-password-settings',
+  imports: [
+    CommonModule,
+    PageHeader,
+    SectionTopCard,
+    PageWarnings,
+    PageWarningsItem,
+    LucideAngularModule,
+  ],
+  templateUrl: './password-settings.html',
+})
+export class PasswordSettings implements OnInit {
+  readonly Icons = AppIcons;
+  readonly #passwordSettingsService = inject(PasswordSettingsService);
+
+  readonly data = signal<PasswordSettingsData | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly expandedOu = signal<string | null>(null);
+  readonly securityKeysExpanded = signal(true);
+  readonly forcedChangeExpanded = signal(true);
+  readonly isRefreshing = signal(false);
+  readonly warningsExpanded = signal(true);
+  readonly criticalWarningsExpanded = signal(true);
+
+  readonly hasAdminsWithoutSecurityKeys = computed(() =>
+    (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0
+  );
+  readonly hasPasswordLengthWeak = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.minLength != null && p.minLength < 12
+    )
+  );
+  readonly hasStrongPasswordNotRequired = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.strongPasswordRequired === false
+    )
+  );
+  readonly hasPasswordNeverExpires = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.expirationDays == null || p.expirationDays === 0
+    )
+  );
+  readonly has2SvNotEnforced = computed(() =>
+    (this.data()?.twoStepVerification.byOrgUnit ?? []).some((ou) => !ou.enforced)
+  );
+
+  readonly hasWarnings = computed(
+    () =>
+      this.hasAdminsWithoutSecurityKeys() ||
+      this.hasPasswordLengthWeak() ||
+      this.hasStrongPasswordNotRequired() ||
+      this.hasPasswordNeverExpires()
+  );
+  readonly hasCriticalWarnings = computed(() => this.has2SvNotEnforced());
+  readonly hasMultipleWarnings = computed(
+    () =>
+      [this.hasAdminsWithoutSecurityKeys(), this.hasPasswordLengthWeak(), this.hasStrongPasswordNotRequired(), this.hasPasswordNeverExpires()].filter(Boolean).length > 1
+  );
+
+  toggleWarnings(): void {
+    this.warningsExpanded.update((v) => !v);
+  }
+
+  toggleCriticalWarnings(): void {
+    this.criticalWarningsExpanded.update((v) => !v);
+  }
+
+  toggleSecurityKeys(): void {
+    this.securityKeysExpanded.update((v) => !v);
+  }
+
+  toggleForcedChange(): void {
+    this.forcedChangeExpanded.update((v) => !v);
+  }
+
+  ngOnInit(): void {
+    this.#load();
+  }
+
+  #load(showLoadingScreen = true, onComplete?: () => void): void {
+    if (showLoadingScreen) {
+      this.loading.set(true);
+    }
+    this.error.set(null);
+    this.#passwordSettingsService.getPasswordSettings().subscribe({
+      next: (settings: PasswordSettingsData) => {
+        this.data.set(settings);
+        this.loading.set(false);
+        onComplete?.();
+      },
+      error: (err) => {
+        this.error.set(err?.message || 'Kon gegevens niet laden.');
+        this.loading.set(false);
+        onComplete?.();
+      },
+    });
+  }
+
+  retry(): void {
+    this.#load(true);
+  }
+
+  refreshData(): void {
+    if (this.isRefreshing()) return;
+    this.isRefreshing.set(true);
+    this.#passwordSettingsService.refreshCache().subscribe({
+      next: () => this.#load(false, () => this.isRefreshing.set(false)),
+      error: (err) => {
+        console.error('Kon cache niet vernieuwen:', err);
+        this.isRefreshing.set(false);
+      },
+    });
+  }
+
+  toggleOu(policy: string): void {
+    this.expandedOu.update((v) => (v === policy ? null : policy));
+  }
+
+  get2SvForOu(orgUnitPath: string): OrgUnit2Sv | undefined {
+    return this.data()?.twoStepVerification.byOrgUnit.find((ou) => ou.orgUnitPath === orgUnitPath);
+  }
+
+  hasPolicyData(policy: OuPasswordPolicy): boolean {
+    return policy.minLength != null || policy.expirationDays != null ||
+      policy.strongPasswordRequired != null || policy.reusePreventionCount != null;
+  }
+
+  openAdminPasswordSettings(): void {
+    UtilityMethods.openAdminPage('https://admin.google.com/ac/security/password');
+  }
+
+  getAdminUserUrl(admin: AdminWithSecurityKey): string {
+    const id = admin.id?.trim();
+    if (!id) return 'https://admin.google.com/u/1/ac/users';
+    return `https://admin.google.com/u/1/ac/users/${encodeURIComponent(id)}`;
+  }
+
+  formatOrgUnit(path: string): string {
+    if (!path || path === '/') return 'Hoofdorganisatie';
+    return path.startsWith('/') ? path.slice(1) : path;
+  }
+
+  getUserUrl(email: string): string {
+    if (!email?.trim()) return 'https://admin.google.com/u/1/ac/users';
+    return `https://admin.google.com/u/1/ac/users/${encodeURIComponent(email.trim())}`;
+  }
+
+  formatForcedChangeReason(reason: string): string {
+    if (reason === 'changePasswordAtNextLogin') return 'Verplicht bij volgende login';
+    return reason || 'Onbekend';
+  }
+}
