@@ -11,6 +11,7 @@ public record FullSecurityReport(
         DeviceMetrics devices,
         AppAccessMetrics appAccess,
         AppPasswordMetrics appPasswords,
+        PasswordMetrics passwordSettings,
         List<DomainData> domains
 ) {
     public record RiskItem(String title, String description) {}
@@ -34,6 +35,8 @@ public record FullSecurityReport(
 
     public record AppPasswordMetrics(int activePasswords, int usersUsingThem, int securityScore) {}
 
+    public record PasswordMetrics(int totalOus, int enforced2FaOus,long unenforcedOusWithUsers, int adminsWithoutKeys, int securityScore){}
+
     public record DomainData(
             String name,
             int score,
@@ -46,8 +49,8 @@ public record FullSecurityReport(
             String title,
             String description,
             String tip,
-            String status,    // Gebruik: "RED", "ORANGE", "GREEN", "GRAY"
-            String badgeText  // Gebruik: "Actie vereist", "Aandacht", "Geldig", "Optioneel"
+            String status,
+            String badgeText
     ) {}
 
     public record DnsRecord(

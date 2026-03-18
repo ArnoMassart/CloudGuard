@@ -64,4 +64,20 @@ public class TeamleaderCompanyService {
 
         return null;
     }
+
+    public String getCompanyNameByEmail(String loggedInEmail, HttpHeaders headers) {
+        String companyId = getCompanyIdByEmail(loggedInEmail, headers);
+
+        if (companyId == null) {
+            return "Onbekend Bedrijf";
+        }
+
+        Map<String, Object> companyDetails = getCompanyDetails(companyId, headers);
+
+        if (companyDetails != null && companyDetails.containsKey("name")) {
+            return (String) companyDetails.get("name");
+        }
+
+        return "Onbekend Bedrijf";
+    }
 }

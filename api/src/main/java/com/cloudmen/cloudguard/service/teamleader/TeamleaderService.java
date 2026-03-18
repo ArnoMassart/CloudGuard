@@ -38,7 +38,7 @@ public class TeamleaderService {
     }
 
 
-    HttpHeaders createHeaders() {
+    public HttpHeaders createHeaders() {
         // Haal altijd de meest verse token op uit Supabase!
         SupabaseTokenService.TeamleaderTokens tokens = supabaseTokenService.getTokens();
 

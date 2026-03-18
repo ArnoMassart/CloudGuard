@@ -42,18 +42,23 @@
         /* --- COVER PAGE --- */
         .cover {
             page: cover-page; /* Koppel deze div aan de Named Page */
-            background-color: #0f172a;
+            background-color: #04233d;
             height: 297mm; /* Exact A4 hoogte */
             width: 210mm; /* Exact A4 breedte */
+
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+
             color: white;
             text-align: left;
             page-break-after: always;
         }
         .cover-content { padding-top: 50px; padding-left: 76px; }
-        .logo { width: 90px; padding-bottom: 150px;}
-        .title { font-size: 26pt; font-weight: bold; margin-bottom: 10px; color: #cbd5e1; }
-        .subtitle { font-size: 20pt; color: #cbd5e1; letter-spacing: 2px; }
-        .date { margin-top: 40px; font-size: 12pt; color: #94a3b8; }
+        .logo { width: 100px; padding-bottom: 125px;}
+        .title { font-size: 30pt; font-weight: bold; margin-bottom: 10px; color: #cbd5e1; }
+        .subtitle { font-size: 24pt; color: #cbd5e1; letter-spacing: 2px; }
+        .date { margin-top: 40px; font-size: 16pt; color: #94a3b8; }
 
 
         /* --- LAYOUT & TYPOGRAPHY --- */
@@ -179,7 +184,6 @@
         .dns-table th { background-color: #f8fafc; color: #64748b; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; }
         .dns-table td.break-text {
             word-wrap: break-word;
-            overflow-wrap: break-word;
         }
 
         .domain-card {
@@ -190,7 +194,7 @@
         }
 
         .domain-header {
-            background-color: #0f172a;
+            background-color: #04233d;
             color: white;
             padding: 12px 20px;
             font-size: 14pt;
@@ -235,7 +239,7 @@
 </head>
 <body>
 
-<div class="cover">
+<div class="cover" th:style="'background-image: url(' + ${bgImage} + ');'">
     <div class="cover-content">
         <img th:if="${logoBase64 != null}" th:src="${logoBase64}" class="logo" alt="Logo"/>
         <div class="title">Security Assessment Rapport</div>
@@ -315,8 +319,7 @@
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Actieve Gebruikersaccounts</div>
-                    <div class="fw-desc">
-                        Het totale aantal actieve werknemersaccounts (inclusief service-accounts) binnen de Google Workspace omgeving. Een accuraat beheer van actieve accounts is essentieel voor licentiebeheer en geeft direct de schaal aan van het te beveiligen oppervlak.
+                    <div class="fw-desc">Het totale aantal actieve werknemersaccounts (inclusief service-accounts) binnen de Google Workspace omgeving. Een accuraat beheer van actieve accounts is essentieel voor licentiebeheer en geeft direct de schaal aan van het te beveiligen oppervlak.
                     </div>
                 </td>
             </tr>
@@ -392,8 +395,7 @@
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Actieve E-mailgroepen</div>
-                    <div class="fw-desc">
-                        Het totale aantal aangemaakte distributielijsten en samenwerkingsgroepen (bijv. <em>info@</em>, <em>sales@</em>). Een overzichtelijk aantal voorkomt verwarring en maakt het beheer van toegangsrechten eenvoudiger.
+                    <div class="fw-desc">Het totale aantal aangemaakte distributielijsten en samenwerkingsgroepen (bijv. <em>info@</em>, <em>sales@</em>). Een overzichtelijk aantal voorkomt verwarring en maakt het beheer van toegangsrechten eenvoudiger.
                     </div>
                 </td>
             </tr>
@@ -407,8 +409,7 @@
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Groepen met Externe Deelnemers</div>
-                    <div class="fw-desc">
-                        Het aantal groepen waarbij e-mailadressen van buiten uw eigen organisatie zijn toegevoegd als lid. E-mails die naar deze interne groepen worden gestuurd, worden automatisch doorgestuurd naar deze externe mailboxen.
+                    <div class="fw-desc">Het aantal groepen waarbij e-mailadressen van buiten uw eigen organisatie zijn toegevoegd als lid. E-mails die naar deze interne groepen worden gestuurd, worden automatisch doorgestuurd naar deze externe mailboxen.
                     </div>
                 </td>
             </tr>
@@ -422,66 +423,12 @@
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Groepen met Hoog Risico Instellingen</div>
-                    <div class="fw-desc">
-                        Dit zijn groepen met kwetsbare configuraties, zoals lijsten waarbij iedereen op het internet e-mails mag insturen, of waarbij de ledenlijst publiekelijk inzichtelijk is. Dit type instelling is vaak de oorzaak van phishing en ongewenste spam.
+                    <div class="fw-desc">Dit zijn groepen met kwetsbare configuraties, zoals lijsten waarbij iedereen op het internet e-mails mag insturen, of waarbij de ledenlijst publiekelijk inzichtelijk is. Dit type instelling is vaak de oorzaak van phishing en ongewenste spam.
                     </div>
                 </td>
             </tr>
         </table>
     </div>
-
-<!--    <div class="section-break">-->
-<!--        <h1>Organisatie-eenheden (OU's)</h1>-->
-<!--        <p>Organisatie-eenheden bepalen welke beveiligingsregels op welke afdelingen worden toegepast. Een schone OU-structuur voorkomt dat onveilige instellingen per ongeluk worden geërfd en zorgt voor overzicht in toegangsrechten.</p>-->
-
-<!--        <table class="full-card-table">-->
-<!--            <tr>-->
-<!--                <td class="card-stat-cell">-->
-<!--                    <div class="metric-val text-blue" th:text="${report.orgUnits.total}">0</div>-->
-<!--                    <div class="metric-lbl">TOTAAL OU'S</div>-->
-<!--                </td>-->
-<!--                <td class="card-text-cell">-->
-<!--                    <div class="fw-title">Organisatiestructuur</div>-->
-<!--                    <div class="fw-desc">-->
-<!--                        Dit is het totale aantal gedefinieerde eenheden binnen de Google Workspace omgeving. Een overzichtelijke, niet te diep geneste structuur helpt bij het nauwkeurig toewijzen van rechten (zoals toegang tot specifieke apps) zonder dat dit direct de hele organisatie raakt.-->
-<!--                    </div>-->
-<!--                </td>-->
-<!--            </tr>-->
-<!--        </table>-->
-
-<!--        <table class="full-card-table">-->
-<!--            <tr>-->
-<!--                <td class="card-stat-cell">-->
-<!--                    <div class="metric-val text-green" th:text="${report.orgUnits.withCustomPolicies}">0</div>-->
-<!--                    <div class="metric-lbl">CUSTOM POLICIES</div>-->
-<!--                </td>-->
-<!--                <td class="card-text-cell">-->
-<!--                    <div class="fw-title">Specifiek Beleid (Overerving Doorbroken)</div>-->
-<!--                    <div class="fw-desc">-->
-<!--                        Dit toont de OU's met een afwijkend beveiligingsbeleid ten opzichte van de hoofdorganisatie (Root). Het lokaal aanpassen van beleid is vaak nodig voor specifieke afdelingen, maar moet sterk gemonitord worden om te voorkomen dat er blinde vlekken in het algemene veiligheidsbeleid ontstaan.-->
-<!--                    </div>-->
-<!--                </td>-->
-<!--            </tr>-->
-<!--        </table>-->
-
-<!--        <table class="full-card-table">-->
-<!--            <tr>-->
-<!--                <td class="card-stat-cell">-->
-<!--                    <div class="metric-val" th:classappend="${report.orgUnits.unprotected > 0 ? 'text-red' : 'text-green'}" th:text="${report.orgUnits.unprotected}">0</div>-->
-<!--                    <div class="metric-lbl">ZONDER RESTRICTIES</div>-->
-<!--                </td>-->
-<!--                <td class="card-text-cell">-->
-<!--                    <div class="fw-title">OU's zonder Basisrestricties</div>-->
-<!--                    <div class="fw-desc">-->
-<!--                        Eenheden waarbij cruciale standaardmaatregelen—zoals het blokkeren van onveilige externe applicaties of het tegengaan van openbaar bestanden delen—niet of nauwelijks actief zijn.-->
-<!--                    </div>-->
-<!--                    <div th:if="${report.orgUnits.unprotected > 0}" class="fw-alert">-->
-<!--                        <strong>Aandachtspunt:</strong> Er zijn afdelingen aangetroffen zonder adequate veiligheidsrestricties. Zorg ervoor dat deze uitsluitend worden gebruikt voor testdoeleinden of sterk afgeschermde service-accounts. Verplaats reguliere gebruikers direct naar een beter beveiligde OU.-->
-<!--                    </div>-->
-<!--                </td>-->
-<!--            </tr>-->
-<!--        </table>-->
-<!--    </div>-->
 
     <div class="section-break">
         <h1>Gedeelde Drives</h1>
@@ -522,8 +469,7 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Drives met Externe Toegang</div>
                     <div class="fw-desc">Gedeelde Drives waarbij het is toegestaan om bestanden te delen met gebruikers buiten de organisatie. Hoewel dit soms noodzakelijk is voor samenwerking, vergroot dit het risico op datalekken aanzienlijk.</div>
-                    <div th:if="${report.drives.externallyShared > 0}" class="fw-alert">
-                        <strong>Aandachtspunt:</strong> Er zijn drives die extern delen toestaan. Controleer periodiek (bijv. elk kwartaal) of deze externe toegang nog steeds strikt noodzakelijk is voor de bedrijfsvoering, of dat dit kan worden uitgeschakeld.
+                    <div th:if="${report.drives.externallyShared > 0}" class="fw-alert"><strong>Aandachtspunt:</strong> Er zijn drives die extern delen toestaan. Controleer periodiek (bijv. elk kwartaal) of deze externe toegang nog steeds strikt noodzakelijk is voor de bedrijfsvoering, of dat dit kan worden uitgeschakeld.
                     </div>
                 </td>
             </tr>
@@ -538,8 +484,7 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Drives zonder Actieve Beheerder</div>
                     <div class="fw-desc">Elke Gedeelde Drive heeft minimaal één beheerder nodig om toegangsrechten te reguleren. Drives zonder beheerder (bijvoorbeeld doordat de medewerker uit dienst is gegaan) kunnen leiden tot "wees-data" en ongecontroleerde toegang.</div>
-                    <div th:if="${report.drives.noManagers > 0}" class="fw-alert">
-                        <strong>Aandachtspunt:</strong> Wijs zo snel mogelijk een nieuwe beheerder (Manager) toe aan deze drives om de controle over de documenten te behouden en dataverlies te voorkomen.
+                    <div th:if="${report.drives.noManagers > 0}" class="fw-alert"><strong>Aandachtspunt:</strong> Wijs zo snel mogelijk een nieuwe beheerder (Manager) toe aan deze drives om de controle over de documenten te behouden en dataverlies te voorkomen.
                     </div>
                 </td>
             </tr>
@@ -587,8 +532,7 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Apparaten met Beveiligingsrisico</div>
                     <div class="fw-desc">Apparaten die niet aan alle veiligheidseisen voldoen. Dit kan variëren van het ontbreken van een simpel wachtwoord tot een gecompromitteerd besturingssysteem (zoals een jailbreak of malware-infectie).</div>
-                    <div th:if="${report.devices.unsafe > 0}" class="fw-alert">
-                        <strong>Aandachtspunt:</strong> Er zijn onveilige apparaten gedetecteerd. Overweeg om via Mobile Device Management (MDM) of Context-Aware Access de toegang tot bedrijfsgegevens voor deze apparaten te blokkeren totdat de problemen zijn verholpen.
+                    <div th:if="${report.devices.unsafe > 0}" class="fw-alert"><strong>Aandachtspunt:</strong> Er zijn onveilige apparaten gedetecteerd. Overweeg om via Mobile Device Management (MDM) of Context-Aware Access de toegang tot bedrijfsgegevens voor deze apparaten te blokkeren totdat de problemen zijn verholpen.
                     </div>
                 </td>
             </tr>
@@ -604,8 +548,7 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Schijfversleuteling (BitLocker / FileVault)</div>
                     <div class="fw-desc">Schijfversleuteling zorgt ervoor dat de data op een apparaat onleesbaar is als het wordt gestolen. Zonder encryptie kan een dief de harde schijf simpelweg in een andere computer pluggen en alle bestanden kopiëren, ongeacht het wachtwoord.</div>
-                    <div th:if="${report.devices.encryptedPct < 100}" class="fw-alert">
-                        <strong>Aandachtspunt:</strong> Niet alle actieve apparaten zijn versleuteld. Bij verlies of diefstal van een onversleuteld apparaat met bedrijfsdata moet dit doorgaans worden gemeld als een officieel datalek bij de Autoriteit Persoonsgegevens.
+                    <div th:if="${report.devices.encryptedPct < 100}" class="fw-alert"><strong>Aandachtspunt:</strong> Niet alle actieve apparaten zijn versleuteld. Bij verlies of diefstal van een onversleuteld apparaat met bedrijfsdata moet dit doorgaans worden gemeld als een officieel datalek bij de Autoriteit Persoonsgegevens.
                     </div>
                 </td>
             </tr>
@@ -678,8 +621,7 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Applicaties met Hoog Risico Rechten</div>
                     <div class="fw-desc">Apps die vergaande rechten hebben geëist van de gebruiker, zoals het volledig mogen lezen, wissen of verzenden van e-mails (Gmail) of volledige toegang tot álle Google Drive bestanden.</div>
-                    <div th:if="${report.appAccess.highRisk > 0}" class="fw-alert">
-                        <strong>Aandachtspunt:</strong> Er zijn apps met zeer ruime (hoog risico) toegangsrechten gedetecteerd. Beoordeel of deze applicaties deze vergaande rechten daadwerkelijk nodig hebben voor hun werking, en blokkeer (revoke) de toegang indien de applicatie onbekend of overbodig is.
+                    <div th:if="${report.appAccess.highRisk > 0}" class="fw-alert"><strong>Aandachtspunt:</strong> Er zijn apps met zeer ruime (hoog risico) toegangsrechten gedetecteerd. Beoordeel of deze applicaties deze vergaande rechten daadwerkelijk nodig hebben voor hun werking, en blokkeer (revoke) de toegang indien de applicatie onbekend of overbodig is.
                     </div>
                 </td>
             </tr>
@@ -712,8 +654,7 @@
                 <td class="card-text-cell">
                     <div class="fw-title">Actieve App-wachtwoorden</div>
                     <div class="fw-desc">Dit is het aantal actieve, eenmalige wachtwoorden dat direct toegang geeft tot een account, zonder dat er om een 2FA-code wordt gevraagd. Omdat ze MFA omzeilen, resulteert een uitgelekt of gestolen app-wachtwoord direct in een ongemerkt datalek.</div>
-                    <div th:if="${report.appPasswords.activePasswords > 0}" class="fw-alert">
-                        <strong>Aandachtspunt:</strong> Schakel de Google Workspace instelling "Minder veilige apps toestaan" zo snel mogelijk uit. Instrueer medewerkers om moderne authenticatie (OAuth) te gebruiken in hun programma's en verwijder alle bestaande app-wachtwoorden.
+                    <div th:if="${report.appPasswords.activePasswords > 0}" class="fw-alert"><strong>Aandachtspunt:</strong> Schakel de Google Workspace instelling "Minder veilige apps toestaan" zo snel mogelijk uit. Instrueer medewerkers om moderne authenticatie (OAuth) te gebruiken in hun programma's en verwijder alle bestaande app-wachtwoorden.
                     </div>
                 </td>
             </tr>
@@ -736,6 +677,72 @@
     </div>
 
     <div class="section-break">
+        <h1>Wachtwoordbeleid & 2-Staps Verificatie</h1>
+        <p>Inzicht in de vereisten voor wachtwoorden en tweestapsverificatie (2FA/MFA) binnen uw organisatie. Een sterk wachtwoordbeleid, gecombineerd met hardware security keys voor beheerders, is de sterkste verdediging tegen accountovernames door phishing of datalekken.</p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.passwordSettings.securityScore < 50 ? 'text-red' : (report.passwordSettings.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.passwordSettings.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">Deze sectiescore weerspiegelt de robuustheid van uw inlogbeveiliging. Een hoge score betekent dat 2FA organisatiebreed is afgedwongen, dat wachtwoorden aan strenge eisen voldoen (zoals minimale lengte), en dat beheerders veilig inloggen met phishing-resistente fysieke beveiligingssleutels (Security Keys).
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.passwordSettings.totalOus}">12</div>
+                    <div class="metric-lbl">ORGANISATIE-EENHEDEN</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Totaal Organisatie-eenheden (OU's)</div>
+                    <div class="fw-desc">Het aantal gedefinieerde eenheden in uw Google Workspace omgeving waarvoor een specifiek, afwijkend wachtwoord- of 2FA-beleid kan worden ingesteld.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val"
+                         th:classappend="${report.passwordSettings.unenforcedOusWithUsers > 0 ? 'text-orange' : 'text-green'}"
+                         th:text="${report.passwordSettings.enforced2FaOus}">2</div>
+                    <div class="metric-lbl">2FA VERPLICHT (OU'S)</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Eenheden met 2-Step Verification Afgedwongen</div>
+                    <div class="fw-desc">Het aantal eenheden waarbij 2FA verplicht is gesteld voor alle gebruikers. Als 2FA niet wordt afgedwongen, is de activatie afhankelijk van de discipline van de medewerker zelf.
+                    </div>
+                    <div th:if="${report.passwordSettings.unenforcedOusWithUsers > 0}" class="fw-alert"><strong>Aandachtspunt:</strong> Niet in alle organisatie-eenheden wordt 2FA momenteel afgedwongen. Voor optimale veiligheid wordt aangeraden de status "Aan" (Enforced) af te dwingen voor de gehele organisatie (Root niveau).
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.passwordSettings.adminsWithoutKeys > 0 ? 'text-red' : 'text-green'}" th:text="${report.passwordSettings.adminsWithoutKeys}">3</div>
+                    <div class="metric-lbl">ADMINS ZONDER KEY</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Beheerders zonder Fysieke Security Key</div>
+                    <div class="fw-desc">Beheerdersaccounts hebben de sleutels tot de gehele IT-omgeving. Standaard 2FA (zoals SMS of een authenticator app) is kwetsbaar voor geavanceerde phishing-aanvallen (AiTM). Hardware Security Keys (zoals YubiKey of Google Titan) zijn immuun voor deze aanvallen.
+                    </div>
+                    <div th:if="${report.passwordSettings.adminsWithoutKeys > 0}" class="fw-alert"><strong>Kritiek Aandachtspunt:</strong> Voorzie alle Super Admins onmiddellijk van een fysieke FIDO2 Security Key en dwing het gebruik hiervan af in de Google Admin console om catastrofale accountovernames te voorkomen.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
         <h1>Domein & DNS Beveiliging</h1>
         <p>DNS-records beschermen uw domeinen tegen spoofing, phishing en misbruik. Zonder de juiste configuratie (zoals SPF, DKIM en DMARC) kunnen kwaadwillenden e-mails versturen uit naam van uw organisatie. Hieronder volgt een gedetailleerde analyse per gekoppeld domein.</p>
 
@@ -744,8 +751,7 @@
             <div class="domain-card">
                 <div class="domain-header" th:text="${domain.name}">labo.cloudmen.com</div>
 
-                <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">
-                    Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
+                <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
                 </div>
 
                 <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">
