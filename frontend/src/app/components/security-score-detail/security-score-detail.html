@@ -1,0 +1,61 @@
+<div class="bg-white rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] flex flex-col">
+  <header class="flex justify-between items-start gap-4 px-6 py-5 border-b-2 border-gray-100 shrink-0">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 flex items-center justify-center rounded-lg shrink-0" [style.background-color]="getStatusBgColor()" [style.color]="getScoreColor()">
+        <i-lucide [img]="Icons.Shield" size="24"></i-lucide>
+      </div>
+      <div class="min-w-0">
+        <h2 class="m-0 text-xl font-semibold text-gray-900">Security Score Berekening</h2>
+        <p class="m-0 text-sm text-gray-500 mt-0.5">{{ data.subtitle ?? 'Wachtwoord Instellingen' }}</p>
+      </div>
+    </div>
+    <button type="button" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0" (click)="close()" aria-label="Sluiten">
+      <i-lucide [img]="Icons.X" size="20"></i-lucide>
+    </button>
+  </header>
+
+  <div class="px-6 py-5 flex flex-col gap-4 shrink-0">
+    <div class="flex items-center justify-between gap-4 p-4 rounded-xl" [style.background-color]="getStatusBgColor()">
+      <div>
+        <span class="text-sm font-medium text-gray-600">Huidige Score</span>
+        <p class="m-0 text-3xl font-bold mt-1" [style.color]="getScoreColor()">{{ breakdown.totalScore }}%</p>
+      </div>
+      <span class="inline-flex px-3 py-1.5 rounded-lg text-sm font-medium" [style.background-color]="getStatusBgColor()" [style.color]="getScoreColor()">
+        {{ breakdown.status }}
+      </span>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto px-6 pb-5">
+    <div class="flex flex-col gap-3">
+      @for (factor of breakdown.factors; track factor.title) {
+        <div class="rounded-xl p-4 border" [style.border]="getFactorStyles(factor).border" [style.background-color]="getFactorStyles(factor).bg">
+          <div class="flex items-start gap-3">
+            <div class="shrink-0 mt-0.5" [style.color]="getProgressColor(factor)">
+              <i-lucide [img]="getFactorIcon(factor)" size="20"></i-lucide>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="m-0 text-sm font-semibold text-gray-900">{{ factor.title }}</h3>
+              <p class="m-0 text-sm text-gray-600 mt-1">{{ factor.description }}</p>
+              <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                <span>Gewicht: {{ factor.weightPercent }}% van totaal</span>
+                <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>
+                <span>Percentage: {{ factor.maxScore > 0 ? Math.round((factor.score / factor.maxScore) * 100) : 0 }}%</span>
+              </div>
+              <div class="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div class="h-full rounded-full transition-all" [style.width.%]="factor.maxScore > 0 ? (factor.score / factor.maxScore) * 100 : 0" [style.background-color]="getProgressColor(factor)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <footer class="px-6 py-5 border-t border-gray-100 shrink-0">
+    <p class="m-0 text-sm text-gray-600 mb-4">Verbeter uw score door de rode en oranje factoren aan te pakken</p>
+    <button type="button" class="w-full py-2.5 px-4 rounded-lg text-white font-medium text-sm bg-[#1e40af] hover:bg-[#1d4ed8] transition-colors" (click)="close()">
+      Sluiten
+    </button>
+  </footer>
+</div>

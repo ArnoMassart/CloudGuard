@@ -8,6 +8,22 @@ export interface PasswordSettings {
   adminsWithoutSecurityKeys: AdminWithSecurityKey[];
   adminsSecurityKeysErrorMessage?: string;
   securityScore: number;
+  securityScoreBreakdown?: SecurityScoreBreakdown;
+}
+
+export interface SecurityScoreBreakdown {
+  totalScore: number;
+  status: string;
+  factors: SecurityScoreFactor[];
+}
+
+export interface SecurityScoreFactor {
+  title: string;
+  description: string;
+  weightPercent: number;
+  score: number;
+  maxScore: number;
+  severity: 'success' | 'warning' | 'error';
 }
 
 export interface OuPasswordPolicy {

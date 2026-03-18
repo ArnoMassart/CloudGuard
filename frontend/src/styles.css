@@ -34,6 +34,24 @@ canvas {
   background: rgba(0, 0, 0, 0.5) !important;
 }
 
+.security-score-detail-panel {
+  --mat-dialog-container-shape: 12px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  outline: none;
+}
+
+.security-score-detail-panel .mat-mdc-dialog-container {
+  padding: 0 !important;
+}
+
+.security-score-detail-panel .mat-mdc-dialog-surface {
+  border-radius: 12px !important;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
 .mat-mdc-progress-spinner {
   --mdc-circular-progress-active-indicator-color: currentColor;
 }

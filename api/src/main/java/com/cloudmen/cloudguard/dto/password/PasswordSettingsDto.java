@@ -11,6 +11,7 @@ public record PasswordSettingsDto(
         PasswordSettingsSummaryDto summary,
         List<AdminWithSecurityKeyDto> adminsWithoutSecurityKeys,
         String adminsSecurityKeysErrorMessage,
-        int securityScore
+        int securityScore,
+        SecurityScoreBreakdownDto securityScoreBreakdown
 ) {
 }

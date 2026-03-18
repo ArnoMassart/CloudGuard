@@ -1,9 +1,11 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { SecurityScoreDetailComponent, SecurityScoreDetailData } from '../../../components/security-score-detail/security-score-detail';
 import { PasswordSettingsService } from '../../../services/password-settings-service';
 import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
 import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminWithSecurityKey';
@@ -26,6 +28,7 @@ import { LucideAngularModule } from 'lucide-angular';
 export class PasswordSettings implements OnInit {
   readonly Icons = AppIcons;
   readonly #passwordSettingsService = inject(PasswordSettingsService);
+  readonly #dialog = inject(MatDialog);
 
   readonly data = signal<PasswordSettingsData | null>(null);
   readonly loading = signal(true);
@@ -163,5 +166,21 @@ export class PasswordSettings implements OnInit {
   formatForcedChangeReason(reason: string): string {
     if (reason === 'changePasswordAtNextLogin') return 'Verplicht bij volgende login';
     return reason || 'Onbekend';
+  }
+
+  openSecurityScoreDetail(): void {
+    const settings = this.data();
+    const breakdown = settings?.securityScoreBreakdown;
+    if (!breakdown) return;
+
+    const data: SecurityScoreDetailData = {
+      breakdown,
+      subtitle: 'Wachtwoord Instellingen',
+    };
+    this.#dialog.open(SecurityScoreDetailComponent, {
+      data,
+      panelClass: 'security-score-detail-panel',
+      maxWidth: '95vw',
+    });
   }
 }
