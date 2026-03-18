@@ -28,30 +28,30 @@ export class SecurityScoreDetailComponent {
 
   getStatusColor(): string {
     const s = this.breakdown.status;
-    if (s === 'Goed') return '#3abfad';
-    if (s === 'Zwak') return '#d38700';
+    if (s === 'Perfect' || s === 'Goed') return '#3abfad';
+    if (s === 'Matig') return '#d69518';
     return '#e7000b';
   }
 
   getStatusBgColor(): string {
     const s = this.breakdown.status;
-    if (s === 'Goed') return '#d8f2ef';
-    if (s === 'Zwak') return '#fef9c2';
-    return '#ffe2e2';
+    if (s === 'Perfect' || s === 'Goed') return 'rgba(58, 191, 173, 0.08)';
+    if (s === 'Matig') return 'rgba(214, 149, 24, 0.08)';
+    return 'rgba(231, 0, 11, 0.08)';
   }
 
   getScoreColor(): string {
     const n = this.breakdown.totalScore;
-    if (n >= 75) return '#3abfad';
-    if (n >= 50) return '#d38700';
+    if (n === 100 || n >= 75) return '#3abfad';
+    if (n > 50) return '#d69518';
     return '#e7000b';
   }
 
-  getFactorStyles(factor: { severity: string }): { border: string; bg: string } {
+  getFactorStyles(factor: { severity: string }): { borderColor: string; bg: string } {
     const s = factor.severity;
-    if (s === 'success') return { border: '1px solid #3abfad', bg: '#d8f2ef' };
-    if (s === 'warning') return { border: '1px solid #d38700', bg: '#fef9c2' };
-    return { border: '1px solid #e7000b', bg: '#ffe2e2' };
+    if (s === 'success') return { borderColor: 'rgba(58, 191, 173, 0.3)', bg: 'rgba(58, 191, 173, 0.06)' };
+    if (s === 'warning') return { borderColor: 'rgba(214, 149, 24, 0.3)', bg: 'rgba(214, 149, 24, 0.06)' };
+    return { borderColor: 'rgba(231, 0, 11, 0.3)', bg: 'rgba(231, 0, 11, 0.06)' };
   }
 
   getFactorIcon(factor: SecurityScoreFactor): LucideIconData {
@@ -64,8 +64,8 @@ export class SecurityScoreDetailComponent {
   getProgressColor(factor: { severity: string }): string {
     const s = factor.severity;
     if (s === 'success') return '#3abfad';
-    if (s === 'warning') return '#d38700';
-    return '#e7000b';
+    if (s === 'warning') return '#d69518';
+    return '#FF3B3B';
   }
 
   close(): void {

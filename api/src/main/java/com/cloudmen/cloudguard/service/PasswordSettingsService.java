@@ -424,11 +424,10 @@ public class PasswordSettingsService {
                 new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, 30, (int) Math.round(twoFaScore), 100, severity(twoFaScore)),
                 new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, 15, (int) Math.round(lengthScore), 100, severity(lengthScore)),
                 new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, 10, (int) Math.round(expirationScore), 100, severity(expirationScore)),
-                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, 10, (int) Math.round(strengthScore), 100, severity(strengthScore)),
-                new SecurityScoreFactorDto("Wachtwoordgeschiedenis", "Werd niet gebruikt voor de score", 5, 100, 100, "success")
+                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, 10, (int) Math.round(strengthScore), 100, severity(strengthScore))
         );
 
-        String status = totalScore >= 75 ? "Goed" : totalScore >= 50 ? "Zwak" : "Kritiek";
+        String status = totalScore == 100 ? "Perfect" : totalScore >= 75 ? "Goed" : totalScore > 50 ? "Matig" : "Slecht";
 
         return new SecurityScoreResult(totalScore, new SecurityScoreBreakdownDto(totalScore, status, factors));
     }
