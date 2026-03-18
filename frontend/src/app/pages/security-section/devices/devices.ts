@@ -139,8 +139,9 @@ export class Devices implements OnInit {
   }
 
   openSecurityScoreDetail() {
-    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
-      this.pageOverview()?.securityScore ?? 0,
+    const overview = this.pageOverview();
+    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
       'Apparaten'
     );
     this.#securityScoreDetail.open(breakdown, 'Apparaten');

@@ -159,8 +159,11 @@ export class AppAccess implements OnInit {
   }
 
   openSecurityScoreDetail(): void {
-    const score = this.pageOverview()?.securityScore ?? 0;
-    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(score, 'App Toegang');
+    const overview = this.pageOverview();
+    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
+      'App Toegang'
+    );
     this.#securityScoreDetail.open(breakdown, 'App Toegang');
   }
 

@@ -1,3 +1,5 @@
+import type { SecurityScoreBreakdown } from '../password/PasswordSettings';
+
 export type DevicesOverviewResponse = {
   totalDevices: number;
   totalNonCompliant: number;
@@ -7,4 +9,5 @@ export type DevicesOverviewResponse = {
   encryptionCount: number;
   osVersionCount: number;
   integrityCount: number;
+  securityScoreBreakdown?: SecurityScoreBreakdown;
 };

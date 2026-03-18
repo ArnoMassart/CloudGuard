@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.dto.devices;
 
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+
 public record DeviceOverviewResponse(
         int totalDevices,
         int totalNonCompliant,
@@ -8,6 +10,7 @@ public record DeviceOverviewResponse(
         int lockScreenCount,
         int encryptionCount,
         int osVersionCount,
-        int integrityCount
+        int integrityCount,
+        SecurityScoreBreakdownDto securityScoreBreakdown
 ) {
 }

@@ -1,6 +1,8 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.devices.*;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -134,12 +136,38 @@ public class GoogleDeviceService {
             }
         }
 
-        int securityScore = totalDevices == 0 ? 0 : (int) Math.round((double) totalScoreSum / totalDevices);
+        int securityScore = totalDevices == 0 ? 100 : (int) Math.round((double) totalScoreSum / totalDevices);
+
+        SecurityScoreBreakdownDto breakdown = buildDevicesBreakdown(
+                totalDevices, totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount, securityScore);
 
         return new DeviceOverviewResponse(
                 totalDevices, nonCompliantDevices, approvedDevices, securityScore,
-                totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount
+                totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,
+                breakdown
         );
+    }
+
+    private SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore) {
+        int lockScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - lockScreenCount) * 100.0 / totalDevices);
+        int encScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - encryptionCount) * 100.0 / totalDevices);
+        int osScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - osVersionCount) * 100.0 / totalDevices);
+        int intScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
+
+        var factors = java.util.List.of(
+                new SecurityScoreFactorDto("Vergrendelscherm", lockScreenCount == 0 ? "Alle apparaten hebben vergrendelscherm" : lockScreenCount + " apparaat/apparaten zonder vergrendelscherm", 25, lockScore, 100, severity(lockScore)),
+                new SecurityScoreFactorDto("Encryptie", encryptionCount == 0 ? "Alle apparaten hebben encryptie" : encryptionCount + " apparaat/apparaten zonder encryptie", 25, encScore, 100, severity(encScore)),
+                new SecurityScoreFactorDto("OS versie", osVersionCount == 0 ? "Alle apparaten hebben actuele OS versie" : osVersionCount + " apparaat/apparaten met verouderde OS", 25, osScore, 100, severity(osScore)),
+                new SecurityScoreFactorDto("Integriteit", integrityCount == 0 ? "Geen apparaten met root/jailbreak gedetecteerd" : integrityCount + " apparaat/apparaten met integriteitsproblemen", 25, intScore, 100, severity(intScore))
+        );
+        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     // =========================================================================================

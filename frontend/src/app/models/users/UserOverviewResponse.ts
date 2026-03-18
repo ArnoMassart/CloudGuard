@@ -1,3 +1,5 @@
+import type { SecurityScoreBreakdown } from '../password/PasswordSettings';
+
 export type UserOverviewResponse = {
   totalUsers: number;
   withoutTwoFactor: number;
@@ -5,4 +7,5 @@ export type UserOverviewResponse = {
   securityScore: number;
   activeLongNoLoginCount: number;
   inactiveRecentLoginCount: number;
+  securityScoreBreakdown?: SecurityScoreBreakdown;
 };

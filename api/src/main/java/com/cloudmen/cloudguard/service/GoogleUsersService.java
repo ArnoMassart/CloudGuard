@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.dto.users.*;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
@@ -107,7 +109,30 @@ public class GoogleUsersService {
             return Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) <= 7;
         }).count();
 
-        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, (int) securityScore, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount);
+        SecurityScoreBreakdownDto breakdown = buildUsersBreakdown(
+                (int) totalUsers, (int) withoutTwoFactor, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, (int) securityScore);
+
+        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, (int) securityScore, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown);
+    }
+
+    private SecurityScoreBreakdownDto buildUsersBreakdown(int totalUsers, int withoutTwoFactor, int activeLongNoLoginCount, int inactiveRecentLoginCount, int securityScore) {
+        int twoFaScore = totalUsers == 0 ? 100 : (int) Math.round((totalUsers - withoutTwoFactor) * 100.0 / totalUsers);
+        int activeNoLoginScore = totalUsers == 0 ? 100 : activeLongNoLoginCount == 0 ? 100 : (int) Math.max(0, 100 - activeLongNoLoginCount * 100 / totalUsers);
+        int inactiveRecentScore = inactiveRecentLoginCount == 0 ? 100 : (int) Math.max(0, 100 - inactiveRecentLoginCount * 50 / Math.max(1, totalUsers));
+
+        var factors = java.util.List.of(
+                new SecurityScoreFactorDto("2-Step Verification", withoutTwoFactor == 0 ? "Alle actieve gebruikers hebben 2FA" : withoutTwoFactor + " van " + totalUsers + " actieve gebruikers zonder 2FA", 50, twoFaScore, 100, severity(twoFaScore)),
+                new SecurityScoreFactorDto("Actieve gebruikers zonder lange inactiviteit", activeLongNoLoginCount == 0 ? "Geen actieve gebruikers met >1 jaar geen login" : activeLongNoLoginCount + " actieve gebruiker(s) met >1 jaar geen login", 25, activeNoLoginScore, 100, severity(activeNoLoginScore)),
+                new SecurityScoreFactorDto("Gedeactiveerde gebruikers met recente login", inactiveRecentLoginCount == 0 ? "Geen gedeactiveerde gebruikers met recente login" : inactiveRecentLoginCount + " gedeactiveerde gebruiker(s) met recente login (mogelijk risico)", 25, inactiveRecentScore, 100, severity(inactiveRecentScore))
+        );
+        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     private int calculateSecurityScore(List<User> googleUsers) {

@@ -287,12 +287,12 @@ public class NotificationAggregationService {
                     .map(DomainDto::domainName)
                     .orElse(null);
             if (primaryDomain == null || primaryDomain.isBlank()) {
-                return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0);
+                return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
             }
             return dnsRecordsService.getImportantRecords(primaryDomain, "google");
         } catch (Exception e) {
             log.warn("Failed to fetch DNS data for notifications: {}", e.getMessage());
-            return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0);
+            return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
         }
     }
 

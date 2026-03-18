@@ -116,8 +116,9 @@ export class GroupsSection implements OnInit {
   }
 
   openSecurityScoreDetail() {
-    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
-      this.pageOverview()?.securityScore ?? 0,
+    const overview = this.pageOverview();
+    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
       'Groepen'
     );
     this.#securityScoreDetail.open(breakdown, 'Groepen');

@@ -7,6 +7,7 @@ import { Domain } from '../../../models/domain/Domain';
 import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
 import { DnsRecord } from '../../../models/dns/DnsRecord';
+import type { SecurityScoreBreakdown } from '../../../models/password/PasswordSettings';
 import { DnsService } from '../../../services/dns-service';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 
@@ -34,6 +35,7 @@ export class DomainDns implements OnInit {
   readonly validDnsRecords = computed(() => this.rows().filter((r) => r.status === 'VALID').length);
 
   securityScore = signal<number>(0);
+  securityScoreBreakdown = signal<SecurityScoreBreakdown | null>(null);
 
   /** Controls sorted by severity */
   readonly securityControlsRows = computed(() => {
@@ -185,7 +187,7 @@ export class DomainDns implements OnInit {
   }
 
   openSecurityScoreDetail() {
-    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(
+    const breakdown = this.securityScoreBreakdown() ?? this.#securityScoreDetail.createSimpleBreakdown(
       this.securityScore(),
       'DNS'
     );
@@ -257,6 +259,7 @@ export class DomainDns implements OnInit {
       },
       error: (err) => {
         console.error('DNS load failed', err);
+        this.securityScoreBreakdown.set(null);
         this.isLoadingDns.set(false);
       },
     });
