@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.dto.passwords;
+package com.cloudmen.cloudguard.dto.apppasswords;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

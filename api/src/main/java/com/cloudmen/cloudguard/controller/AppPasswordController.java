@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.passwords.AppPasswordOverviewResponse;
-import com.cloudmen.cloudguard.dto.passwords.AppPasswordPageResponse;
+import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
+import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
 import org.springframework.http.HttpStatus;
