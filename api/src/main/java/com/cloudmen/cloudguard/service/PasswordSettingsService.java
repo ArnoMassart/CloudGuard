@@ -7,6 +7,8 @@ import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.model.OrgUnit;
 import com.google.api.services.admin.directory.model.User;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +27,11 @@ public class PasswordSettingsService {
     private final GoogleUsersCacheService usersCache;
     private final GoogleOrgUnitCacheService orgUnitCache;
     private final AdminSecurityKeysService adminSecurityKeysService;
+
+    private final Cache<String, PasswordSettingsDto> cache = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .maximumSize(100)
+            .build();
 
     public PasswordSettingsService(PolicyApiCacheService policyCache,
                                   GoogleUsersCacheService usersCache,
@@ -36,6 +44,7 @@ public class PasswordSettingsService {
     }
 
     public void forceRefreshCache(String adminEmail) {
+        cache.invalidate(adminEmail);
         usersCache.forceRefreshCache(adminEmail);
         orgUnitCache.forceRefreshCache(adminEmail);
         policyCache.forceRefreshCache();
@@ -43,6 +52,10 @@ public class PasswordSettingsService {
     }
 
     public PasswordSettingsDto getPasswordSettings(String adminEmail) {
+        return cache.get(adminEmail, this::fetchPasswordSettings);
+    }
+
+    private PasswordSettingsDto fetchPasswordSettings(String adminEmail) {
         var entry = usersCache.getOrFetchUsersData(adminEmail);
         List<User> allUsers = entry.allUsers();
 

@@ -32,7 +32,7 @@ public class PolicyApiCacheService {
     private static final Logger log = LoggerFactory.getLogger(PolicyApiCacheService.class);
     private static final String POLICY_API_SCOPE = "https://www.googleapis.com/auth/cloud-identity.policies.readonly";
     private static final String POLICY_API_BASE = "https://cloudidentity.googleapis.com/v1/policies";
-    private static final long CACHE_TTL_MS = 5 * 60 * 1000L;
+    private static final long CACHE_TTL_MS = 15 * 60 * 1000L; // 15 min (Policy API: 1 QPS per customer)
 
     private final GoogleApiFactory directoryFactory;
     private final RestTemplate restTemplate = new RestTemplate();
