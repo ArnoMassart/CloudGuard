@@ -78,8 +78,6 @@
             <app-security-component [Value]="pageResponse()?.scores?.usersScore" />
             <app-security-component Label="Groepen" [Value]="pageResponse()?.scores?.groupsScore"
               [Icon]="Icons.UsersRound" [IsGroups]="true" />
-            <app-security-component Label="Organisatie-eenheden" [Icon]="Icons.Building2" [NoValueShow]="true"
-              Route="organizational-units" />
             <app-security-component Label="Drives" [Value]="pageResponse()?.scores?.drivesScore"
               [Icon]="Icons.FolderOpen" Route="shared-drives" />
             <app-security-component Label="Apparaten" [Value]="pageResponse()?.scores?.devicesScore"
@@ -88,6 +86,8 @@
               [Icon]="Icons.Key" Route="app-access" />
             <app-security-component Label="App Wachtwoorden" [Value]="pageResponse()?.scores?.appPasswordsScore"
               [Icon]="Icons.Lock" Route="app-passwords" />
+            <app-security-component Label="Wachtwoordinstellingen" [Icon]="Icons.ShieldCheck"
+              [Value]="pageResponse()?.scores?.passwordSettingsScore" Route="password-settings" />
             <app-security-component Label="DNS" [Value]="pageResponse()?.scores?.dnsScore" [Icon]="Icons.Globe"
               Route="domain-dns" />
           </div>

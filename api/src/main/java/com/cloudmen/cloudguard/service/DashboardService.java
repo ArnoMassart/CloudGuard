@@ -25,8 +25,9 @@ public class DashboardService {
     private final DnsRecordsService dnsRecordsService;
     private final GoogleDomainService domainService;
     private final NotificationAggregationService notificationService;
+    private final PasswordSettingsService passwordSettingsService;
 
-    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService) {
+    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService, PasswordSettingsService passwordSettingsService) {
         this.usersService = usersService;
         this.groupsService = groupsService;
         this.sharedDriveService = sharedDriveService;
@@ -36,6 +37,7 @@ public class DashboardService {
         this.dnsRecordsService = dnsRecordsService;
         this.domainService = domainService;
         this.notificationService = notificationService;
+        this.passwordSettingsService = passwordSettingsService;
     }
 
     public DashboardPageResponse getDashboardSecurityScores(String loggedInEmail) {
@@ -77,7 +79,8 @@ public class DashboardService {
 
         CompletableFuture<Integer> appPasswordsFuture = CompletableFuture.supplyAsync(() ->
                 passwordsService.getOverview(loggedInEmail, IS_TESTMODE).securityScore());
-        
+
+        CompletableFuture<Integer> passwordSettingsFuture = CompletableFuture.supplyAsync(() -> passwordSettingsService.getPasswordSettings(loggedInEmail).securityScore());
 
         CompletableFuture<Integer> dnsAverageFuture = CompletableFuture.supplyAsync(() ->
                         domainService.getAllDomains(loggedInEmail))
@@ -112,15 +115,16 @@ public class DashboardService {
         int devicesScore = devicesFuture.join();
         int appAccessScore = appAccessFuture.join();
         int appPasswordsScore = appPasswordsFuture.join();
+        int passwordSettingsScore = passwordSettingsFuture.join();
         int dnsScore = dnsAverageFuture.join();
 
         return new DashboardScores(usersScore, groupsScore, drivesScore,
-                devicesScore, appAccessScore,appPasswordsScore, dnsScore);
+                devicesScore, appAccessScore,appPasswordsScore,passwordSettingsScore, dnsScore);
     }
 
     private int calculateTotalScore(DashboardScores scores) {
-        int totalCategories = 7;
-        int totalScoresAdded = scores.usersScore() + scores.groupsScore() + scores.drivesScore() + scores.devicesScore() + scores.appAccessScore() + scores.appPasswordsScore()+scores.dnsScore();
+        int totalCategories = 8;
+        int totalScoresAdded = scores.usersScore() + scores.groupsScore() + scores.drivesScore() + scores.devicesScore() + scores.appAccessScore() + scores.appPasswordsScore()+scores.passwordSettingsScore()+scores.dnsScore();
 
 
         return Math.round((float)totalScoresAdded / totalCategories);
