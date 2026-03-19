@@ -191,8 +191,8 @@ public class GoogleOAuthService {
         int noAppsScore = totalThirdPartyApps == 0 ? 100 : 100;
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Apps zonder hoog risico", totalHighRiskApps == 0 ? "Geen apps met hoog risico gedetecteerd" : totalHighRiskApps + " van " + totalThirdPartyApps + " apps hebben hoog risico (kritieke toegang)", 70, highRiskScore, 100, severity(highRiskScore)),
-                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? "Geen 3rd-party apps gekoppeld" : totalThirdPartyApps + " 3rd-party app(s) met " + totalPermissionsGranted + " verleende permissies", 30, noAppsScore, 100, severity(noAppsScore))
+                new SecurityScoreFactorDto("Apps zonder hoog risico", totalHighRiskApps == 0 ? "Geen apps met hoog risico gedetecteerd" : totalHighRiskApps + " van " + totalThirdPartyApps + " apps hebben hoog risico (kritieke toegang)", highRiskScore, 100, severity(highRiskScore)),
+                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? "Geen 3rd-party apps gekoppeld" : totalThirdPartyApps + " 3rd-party app(s) met " + totalPermissionsGranted + " verleende permissies", noAppsScore, 100, severity(noAppsScore))
         );
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

@@ -83,10 +83,10 @@ public class GoogleGroupsService {
         int externalScore = totalGroups == 0 ? 100 : groupsWithExternal == 0 ? 100 : (int) Math.max(0, 100 - groupsWithExternal * 100 / totalGroups);
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Laag risico groepen", lowRiskGroups + " van " + totalGroups + " groepen met laag risico", 50, lowScore, 100, severity(lowScore)),
-                new SecurityScoreFactorDto("Gemiddeld risico groepen", mediumRiskGroups + " van " + totalGroups + " groepen met gemiddeld risico", 25, mediumScore, 60, severity(mediumScore * 100 / 60)),
-                new SecurityScoreFactorDto("Hoog risico groepen", highRiskGroups + " van " + totalGroups + " groepen met hoog risico (open/externe instellingen)", 15, highScore, 20, severity(highScore * 100 / 20)),
-                new SecurityScoreFactorDto("Groepen zonder externe leden", groupsWithExternal == 0 ? "Geen groepen met externe leden" : groupsWithExternal + " groep(en) met externe leden", 10, externalScore, 100, severity(externalScore))
+                new SecurityScoreFactorDto("Laag risico groepen", lowRiskGroups + " van " + totalGroups + " groepen met laag risico", lowScore, 100, severity(lowScore)),
+                new SecurityScoreFactorDto("Gemiddeld risico groepen", mediumRiskGroups + " van " + totalGroups + " groepen met gemiddeld risico", mediumScore, 60, severity(mediumScore * 100 / 60)),
+                new SecurityScoreFactorDto("Hoog risico groepen", highRiskGroups + " van " + totalGroups + " groepen met hoog risico (open/externe instellingen)", highScore, 20, severity(highScore * 100 / 20)),
+                new SecurityScoreFactorDto("Groepen zonder externe leden", groupsWithExternal == 0 ? "Geen groepen met externe leden" : groupsWithExternal + " groep(en) met externe leden", externalScore, 100, severity(externalScore))
         );
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

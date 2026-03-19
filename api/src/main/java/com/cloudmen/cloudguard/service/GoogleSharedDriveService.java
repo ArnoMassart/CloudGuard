@@ -96,12 +96,12 @@ public class GoogleSharedDriveService {
         int membersOnlyScore = totalDrives == 0 ? 100 : notOnlyMembersCanAccessCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyMembersCanAccessCount * 50 / totalDrives);
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Laag risico drives", totalLowRisk + " van " + totalDrives + " drives met laag risico", 40, lowScore, 100, severity(lowScore)),
-                new SecurityScoreFactorDto("Gemiddeld risico drives", totalMediumRisk + " van " + totalDrives + " drives met gemiddeld risico", 20, mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0)),
-                new SecurityScoreFactorDto("Hoog risico drives", totalHighRisk + " van " + totalDrives + " drives met hoog risico", 15, highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0)),
-                new SecurityScoreFactorDto("Drives met beheerders", orphanDrives == 0 ? "Alle drives hebben beheerders" : orphanDrives + " drive(s) zonder beheerder", 10, orphanScore, 100, severity(orphanScore)),
-                new SecurityScoreFactorDto("Alleen domeingebruikers", notOnlyDomainUsersAllowedCount == 0 ? "Alle drives staan alleen domeingebruikers toe" : notOnlyDomainUsersAllowedCount + " drive(s) staan externe gebruikers toe", 8, domainOnlyScore, 100, severity(domainOnlyScore)),
-                new SecurityScoreFactorDto("Alleen leden toegang", notOnlyMembersCanAccessCount == 0 ? "Alle drives beperken toegang tot leden" : notOnlyMembersCanAccessCount + " drive(s) geven toegang aan niet-leden", 7, membersOnlyScore, 100, severity(membersOnlyScore))
+                new SecurityScoreFactorDto("Laag risico drives", totalLowRisk + " van " + totalDrives + " drives met laag risico", lowScore, 100, severity(lowScore)),
+                new SecurityScoreFactorDto("Gemiddeld risico drives", totalMediumRisk + " van " + totalDrives + " drives met gemiddeld risico", mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0)),
+                new SecurityScoreFactorDto("Hoog risico drives", totalHighRisk + " van " + totalDrives + " drives met hoog risico", highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0)),
+                new SecurityScoreFactorDto("Drives met beheerders", orphanDrives == 0 ? "Alle drives hebben beheerders" : orphanDrives + " drive(s) zonder beheerder", orphanScore, 100, severity(orphanScore)),
+                new SecurityScoreFactorDto("Alleen domeingebruikers", notOnlyDomainUsersAllowedCount == 0 ? "Alle drives staan alleen domeingebruikers toe" : notOnlyDomainUsersAllowedCount + " drive(s) staan externe gebruikers toe", domainOnlyScore, 100, severity(domainOnlyScore)),
+                new SecurityScoreFactorDto("Alleen leden toegang", notOnlyMembersCanAccessCount == 0 ? "Alle drives beperken toegang tot leden" : notOnlyMembersCanAccessCount + " drive(s) geven toegang aan niet-leden", membersOnlyScore, 100, severity(membersOnlyScore))
         );
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

@@ -155,10 +155,10 @@ public class GoogleDeviceService {
         int intScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Vergrendelscherm", lockScreenCount == 0 ? "Alle apparaten hebben vergrendelscherm" : lockScreenCount + " apparaat/apparaten zonder vergrendelscherm", 25, lockScore, 100, severity(lockScore)),
-                new SecurityScoreFactorDto("Encryptie", encryptionCount == 0 ? "Alle apparaten hebben encryptie" : encryptionCount + " apparaat/apparaten zonder encryptie", 25, encScore, 100, severity(encScore)),
-                new SecurityScoreFactorDto("OS versie", osVersionCount == 0 ? "Alle apparaten hebben actuele OS versie" : osVersionCount + " apparaat/apparaten met verouderde OS", 25, osScore, 100, severity(osScore)),
-                new SecurityScoreFactorDto("Integriteit", integrityCount == 0 ? "Geen apparaten met root/jailbreak gedetecteerd" : integrityCount + " apparaat/apparaten met integriteitsproblemen", 25, intScore, 100, severity(intScore))
+                new SecurityScoreFactorDto("Vergrendelscherm", lockScreenCount == 0 ? "Alle apparaten hebben vergrendelscherm" : lockScreenCount + " apparaat/apparaten zonder vergrendelscherm", lockScore, 100, severity(lockScore)),
+                new SecurityScoreFactorDto("Encryptie", encryptionCount == 0 ? "Alle apparaten hebben encryptie" : encryptionCount + " apparaat/apparaten zonder encryptie", encScore, 100, severity(encScore)),
+                new SecurityScoreFactorDto("OS versie", osVersionCount == 0 ? "Alle apparaten hebben actuele OS versie" : osVersionCount + " apparaat/apparaten met verouderde OS", osScore, 100, severity(osScore)),
+                new SecurityScoreFactorDto("Integriteit", integrityCount == 0 ? "Geen apparaten met root/jailbreak gedetecteerd" : integrityCount + " apparaat/apparaten met integriteitsproblemen", intScore, 100, severity(intScore))
         );
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

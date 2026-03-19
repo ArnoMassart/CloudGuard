@@ -97,10 +97,10 @@ public class AppPasswordsService {
         var factors = java.util.List.of(
                 new SecurityScoreFactorDto("Gebruikers zonder app-wachtwoorden",
                         usersWithAppPasswords == 0 ? "Geen gebruikers met app-wachtwoorden" : usersWithAppPasswords + " van " + totalUserCount + " gebruikers hebben app-wachtwoorden",
-                        70, usersWithoutScore, 100, severity(usersWithoutScore)),
+                        usersWithoutScore, 100, severity(usersWithoutScore)),
                 new SecurityScoreFactorDto("Totaal app-wachtwoorden",
                         totalAppPasswords == 0 ? "Geen app-wachtwoorden in gebruik" : totalAppPasswords + " app-wachtwoord(en) actief. Minder is beter.",
-                        30, totalCountScore, 100, severity(totalCountScore))
+                        totalCountScore, 100, severity(totalCountScore))
         );
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

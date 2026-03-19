@@ -13,6 +13,7 @@ export class SecurityScoreDetailService {
     this.#dialog.open(SecurityScoreDetailComponent, {
       data: { breakdown, subtitle },
       panelClass: 'security-score-detail-panel',
+      width: '32rem',
       maxWidth: '95vw',
     });
   }
@@ -30,7 +31,6 @@ export class SecurityScoreDetailService {
         {
           title: 'Algemene score',
           description: 'Gedetailleerde berekeningsfactoren zijn niet beschikbaar voor dit onderdeel.',
-          weightPercent: 100,
           score,
           maxScore: 100,
           severity: severity as 'success' | 'warning' | 'error',

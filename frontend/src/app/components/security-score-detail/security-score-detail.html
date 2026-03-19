@@ -1,4 +1,4 @@
-<div class="bg-white rounded-xl shadow-lg max-w-lg w-full max-h-[90vh] flex flex-col">
+<div class="bg-white rounded-xl shadow-lg w-full max-h-[90vh] flex flex-col">
   <header class="flex justify-between items-start gap-4 px-6 py-5 shrink-0">
     <div class="flex items-center gap-3 min-w-0">
       <div class="w-10 h-10 flex items-center justify-center rounded-lg" [style.background-color]="getStatusBgColor()" [style.color]="getScoreColor()">
@@ -39,7 +39,6 @@
               <h3 class="m-0 text-sm font-medium">{{ factor.title }}</h3>
               <p class="m-0 text-sm mt-1">{{ factor.description }}</p>
               <div class="flex items-center gap-4 mt-3 text-xs" [style.opacity]="0.85">
-                <span>Gewicht: {{ factor.weightPercent }}% van totaal</span>
                 <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>
                 <span>Percentage: {{ factor.maxScore > 0 ? Math.round((factor.score / factor.maxScore) * 100) : 0 }}%</span>
               </div>

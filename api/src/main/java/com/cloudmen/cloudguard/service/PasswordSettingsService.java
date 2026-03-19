@@ -419,12 +419,12 @@ public class PasswordSettingsService {
                 : "Sterke wachtwoorden zijn niet verplicht voor sommige OUs";
 
         List<SecurityScoreFactorDto> factors = List.of(
-                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, 15, (int) Math.round(adminKeysScore), 100, severity(adminKeysScore)),
-                new SecurityScoreFactorDto("Verplichte wachtwoordwijziging", usersNeedChangeDesc, 15, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
-                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, 30, (int) Math.round(twoFaScore), 100, severity(twoFaScore)),
-                new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, 15, (int) Math.round(lengthScore), 100, severity(lengthScore)),
-                new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, 10, (int) Math.round(expirationScore), 100, severity(expirationScore)),
-                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, 10, (int) Math.round(strengthScore), 100, severity(strengthScore))
+                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, (int) Math.round(adminKeysScore), 100, severity(adminKeysScore)),
+                new SecurityScoreFactorDto("Verplichte wachtwoordwijziging", usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
+                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, (int) Math.round(twoFaScore), 100, severity(twoFaScore)),
+                new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, (int) Math.round(lengthScore), 100, severity(lengthScore)),
+                new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, (int) Math.round(expirationScore), 100, severity(expirationScore)),
+                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, (int) Math.round(strengthScore), 100, severity(strengthScore))
         );
 
         String status = totalScore == 100 ? "Perfect" : totalScore >= 75 ? "Goed" : totalScore > 50 ? "Matig" : "Slecht";

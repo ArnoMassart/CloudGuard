@@ -80,11 +80,6 @@ public class DnsRecordsService {
     private SecurityScoreBreakdownDto buildDnsBreakdown(List<DnsRecordDto> rows, int securityScore) {
         List<SecurityScoreFactorDto> factors = new ArrayList<>();
         for (DnsRecordDto row : rows) {
-            int weight = switch (row.importance()) {
-                case REQUIRED -> 15;
-                case RECOMMENDED -> 10;
-                case OPTIONAL -> 5;
-            };
             double mult = switch (row.status()) {
                 case VALID -> 1.0;
                 case OK, ATTENTION -> 0.5;
@@ -102,7 +97,7 @@ public class DnsRecordsService {
                 case "CNAME" -> "Mail subdomein";
                 default -> row.type();
             };
-            factors.add(new SecurityScoreFactorDto(title, row.message(), weight, score, 100, severity(score)));
+            factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score)));
         }
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

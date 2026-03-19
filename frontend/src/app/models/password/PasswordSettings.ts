@@ -20,7 +20,6 @@ export interface SecurityScoreBreakdown {
 export interface SecurityScoreFactor {
   title: string;
   description: string;
-  weightPercent: number;
   score: number;
   maxScore: number;
   severity: 'success' | 'warning' | 'error';
