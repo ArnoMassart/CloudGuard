@@ -86,7 +86,7 @@ public class AppPasswordsService {
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
         SecurityScoreBreakdownDto breakdown = buildAppPasswordsBreakdown(
                 totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore);
-        return new AppPasswordOverviewResponse(true, totalAppPasswords, totalAppPasswords, securityScore, breakdown);
+        return new AppPasswordOverviewResponse(true, totalAppPasswords, usersWithAppPasswords, securityScore, breakdown);
     }
 
     private SecurityScoreBreakdownDto buildAppPasswordsBreakdown(int totalUserCount, int usersWithAppPasswords, int totalAppPasswords, int securityScore) {
@@ -110,8 +110,6 @@ public class AppPasswordsService {
         if (score >= 75) return "success";
         if (score >= 50) return "warning";
         return "error";
-
-        return new AppPasswordOverviewResponse(true, totalAppPasswords, totalAppPasswords, usersWithAppPasswords ,securityScore);
     }
 
     public void forceRefreshCache(String adminEmail) {
