@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { GroupOverviewResponse, GroupService } from '../../../../services/group-service';
+import { SecurityScoreDetailService } from '../../../../services/security-score-detail.service';
 import { GroupOrgDetail } from '../../../../models/groups/GroupOrgDetail';
 import { SectionTopCard } from '../../../../components/section-top-card/section-top-card';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
@@ -43,6 +44,7 @@ export class GroupsSection implements OnInit {
   readonly Icons = AppIcons;
 
   readonly #groupService = inject(GroupService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
   readonly isRefreshing = signal<boolean>(false);
@@ -111,6 +113,15 @@ export class GroupsSection implements OnInit {
 
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
+  }
+
+  openSecurityScoreDetail() {
+    const overview = this.pageOverview();
+    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
+      'Groepen'
+    );
+    this.#securityScoreDetail.open(breakdown, 'Groepen');
   }
 
   refreshData() {

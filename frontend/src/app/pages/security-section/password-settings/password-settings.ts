@@ -5,6 +5,7 @@ import { PageHeader } from '../../../components/page-header/page-header';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { PasswordSettingsService } from '../../../services/password-settings-service';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
 import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminWithSecurityKey';
 import { AppIcons } from '../../../shared/AppIcons';
@@ -26,6 +27,7 @@ import { LucideAngularModule } from 'lucide-angular';
 export class PasswordSettings implements OnInit {
   readonly Icons = AppIcons;
   readonly #passwordSettingsService = inject(PasswordSettingsService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
 
   readonly data = signal<PasswordSettingsData | null>(null);
   readonly loading = signal(true);
@@ -163,5 +165,11 @@ export class PasswordSettings implements OnInit {
   formatForcedChangeReason(reason: string): string {
     if (reason === 'changePasswordAtNextLogin') return 'Verplicht bij volgende login';
     return reason || 'Onbekend';
+  }
+
+  openSecurityScoreDetail(): void {
+    const settings = this.data();
+    const breakdown = settings?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(settings?.securityScore ?? 0, 'Wachtwoord Instellingen');
+    this.#securityScoreDetail.open(breakdown, 'Wachtwoord Instellingen');
   }
 }

@@ -4,6 +4,7 @@ import { SectionTopCard } from '../../../components/section-top-card/section-top
 import { AppIcons } from '../../../shared/AppIcons';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { AppPasswordsService } from '../../../services/app-password-service';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { AppPassword } from '../../../models/app-password/AppPassword';
 import { AppPasswordOverviewResponse } from '../../../models/app-password/AppPasswordOverviewResponse';
 import { UserAppPasswords } from '../../../models/app-password/UserAppPasswords';
@@ -34,6 +35,7 @@ export class AppPasswords implements OnInit {
   readonly Icons = AppIcons;
   readonly pageOverview = signal<AppPasswordOverviewResponse | null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
   readonly userAppPasswords = signal<UserAppPasswords[]>([]);
   readonly expandedAppPassword = signal<string | null>(null);
   readonly currentPage = signal(1);
@@ -195,5 +197,14 @@ export class AppPasswords implements OnInit {
     if (diffDays < 7) return `${diffDays} dagen geleden`;
     if (diffDays < 31) return `${Math.floor(diffDays / 7)} weken geleden`;
     return `${Math.floor(diffDays / 31)} maanden geleden`;
+  }
+
+  openSecurityScoreDetail(): void {
+    const overview = this.pageOverview();
+    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
+      'App Wachtwoorden'
+    );
+    this.#securityScoreDetail.open(breakdown, 'App Wachtwoorden');
   }
 }

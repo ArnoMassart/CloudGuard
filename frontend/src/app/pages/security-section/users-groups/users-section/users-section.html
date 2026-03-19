@@ -5,8 +5,22 @@
       BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="Icons.TriangleAlert" />
     <app-section-top-card class="flex-1" Title="Admin gebruikers" [Value]="pageOverview()?.adminUsers"
       BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-    <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
-      [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+    <div
+      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+      (click)="openSecurityScoreDetail()"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
+    >
+      <app-section-top-card
+        Title="Security Score"
+        [Value]="pageOverview()?.securityScore"
+        [IsPercentage]="true"
+        BackgroundColor="#fef9c2"
+        IconColor="#d69518"
+      />
+    </div>
   </div>
 
   @if (hasWarnings() && !isLoading()) {

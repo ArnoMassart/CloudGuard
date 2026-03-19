@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { RouteService } from './route-service';
 import { Observable } from 'rxjs';
 import { GroupOrgDetail } from '../models/groups/GroupOrgDetail';
+import type { SecurityScoreBreakdown } from '../models/password/PasswordSettings';
 
 @Injectable({
   providedIn: 'root',
@@ -58,6 +59,7 @@ export interface GroupOverviewResponse {
   mediumRiskGroups: number;
   lowRiskGroups: number;
   securityScore: number;
+  securityScoreBreakdown?: SecurityScoreBreakdown;
 }
 
 export interface GroupSettingsDto {

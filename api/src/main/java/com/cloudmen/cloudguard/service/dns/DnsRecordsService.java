@@ -5,6 +5,8 @@ import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.dto.dns.DnsLookupResult;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -70,8 +72,41 @@ public class DnsRecordsService {
         rows.add(buildCname(cnameName));
 
         int securityScore = calculateSecurityScore(rows);
+        SecurityScoreBreakdownDto breakdown = buildDnsBreakdown(rows, securityScore);
 
-        return new DnsRecordResponseDto(domain, rows, securityScore);
+        return new DnsRecordResponseDto(domain, rows, securityScore, breakdown);
+    }
+
+    private SecurityScoreBreakdownDto buildDnsBreakdown(List<DnsRecordDto> rows, int securityScore) {
+        List<SecurityScoreFactorDto> factors = new ArrayList<>();
+        for (DnsRecordDto row : rows) {
+            double mult = switch (row.status()) {
+                case VALID -> 1.0;
+                case OK, ATTENTION -> 0.5;
+                case ACTION_REQUIRED, ERROR -> 0.0;
+            };
+            int score = (int) Math.round(mult * 100);
+            String title = switch (row.type()) {
+                case "SPF" -> "SPF Record";
+                case "DKIM" -> "DKIM Signing";
+                case "DMARC" -> "DMARC Policy";
+                case "MX" -> "MX Records";
+                case "DNSSEC" -> "DNSSEC";
+                case "CAA" -> "CAA Records";
+                case "TXT" -> "Site verificatie";
+                case "CNAME" -> "Mail subdomein";
+                default -> row.type();
+            };
+            factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score)));
+        }
+        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     private int calculateSecurityScore(List<DnsRecordDto> rows) {

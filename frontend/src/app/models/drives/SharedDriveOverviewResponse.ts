@@ -1,3 +1,5 @@
+import type { SecurityScoreBreakdown } from '../password/PasswordSettings';
+
 export type SharedDriveOverviewResponse = {
   totalDrives: number;
   orphanDrives: number;
@@ -7,4 +9,5 @@ export type SharedDriveOverviewResponse = {
   notOnlyDomainUsersAllowedCount: number;
   notOnlyMembersCanAccessCount: number;
   externalMembersDriveCount: number;
+  securityScoreBreakdown?: SecurityScoreBreakdown;
 };

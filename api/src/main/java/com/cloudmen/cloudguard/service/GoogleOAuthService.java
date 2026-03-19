@@ -1,6 +1,8 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.oauth.*;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.stereotype.Service;
@@ -173,12 +175,33 @@ public class GoogleOAuthService {
             securityScore = (int) Math.max(0, 100 - Math.round(penalty));
         }
 
+        SecurityScoreBreakdownDto breakdown = buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, totalPermissionsGranted, securityScore);
+
         return new OAuthOverviewResponse(
                 totalThirdPartyApps,
                 totalHighRiskApps,
                 totalPermissionsGranted,
-                securityScore
+                securityScore,
+                breakdown
         );
+    }
+
+    private SecurityScoreBreakdownDto buildOAuthBreakdown(long totalThirdPartyApps, long totalHighRiskApps, long totalPermissionsGranted, int securityScore) {
+        int highRiskScore = totalThirdPartyApps == 0 ? 100 : (int) Math.round((totalThirdPartyApps - totalHighRiskApps) * 100.0 / totalThirdPartyApps);
+        int noAppsScore = totalThirdPartyApps == 0 ? 100 : 100;
+
+        var factors = java.util.List.of(
+                new SecurityScoreFactorDto("Apps zonder hoog risico", totalHighRiskApps == 0 ? "Geen apps met hoog risico gedetecteerd" : totalHighRiskApps + " van " + totalThirdPartyApps + " apps hebben hoog risico (kritieke toegang)", highRiskScore, 100, severity(highRiskScore)),
+                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? "Geen 3rd-party apps gekoppeld" : totalThirdPartyApps + " 3rd-party app(s) met " + totalPermissionsGranted + " verleende permissies", noAppsScore, 100, severity(noAppsScore))
+        );
+        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     private List<AggregatedAppBuilder> aggregateTokens(List<RawUserToken> rawTokens) {

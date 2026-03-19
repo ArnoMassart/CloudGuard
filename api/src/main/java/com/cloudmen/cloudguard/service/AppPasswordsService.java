@@ -1,6 +1,8 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.apppasswords.*;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -82,8 +84,32 @@ public class AppPasswordsService {
         int totalUserCount = entry.totalUserCount();
         int securityScore = totalUserCount == 0 ? 100
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
+        SecurityScoreBreakdownDto breakdown = buildAppPasswordsBreakdown(
+                totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore);
+        return new AppPasswordOverviewResponse(true, totalAppPasswords, usersWithAppPasswords, securityScore, breakdown);
+    }
 
-        return new AppPasswordOverviewResponse(true, totalAppPasswords, totalAppPasswords, usersWithAppPasswords ,securityScore);
+    private SecurityScoreBreakdownDto buildAppPasswordsBreakdown(int totalUserCount, int usersWithAppPasswords, int totalAppPasswords, int securityScore) {
+        int usersWithoutScore = totalUserCount == 0 ? 100
+                : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
+        int totalCountScore = totalAppPasswords == 0 ? 100 : (int) Math.max(0, 100 - Math.min(totalAppPasswords, 50) * 2);
+
+        var factors = java.util.List.of(
+                new SecurityScoreFactorDto("Gebruikers zonder app-wachtwoorden",
+                        usersWithAppPasswords == 0 ? "Geen gebruikers met app-wachtwoorden" : usersWithAppPasswords + " van " + totalUserCount + " gebruikers hebben app-wachtwoorden",
+                        usersWithoutScore, 100, severity(usersWithoutScore)),
+                new SecurityScoreFactorDto("Totaal app-wachtwoorden",
+                        totalAppPasswords == 0 ? "Geen app-wachtwoorden in gebruik" : totalAppPasswords + " app-wachtwoord(en) actief. Minder is beter.",
+                        totalCountScore, 100, severity(totalCountScore))
+        );
+        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -160,10 +186,10 @@ public class AppPasswordsService {
                 new UserAppPasswordsDto("demo-1", "Pieter de Vries", "pieter.devries@bedrijf.nl", "User", false, List.of(p1)),
                 new UserAppPasswordsDto("demo-2", "Thomas Mulder", "thomas.mulder@bedrijf.nl", "User", true, List.of(p2)),
                 new UserAppPasswordsDto("demo-3", "Lisa van Berg", "lisa.vanberg@bedrijf.nl", "Admin", true, List.of(p3a, p3b)),
-                new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, new ArrayList<>()),
+                new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, List.of(p4)),
                 new UserAppPasswordsDto("demo-5", "Sophie Jansen", "sophie.jansen@bedrijf.nl", "User", false, List.of(p5a, p5b))
         );
-        return new AppPasswordCacheEntry(users, 5);
+        return new AppPasswordCacheEntry(users, 15);
     }
 
     private AppPasswordDto mapToDto(Asp asp) {

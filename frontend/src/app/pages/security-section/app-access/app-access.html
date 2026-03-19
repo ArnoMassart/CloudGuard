@@ -16,8 +16,22 @@
                     [Value]="pageOverview()?.totalPermissionsGranted" BackgroundColor="#f3e8ff" IconColor="#9810fa"
                     TextColor="#9810fa" [Icon]="Icons.ShieldCheck" />
 
-                <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
-                    [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+                <div
+                  class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+                  (click)="openSecurityScoreDetail()"
+                  role="button"
+                  tabindex="0"
+                  (keydown.enter)="openSecurityScoreDetail()"
+                  (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
+                >
+                  <app-section-top-card
+                    Title="Security Score"
+                    [Value]="pageOverview()?.securityScore"
+                    [IsPercentage]="true"
+                    BackgroundColor="#fef9c2"
+                    IconColor="#d69518"
+                  />
+                </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-10">

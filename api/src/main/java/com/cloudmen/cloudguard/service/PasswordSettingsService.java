@@ -75,7 +75,7 @@ public class PasswordSettingsService {
                 ? adminSecurityKeysResponse.admins() : List.of();
         String adminsSecurityKeysErrorMessage = adminSecurityKeysResponse.errorMessage();
 
-        int securityScore = calculateSecurityScore(
+        var scoreResult = calculateSecurityScoreWithBreakdown(
                 adminSecurityKeysResponse.totalAdmins(),
                 adminsWithoutSecurityKeys.size(),
                 summary,
@@ -83,7 +83,7 @@ public class PasswordSettingsService {
                 passwordPoliciesByOu);
 
         return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
-                adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, securityScore);
+                adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, scoreResult.score(), scoreResult.breakdown());
     }
 
     private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String adminEmail) {
@@ -329,7 +329,9 @@ public class PasswordSettingsService {
      * - Password strength (10%): true→100, false→0
      * - Password history (5%): not used for score, always 100
      */
-    private int calculateSecurityScore(
+    private record SecurityScoreResult(int score, SecurityScoreBreakdownDto breakdown) {}
+
+    private SecurityScoreResult calculateSecurityScoreWithBreakdown(
             int totalAdmins,
             int adminsWithoutKeys,
             PasswordSettingsSummaryDto summary,
@@ -390,6 +392,49 @@ public class PasswordSettingsService {
                 + strengthScore * 0.10
                 + historyScore * 0.05;
 
-        return (int) Math.round(Math.max(0, Math.min(100, weighted)));
+        int totalScore = (int) Math.round(Math.max(0, Math.min(100, weighted)));
+
+        String adminKeysDesc = totalAdmins == 0 ? "Geen admins gevonden"
+                : adminsWithoutKeys == 0 ? "Alle admins hebben een security key"
+                : adminsWithoutKeys + " van " + totalAdmins + " admins missen nog een security key (hardware 2FA)";
+
+        String usersNeedChangeDesc = summary.totalUsers() == 0 ? "Geen gebruikers"
+                : summary.usersWithForcedChange() == 0 ? "Geen gebruikers met verplichte wachtwoordwijziging"
+                : summary.usersWithForcedChange() + " gebruiker(s) moeten bij volgende login hun wachtwoord wijzigen";
+
+        String twoFaDesc = totalUsers2Fa == 0 ? "Geen gebruikers"
+                : (int) twoFaScore == 100 ? "2-Step Verification is verplicht voor alle OUs"
+                : "2-Step Verification is niet verplicht gesteld voor alle organisatie-eenheden";
+
+        String lengthDesc = totalPolicyUsers == 0 ? "Geen OUs met beleid"
+                : (int) lengthScore >= 90 ? "Alle OUs hanteren minimaal 12 tekens als wachtwoordlengte"
+                : "Niet alle OUs hanteren minimaal 12 tekens als wachtwoordlengte";
+
+        String expirationDesc = totalPolicyUsers == 0 ? "Geen OUs met beleid"
+                : (int) expirationScore == 100 ? "Alle OUs hanteren wachtwoordverloop"
+                : "Sommige OUs hanteren geen wachtwoordverloop of te lange periodes";
+
+        String strengthDesc = totalPolicyUsers == 0 ? "Geen OUs met beleid"
+                : (int) strengthScore == 100 ? "Sterke wachtwoorden zijn verplicht voor alle OUs"
+                : "Sterke wachtwoorden zijn niet verplicht voor sommige OUs";
+
+        List<SecurityScoreFactorDto> factors = List.of(
+                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, (int) Math.round(adminKeysScore), 100, severity(adminKeysScore)),
+                new SecurityScoreFactorDto("Verplichte wachtwoordwijziging", usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
+                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, (int) Math.round(twoFaScore), 100, severity(twoFaScore)),
+                new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, (int) Math.round(lengthScore), 100, severity(lengthScore)),
+                new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, (int) Math.round(expirationScore), 100, severity(expirationScore)),
+                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, (int) Math.round(strengthScore), 100, severity(strengthScore))
+        );
+
+        String status = totalScore == 100 ? "Perfect" : totalScore >= 75 ? "Goed" : totalScore > 50 ? "Matig" : "Slecht";
+
+        return new SecurityScoreResult(totalScore, new SecurityScoreBreakdownDto(totalScore, status, factors));
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 }

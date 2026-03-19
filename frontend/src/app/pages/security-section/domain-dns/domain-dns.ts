@@ -7,7 +7,9 @@ import { Domain } from '../../../models/domain/Domain';
 import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
 import { DnsRecord } from '../../../models/dns/DnsRecord';
+import type { SecurityScoreBreakdown } from '../../../models/password/PasswordSettings';
 import { DnsService } from '../../../services/dns-service';
+import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 
 @Component({
   selector: 'app-domain-dns',
@@ -21,6 +23,7 @@ export class DomainDns implements OnInit {
   readonly isRefreshing = signal(false);
   readonly #domainService = inject(DomainService);
   readonly Icons = AppIcons;
+  readonly #securityScoreDetail = inject(SecurityScoreDetailService);
 
   private readonly dnsService = inject(DnsService);
   readonly rows = signal<DnsRecord[]>([]);
@@ -32,6 +35,7 @@ export class DomainDns implements OnInit {
   readonly validDnsRecords = computed(() => this.rows().filter((r) => r.status === 'VALID').length);
 
   securityScore = signal<number>(0);
+  securityScoreBreakdown = signal<SecurityScoreBreakdown | null>(null);
 
   /** Controls sorted by severity */
   readonly securityControlsRows = computed(() => {
@@ -182,6 +186,14 @@ export class DomainDns implements OnInit {
     return tips[type] ?? null;
   }
 
+  openSecurityScoreDetail() {
+    const breakdown = this.securityScoreBreakdown() ?? this.#securityScoreDetail.createSimpleBreakdown(
+      this.securityScore(),
+      'DNS'
+    );
+    this.#securityScoreDetail.open(breakdown, 'DNS');
+  }
+
   getControlArticleUrl(type: string): string | null {
     const urls: Record<string, string> = {
       SPF: 'https://support.google.com/a/answer/33786',
@@ -243,10 +255,12 @@ export class DomainDns implements OnInit {
       next: (res) => {
         this.rows.set(res.rows);
         this.securityScore.set(res.securityScore);
+        this.securityScoreBreakdown.set(res.securityScoreBreakdown ?? null);
         this.isLoadingDns.set(false);
       },
       error: (err) => {
         console.error('DNS load failed', err);
+        this.securityScoreBreakdown.set(null);
         this.isLoadingDns.set(false);
       },
     });

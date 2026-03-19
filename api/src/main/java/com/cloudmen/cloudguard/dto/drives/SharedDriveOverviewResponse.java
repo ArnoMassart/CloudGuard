@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.dto.drives;
 
+import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+
 public record SharedDriveOverviewResponse(
         int totalDrives,
         int orphanDrives,
@@ -8,6 +10,7 @@ public record SharedDriveOverviewResponse(
         int securityScore,
         int notOnlyDomainUsersAllowedCount,
         int notOnlyMembersCanAccessCount,
-        int externalMembersDriveCount
+        int externalMembersDriveCount,
+        SecurityScoreBreakdownDto securityScoreBreakdown
 )
 { }
