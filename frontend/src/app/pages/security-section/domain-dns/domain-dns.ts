@@ -255,6 +255,7 @@ export class DomainDns implements OnInit {
       next: (res) => {
         this.rows.set(res.rows);
         this.securityScore.set(res.securityScore);
+        this.securityScoreBreakdown.set(res.securityScoreBreakdown ?? null);
         this.isLoadingDns.set(false);
       },
       error: (err) => {

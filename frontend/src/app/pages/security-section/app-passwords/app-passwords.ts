@@ -200,8 +200,11 @@ export class AppPasswords implements OnInit {
   }
 
   openSecurityScoreDetail(): void {
-    const score = this.pageOverview()?.securityScore ?? 0;
-    const breakdown = this.#securityScoreDetail.createSimpleBreakdown(score, 'App Wachtwoorden');
+    const overview = this.pageOverview();
+    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
+      overview?.securityScore ?? 0,
+      'App Wachtwoorden'
+    );
     this.#securityScoreDetail.open(breakdown, 'App Wachtwoorden');
   }
 }
