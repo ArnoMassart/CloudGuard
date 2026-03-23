@@ -2,10 +2,11 @@ import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../shared/AppIcons';
 import { Router } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-page-warnings',
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, TranslocoPipe],
   templateUrl: './page-warnings.html',
   styleUrl: './page-warnings.css',
   standalone: true,

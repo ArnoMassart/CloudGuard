@@ -1,30 +1,27 @@
 <div class="px-10 py-6">
-  <app-page-header Title="Security Dashboard Overzicht"
-    Description="Real-time inzicht in uw Google Workspace beveiliging en compliance" AdminLink="home" />
+  <app-page-header Title="{{ 'home.page-title' | transloco }}" Description="{{ 'home.page-description' | transloco }}"
+    AdminLink="home" />
 
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
       <div class="w-full flex gap-4">
-        <app-section-top-card class="flex-1" Title="Totale meldingen" [Value]="pageOverview()?.totalNotifications"
-          BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="Icons.TriangleAlert" />
+        <app-section-top-card class="flex-1" Title="{{ 'home.section-card.meldingen' | transloco }}"
+          [Value]="pageOverview()?.totalNotifications" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
+          [Icon]="Icons.TriangleAlert" />
 
-        <app-section-top-card class="flex-1" Title="Kritieke problemen" [Value]="pageOverview()?.criticalNotifications"
-          BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.CircleX" />
+        <app-section-top-card class="flex-1" Title="{{ 'home.section-card.critical' | transloco }}"
+          [Value]="pageOverview()?.criticalNotifications" BackgroundColor="#ffe2e2" IconColor="#e7000b"
+          TextColor="#e7000b" [Icon]="Icons.CircleX" />
 
         <app-section-top-card class="flex-1" Title="Compliance" [Value]="score()" [IsPercentage]="true"
           BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
 
       @if (hasWarnings() && !isLoading()) {
-      <app-page-warnings [isCritical]="true" [isDashboard]="true" [title]="
-            `${pageOverview()?.criticalNotifications}
-                            kritieke beveiligingswaarschuwing${
-                              pageOverview()?.criticalNotifications ? 'en' : ''
-                            }
-`
-          ">
+      <app-page-warnings [isCritical]="true" [isDashboard]="true"
+        title="{{ pageOverview()?.criticalNotifications }} {{ (pageOverview()?.criticalNotifications === 1 ? 'critical-warning' : 'critical-warnings') | transloco }}">
         <app-page-warnings-item body [isCritical]="true">
-          Er zijn urgente beveiligingsproblemen die onmiddelijk aandacht vereisen.
+          {{ 'home.page-warning' | transloco }}
         </app-page-warnings-item>
       </app-page-warnings>
       }
@@ -34,7 +31,7 @@
         <div class="p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col items-center font-sans">
           <div class="flex flex-col justify-between gap-15 items-center flex-1">
             <div class="flex flex-col items-center">
-              <h2 class="text-xl font-bold mb-8">Algemene Beveiligingsscore</h2>
+              <h2 class="text-xl font-bold mb-8">{{ 'home.overall-score' | transloco }}</h2>
 
               <app-security-gauge [score]="score()" />
             </div>
@@ -48,14 +45,14 @@
                 score() == 100
                 ? 'Perfect'
                 : score() >= 75
-                ? 'Goed'
+                ? ('home.score.good' | transloco)
                 : score() > 50
-                ? 'Matig'
-                : 'Slecht'
+                ? ('home.score.average' | transloco)
+                :( 'home.score.bad' | transloco)
                 }}
               </span>
               <p class="text-gray-400 text-xs">
-                Laatste update: {{ pageResponse()?.lastUpdated }}
+                {{ 'home.last-update' | transloco }}: {{ pageResponse()?.lastUpdated }}
               </p>
             </div>
           </div>
@@ -64,29 +61,33 @@
         <div
           class="p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col font-sans flex-2 lg:col-span-2">
           <div class="flex justify-between items-center mb-8">
-            <h2 class="text-xl font-bold">Security Deelgebieden</h2>
+            <h2 class="text-xl font-bold">{{ 'home.security-areas' | transloco }}</h2>
             <button (click)="generateRapport()" [disabled]="isGenerating()"
               class="flex items-center gap-2 px-4 py-2 bg-primary border border-gray-300 rounded-lg text-sm font-medium text-white hover:bg-primary/70 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-70 disabled:cursor-not-allowed transition-colors shadow-sm">
               <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isGenerating()">
               </i-lucide>
 
-              {{ isGenerating() ? 'Genereren...' : 'Security rapport genereren' }}
+              {{
+              isGenerating()
+              ? ('generating' | transloco) + '...'
+              : ('home.security-rapport' | transloco)
+              }}
             </button>
           </div>
 
           <div class="grid sm:grid-cols-2 gap-5">
-            <app-security-component [Value]="pageResponse()?.scores?.usersScore" />
-            <app-security-component Label="Groepen" [Value]="pageResponse()?.scores?.groupsScore"
+            <app-security-component Label="{{ 'users' | transloco }}" [Value]="pageResponse()?.scores?.usersScore" />
+            <app-security-component Label="{{ 'groups' | transloco }}" [Value]="pageResponse()?.scores?.groupsScore"
               [Icon]="Icons.UsersRound" [IsGroups]="true" />
             <app-security-component Label="Drives" [Value]="pageResponse()?.scores?.drivesScore"
               [Icon]="Icons.FolderOpen" Route="shared-drives" />
-            <app-security-component Label="Apparaten" [Value]="pageResponse()?.scores?.devicesScore"
+            <app-security-component Label="{{ 'devices' | transloco }}" [Value]="pageResponse()?.scores?.devicesScore"
               [Icon]="Icons.SmartPhone" Route="devices" />
-            <app-security-component Label="App Toegang" [Value]="pageResponse()?.scores?.appAccessScore"
-              [Icon]="Icons.Key" Route="app-access" />
-            <app-security-component Label="App Wachtwoorden" [Value]="pageResponse()?.scores?.appPasswordsScore"
-              [Icon]="Icons.Lock" Route="app-passwords" />
-            <app-security-component Label="Wachtwoordinstellingen" [Icon]="Icons.ShieldCheck"
+            <app-security-component Label="{{ 'app-access' | transloco }}"
+              [Value]="pageResponse()?.scores?.appAccessScore" [Icon]="Icons.Key" Route="app-access" />
+            <app-security-component Label="{{ 'app-passwords' | transloco }}"
+              [Value]="pageResponse()?.scores?.appPasswordsScore" [Icon]="Icons.Lock" Route="app-passwords" />
+            <app-security-component Label="{{ 'password-settings' | transloco }}" [Icon]="Icons.ShieldCheck"
               [Value]="pageResponse()?.scores?.passwordSettingsScore" Route="password-settings" />
             <app-security-component Label="DNS" [Value]="pageResponse()?.scores?.dnsScore" [Icon]="Icons.Globe"
               Route="domain-dns" />

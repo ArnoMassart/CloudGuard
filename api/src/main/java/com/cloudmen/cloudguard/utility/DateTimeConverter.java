@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.utility;
 
 import com.google.api.client.util.DateTime;
 import org.ocpsoft.prettytime.PrettyTime;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -33,7 +34,9 @@ public class DateTimeConverter {
     }
 
     public static String parseWithPattern(LocalDateTime value, String pattern) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern).withLocale(new Locale("nl", "BE"));
+        Locale userLocale = LocaleContextHolder.getLocale();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern).withLocale(userLocale);
 
         return value.format(formatter);
     }

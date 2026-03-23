@@ -2,10 +2,11 @@ import { Component, Input } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../shared/AppIcons';
 import { UtilityMethods } from '../../shared/UtilityMethods';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-page-header',
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, TranslocoPipe],
   templateUrl: './page-header.html',
   styleUrl: './page-header.css',
 })

@@ -10,11 +10,13 @@ import { Router } from '@angular/router';
 import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 import { UserService } from '../services/user-service';
 import { AppIcons } from '../shared/AppIcons';
+import { TranslocoService } from '@jsverse/transloco';
+import { LanguageBar } from '../components/language-bar/language-bar';
 
 @Component({
   standalone: true,
   selector: 'app-navbar',
-  imports: [LucideAngularModule, NavItem, CommonModule, Profile],
+  imports: [LucideAngularModule, NavItem, CommonModule, Profile, LanguageBar],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   providers: [CookieService],
