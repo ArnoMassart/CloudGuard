@@ -1,8 +1,7 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.context.UserContext;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.PdfReportService;
+import com.cloudmen.cloudguard.service.report.PdfReportService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,25 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
     private final PdfReportService reportService;
     private final JwtService jwtService;
-    private final UserContext userContext;
-
-    public ReportController(PdfReportService reportService, JwtService jwtService, UserContext userContext) {
+    public ReportController(PdfReportService reportService, JwtService jwtService) {
         this.reportService = reportService;
         this.jwtService = jwtService;
-        this.userContext = userContext;
     }
 
     @GetMapping
-    public ResponseEntity<byte[]> downloadReport(@CookieValue(name = "AuthToken", required = false) String token) throws Exception {
+    public ResponseEntity<byte[]> downloadReport(@CookieValue(name = "AuthToken", required = false) String token) {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        userContext.setEmail(loggedInEmail);
-
-        byte[] pdfBytes = reportService.generateSecurityRapport();
+        byte[] pdfBytes = reportService.generateSecurityRapport(loggedInEmail).data();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Security_Report.pdf")

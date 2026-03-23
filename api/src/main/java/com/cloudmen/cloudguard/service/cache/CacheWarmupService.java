@@ -62,7 +62,7 @@ public class CacheWarmupService {
         });
     }
 
-    public void warmupAllCachesAsync(String loggedInEmail) {
+    public CompletableFuture<Void> warmupAllCachesAsync(String loggedInEmail) {
         CompletableFuture<?>[] tasks = new CompletableFuture<?>[] {
           runSafeAsync(() -> usersCacheService.forceRefreshCache(loggedInEmail), "Users"),
           runSafeAsync(() -> groupsCacheService.forceRefreshCache(loggedInEmail), "Groups"),
@@ -82,6 +82,6 @@ public class CacheWarmupService {
                 runSafeAsync(() -> domainCacheService.forceRefreshCache(loggedInEmail), "Domain"),
         };
 
-        CompletableFuture.allOf(tasks).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
+        return CompletableFuture.allOf(tasks).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
     }
 }
