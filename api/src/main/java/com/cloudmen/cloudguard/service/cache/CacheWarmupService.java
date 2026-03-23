@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.PasswordSettingsService;
+import com.cloudmen.cloudguard.service.policy.MobileManagementPolicyProvider;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +27,13 @@ public class CacheWarmupService {
     private final PasswordSettingsService passwordSettingsService;
 
     private final TSVPolicyProvider tsvPolicyProvider;
+    private final MobileManagementPolicyProvider mobileManagementPolicyProvider;
     private final PolicyApiCacheService policyApiCacheService;
 
     private final GoogleLicenseCacheService licenseCacheService;
     private final GoogleDomainCacheService domainCacheService;
 
-    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, AdminSecurityKeysService adminSecurityKeysService, GoogleOAuthCacheService oAuthCacheService, PasswordSettingsService passwordSettingsService, TSVPolicyProvider tsvPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
+    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, AdminSecurityKeysService adminSecurityKeysService, GoogleOAuthCacheService oAuthCacheService, PasswordSettingsService passwordSettingsService, TSVPolicyProvider tsvPolicyProvider, MobileManagementPolicyProvider mobileManagementPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
         this.usersCacheService = usersCacheService;
         this.groupsCacheService = groupsCacheService;
         this.orgUnitCacheService = orgUnitCacheService;
@@ -42,6 +44,7 @@ public class CacheWarmupService {
         this.oAuthCacheService = oAuthCacheService;
         this.passwordSettingsService = passwordSettingsService;
         this.tsvPolicyProvider = tsvPolicyProvider;
+        this.mobileManagementPolicyProvider = mobileManagementPolicyProvider;
         this.policyApiCacheService = policyApiCacheService;
         this.licenseCacheService = licenseCacheService;
         this.domainCacheService = domainCacheService;
@@ -73,6 +76,7 @@ public class CacheWarmupService {
           runSafeAsync(() -> adminSecurityKeysService.forceRefreshCache(loggedInEmail), "Admin security keys"),
           runSafeAsync(() -> passwordSettingsService.getPasswordSettings(loggedInEmail), "Password settings"),
           runSafeAsync(() -> tsvPolicyProvider.forceRefreshCache(loggedInEmail), "TSV Policy"),
+          runSafeAsync(() -> mobileManagementPolicyProvider.forceRefreshCache(loggedInEmail), "Mobile Management Policy"),
           runSafeAsync(() -> {
               policyApiCacheService.getAllPolicies(loggedInEmail);
               policyApiCacheService.getOuIdToPathMap(loggedInEmail);
