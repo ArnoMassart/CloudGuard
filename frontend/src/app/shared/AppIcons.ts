@@ -1,6 +1,9 @@
 import {
+  AppWindow,
   Bell,
+  LayoutGrid,
   Building2,
+  EyeOff,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -44,7 +47,9 @@ import {
 } from 'lucide-angular';
 
 export class AppIcons {
+  static readonly AppWindow = AppWindow;
   static readonly Bell = Bell;
+  static readonly LayoutGrid = LayoutGrid;
   static readonly Building2 = Building2;
   static readonly Calendar = Calendar;
   static readonly ChevronDown = ChevronDown;
@@ -59,6 +64,7 @@ export class AppIcons {
   static readonly CreditCard = CreditCard;
   static readonly DollarSign = DollarSign;
   static readonly ExternalLink = ExternalLink;
+  static readonly EyeOff = EyeOff;
   static readonly FileText = FileText;
   static readonly FolderOpen = FolderOpen;
   static readonly FolderTree = FolderTree;

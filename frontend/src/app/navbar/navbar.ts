@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
@@ -27,6 +27,14 @@ export class Navbar {
 
   readonly currentUser = this.authService.currentUser;
   readonly profilePopupOpen = signal(false);
+  readonly profileImageError = signal(false);
+
+  constructor() {
+    effect(() => {
+      this.currentUser();
+      this.profileImageError.set(false);
+    });
+  }
 
   readonly NavItemsSecurity = [
     { Icon: this.Icons.Shield, Label: 'Dashboard', Route: '/home' },
@@ -35,8 +43,8 @@ export class Navbar {
     { Icon: this.Icons.FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
     { Icon: this.Icons.SmartPhone, Label: 'Apparaten', Route: '/devices' },
     { Icon: this.Icons.Key, Label: 'App Toegang', Route: '/app-access' },
-    { Icon: this.Icons.Lock, Label: 'App-wachtwoorden', Route: '/app-passwords' },
-    { Icon: this.Icons.ShieldCheck, Label: 'Wachtwoordinstellingen', Route: '/password-settings' },
+    { Icon: this.Icons.LayoutGrid, Label: 'App-wachtwoorden', Route: '/app-passwords' },
+    { Icon: this.Icons.Lock, Label: 'Wachtwoordinstellingen', Route: '/password-settings' },
     { Icon: this.Icons.Globe, Label: 'Domein & DNS', Route: '/domain-dns' },
   ];
 

@@ -2,7 +2,7 @@ package com.cloudmen.cloudguard.dto.notifications;
 
 import java.util.List;
 
-public record ResolveNotificationRequest(
+public record DismissNotificationRequest(
         String source,
         String notificationType,
         String sourceLabel,

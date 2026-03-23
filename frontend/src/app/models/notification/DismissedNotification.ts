@@ -1,4 +1,4 @@
-export interface ResolvedNotification {
+export interface DismissedNotification {
   id: string;
   severity: string;
   title: string;
@@ -8,5 +8,5 @@ export interface ResolvedNotification {
   source: string;
   sourceLabel: string;
   sourceRoute: string;
-  resolvedAt: string | null;
+  dismissedAt: string | null;
 }

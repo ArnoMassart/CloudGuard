@@ -4,6 +4,6 @@ import java.util.List;
 
 public record NotificationsResponse(
         List<NotificationDto> active,
-        List<NotificationDto> resolved
+        List<NotificationDto> dismissed
 ) {
 }

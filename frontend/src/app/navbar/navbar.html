@@ -33,8 +33,14 @@
     </div>
 
     <div class="relative z-10 flex items-center gap-3 min-w-0 ">
-      <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center">
+      <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+        @if (user.pictureUrl && !profileImageError()) {
+        <img [src]="user.pictureUrl" alt="" class="w-full h-full object-cover"
+          (error)="profileImageError.set(true)" />
+        }
+        @if (!user.pictureUrl || profileImageError()) {
         <span class="text-white text-lg">{{ getInitials(user) }}</span>
+        }
       </div>
 
       <div class="flex flex-col min-w-0">

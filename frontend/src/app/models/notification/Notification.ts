@@ -1,7 +1,5 @@
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
 
-export type NotificationStatus = 'new' | 'in_behandeling' | 'resolved';
-
 export interface Notification {
   id: string;
   severity: NotificationSeverity;
@@ -12,6 +10,7 @@ export interface Notification {
   source: string;
   sourceLabel: string;
   sourceRoute: string;
-  status?: NotificationStatus;
+  hasReported?: boolean;
+  dismissed?: boolean;
   supportsDetails?: boolean;
 }
