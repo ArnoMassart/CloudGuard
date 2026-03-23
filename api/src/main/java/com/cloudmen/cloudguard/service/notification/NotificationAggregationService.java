@@ -115,9 +115,9 @@ public class NotificationAggregationService {
     }
 
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
-        String status = feedbackKeys.contains(n.source() + ":" + n.notificationType()) ? "in_behandeling" : "new";
+        boolean hasReported = feedbackKeys.contains(n.source() + ":" + n.notificationType());
         return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),
-                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), status, n.supportsDetails());
+                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, false, n.supportsDetails());
     }
 
     private NotificationDto toResolvedDto(ResolvedNotification r) {
@@ -132,7 +132,8 @@ public class NotificationAggregationService {
                 r.getSource(),
                 r.getSourceLabel(),
                 r.getSourceRoute(),
-                "dismissed",
+                false,
+                true,
                 supportsDetails
         );
     }
@@ -310,7 +311,7 @@ public class NotificationAggregationService {
                                   String source, String sourceLabel, String sourceRoute) {
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(notificationType);
         return new NotificationDto("n-" + id, severity, title, description, recommendedActions,
-                notificationType, source, sourceLabel, sourceRoute, null, supportsDetails);
+                notificationType, source, sourceLabel, sourceRoute, false, false, supportsDetails);
     }
 
 }

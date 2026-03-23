@@ -90,7 +90,7 @@
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 {{ n.notificationType }}
                             </span>
-                            @if (n.status === 'in_behandeling' && filterSeverity() !== 'dismissed') {
+                            @if (n.hasReported && filterSeverity() !== 'dismissed') {
                             <span
                                 class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                                 <i-lucide [img]="Icons.Clock" size="12" />
@@ -102,8 +102,7 @@
                         <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            {{ filterSeverity() === 'dismissed' ? 'Genegeerd' : n.status === 'in_behandeling' ? 'In
-                            behandeling' : 'Vandaag' }}
+                            {{ filterSeverity() === 'dismissed' ? 'Genegeerd' : n.hasReported ? 'In behandeling' : 'Vandaag' }}
                         </p>
                         @if (n.supportsDetails) {
                         <button (click)="toggleExpand(n); $event.stopPropagation()"
@@ -150,7 +149,7 @@
                         }
                         @if (filterSeverity() !== 'dismissed') {
                         <div class="mt-4">
-                            @if (n.status === 'in_behandeling') {
+                            @if (n.hasReported) {
                             <p class="text-sm text-teal-600 flex items-center gap-2">
                                 <i-lucide [img]="Icons.Clock" size="16" />
                                 In behandeling
@@ -201,7 +200,7 @@
                             </span>
                         </div>
                         }
-                        @if (filterSeverity() !== 'dismissed' && n.status === 'in_behandeling') {
+                        @if (filterSeverity() !== 'dismissed' && n.hasReported) {
                         <div class="flex flex-wrap gap-2 mt-6">
                             <button type="button" (click)="markAsResolved(n)" [disabled]="isResolving(n)"
                                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">

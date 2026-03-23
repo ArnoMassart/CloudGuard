@@ -50,7 +50,7 @@ export class ReportsReactions implements OnInit {
     const filter = this.filterSeverity();
     if (filter === 'dismissed') return this.resolvedNotifications();
     const list = this.notifications();
-    if (filter === 'in-behandeling') return list.filter((n) => n.status === 'in_behandeling');
+    if (filter === 'in-behandeling') return list.filter((n) => n.hasReported);
     if (filter === 'all') return list;
     return list.filter((n) => n.severity === filter);
   });
@@ -67,7 +67,7 @@ export class ReportsReactions implements OnInit {
     () => this.notifications().filter((n) => n.severity === 'info').length,
   );
   readonly inBehandelingCount = computed(
-    () => this.notifications().filter((n) => n.status === 'in_behandeling').length,
+    () => this.notifications().filter((n) => n.hasReported).length,
   );
 
   readonly isWarningExpanded = signal(true);
@@ -286,7 +286,7 @@ export class ReportsReactions implements OnInit {
       next: () => {
         this.notifications.update((list) =>
           list.map((item) =>
-            item.id === n.id ? { ...item, status: 'in_behandeling' as const } : item,
+            item.id === n.id ? { ...item, hasReported: true } : item,
           ),
         );
         this.feedbackFormOpenIds.update((s) => {
