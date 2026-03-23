@@ -83,7 +83,7 @@ public class NotificationAggregationService {
         Set<String> dismissedKeys = dismissed.stream()
                 .map(d -> d.getSource() + ":" + d.getNotificationType())
                 .collect(Collectors.toSet());
-        Set<String> feedbackKeys = feedbackService.getFeedbackKeysForUser(userId);
+        Set<String> feedbackKeys = feedbackService.getAllFeedbackKeys();
 
         List<NotificationDto> filtered = active.stream()
                 .filter(n -> !dismissedKeys.contains(n.source() + ":" + n.notificationType()))
