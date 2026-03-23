@@ -9,14 +9,14 @@ import java.util.List;
 
 @Entity
 @Table(
-        name = "resolved_notification",
+        name = "dismissed_notification",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "source", "notification_type"})
         }
 )
 @Getter
 @Setter
-public class ResolvedNotification {
+public class DismissedNotification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,10 +33,10 @@ public class ResolvedNotification {
     private String severity;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "resolved_notification_actions", joinColumns = @JoinColumn(name = "resolved_notification_id"))
+    @CollectionTable(name = "dismissed_notification_actions", joinColumns = @JoinColumn(name = "dismissed_notification_id"))
     @Column(name = "action")
     private List<String> recommendedActions;
 
-    @Column(name = "resolved_at")
-    private LocalDateTime resolvedAt;
+    @Column(name = "dismissed_at")
+    private LocalDateTime dismissedAt;
 }

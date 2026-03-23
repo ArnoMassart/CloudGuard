@@ -8,7 +8,7 @@ import { FilterOption } from '../../../models/FilterOption';
 import { NotificationService } from '../../../services/notification-service';
 import { Notification, NotificationSeverity } from '../../../models/notification/Notification';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
-import { ResolvedNotificationService } from '../../../services/resolved-notification-service';
+import { DismissedNotificationService } from '../../../services/dismissed-notification-service';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 
@@ -29,10 +29,10 @@ export class ReportsReactions implements OnInit {
   readonly Icons = AppIcons;
   readonly #notificationService = inject(NotificationService);
   readonly #notificationFeedbackService = inject(NotificationFeedbackService);
-  readonly #resolvedService = inject(ResolvedNotificationService);
+  readonly #dismissedService = inject(DismissedNotificationService);
 
   readonly notifications = signal<Notification[]>([]);
-  readonly resolvedNotifications = signal<Notification[]>([]);
+  readonly dismissedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'>(
     'all',
@@ -44,12 +44,12 @@ export class ReportsReactions implements OnInit {
   readonly feedbackTextById = signal<Record<string, string>>({});
   readonly submittingIds = signal<Set<string>>(new Set());
   readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
-  readonly resolvingIds = signal<Set<string>>(new Set());
+  readonly dismissingIds = signal<Set<string>>(new Set());
   readonly unDismissingIds = signal<Set<string>>(new Set());
 
   readonly filteredNotifications = computed(() => {
     const filter = this.filterSeverity();
-    if (filter === 'dismissed') return this.resolvedNotifications();
+    if (filter === 'dismissed') return this.dismissedNotifications();
     const list = this.notifications();
     if (filter === 'in-behandeling') return list.filter((n) => n.hasReported);
     if (filter === 'all') return list;
@@ -57,7 +57,7 @@ export class ReportsReactions implements OnInit {
   });
 
   readonly totalCount = computed(() => this.notifications().length);
-  readonly resolvedCount = computed(() => this.resolvedNotifications().length);
+  readonly dismissedCount = computed(() => this.dismissedNotifications().length);
   readonly criticalCount = computed(
     () => this.notifications().filter((n) => n.severity === 'critical').length,
   );
@@ -115,7 +115,7 @@ export class ReportsReactions implements OnInit {
     {
       value: 'dismissed',
       label: 'Genegeerd',
-      count: this.resolvedCount(),
+      count: this.dismissedCount(),
       activeClass: 'bg-gray-400 text-white',
       inactiveClass: '',
     },
@@ -165,26 +165,26 @@ export class ReportsReactions implements OnInit {
     this.loadingDetailsIds.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
     this.unDismissingIds.set(new Set());
-    this.#notificationService.getNotificationsAndResolved().subscribe({
-      next: ({ active, resolved }) => {
+    this.#notificationService.getNotificationsAndDismissed().subscribe({
+      next: ({ active, dismissed }) => {
         this.notifications.set(active);
-        this.resolvedNotifications.set(resolved);
+        this.dismissedNotifications.set(dismissed);
         this.isLoading.set(false);
       },
       error: () => {
         this.notifications.set([]);
-        this.resolvedNotifications.set([]);
+        this.dismissedNotifications.set([]);
         this.isLoading.set(false);
       },
     });
   }
 
-  markAsResolved(n: Notification) {
+  markAsDismissed(n: Notification) {
     const key = `${n.source}:${n.notificationType}`;
-    if (this.resolvingIds().has(key)) return;
-    this.resolvingIds.update((s) => new Set(s).add(key));
-    this.#resolvedService
-      .markAsResolved({
+    if (this.dismissingIds().has(key)) return;
+    this.dismissingIds.update((s) => new Set(s).add(key));
+    this.#dismissedService
+      .markAsDismissed({
         source: n.source,
         notificationType: n.notificationType,
         sourceLabel: n.sourceLabel,
@@ -196,7 +196,7 @@ export class ReportsReactions implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.resolvingIds.update((s) => {
+          this.dismissingIds.update((s) => {
             const next = new Set(s);
             next.delete(key);
             return next;
@@ -204,7 +204,7 @@ export class ReportsReactions implements OnInit {
           this.refresh();
         },
         error: () => {
-          this.resolvingIds.update((s) => {
+          this.dismissingIds.update((s) => {
             const next = new Set(s);
             next.delete(key);
             return next;
@@ -213,15 +213,15 @@ export class ReportsReactions implements OnInit {
       });
   }
 
-  isResolving(n: Notification): boolean {
-    return this.resolvingIds().has(`${n.source}:${n.notificationType}`);
+  isDismissing(n: Notification): boolean {
+    return this.dismissingIds().has(`${n.source}:${n.notificationType}`);
   }
 
   unDismiss(n: Notification) {
     const key = `${n.source}:${n.notificationType}`;
     if (this.unDismissingIds().has(key)) return;
     this.unDismissingIds.update((s) => new Set(s).add(key));
-    this.#resolvedService.unDismiss(n.source, n.notificationType).subscribe({
+    this.#dismissedService.unDismiss(n.source, n.notificationType).subscribe({
       next: () => {
         this.unDismissingIds.update((s) => {
           const next = new Set(s);

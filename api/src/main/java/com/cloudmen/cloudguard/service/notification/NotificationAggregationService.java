@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.notification;
 
-import com.cloudmen.cloudguard.domain.model.feedback.ResolvedNotification;
+import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
@@ -51,7 +51,7 @@ public class NotificationAggregationService {
     private final AppPasswordsService appPasswordsService;
     private final GoogleGroupsService groupsService;
     private final GoogleOAuthService oAuthService;
-    private final ResolvedNotificationService resolvedService;
+    private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
 
     public NotificationAggregationService(
@@ -63,7 +63,7 @@ public class NotificationAggregationService {
             AppPasswordsService appPasswordsService,
             GoogleGroupsService groupsService,
             GoogleOAuthService oAuthService,
-            ResolvedNotificationService resolvedService,
+            DismissedNotificationService dismissedService,
             NotificationFeedbackService feedbackService) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
@@ -73,28 +73,28 @@ public class NotificationAggregationService {
         this.appPasswordsService = appPasswordsService;
         this.groupsService = groupsService;
         this.oAuthService = oAuthService;
-        this.resolvedService = resolvedService;
+        this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
     }
 
     public NotificationsResponse getNotifications(String userId) {
         List<NotificationDto> active = aggregateActive(userId);
-        List<ResolvedNotification> resolved = resolvedService.getResolvedForUser(userId);
-        Set<String> resolvedKeys = resolved.stream()
-                .map(r -> r.getSource() + ":" + r.getNotificationType())
+        List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
+        Set<String> dismissedKeys = dismissed.stream()
+                .map(d -> d.getSource() + ":" + d.getNotificationType())
                 .collect(Collectors.toSet());
         Set<String> feedbackKeys = feedbackService.getFeedbackKeysForUser(userId);
 
         List<NotificationDto> filtered = active.stream()
-                .filter(n -> !resolvedKeys.contains(n.source() + ":" + n.notificationType()))
+                .filter(n -> !dismissedKeys.contains(n.source() + ":" + n.notificationType()))
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
-        List<NotificationDto> resolvedDtos = resolved.stream()
-                .map(this::toResolvedDto)
+        List<NotificationDto> dismissedDtos = dismissed.stream()
+                .map(this::toDismissedDto)
                 .toList();
 
-        return new NotificationsResponse(filtered, resolvedDtos);
+        return new NotificationsResponse(filtered, dismissedDtos);
     }
 
     public long getNotificationsCount(String userId) {
@@ -120,18 +120,18 @@ public class NotificationAggregationService {
                 n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, false, n.supportsDetails());
     }
 
-    private NotificationDto toResolvedDto(ResolvedNotification r) {
-        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(r.getNotificationType());
+    private NotificationDto toDismissedDto(DismissedNotification d) {
+        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(d.getNotificationType());
         return new NotificationDto(
-                r.getId().toString(),
-                r.getSeverity(),
-                r.getTitle(),
-                r.getDescription(),
-                r.getRecommendedActions() != null ? r.getRecommendedActions() : List.of(),
-                r.getNotificationType(),
-                r.getSource(),
-                r.getSourceLabel(),
-                r.getSourceRoute(),
+                d.getId().toString(),
+                d.getSeverity(),
+                d.getTitle(),
+                d.getDescription(),
+                d.getRecommendedActions() != null ? d.getRecommendedActions() : List.of(),
+                d.getNotificationType(),
+                d.getSource(),
+                d.getSourceLabel(),
+                d.getSourceRoute(),
                 false,
                 true,
                 supportsDetails

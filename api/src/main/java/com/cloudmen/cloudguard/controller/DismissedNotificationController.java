@@ -1,30 +1,30 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.dto.notifications.ResolveNotificationRequest;
+import com.cloudmen.cloudguard.dto.notifications.DismissNotificationRequest;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.notification.ResolvedNotificationService;
+import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/notifications/resolved")
-public class ResolvedNotificationController {
+@RequestMapping("/notifications/dismissed")
+public class DismissedNotificationController {
 
-    private final ResolvedNotificationService resolvedNotificationService;
+    private final DismissedNotificationService dismissedNotificationService;
     private final JwtService jwtService;
 
-    public ResolvedNotificationController(ResolvedNotificationService resolvedNotificationService, JwtService jwtService) {
-        this.resolvedNotificationService = resolvedNotificationService;
+    public DismissedNotificationController(DismissedNotificationService dismissedNotificationService, JwtService jwtService) {
+        this.dismissedNotificationService = dismissedNotificationService;
         this.jwtService = jwtService;
     }
 
     @PostMapping
-    public ResponseEntity<?> markAsResolved(
+    public ResponseEntity<?> markAsDismissed(
             @CookieValue(name = "AuthToken") String token,
-            @RequestBody ResolveNotificationRequest request
+            @RequestBody DismissNotificationRequest request
     ) {
         String userId = jwtService.validateInternalToken(token);
-        resolvedNotificationService.markAsResolved(userId, request);
+        dismissedNotificationService.markAsDismissed(userId, request);
         return ResponseEntity.ok().build();
     }
 
@@ -35,7 +35,7 @@ public class ResolvedNotificationController {
             @RequestParam String notificationType
     ) {
         String userId = jwtService.validateInternalToken(token);
-        boolean removed = resolvedNotificationService.unDismiss(userId, source, notificationType);
+        boolean removed = dismissedNotificationService.unDismiss(userId, source, notificationType);
         return removed ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 }

@@ -2,16 +2,16 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { RouteService } from './route-service';
-import { ResolveNotificationRequest } from '../models/notification/ResolveNotificationRequest';
+import { DismissNotificationRequest } from '../models/notification/DismissNotificationRequest';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ResolvedNotificationService {
-  readonly #API_URL = RouteService.getBackendUrl('/notifications/resolved');
+export class DismissedNotificationService {
+  readonly #API_URL = RouteService.getBackendUrl('/notifications/dismissed');
   readonly #http = inject(HttpClient);
 
-  markAsResolved(request: ResolveNotificationRequest): Observable<void> {
+  markAsDismissed(request: DismissNotificationRequest): Observable<void> {
     return this.#http.post<void>(this.#API_URL, request, {
       withCredentials: true,
     });

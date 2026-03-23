@@ -24,10 +24,10 @@ export class NotificationService {
   readonly #groupService = inject(GroupService);
   readonly #oAuthService = inject(OAuthService);
 
-  getNotificationsAndResolved(): Observable<{ active: Notification[]; resolved: Notification[] }> {
+  getNotificationsAndDismissed(): Observable<{ active: Notification[]; dismissed: Notification[] }> {
     return this.#http
       .get<NotificationsResponse>(this.#API_URL, { withCredentials: true })
-      .pipe(catchError(() => of({ active: [], resolved: [] })));
+      .pipe(catchError(() => of({ active: [], dismissed: [] })));
   }
 
   getNotificationDetails(notification: Notification): Observable<string[]> {

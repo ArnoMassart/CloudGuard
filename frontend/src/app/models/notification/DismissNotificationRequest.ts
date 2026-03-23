@@ -1,4 +1,4 @@
-export interface ResolveNotificationRequest {
+export interface DismissNotificationRequest {
   source: string;
   notificationType: string;
   sourceLabel: string;
