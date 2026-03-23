@@ -44,7 +44,9 @@ public class DateTimeConverter {
     private static String convertTimeToPretty(long epochMillis) {
         Date date = new Date(epochMillis);
 
-        PrettyTime p = new PrettyTime(new Locale("nl"));
+        Locale userLocale = LocaleContextHolder.getLocale();
+
+        PrettyTime p = new PrettyTime(userLocale);
 
         return p.format(date);
     }

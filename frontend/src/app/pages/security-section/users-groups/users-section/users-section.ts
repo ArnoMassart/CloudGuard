@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,6 +13,8 @@ import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 // ==========================================
 // CONSTANTS
@@ -30,17 +32,19 @@ const ITEMS_PER_PAGE = 4;
     PageWarnings,
     PageWarningsItem,
     SearchBar,
+    TranslocoPipe,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
 })
-export class UsersSection implements OnInit {
+export class UsersSection implements OnInit, OnDestroy {
   // ==========================================
   // INJECTIONS
   // ==========================================
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -58,9 +62,9 @@ export class UsersSection implements OnInit {
 
   readonly hasWarnings = signal(false);
   readonly userPageWarnings = signal<UsersPageWarnings>({
-    twoFactorWarning: false,
-    activeWithLongNoLogin: false,
-    notActiveWithRecentLogin: false,
+    twoFactorWarning: true,
+    activeWithLongNoLogin: true,
+    notActiveWithRecentLogin: true,
   });
 
   readonly hasMultipleWarnings = computed(() => {
@@ -73,13 +77,22 @@ export class UsersSection implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
+  #langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#loadPageOverview();
-    this.#loadUsers();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadPageOverview();
+      this.#loadUsers();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   // ==========================================
@@ -131,11 +144,10 @@ export class UsersSection implements OnInit {
 
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
-    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
-      overview?.securityScore ?? 0,
-      'Gebruikers'
-    );
-    this.#securityScoreDetail.open(breakdown, 'Gebruikers');
+    const breakdown =
+      overview?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'users');
+    this.#securityScoreDetail.open(breakdown, 'users');
   }
 
   refreshData() {

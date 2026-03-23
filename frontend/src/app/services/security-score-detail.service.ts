@@ -22,15 +22,16 @@ export class SecurityScoreDetailService {
    * Creates a minimal breakdown from a single score (for pages that don't have detailed factor data).
    */
   createSimpleBreakdown(score: number, subtitle: string): SecurityScoreBreakdown {
-    const status = score === 100 ? 'Perfect' : score >= 75 ? 'Goed' : score > 50 ? 'Matig' : 'Slecht';
+    const status =
+      score === 100 ? 'perfect' : score >= 75 ? 'good' : score > 50 ? 'average' : 'bad';
     const severity = score >= 75 ? 'success' : score >= 50 ? 'warning' : 'error';
     return {
       totalScore: score,
       status,
       factors: [
         {
-          title: 'Algemene score',
-          description: 'Gedetailleerde berekeningsfactoren zijn niet beschikbaar voor dit onderdeel.',
+          title: 'overall-score',
+          description: 'score-detail.description.',
           score,
           maxScore: 100,
           severity: severity as 'success' | 'warning' | 'error',

@@ -10,6 +10,7 @@ import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -36,6 +37,7 @@ interface GroupSummary {
     FormsModule,
     PageWarnings,
     PageWarningsItem,
+    TranslocoPipe,
   ],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
@@ -117,11 +119,10 @@ export class GroupsSection implements OnInit {
 
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
-    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
-      overview?.securityScore ?? 0,
-      'Groepen'
-    );
-    this.#securityScoreDetail.open(breakdown, 'Groepen');
+    const breakdown =
+      overview?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'groups');
+    this.#securityScoreDetail.open(breakdown, 'groups');
   }
 
   refreshData() {
@@ -157,7 +158,6 @@ export class GroupsSection implements OnInit {
           this.groups.set(this.mapToGroupSummary(res.groups));
           this.nextPageToken.set(res.nextPageToken ?? null);
           this.loading.set(false);
-          console.log(this.groups());
         },
         error: (error) => {
           console.error('Error fetching groups:', error);

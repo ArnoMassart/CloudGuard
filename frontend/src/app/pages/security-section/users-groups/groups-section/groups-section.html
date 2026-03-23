@@ -1,30 +1,22 @@
 <div class="w-full flex flex-col gap-5">
   <!-- KPI cards -->
   <div class="w-full flex gap-4">
-    <app-section-top-card class="flex-1" Title="Totaal groepen" [Value]="pageOverview()?.totalGroups"
-      [Icon]="Icons.Users" />
+    <app-section-top-card class="flex-1" Title="{{ 'groups.total-groups' | transloco }}"
+      [Value]="pageOverview()?.totalGroups" [Icon]="Icons.Users" />
 
-    <app-section-top-card class="flex-1" Title="Met externe leden" [Value]="pageOverview()?.groupsWithExternal"
-      BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="Icons.ShieldAlert" />
+    <app-section-top-card class="flex-1" Title="{{ 'groups.withExternal' | transloco }}"
+      [Value]="pageOverview()?.groupsWithExternal" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
+      [Icon]="Icons.ShieldAlert" />
 
-    <app-section-top-card class="flex-1" Title="Groepen met hoog risico" [Value]="pageOverview()?.highRiskGroups"
-      BackgroundColor="#fee2e2" [Icon]="Icons.TriangleAlert" IconColor="#dc2626" />
+    <app-section-top-card class="flex-1" Title="{{ 'groups.high-risk' | transloco }}"
+      [Value]="pageOverview()?.highRiskGroups" BackgroundColor="#fee2e2" [Icon]="Icons.TriangleAlert"
+      IconColor="#dc2626" />
 
-    <div
-      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-      (click)="openSecurityScoreDetail()"
-      role="button"
-      tabindex="0"
-      (keydown.enter)="openSecurityScoreDetail()"
-      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-    >
-      <app-section-top-card
-        Title="Security Score"
-        [Value]="pageOverview()?.securityScore"
-        [IsPercentage]="true"
-        BackgroundColor="#fef9c2"
-        IconColor="#d69518"
-      />
+    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+      <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
+        BackgroundColor="#fef9c2" IconColor="#d69518" />
     </div>
   </div>
 
@@ -36,17 +28,17 @@
 
       @if (groupPageWarnings().externalMember) {
       <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-        {{ pageOverview()?.groupsWithExternal }} groep{{pageOverview()?.groupsWithExternal! > 1 ? "en" : ""}} met
-        externe
-        leden gedetecteerd
+        {{ pageOverview()?.groupsWithExternal }} {{(pageOverview()?.groupsWithExternal! > 1 ? 'groups-no-cap' : 'group')
+        |
+        transloco}} {{ 'groups.withExternalDetected' | transloco }}
       </app-page-warnings-item>
       }
 
       @if (groupPageWarnings().highRisk) {
       <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-        {{ pageOverview()?.highRiskGroups }} groep{{pageOverview()?.highRiskGroups! > 1 ? "en" : ""}} met hoog risico
-        door open of externe
-        instellingen
+        {{ pageOverview()?.highRiskGroups }} {{(pageOverview()?.highRiskGroups! > 1 ? 'groups-no-cap' : 'group')
+        |
+        transloco}} {{ 'groups.highriskWarning' | transloco }}
       </app-page-warnings-item>
       }
     </div>
@@ -54,19 +46,19 @@
   }
 
   <!-- Search -->
-  <app-search-bar placeholder="Zoek groepen op naam..." [value]="searchQuery()"
+  <app-search-bar placeholder="{{ 'groups.search-groups' | transloco }}..." [value]="searchQuery()"
     (searchChange)="onSearch($event)" />
 
   <!-- Groups list -->
   <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-5">
     <div class="flex justify-between items-center mx-6 pb-5">
-      <span class="font-medium text-lg">Alle groepen</span>
+      <span class="font-medium text-lg">{{ 'groups.all' | transloco }}</span>
       <button (click)="refreshData()" [disabled]="isRefreshing()"
         class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
         </i-lucide>
 
-        {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+        {{ isRefreshing() ? ( 'refreshing' | transloco) +'...' : ('renew-data' | transloco) }}
       </button>
     </div>
 
@@ -88,17 +80,17 @@
           <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
             @for (tag of group.tags; track tag) {
             <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
-              [class.bg-emerald-100]="tag.toLowerCase().includes('laag')"
-              [class.text-emerald-800]="tag.toLowerCase().includes('laag')"
-              [class.bg-amber-100]="tag.toLowerCase().includes('middel')"
-              [class.text-amber-800]="tag.toLowerCase().includes('middel')"
-              [class.bg-rose-100]="tag.toLowerCase().includes('hoog')"
-              [class.text-rose-800]="tag.toLowerCase().includes('hoog')"
+              [class.bg-emerald-100]="tag.toLowerCase().includes('low')"
+              [class.text-emerald-800]="tag.toLowerCase().includes('low')"
+              [class.bg-amber-100]="tag.toLowerCase().includes('middle')"
+              [class.text-amber-800]="tag.toLowerCase().includes('middle')"
+              [class.bg-rose-100]="tag.toLowerCase().includes('high')"
+              [class.text-rose-800]="tag.toLowerCase().includes('high')"
               [class.bg-sky-100]="tag.toLowerCase().includes('mailing')"
               [class.text-sky-700]="tag.toLowerCase().includes('mailing')"
               [class.bg-indigo-100]="tag.toLowerCase().includes('security')"
               [class.text-indigo-700]="tag.toLowerCase().includes('security')">
-              {{ tag }}
+              {{ tag | transloco }}
             </span>
             }
           </div>
@@ -108,7 +100,7 @@
         <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-              TOTAAL LEDEN
+              {{ 'groups.total-members' | transloco }}
             </p>
             <div class="flex items-center gap-2">
               <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
@@ -117,7 +109,7 @@
           </div>
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-              EXTERNE LEDEN
+              {{ 'groups.external-members' | transloco }}
             </p>
             <span class="font-medium" [ngClass]="group.externalMembers > 0 ? 'text-rose-600' : 'text-emerald-600'">
               {{ group.externalMembers }}
@@ -125,16 +117,16 @@
           </div>
           <div>
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-              EXTERNE LEDEN TOEGESTAAN
+              {{ 'groups.external-allowed' | transloco }}
             </p>
             <a class="inline-flex items-center gap-1 font-medium hover:opacity-80"
               [ngClass]="group.externalAllowed ? 'text-rose-600 underline' : 'text-emerald-600'"
               [href]="getGroupAdminUrl(group)" target="_blank" rel="noopener noreferrer">
               <ng-container *ngIf="group.externalAllowed; else externalNo">
                 <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                Ja
+                {{ 'yes' | transloco }}
               </ng-container>
-              <ng-template #externalNo>Nee</ng-template>
+              <ng-template #externalNo>{{ 'no' | transloco }}</ng-template>
             </a>
           </div>
         </div>
@@ -143,35 +135,35 @@
         <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="bg-slate-50 rounded-md px-3 py-3">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-              WIE KAN LID WORDEN
+              {{ 'groups.whoCanBeMember' | transloco }}
             </p>
-            <p class="text-sm text-slate-900">{{ group.whoCanJoin }}</p>
+            <p class="text-sm text-slate-900">{{ group.whoCanJoin | transloco }}</p>
           </div>
           <div class="bg-slate-50 rounded-md px-3 py-3">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-              WIE KAN LEDEN BEKIJKEN
+              {{ 'groups.whoCanSeeMembers' | transloco }}
             </p>
-            <p class="text-sm text-slate-900">{{ group.whoCanView }}</p>
+            <p class="text-sm text-slate-900">{{ group.whoCanView | transloco }}</p>
           </div>
         </div>
       </article>
       } @empty {
-      <p class="text-sm text-slate-500">Geen groepen gevonden voor deze zoekopdracht.</p>
+      <p class="text-sm text-slate-500">{{ 'groups.no-found' | transloco }}.</p>
       }
 
       <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
         <span class="text-sm text-gray-500">
-          Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+          {{ 'page' | transloco }} <span class="font-medium text-slate-900">{{ currentPage() }}</span>
         </span>
         <div class="flex gap-2">
           <button (click)="prevPage()" [disabled]="currentPage() === 1"
             class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
             <i-lucide [img]="Icons.ChevronLeft" size="16" />
-            Vorige
+            {{ 'previous' | transloco }}
           </button>
           <button (click)="nextPage()" [disabled]="!nextPageToken()"
             class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            Volgende
+            {{ 'next' | transloco }}
             <i-lucide [img]="Icons.ChevronRight" size="16" />
           </button>
         </div>
@@ -185,7 +177,7 @@
           <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
         <span class="text-sm font-medium text-slate-600 animate-pulse">
-          Groepen worden geladen...
+          {{ 'groups.loading' | transloco }}...
         </span>
       </div>
     </div>

@@ -88,7 +88,7 @@ public class GoogleGroupsService {
                 new SecurityScoreFactorDto("Hoog risico groepen", highRiskGroups + " van " + totalGroups + " groepen met hoog risico (open/externe instellingen)", highScore, 20, severity(highScore * 100 / 20)),
                 new SecurityScoreFactorDto("Groepen zonder externe leden", groupsWithExternal == 0 ? "Geen groepen met externe leden" : groupsWithExternal + " groep(en) met externe leden", externalScore, 100, severity(externalScore))
         );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

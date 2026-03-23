@@ -1,15 +1,19 @@
 <div class="bg-white rounded-xl shadow-lg w-full max-h-[90vh] flex flex-col">
   <header class="flex justify-between items-start gap-4 px-6 py-5 shrink-0">
     <div class="flex items-center gap-3 min-w-0">
-      <div class="w-10 h-10 flex items-center justify-center rounded-lg" [style.background-color]="getStatusBgColor()" [style.color]="getScoreColor()">
+      <div class="w-10 h-10 flex items-center justify-center rounded-lg" [style.background-color]="getStatusBgColor()"
+        [style.color]="getScoreColor()">
         <i-lucide [img]="Icons.Shield" size="24"></i-lucide>
       </div>
       <div class="min-w-0">
-        <h2 class="m-0 text-xl font-medium text-gray-900">Security Score Berekening</h2>
-        <p class="m-0 text-sm text-gray-500 mt-0.5">{{ data.subtitle ?? 'Wachtwoord Instellingen' }}</p>
+        <h2 class="m-0 text-xl font-medium text-gray-900">Security Score {{ 'calculation' | transloco }}</h2>
+        <p class="m-0 text-sm text-gray-500 mt-0.5">{{ (data.subtitle | transloco) ??
+          ('security-score.password-settings' | transloco) }}</p>
       </div>
     </div>
-    <button type="button" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0" (click)="close()" aria-label="Sluiten">
+    <button type="button"
+      class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+      (click)="close()" aria-label="{{ 'closing' | transloco }}">
       <i-lucide [img]="Icons.X" size="20"></i-lucide>
     </button>
   </header>
@@ -17,37 +21,44 @@
   <div class="px-6 pb-4 flex flex-col gap-4 shrink-0 border-b-2 border-gray-200">
     <div class="flex items-center justify-between gap-4 p-4 rounded-xl" [style.background-color]="getStatusBgColor()">
       <div>
-        <span class="text-sm font-medium text-gray-600">Huidige Score</span>
-        <p class="m-0 text-3xl font-bold mt-1" [style.color]="getScoreColor()">{{ breakdown.totalScore }}%</p>
+        <span class="text-sm font-medium text-gray-600">{{ 'current' | transloco }} Score</span>
+        <p class="m-0 text-3xl font-bold mt-1" [style.color]="getScoreColor()">{{ breakdown.totalScore }}%
+        </p>
       </div>
-      <span class="inline-flex px-3 py-1.5 rounded-lg text-sm font-medium" [style.background-color]="getStatusBgColor()" [style.color]="getScoreColor()">
-        {{ breakdown.status }}
+      <span class="inline-flex px-3 py-1.5 rounded-lg text-sm font-medium" [style.background-color]="getStatusBgColor()"
+        [style.color]="getScoreColor()">
+        {{ breakdown.status | transloco }}
       </span>
     </div>
   </div>
 
   <div class="flex-1 overflow-y-auto px-6 pb-5 mt-4">
-    <h3 class="text-m font-medium text-gray-800 mb-3">Berekeningsfactoren</h3>
+    <h3 class="text-m font-medium text-gray-800 mb-3">{{ 'security-score.calculation-factor' | transloco }}</h3>
     <div class="flex flex-col gap-3">
       @for (factor of breakdown.factors; track factor.title) {
-        <div class="rounded-lg p-4 border-2 transition-all duration-200" [style.border-color]="getFactorStyles(factor).borderColor" [style.background-color]="getFactorStyles(factor).bg">
-          <div class="flex items-start gap-3">
-            <div class="shrink-0 mt-0.5" [style.color]="getProgressColor(factor)">
-              <i-lucide [img]="getFactorIcon(factor)" size="20"></i-lucide>
+      <div class="rounded-lg p-4 border-2 transition-all duration-200"
+        [style.border-color]="getFactorStyles(factor).borderColor"
+        [style.background-color]="getFactorStyles(factor).bg">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 mt-0.5" [style.color]="getProgressColor(factor)">
+            <i-lucide [img]="getFactorIcon(factor)" size="20"></i-lucide>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="m-0 text-sm font-medium">{{ factor.title | transloco }}</h3>
+            <p class="m-0 text-sm mt-1">{{ factor.description }}</p>
+            <div class="flex items-center gap-4 mt-3 text-xs" [style.opacity]="0.85">
+              <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>
+              <span>Percentage: {{ factor.maxScore > 0 ? Math.round((factor.score / factor.maxScore) * 100) : 0
+                }}%</span>
             </div>
-            <div class="min-w-0 flex-1">
-              <h3 class="m-0 text-sm font-medium">{{ factor.title }}</h3>
-              <p class="m-0 text-sm mt-1">{{ factor.description }}</p>
-              <div class="flex items-center gap-4 mt-3 text-xs" [style.opacity]="0.85">
-                <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>
-                <span>Percentage: {{ factor.maxScore > 0 ? Math.round((factor.score / factor.maxScore) * 100) : 0 }}%</span>
-              </div>
-              <div class="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
-                <div class="h-full rounded-full transition-all" [style.width.%]="factor.maxScore > 0 ? (factor.score / factor.maxScore) * 100 : 0" [style.background-color]="getProgressColor(factor)"></div>
-              </div>
+            <div class="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+              <div class="h-full rounded-full transition-all"
+                [style.width.%]="factor.maxScore > 0 ? (factor.score / factor.maxScore) * 100 : 0"
+                [style.background-color]="getProgressColor(factor)"></div>
             </div>
           </div>
         </div>
+      </div>
       }
     </div>
   </div>
