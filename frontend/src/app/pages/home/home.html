@@ -85,8 +85,8 @@
             <app-security-component Label="App Toegang" [Value]="pageResponse()?.scores?.appAccessScore"
               [Icon]="Icons.Key" Route="app-access" />
             <app-security-component Label="App Wachtwoorden" [Value]="pageResponse()?.scores?.appPasswordsScore"
-              [Icon]="Icons.Lock" Route="app-passwords" />
-            <app-security-component Label="Wachtwoordinstellingen" [Icon]="Icons.ShieldCheck"
+              [Icon]="Icons.LayoutGrid" Route="app-passwords" />
+            <app-security-component Label="Wachtwoordinstellingen" [Icon]="Icons.Lock"
               [Value]="pageResponse()?.scores?.passwordSettingsScore" Route="password-settings" />
             <app-security-component Label="DNS" [Value]="pageResponse()?.scores?.dnsScore" [Icon]="Icons.Globe"
               Route="domain-dns" />
