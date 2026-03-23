@@ -132,7 +132,7 @@ public class NotificationAggregationService {
                 r.getSource(),
                 r.getSourceLabel(),
                 r.getSourceRoute(),
-                "resolved",
+                "dismissed",
                 supportsDetails
         );
     }

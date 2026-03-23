@@ -45,8 +45,8 @@
             <p class="text-sm text-gray-500 mt-1 text-center max-w-md">
                 @if (filterSeverity() === 'all') {
                 Er zijn geen kritieke meldingen of waarschuwingen voor dit Workspace.
-                } @else if (filterSeverity() === 'resolved') {
-                Geen opgeloste meldingen.
+                } @else if (filterSeverity() === 'dismissed') {
+                Geen genegeerde meldingen.
                 } @else if (filterSeverity() === 'in-behandeling') {
                 Geen meldingen in behandeling.
                 } @else {
@@ -90,7 +90,7 @@
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 {{ n.notificationType }}
                             </span>
-                            @if (n.status === 'in_behandeling' && filterSeverity() !== 'resolved') {
+                            @if (n.status === 'in_behandeling' && filterSeverity() !== 'dismissed') {
                             <span
                                 class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                                 <i-lucide [img]="Icons.Clock" size="12" />
@@ -102,7 +102,7 @@
                         <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            {{ filterSeverity() === 'resolved' ? 'Opgelost' : n.status === 'in_behandeling' ? 'In
+                            {{ filterSeverity() === 'dismissed' ? 'Genegeerd' : n.status === 'in_behandeling' ? 'In
                             behandeling' : 'Vandaag' }}
                         </p>
                         @if (n.supportsDetails) {
@@ -148,7 +148,7 @@
                             </ul>
                         </div>
                         }
-                        @if (filterSeverity() !== 'resolved') {
+                        @if (filterSeverity() !== 'dismissed') {
                         <div class="mt-4">
                             @if (n.status === 'in_behandeling') {
                             <p class="text-sm text-teal-600 flex items-center gap-2">
@@ -185,9 +185,9 @@
                                     Stuur feedback
                                 </button>
                                 <button type="button" (click)="markAsResolved(n)" [disabled]="isResolving(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                    {{ isResolving(n) ? 'Bezig...' : 'Markeer als opgelost' }}
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                    <i-lucide [img]="Icons.EyeOff" size="16" />
+                                    {{ isResolving(n) ? 'Bezig...' : 'Negeer (30 dagen)' }}
                                 </button>
                             </div>
                             }
@@ -197,16 +197,16 @@
                             <span
                                 class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
                                 <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                Opgelost
+                                Genegeerd
                             </span>
                         </div>
                         }
-                        @if (filterSeverity() !== 'resolved' && n.status === 'in_behandeling') {
+                        @if (filterSeverity() !== 'dismissed' && n.status === 'in_behandeling') {
                         <div class="flex flex-wrap gap-2 mt-6">
                             <button type="button" (click)="markAsResolved(n)" [disabled]="isResolving(n)"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                {{ isResolving(n) ? 'Bezig...' : 'Markeer als opgelost' }}
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-400 text-white hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                <i-lucide [img]="Icons.EyeOff" size="16" />
+                                {{ isResolving(n) ? 'Bezig...' : 'Negeer (30 dagen)' }}
                             </button>
                         </div>
                         }

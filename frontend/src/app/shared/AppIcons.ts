@@ -1,6 +1,7 @@
 import {
   Bell,
   Building2,
+  EyeOff,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -59,6 +60,7 @@ export class AppIcons {
   static readonly CreditCard = CreditCard;
   static readonly DollarSign = DollarSign;
   static readonly ExternalLink = ExternalLink;
+  static readonly EyeOff = EyeOff;
   static readonly FileText = FileText;
   static readonly FolderOpen = FolderOpen;
   static readonly FolderTree = FolderTree;

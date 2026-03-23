@@ -1,6 +1,6 @@
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
 
-export type NotificationStatus = 'new' | 'in_behandeling' | 'resolved';
+export type NotificationStatus = 'new' | 'in_behandeling' | 'dismissed';
 
 export interface Notification {
   id: string;

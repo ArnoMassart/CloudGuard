@@ -34,7 +34,7 @@ export class ReportsReactions implements OnInit {
   readonly notifications = signal<Notification[]>([]);
   readonly resolvedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'resolved' | 'in-behandeling'>(
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'>(
     'all',
   );
   readonly expandedIds = signal<Set<string>>(new Set());
@@ -48,7 +48,7 @@ export class ReportsReactions implements OnInit {
 
   readonly filteredNotifications = computed(() => {
     const filter = this.filterSeverity();
-    if (filter === 'resolved') return this.resolvedNotifications();
+    if (filter === 'dismissed') return this.resolvedNotifications();
     const list = this.notifications();
     if (filter === 'in-behandeling') return list.filter((n) => n.status === 'in_behandeling');
     if (filter === 'all') return list;
@@ -112,10 +112,10 @@ export class ReportsReactions implements OnInit {
       inactiveClass: '',
     },
     {
-      value: 'resolved',
-      label: 'Opgelost',
+      value: 'dismissed',
+      label: 'Genegeerd',
       count: this.resolvedCount(),
-      activeClass: 'bg-emerald-100 text-emerald-800',
+      activeClass: 'bg-gray-400 text-white',
       inactiveClass: '',
     },
   ]);
@@ -154,7 +154,7 @@ export class ReportsReactions implements OnInit {
   }
 
   setFilter(filter: string) {
-    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'resolved' | 'in-behandeling');
+    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling');
   }
 
   #loadNotifications() {
