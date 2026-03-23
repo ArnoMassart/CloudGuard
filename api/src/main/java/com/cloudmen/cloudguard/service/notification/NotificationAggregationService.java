@@ -13,6 +13,7 @@ import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.notifications.NotificationsResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
@@ -40,7 +41,9 @@ public class NotificationAggregationService {
 
     private static final Set<String> NOTIFICATION_TYPES_WITH_DETAILS = Set.of(
             "user-control", "group-external", "oauth-high-risk", "drive-orphan", "drive-external",
-            "device-lockscreen", "device-encryption", "device-os", "device-integrity"
+            "device-lockscreen", "device-encryption", "device-os", "device-integrity",
+            "password-2sv-not-enforced", "password-weak-length", "password-strong-not-required",
+            "password-never-expires", "password-admins-no-security-keys"
     );
 
     private final GoogleDomainService domainService;
@@ -51,6 +54,7 @@ public class NotificationAggregationService {
     private final AppPasswordsService appPasswordsService;
     private final GoogleGroupsService groupsService;
     private final GoogleOAuthService oAuthService;
+    private final PasswordSettingsService passwordSettingsService;
     private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
 
@@ -63,6 +67,7 @@ public class NotificationAggregationService {
             AppPasswordsService appPasswordsService,
             GoogleGroupsService groupsService,
             GoogleOAuthService oAuthService,
+            PasswordSettingsService passwordSettingsService,
             DismissedNotificationService dismissedService,
             NotificationFeedbackService feedbackService) {
         this.domainService = domainService;
@@ -73,6 +78,7 @@ public class NotificationAggregationService {
         this.appPasswordsService = appPasswordsService;
         this.groupsService = groupsService;
         this.oAuthService = oAuthService;
+        this.passwordSettingsService = passwordSettingsService;
         this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
     }
@@ -265,6 +271,64 @@ public class NotificationAggregationService {
                     appPasswords.totalAppPasswords() + " app-wachtwoord(en) actief. App-wachtwoorden omzeilen 2FA.",
                     List.of("Overweeg OAuth-gebaseerde authenticatie waar mogelijk"),
                     "app-password", "app-passwords", "App-wachtwoorden", "/app-passwords"));
+        }
+
+        // Password settings
+        PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(adminEmail));
+        if (passwordSettings != null) {
+            var twoStep = passwordSettings.twoStepVerification();
+            var policies = passwordSettings.passwordPoliciesByOu();
+            var adminsWithoutKeys = passwordSettings.adminsWithoutSecurityKeys();
+
+            // Critical: 2SV not enforced in some OUs
+            long ousWithout2Sv = twoStep.byOrgUnit().stream().filter(ou -> !ou.enforced()).count();
+            if (ousWithout2Sv > 0) {
+                notifications.add(create(++id, "critical", "2-Step Verification niet verplicht",
+                        ousWithout2Sv + " organisatie-eenheid(en) vereisen geen 2-Step Verification.",
+                        List.of("Stel 2-Step Verification verplicht in voor alle organisatie-eenheden"),
+                        "password-2sv-not-enforced", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: weak password length (< 12)
+            long ousWeakLength = policies.stream()
+                    .filter(p -> p.minLength() != null && p.minLength() < 12)
+                    .count();
+            if (ousWeakLength > 0) {
+                notifications.add(create(++id, "warning", "Zwakke wachtwoordlengte",
+                        ousWeakLength + " organisatie-eenheid(en) hanteren een minimale wachtwoordlengte onder 12 tekens.",
+                        List.of("Verhoog de minimale wachtwoordlengte naar minimaal 12 tekens"),
+                        "password-weak-length", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: strong password not required
+            long ousNoStrong = policies.stream()
+                    .filter(p -> Boolean.FALSE.equals(p.strongPasswordRequired()))
+                    .count();
+            if (ousNoStrong > 0) {
+                notifications.add(create(++id, "warning", "Sterke wachtwoorden niet verplicht",
+                        ousNoStrong + " organisatie-eenheid(en) vereisen geen sterke wachtwoorden.",
+                        List.of("Schakel sterke wachtwoorden in voor alle organisatie-eenheden"),
+                        "password-strong-not-required", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: password never expires
+            long ousNoExpiry = policies.stream()
+                    .filter(p -> p.expirationDays() == null || p.expirationDays() == 0)
+                    .count();
+            if (ousNoExpiry > 0) {
+                notifications.add(create(++id, "warning", "Wachtwoorden verlopen nooit",
+                        ousNoExpiry + " organisatie-eenheid(en) hebben geen wachtwoordverloop.",
+                        List.of("Stel een wachtwoordverloop in voor betere beveiliging"),
+                        "password-never-expires", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: admins without security keys
+            if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
+                notifications.add(create(++id, "warning", "Admins zonder security key",
+                        adminsWithoutKeys.size() + " admin(s) hebben geen hardware security key (2FA omzeiling risico).",
+                        List.of("Vereis security keys voor alle beheerdersaccounts"),
+                        "password-admins-no-security-keys", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
         }
 
         // Deduplicate by source-notificationType

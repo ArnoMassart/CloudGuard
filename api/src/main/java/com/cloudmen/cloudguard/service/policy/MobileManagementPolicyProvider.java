@@ -95,7 +95,7 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
                 null,
                 false,
                 SETTINGS_LINK_TEXT,
-                "https://admin.google.com/u/1/ac/managedsettings/55656082996",
+                "https://admin.google.com/u/1/ac/devices/settings/general",
                 details
         );
     }
