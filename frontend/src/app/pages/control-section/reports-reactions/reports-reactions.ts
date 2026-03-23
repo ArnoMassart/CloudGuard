@@ -45,6 +45,7 @@ export class ReportsReactions implements OnInit {
   readonly submittingIds = signal<Set<string>>(new Set());
   readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
   readonly resolvingIds = signal<Set<string>>(new Set());
+  readonly unDismissingIds = signal<Set<string>>(new Set());
 
   readonly filteredNotifications = computed(() => {
     const filter = this.filterSeverity();
@@ -163,6 +164,7 @@ export class ReportsReactions implements OnInit {
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
+    this.unDismissingIds.set(new Set());
     this.#notificationService.getNotificationsAndResolved().subscribe({
       next: ({ active, resolved }) => {
         this.notifications.set(active);
@@ -213,6 +215,33 @@ export class ReportsReactions implements OnInit {
 
   isResolving(n: Notification): boolean {
     return this.resolvingIds().has(`${n.source}:${n.notificationType}`);
+  }
+
+  unDismiss(n: Notification) {
+    const key = `${n.source}:${n.notificationType}`;
+    if (this.unDismissingIds().has(key)) return;
+    this.unDismissingIds.update((s) => new Set(s).add(key));
+    this.#resolvedService.unDismiss(n.source, n.notificationType).subscribe({
+      next: () => {
+        this.unDismissingIds.update((s) => {
+          const next = new Set(s);
+          next.delete(key);
+          return next;
+        });
+        this.refresh();
+      },
+      error: () => {
+        this.unDismissingIds.update((s) => {
+          const next = new Set(s);
+          next.delete(key);
+          return next;
+        });
+      },
+    });
+  }
+
+  isUnDismissing(n: Notification): boolean {
+    return this.unDismissingIds().has(`${n.source}:${n.notificationType}`);
   }
 
   refresh() {

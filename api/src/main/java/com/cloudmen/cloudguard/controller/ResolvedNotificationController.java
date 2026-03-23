@@ -27,4 +27,15 @@ public class ResolvedNotificationController {
         resolvedNotificationService.markAsResolved(userId, request);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping
+    public ResponseEntity<?> unDismiss(
+            @CookieValue(name = "AuthToken") String token,
+            @RequestParam String source,
+            @RequestParam String notificationType
+    ) {
+        String userId = jwtService.validateInternalToken(token);
+        boolean removed = resolvedNotificationService.unDismiss(userId, source, notificationType);
+        return removed ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
 }

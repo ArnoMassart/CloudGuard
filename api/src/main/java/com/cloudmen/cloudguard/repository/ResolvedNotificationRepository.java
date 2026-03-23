@@ -20,4 +20,8 @@ public interface ResolvedNotificationRepository extends JpaRepository<ResolvedNo
     @Modifying
     @Query("DELETE FROM ResolvedNotification r WHERE r.resolvedAt < :before")
     int deleteByResolvedAtBefore(LocalDateTime before);
+
+    @Modifying
+    @Query("DELETE FROM ResolvedNotification r WHERE r.userId = :userId AND r.source = :source AND r.notificationType = :notificationType")
+    int deleteByUserIdAndSourceAndNotificationType(String userId, String source, String notificationType);
 }

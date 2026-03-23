@@ -49,6 +49,12 @@ public class ResolvedNotificationService {
     }
 
     @Transactional
+    public boolean unDismiss(String userId, String source, String notificationType) {
+        int deleted = repository.deleteByUserIdAndSourceAndNotificationType(userId, source, notificationType);
+        return deleted > 0;
+    }
+
+    @Transactional
     public int deleteOlderThan30Days() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(RETENTION_DAYS);
         return repository.deleteByResolvedAtBefore(cutoff);

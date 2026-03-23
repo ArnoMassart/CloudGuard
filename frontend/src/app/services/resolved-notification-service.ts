@@ -16,4 +16,11 @@ export class ResolvedNotificationService {
       withCredentials: true,
     });
   }
+
+  unDismiss(source: string, notificationType: string): Observable<void> {
+    return this.#http.delete<void>(this.#API_URL, {
+      params: { source, notificationType },
+      withCredentials: true,
+    });
+  }
 }
