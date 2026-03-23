@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
@@ -27,6 +27,14 @@ export class Navbar {
 
   readonly currentUser = this.authService.currentUser;
   readonly profilePopupOpen = signal(false);
+  readonly profileImageError = signal(false);
+
+  constructor() {
+    effect(() => {
+      this.currentUser();
+      this.profileImageError.set(false);
+    });
+  }
 
   readonly NavItemsSecurity = [
     { Icon: this.Icons.Shield, Label: 'Dashboard', Route: '/home' },
