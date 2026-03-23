@@ -35,8 +35,8 @@ export class Navbar {
     { Icon: this.Icons.FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
     { Icon: this.Icons.SmartPhone, Label: 'Apparaten', Route: '/devices' },
     { Icon: this.Icons.Key, Label: 'App Toegang', Route: '/app-access' },
-    { Icon: this.Icons.Lock, Label: 'App-wachtwoorden', Route: '/app-passwords' },
-    { Icon: this.Icons.ShieldCheck, Label: 'Wachtwoordinstellingen', Route: '/password-settings' },
+    { Icon: this.Icons.LayoutGrid, Label: 'App-wachtwoorden', Route: '/app-passwords' },
+    { Icon: this.Icons.Lock, Label: 'Wachtwoordinstellingen', Route: '/password-settings' },
     { Icon: this.Icons.Globe, Label: 'Domein & DNS', Route: '/domain-dns' },
   ];
 
