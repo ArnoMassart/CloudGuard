@@ -17,6 +17,8 @@ import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -59,6 +61,7 @@ public class NotificationAggregationService {
     private final PasswordSettingsService passwordSettingsService;
     private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
+    private final UserSecurityPreferenceService preferenceService;
     private final MessageSource messageSource;
 
     public NotificationAggregationService(
@@ -73,7 +76,8 @@ public class NotificationAggregationService {
             MessageSource messageSource,
             PasswordSettingsService passwordSettingsService,
             DismissedNotificationService dismissedService,
-            NotificationFeedbackService feedbackService) {
+            NotificationFeedbackService feedbackService,
+            UserSecurityPreferenceService preferenceService) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -85,10 +89,13 @@ public class NotificationAggregationService {
         this.passwordSettingsService = passwordSettingsService;
         this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
+        this.preferenceService = preferenceService;
         this.messageSource = messageSource;
     }
 
     public NotificationsResponse getNotifications(String userId) {
+        Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
+
         List<NotificationDto> active = aggregateActive(userId);
         List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
         Set<String> dismissedKeys = dismissed.stream()
@@ -97,15 +104,21 @@ public class NotificationAggregationService {
         Set<String> feedbackKeys = feedbackService.getAllFeedbackKeys();
 
         List<NotificationDto> filtered = active.stream()
+                .filter(n -> !isHiddenByPreference(n.source(), n.notificationType(), disabledPreferenceKeys))
                 .filter(n -> !dismissedKeys.contains(n.source() + ":" + n.notificationType()))
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
         List<NotificationDto> dismissedDtos = dismissed.stream()
+                .filter(d -> !isHiddenByPreference(d.getSource(), d.getNotificationType(), disabledPreferenceKeys))
                 .map(this::toDismissedDto)
                 .toList();
 
         return new NotificationsResponse(filtered, dismissedDtos);
+    }
+
+    private boolean isHiddenByPreference(String source, String notificationType, Set<String> disabledPreferenceKeys) {
+        return PreferenceToNotificationMapping.isDisabledByPreference(source, notificationType, disabledPreferenceKeys);
     }
 
     public long getNotificationsCount(String userId) {
