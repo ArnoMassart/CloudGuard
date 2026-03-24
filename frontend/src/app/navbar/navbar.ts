@@ -10,13 +10,13 @@ import { Router } from '@angular/router';
 import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 import { UserService } from '../services/user-service';
 import { AppIcons } from '../shared/AppIcons';
-import { TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LanguageBar } from '../components/language-bar/language-bar';
 
 @Component({
   standalone: true,
   selector: 'app-navbar',
-  imports: [LucideAngularModule, NavItem, CommonModule, Profile, LanguageBar],
+  imports: [LucideAngularModule, NavItem, CommonModule, Profile, LanguageBar, TranslocoPipe],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   providers: [CookieService],
@@ -31,20 +31,20 @@ export class Navbar {
   readonly profilePopupOpen = signal(false);
 
   readonly NavItemsSecurity = [
-    { Icon: this.Icons.Shield, Label: 'Dashboard', Route: '/home' },
-    { Icon: this.Icons.Users, Label: 'Gebruikers & Groepen', Route: '/users-groups' },
-    { Icon: this.Icons.Building2, Label: 'Organisatie-eenheden', Route: '/organizational-units' },
-    { Icon: this.Icons.FolderOpen, Label: 'Gedeelde Drives', Route: '/shared-drives' },
-    { Icon: this.Icons.SmartPhone, Label: 'Apparaten', Route: '/devices' },
-    { Icon: this.Icons.Key, Label: 'App Toegang', Route: '/app-access' },
-    { Icon: this.Icons.Lock, Label: 'App-wachtwoorden', Route: '/app-passwords' },
-    { Icon: this.Icons.ShieldCheck, Label: 'Wachtwoordinstellingen', Route: '/password-settings' },
-    { Icon: this.Icons.Globe, Label: 'Domein & DNS', Route: '/domain-dns' },
+    { Icon: this.Icons.Shield, Label: 'dashboard', Route: '/home' },
+    { Icon: this.Icons.Users, Label: 'user-groups', Route: '/users-groups' },
+    { Icon: this.Icons.Building2, Label: 'organisational-units', Route: '/organizational-units' },
+    { Icon: this.Icons.FolderOpen, Label: 'shared-drives', Route: '/shared-drives' },
+    { Icon: this.Icons.SmartPhone, Label: 'devices', Route: '/devices' },
+    { Icon: this.Icons.Key, Label: 'app-access', Route: '/app-access' },
+    { Icon: this.Icons.Lock, Label: 'app-passwords', Route: '/app-passwords' },
+    { Icon: this.Icons.ShieldCheck, Label: 'password-settings', Route: '/password-settings' },
+    { Icon: this.Icons.Globe, Label: 'domain-dns', Route: '/domain-dns' },
   ];
 
   readonly NavItemsControl = [
-    { Icon: this.Icons.CreditCard, Label: 'Licenties', Route: '/licenses' },
-    { Icon: this.Icons.Bell, Label: 'Meldingen & Feedback', Route: '/reports-reactions' },
+    { Icon: this.Icons.CreditCard, Label: 'licenses', Route: '/licenses' },
+    { Icon: this.Icons.Bell, Label: 'notifications-feedback', Route: '/reports-reactions' },
   ];
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {

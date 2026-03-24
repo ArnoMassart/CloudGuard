@@ -41,29 +41,19 @@ export class CustomAuthService {
         catchError((err) => {
           // If it's a 401, catchError triggers. We return 'null' to signal "not logged in"
           return of(null);
-        })
+        }),
       )
       .subscribe((res) => {
         // If res exists and status is 200-299, the user is authenticated
         const isAuthenticated = res?.ok ?? false;
-
         this.#loggedInStatus.next(isAuthenticated);
         this.#initializedStatus.next(true);
 
         if (isAuthenticated) {
-          console.log('Session valid. Welcome back!');
           this.#fetchCurrentUser();
-          if (this.#router.url === '/login' || this.#router.url === '/') {
-            this.#router.navigate(['/']);
-          }
         } else {
-          const onCallbackPage = globalThis.location.pathname.includes('/callback');
-          const redirectPending = sessionStorage.getItem('auth0_redirect_pending') === '1';
-
-          if (!onCallbackPage && !redirectPending) {
-            console.warn('No session found. Redirecting to login.');
-            this.#router.navigate(['/login']);
-          }
+          // Laat de AuthGuard bepalen of er een redirect naar login nodig is
+          console.warn('No session found.');
         }
       });
   }
@@ -134,7 +124,7 @@ export class CustomAuthService {
           this.#fetchCurrentUser();
 
           this.#warmupCacheService.triggerWarmup();
-        })
+        }),
       );
   }
 }

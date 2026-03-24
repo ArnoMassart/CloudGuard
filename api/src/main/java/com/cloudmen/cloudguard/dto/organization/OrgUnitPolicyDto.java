@@ -10,7 +10,6 @@ public record OrgUnitPolicyDto(
          String baseExplanation,
          String inheritanceExplanation,
          boolean inherited,
-         String settingsLinkText,
          String adminLink,
          String details
 ) {

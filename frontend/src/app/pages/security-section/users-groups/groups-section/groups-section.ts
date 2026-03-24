@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { GroupOverviewResponse, GroupService } from '../../../../services/group-service';
@@ -10,7 +10,8 @@ import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -42,8 +43,10 @@ interface GroupSummary {
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
 })
-export class GroupsSection implements OnInit {
+export class GroupsSection implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
+
+  readonly #translocoService = inject(TranslocoService);
 
   readonly #groupService = inject(GroupService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
@@ -73,9 +76,19 @@ export class GroupsSection implements OnInit {
     return activeCount > 1;
   });
 
+  #langSubscription?: Subscription;
+
   ngOnInit(): void {
-    this.loadGroupsOverview();
-    this.loadGroups(null);
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.loadGroupsOverview();
+      this.loadGroups(null);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   private loadGroupsOverview(): void {

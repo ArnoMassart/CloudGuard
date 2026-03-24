@@ -1,183 +1,220 @@
 <div class="px-10 py-6">
-  <app-page-header Title="Organisatie-eenheden" Description="Monitor de structuur en beleidsregels van je organisatie"
-    AdminLink="orgunits" />
+  <app-page-header
+    Title="{{ 'organisational-units' | transloco }}"
+    Description="{{ 'organisational-units.description' | transloco }}"
+    AdminLink="orgunits"
+  />
   <!-- Left card: Structuur -->
   @if (loading()) {
-  <div class="flex flex-col items-center p-3">
-    <div class="flex flex-col items-center space-y-4 p-8">
-      <div class="relative flex items-center justify-center">
-        <div class="h-12 w-12 rounded-full"></div>
-        <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+    <div class="flex flex-col items-center p-3">
+      <div class="flex flex-col items-center space-y-4 p-8">
+        <div class="relative flex items-center justify-center">
+          <div class="h-12 w-12 rounded-full"></div>
+          <div
+            class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
+          ></div>
         </div>
+        <span class="text-sm font-medium text-slate-600 animate-pulse">
+          {{ 'organisational-units.loading' | transloco }}...
+        </span>
       </div>
-      <span class="text-sm font-medium text-slate-600 animate-pulse">
-        Organisatie-eenheden worden geladen...
-      </span>
     </div>
-  </div>
   } @else if (error()) {
-  <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-    {{ error() }}
-  </div>
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+      {{ error() }}
+    </div>
   } @else if (tree(); as root) {
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
-    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5 h-[80vh] flex flex-col">
-      <div class="flex justify-between items-center pb-2">
-        <div class="flex items-center gap-2 mb-4">
-          <i-lucide [img]="Icons.FolderTree" size="20" class="text-slate-600" />
-          <h2 class="font-medium text-slate-900">Structuur</h2>
-        </div> <button (click)="refreshData()" [disabled]="isRefreshing()"
-          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
+      <div
+        class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5 h-[80vh] flex flex-col"
+      >
+        <div class="flex justify-between items-center pb-2">
+          <div class="flex items-center gap-2 mb-4">
+            <i-lucide [img]="Icons.FolderTree" size="20" class="text-slate-600" />
+            <h2 class="font-medium text-slate-900">{{ 'structure' | transloco }}</h2>
+          </div>
+          <button
+            (click)="refreshData()"
+            [disabled]="isRefreshing()"
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+          >
+            <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+            </i-lucide>
 
-          <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-          </i-lucide>
-
-          {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
-        </button>
-      </div>
-
-
-
-      <div class="space-y-0.5 min-h-0 flex-1 overflow-y-auto">
-        <ul class="space-y-0.5 list-none p-0 m-0">
-          <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: root, depth: 0 }" />
-        </ul>
-      </div>
-
-      <ng-template #ouNode let-node let-depth="depth">
-        <li [style.padding-left.rem]="0.5 + depth * 1.25">
-          <button type="button" (click)="selectUnit(node); toggleExpanded(node.id)"
-            class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
-            [class.bg-primary/10]="isSelected(node)">
-            @if (node.children?.length) {
-            <i-lucide [img]="isExpanded(node.id) ? Icons.ChevronDown : Icons.ChevronRight" size="16"
-              class="text-slate-500 shrink-0" />
-            } @else {
-            <span class="w-4 shrink-0" aria-hidden="true"></span>
-            }
-            @if (depth === 0) {
-            <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
-            } @else {
-            <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
-            }
-            <span class="font-medium text-slate-900 flex-1 truncate">{{ node.name }}</span>
-            <span
-              class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5">
-              {{ node.userCount }}
-            </span>
+            {{ isRefreshing() ? ('refreshing' | transloco) + '...' : ('renew-data' | transloco) }}
           </button>
-          @if (isExpanded(node.id) && node.children?.length) {
-          <ul class="space-y-0.5 list-none p-0 m-0 mt-0.5">
-            @for (child of node.children; track child.id) {
-            <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: child, depth: depth + 1 }" />
-            }
+        </div>
+
+        <div class="space-y-0.5 min-h-0 flex-1 overflow-y-auto">
+          <ul class="space-y-0.5 list-none p-0 m-0">
+            <ng-container *ngTemplateOutlet="ouNode; context: { $implicit: root, depth: 0 }" />
           </ul>
-          }
-        </li>
-      </ng-template>
-    </div>
+        </div>
 
-
-    <!-- Right card: Selected unit details -->
-    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
-      @if (selectedOrgUnit(); as unit) {
-      <div class="flex items-center gap-2 mb-5">
-        <i-lucide [img]="Icons.Building2" size="20" class="text-slate-600" />
-        <h2 class="font-medium text-slate-900">{{ unit.name }}</h2>
+        <ng-template #ouNode let-node let-depth="depth">
+          <li [style.padding-left.rem]="0.5 + depth * 1.25">
+            <button
+              type="button"
+              (click)="selectUnit(node); toggleExpanded(node.id)"
+              class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors"
+              [class.bg-primary/10]="isSelected(node)"
+            >
+              @if (node.children?.length) {
+                <i-lucide
+                  [img]="isExpanded(node.id) ? Icons.ChevronDown : Icons.ChevronRight"
+                  size="16"
+                  class="text-slate-500 shrink-0"
+                />
+              } @else {
+                <span class="w-4 shrink-0" aria-hidden="true"></span>
+              }
+              @if (depth === 0) {
+                <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
+              } @else {
+                <i-lucide [img]="Icons.Building2" size="18" class="text-slate-600 shrink-0" />
+              }
+              <span class="font-medium text-slate-900 flex-1 truncate">{{ node.name }}</span>
+              <span
+                class="inline-flex items-center rounded-full bg-slate-200/90 text-slate-700 text-xs font-medium px-2.5 py-0.5"
+              >
+                {{ node.userCount }}
+              </span>
+            </button>
+            @if (isExpanded(node.id) && node.children?.length) {
+              <ul class="space-y-0.5 list-none p-0 m-0 mt-0.5">
+                @for (child of node.children; track child.id) {
+                  <ng-container
+                    *ngTemplateOutlet="ouNode; context: { $implicit: child, depth: depth + 1 }"
+                  />
+                }
+              </ul>
+            }
+          </li>
+        </ng-template>
       </div>
 
-      <!-- KPI boxes -->
-      <div class="grid grid-cols-3 gap-3 mb-6">
-        <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
-          <i-lucide [img]="Icons.Users" size="20" class="text-slate-600 mx-auto mb-1" />
-          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Gebruikers</p>
-          <p class="font-semibold text-slate-900">{{ unit.userCount }}</p>
-        </div>
-        <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
-          <i-lucide [img]="Icons.Building2" size="20" class="text-slate-600 mx-auto mb-1" />
-          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Sub-eenheden</p>
-          <p class="font-semibold text-slate-900">{{ getSubUnitCount(unit) }}</p>
-        </div>
-        <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
-          <i-lucide [img]="Icons.CircleCheck" size="20" class="text-primary mx-auto mb-1" />
-          <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Status</p>
-          <p class="font-semibold text-primary">Conform</p>
-        </div>
-      </div>
+      <!-- Right card: Selected unit details -->
+      <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
+        @if (selectedOrgUnit(); as unit) {
+          <div class="flex items-center gap-2 mb-5">
+            <i-lucide [img]="Icons.Building2" size="20" class="text-slate-600" />
+            <h2 class="font-medium text-slate-900">{{ unit.name }}</h2>
+          </div>
 
-      <!-- Beleidsregels -->
-      <h3 class="font-medium text-slate-900 mb-3">Beleidsregels</h3>
-      @if (policiesLoading()) {
-      <div class="flex flex-col items-center p-3">
-        <div class="flex flex-col items-center space-y-4 p-8">
-          <div class="relative flex items-center justify-center">
-            <div class="h-12 w-12 rounded-full"></div>
-            <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+          <!-- KPI boxes -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
+              <i-lucide [img]="Icons.Users" size="20" class="text-slate-600 mx-auto mb-1" />
+              <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                {{ 'users' | transloco }}
+              </p>
+              <p class="font-semibold text-slate-900">{{ unit.userCount }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
+              <i-lucide [img]="Icons.Building2" size="20" class="text-slate-600 mx-auto mb-1" />
+              <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                {{ 'sub-units' | transloco }}
+              </p>
+              <p class="font-semibold text-slate-900">{{ getSubUnitCount(unit) }}</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
+              <i-lucide [img]="Icons.CircleCheck" size="20" class="text-primary mx-auto mb-1" />
+              <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                {{ 'state' | transloco }}
+              </p>
+              <p class="font-semibold text-primary">Conform</p>
             </div>
           </div>
-          <span class="text-sm font-medium text-slate-600 animate-pulse">
-            Beleidsregels worden geladen...
-          </span>
-        </div>
-      </div>
-      } @else if (policiesError()) {
-      <p class="text-sm text-red-600">{{ policiesError() }}</p>
-      } @else {
-      <ul class="space-y-3">
-        @for (policy of policies(); track policy.key) {
-        <li class="rounded-lg border border-slate-200/80 overflow-hidden">
-          <button type="button" (click)="togglePolicyExpanded(policy.key)"
-            class="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50/80 transition-colors">
-            <i-lucide [img]="isPolicyExpanded(policy.key) ? Icons.ChevronDown : Icons.ChevronRight" size="18"
-              class="text-slate-400 mt-0.5 shrink-0" />
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-slate-900 text-sm">{{ policy.title }}</p>
-              <p class="text-xs text-slate-500 mt-0.5">{{ policy.description }}</p>
+
+          <!-- Beleidsregels -->
+          <h3 class="font-medium text-slate-900 mb-3">{{ 'security-rules' | transloco }}</h3>
+          @if (policiesLoading()) {
+            <div class="flex flex-col items-center p-3">
+              <div class="flex flex-col items-center space-y-4 p-8">
+                <div class="relative flex items-center justify-center">
+                  <div class="h-12 w-12 rounded-full"></div>
+                  <div
+                    class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                  ></div>
+                </div>
+                <span class="text-sm font-medium text-slate-600 animate-pulse">
+                  {{ 'security-rules.loading' | transloco }}...
+                </span>
+              </div>
             </div>
-            <span class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center"
-              [class.bg-green-100]="isStatusGreen(policy.statusClass)"
-              [class.text-green-800]="isStatusGreen(policy.statusClass)"
-              [class.bg-amber-100]="isStatusAmber(policy.statusClass)"
-              [class.text-amber-800]="isStatusAmber(policy.statusClass)"
-              [class.bg-slate-100]="isStatusSlate(policy.statusClass)"
-              [class.text-slate-700]="isStatusSlate(policy.statusClass)">
-              {{ policy.status }}
-            </span>
-          </button>
-            @if (isPolicyExpanded(policy.key)) {
-          <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
-            <div class="text-sm text-slate-600 mb-3 space-y-2">
-              @if (policy.baseExplanation) {
-              <p>{{ policy.baseExplanation }}</p>
+          } @else if (policiesError()) {
+            <p class="text-sm text-red-600">{{ policiesError() }}</p>
+          } @else {
+            <ul class="space-y-3">
+              @for (policy of policies(); track policy.key) {
+                <li class="rounded-lg border border-slate-200/80 overflow-hidden">
+                  <button
+                    type="button"
+                    (click)="togglePolicyExpanded(policy.key)"
+                    class="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50/80 transition-colors"
+                  >
+                    <i-lucide
+                      [img]="isPolicyExpanded(policy.key) ? Icons.ChevronDown : Icons.ChevronRight"
+                      size="18"
+                      class="text-slate-400 mt-0.5 shrink-0"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <p class="font-medium text-slate-900 text-sm">{{ policy.title }}</p>
+                      <p class="text-xs text-slate-500 mt-0.5">{{ policy.description }}</p>
+                    </div>
+                    <span
+                      class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center"
+                      [class.bg-green-100]="isStatusGreen(policy.statusClass)"
+                      [class.text-green-800]="isStatusGreen(policy.statusClass)"
+                      [class.bg-amber-100]="isStatusAmber(policy.statusClass)"
+                      [class.text-amber-800]="isStatusAmber(policy.statusClass)"
+                      [class.bg-slate-100]="isStatusSlate(policy.statusClass)"
+                      [class.text-slate-700]="isStatusSlate(policy.statusClass)"
+                    >
+                      {{ policy.status }}
+                    </span>
+                  </button>
+                  @if (isPolicyExpanded(policy.key)) {
+                    <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
+                      <div class="text-sm text-slate-600 mb-3 space-y-2">
+                        @if (policy.baseExplanation) {
+                          <p>{{ policy.baseExplanation }}</p>
+                        }
+                        @if (policy.details) {
+                          <p>{{ policy.details }}</p>
+                        }
+                        @if (policy.inheritanceExplanation) {
+                          <p>{{ policy.inheritanceExplanation }}</p>
+                        }
+                      </div>
+                      <div
+                        class="border-t border-slate-200/80 mt-3 pt-3 flex flex-col items-center"
+                      >
+                        <button
+                          type="button"
+                          class="text-sm text-primary font-medium hover:underline mb-3"
+                        >
+                          {{ 'org-units.change-settings' | transloco }}
+                        </button>
+                        @if (policy.adminLink) {
+                          <button
+                            type="button"
+                            (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
+                            class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center"
+                          >
+                            <span>{{ 'to-admin-console' | transloco }}</span>
+                            <i-lucide [img]="Icons.ExternalLink" size="16" />
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </li>
               }
-              @if (policy.details) {
-              <p>{{ policy.details }}</p>
-              }
-              @if (policy.inheritanceExplanation) {
-              <p>{{ policy.inheritanceExplanation }}</p>
-              }
-            </div>
-            <div class="border-t border-slate-200/80 mt-3 pt-3 flex flex-col items-center">
-              @if (policy.settingsLinkText) {
-              <button type="button" class="text-sm text-primary font-medium hover:underline mb-3">
-                {{ policy.settingsLinkText }}
-              </button>
-              }
-              @if (policy.adminLink) {
-              <button type="button" (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
-                class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center inline-flex">
-                <span>Naar Admin Console</span>
-                <i-lucide [img]="Icons.ExternalLink" size="16" />
-              </button>
-              }
-            </div>
-          </div>
+            </ul>
           }
-        </li>
         }
-      </ul>
-      }
-      }
+      </div>
     </div>
-  </div>
   }
+</div>

@@ -5,18 +5,24 @@ import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.service.cache.GoogleGroupsCacheService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class GoogleGroupsService {
     private final GoogleGroupsCacheService groupsCacheService;
+    private final MessageSource messageSource;
 
 
-    public GoogleGroupsService(GoogleGroupsCacheService groupsCacheService) {
+    public GoogleGroupsService(GoogleGroupsCacheService groupsCacheService, @Qualifier("messageSource") MessageSource messageSource) {
         this.groupsCacheService = groupsCacheService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -82,11 +88,13 @@ public class GoogleGroupsService {
         int highScore = totalGroups == 0 ? 0 : (int) Math.round(highRiskGroups * 20.0 / totalGroups);
         int externalScore = totalGroups == 0 ? 100 : groupsWithExternal == 0 ? 100 : (int) Math.max(0, 100 - groupsWithExternal * 100 / totalGroups);
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Laag risico groepen", lowRiskGroups + " van " + totalGroups + " groepen met laag risico", lowScore, 100, severity(lowScore)),
-                new SecurityScoreFactorDto("Gemiddeld risico groepen", mediumRiskGroups + " van " + totalGroups + " groepen met gemiddeld risico", mediumScore, 60, severity(mediumScore * 100 / 60)),
-                new SecurityScoreFactorDto("Hoog risico groepen", highRiskGroups + " van " + totalGroups + " groepen met hoog risico (open/externe instellingen)", highScore, 20, severity(highScore * 100 / 20)),
-                new SecurityScoreFactorDto("Groepen zonder externe leden", groupsWithExternal == 0 ? "Geen groepen met externe leden" : groupsWithExternal + " groep(en) met externe leden", externalScore, 100, severity(externalScore))
+                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.low_risk.title", null, locale), messageSource.getMessage("groups.score.factor.low_risk.description", new Object[]{lowRiskGroups, totalGroups}, locale), lowScore, 100, severity(lowScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.middle_risk.title", null, locale),messageSource.getMessage("groups.score.factor.middle_risk.description", new Object[]{mediumRiskGroups, totalGroups}, locale) , mediumScore, 60, severity(mediumScore * 100 / 60)),
+                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.high_risk.title", null, locale), messageSource.getMessage("groups.score.factor.high_risk.description", new Object[]{highRiskGroups, totalGroups}, locale) , highScore, 20, severity(highScore * 100 / 20)),
+                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.no_external.title", null, locale), groupsWithExternal == 0 ? messageSource.getMessage("groups.score.factor.no_external.description.no_found", null, locale) : messageSource.getMessage("groups.score.factor.no_external.description", new Object[]{groupsWithExternal}, locale), externalScore, 100, severity(externalScore))
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

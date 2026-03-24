@@ -7,10 +7,14 @@ import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,15 +26,16 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
 
     private static final String DIRECTORY_USER_SECURITY_SCOPE = "https://www.googleapis.com/auth/admin.directory.user.security";
     private static final String DIRECTORY_USER_READONLY_SCOPE = "https://www.googleapis.com/auth/admin.directory.user.readonly";
-    private static final String SETTINGS_LINK_TEXT = "Klik hier om deze instellingen aan te passen";
 
     private final GoogleApiFactory directoryFactory;
 
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private static final long CACHE_TTL_MS = 3600000L;
+    private final MessageSource messageSource;
 
-    public TSVPolicyProvider(GoogleApiFactory directoryFactory) {
+    public TSVPolicyProvider(GoogleApiFactory directoryFactory, @Qualifier("messageSource") MessageSource messageSource) {
         this.directoryFactory = directoryFactory;
+        this.messageSource = messageSource;
     }
 
     @Override public String key() {return "2sv_adoption";}
@@ -52,33 +57,34 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         String status;
         String css;
 
-        String baseExplanation = "Deze beleidsregel toont de adoptie van tweestapsverificatie (2SV) onder gebruikers in deze organisatie-eenheid. Tweestapsverificatie voegt een extra beveiligingslaag toe aan het inloggen.";
+        Locale locale = LocaleContextHolder.getLocale();
+
+        String baseExplanation = messageSource.getMessage("orgUnits.tsv.base_explanation", null, locale);
         String description;
 
         if (total == 0) {
-            status = "Geen gebruikers";
+            status = messageSource.getMessage("orgUnits.tsv.status.no_users", null, locale);
             css = "bg-slate-100 text-slate-700";
-            description = "Er zijn geen gebruikers om te controleren";
+            description = messageSource.getMessage("orgUnits.tsv.description.no_users", null, locale);
         } else if (without2sv == 0) {
             status = "OK (" + total + "/" + total + ")";
             css = "bg-green-100 text-green-800";
-            description = "Alle gebruikers hebben 2SV ingeschakeld";
+            description = messageSource.getMessage("orgUnits.tsv.description.without_2SV", null, locale);
         } else {
-            status = "Risico (" + without2sv + "/" + total + " zonder 2SV)";
+            status = messageSource.getMessage("orgUnits.tsv.status.other", new Object[]{without2sv, total}, locale);
             css = "bg-amber-100 text-amber-800";
-            description = "Sommige gebruikers hebben geen 2SV geactiveerd";
+            description = messageSource.getMessage("orgUnits.tsv.description.other", null, locale);
         }
 
         return new OrgUnitPolicyDto(
                 key(),
-                "Tweestapsverificatie (2SV) adoptie",
+                messageSource.getMessage("orgUnits.tsv.title", null, locale),
                 description,
                 status,
                 css,
                 baseExplanation,
                 null,
                 false,
-                SETTINGS_LINK_TEXT,
                 "https://admin.google.com/u/1/ac/security/2sv",
                 null
         );

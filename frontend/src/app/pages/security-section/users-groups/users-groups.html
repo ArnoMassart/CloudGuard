@@ -1,35 +1,41 @@
 <div class="px-10 py-6">
-    @if (currentSection() === "USERS") {
-    <app-page-header Title="{{ 'user-groups.page-title' | transloco }}"
-        Description="{{ 'user-groups.users.page-description' | transloco }}" AdminLink="users" />
+  @if (currentSection() === 'USERS') {
+    <app-page-header
+      Title="{{ 'user-groups' | transloco }}"
+      Description="{{ 'user-groups.users.page-description' | transloco }}"
+      AdminLink="users"
+    />
+  } @else {
+    <app-page-header
+      Title="{{ 'user-groups' | transloco }}"
+      Description="{{ 'user-groups.groups.page-description' | transloco }}"
+      AdminLink="groups"
+    />
+  }
+  <div class="flex items-center gap-12 pt-6 border-b border-gray-200">
+    <button
+      (click)="togglePage('USERS')"
+      class="flex items-center gap-2 pb-3 transition-all duration-200 font-medium"
+      [ngClass]="getTabClass('USERS')"
+    >
+      <lucide-icon [img]="Icons.Users" size="16"></lucide-icon>
+      <span class="text-sm">{{ 'users' | transloco }}</span>
+    </button>
 
+    <button
+      (click)="togglePage('GROUPS')"
+      class="flex items-center gap-2 pb-3 transition-all duration-200 font-medium"
+      [ngClass]="getTabClass('GROUPS')"
+    >
+      <lucide-icon [img]="Icons.Users" size="16"></lucide-icon>
+      <span class="text-sm">{{ 'groups' | transloco }}</span>
+    </button>
+  </div>
+  <div class="pt-6">
+    @if (currentSection() === 'USERS') {
+      <app-users-section />
     } @else {
-    <app-page-header Title="{{ 'user-groups.page-title' | transloco }}"
-        Description="{{ 'user-groups.groups.page-description' | transloco }}" AdminLink="groups" />
-
+      <app-groups-section />
     }
-    <div class="flex items-center gap-12 pt-6 border-b border-gray-200">
-        <button (click)="togglePage('USERS')"
-            class="flex items-center gap-2 pb-3 transition-all duration-200 font-medium"
-            [ngClass]="getTabClass('USERS')">
-            <lucide-icon [img]="Icons.Users" size="16"></lucide-icon>
-            <span class="text-sm">{{ 'users' | transloco }}</span>
-        </button>
-
-        <button (click)="togglePage('GROUPS')"
-            class="flex items-center gap-2 pb-3 transition-all duration-200 font-medium"
-            [ngClass]="getTabClass('GROUPS')">
-            <lucide-icon [img]="Icons.Users" size="16"></lucide-icon>
-            <span class="text-sm">{{ 'groups' | transloco }}</span>
-        </button>
-
-    </div>
-    <div class="pt-6">@if (currentSection() === "USERS") {
-        <app-users-section />
-
-        } @else {
-        <app-groups-section />
-
-        }
-    </div>
+  </div>
 </div>

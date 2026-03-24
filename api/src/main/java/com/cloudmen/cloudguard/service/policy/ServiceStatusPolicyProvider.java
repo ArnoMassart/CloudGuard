@@ -7,13 +7,12 @@ import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Order(2)
 @Component
@@ -24,9 +23,11 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
     private static final Set<String> TARGET_SERVICES = Set.of("gmail", "drive_and_docs", "meet");
 
     private final PolicyApiCacheService policyCache;
+    private final MessageSource messageSource;
 
-    public ServiceStatusPolicyProvider(PolicyApiCacheService policyCache) {
+    public ServiceStatusPolicyProvider(PolicyApiCacheService policyCache, MessageSource messageSource) {
         this.policyCache = policyCache;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -60,15 +61,17 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
                 ? "bg-slate-100 text-slate-700"
                 : anyOff ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800";
 
-        String baseExplanation = "Hier zie je welke Google-diensten (zoals Gmail, Drive en Meet) beschikbaar zijn voor gebruikers in deze organisatie-eenheid. Services kunnen aan of uit staan per OU.";
+        Locale locale = LocaleContextHolder.getLocale();
+
+        String baseExplanation = messageSource.getMessage("orgUnits.service_status.base_explanation", null, locale);
         String description = anyUnknown
-                ? "Er zijn geen beleidsregels gevonden voor alle services"
+                ? messageSource.getMessage("orgUnits.service_status.any_unknown", null, locale)
                 : anyOff
-                        ? "Een of meer services zijn uitgeschakeld"
-                        : "Alle services zijn ingeschakeld";
+                        ? messageSource.getMessage("orgUnits.service_status.any_off", null, locale)
+                        : messageSource.getMessage("orgUnits.service_status.any_off_not", null, locale);
         String inheritanceExplanation = anyInherited
-                ? "Sommige services erven hun status van een bovenliggende OU."
-                : "Alle services zijn rechtstreeks ingesteld op deze OU.";
+                ? messageSource.getMessage("orgUnits.service_status.inherited", null, locale)
+                : messageSource.getMessage("orgUnits.service_status.not_inherited", null, locale);
 
         return new OrgUnitPolicyDto(
                 key(),
@@ -79,7 +82,6 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
                 baseExplanation,
                 inheritanceExplanation,
                 anyInherited,
-                "Klik hier om deze instellingen aan te passen",
                 "https://admin.google.com/u/1/ac/appslist/core",
                 null
         );
@@ -133,7 +135,8 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
 
         if (best == null) {
             log.warn("No service_status policy found for service={} and OU={}", service, orgUnitPath);
-            return new ServiceStatusDto(service, ServiceStatus.UNKNOWN, true, "(geen policy gevonden)");
+            String text = messageSource.getMessage("orgUnits.service_status.no_policy_found", null, LocaleContextHolder.getLocale());
+            return new ServiceStatusDto(service, ServiceStatus.UNKNOWN, true, "("+text+")");
         }
 
         JsonNode valueNode = best.path("setting").path("value");
@@ -195,11 +198,12 @@ public class ServiceStatusPolicyProvider implements OrgUnitPolicyProvider {
     }
 
     private String formatStatus(ServiceStatusDto dto) {
-        if (dto == null) return "Onbekend";
+        Locale locale = LocaleContextHolder.getLocale();
+        if (dto == null) return messageSource.getMessage("unknown", null,locale);
         return switch (dto.getStatus()) {
-            case ENABLED -> "Aan";
-            case DISABLED -> "Uit";
-            case UNKNOWN -> "Onbekend";
+            case ENABLED -> messageSource.getMessage("on", null,locale);
+            case DISABLED -> messageSource.getMessage("off", null,locale);
+            case UNKNOWN -> messageSource.getMessage("unknown", null,locale);
         };
     }
 }

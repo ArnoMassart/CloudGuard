@@ -4,20 +4,21 @@ import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitNodeDto;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.google.api.services.admin.directory.model.OrgUnit;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class GoogleOrgUnitService { 
 
     private final GoogleOrgUnitCacheService orgUnitCacheService;
+    private final MessageSource messageSource;
 
-    public GoogleOrgUnitService(GoogleOrgUnitCacheService orgUnitCacheService) {
+    public GoogleOrgUnitService(GoogleOrgUnitCacheService orgUnitCacheService, MessageSource messageSource) {
         this.orgUnitCacheService = orgUnitCacheService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -30,7 +31,7 @@ public class GoogleOrgUnitService {
         Map<String, Integer> userCounts = cachedData.userCounts();
 
         if (allOrgUnits == null || allOrgUnits.isEmpty()) {
-            return buildEmptyRoot();
+            return buildEmptyRoot(messageSource);
         }
 
         // 2. Bouw de boom
@@ -98,10 +99,14 @@ public class GoogleOrgUnitService {
         return norm.equals(expectedParent) || (norm.isEmpty() && "/".equals(expectedParent));
     }
 
-    private static OrgUnitNodeDto buildEmptyRoot() {
+    private static OrgUnitNodeDto buildEmptyRoot(MessageSource messageSource) {
         OrgUnitNodeDto root = new OrgUnitNodeDto();
         root.setId("/");
-        root.setName("Organisatie");
+
+        Locale locale = LocaleContextHolder.getLocale();
+
+        String name = messageSource.getMessage("orgUnits.empty_root", null, locale);
+        root.setName(name);
         root.setOrgUnitPath("/");
         root.setRoot(true);
         root.setUserCount(0);

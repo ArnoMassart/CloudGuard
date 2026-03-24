@@ -5,13 +5,12 @@ import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Policy provider for Chrome extension management.
@@ -25,16 +24,16 @@ import java.util.Set;
 public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
 
     private static final Logger log = LoggerFactory.getLogger(ChromeExtensionPolicyProvider.class);
-    private static final String SETTINGS_LINK_TEXT = "Klik hier om deze instellingen aan te passen";
-    private static final String BASE_EXPLANATION = "Deze beleidsregel toont hoe Chrome-extensies voor deze organisatie-eenheid worden beheerd.";
     private static final String ADMIN_LINK = "https://admin.google.com/u/1/ac/chrome/apps";
 
     private final PolicyApiCacheService policyCache;
     private final ChromePolicyApiService chromePolicyApi;
+    private final MessageSource messageSource;
 
-    public ChromeExtensionPolicyProvider(PolicyApiCacheService policyCache, ChromePolicyApiService chromePolicyApi) {
+    public ChromeExtensionPolicyProvider(PolicyApiCacheService policyCache, ChromePolicyApiService chromePolicyApi, MessageSource messageSource) {
         this.policyCache = policyCache;
         this.chromePolicyApi = chromePolicyApi;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -78,43 +77,48 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         String statusClass;
         String description;
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         if (hasForceInstalled || (defaultBlocked && hasAllowlist)) {
             status = "Managed";
             statusClass = "bg-amber-100 text-amber-800";
             description = hasForceInstalled
-                    ? "Er zijn force-installed extensies"
-                    : "Alleen specifieke extensies zijn toegestaan";
+                    ? messageSource.getMessage("orgUnits.description.force_installed", null, locale)
+                    : messageSource.getMessage("orgUnits.description.force_not_installed", null, locale);
         } else if (defaultBlocked && hasBlocklist) {
             // Default block, blocklist only (block all) - treat as Managed
             status = "Managed";
             statusClass = "bg-amber-100 text-amber-800";
-            description = "Alle extensies zijn standaard geblokkeerd";
+            description = messageSource.getMessage("orgUnits.description.default_blocked", null, locale);
         } else if (!defaultBlocked && hasBlocklist) {
             status = "Restricted";
             statusClass = "bg-amber-100 text-amber-800";
-            description = "Er is een blokkeerlijst of force-installed extensies";
+            description = messageSource.getMessage("orgUnits.description.blocked_restricted", null, locale);
         } else {
             status = "Open";
             statusClass = "bg-green-100 text-green-800";
-            description = "Er zijn geen aanvullende restricties";
+            description = messageSource.getMessage("orgUnits.description.blocked_open", null, locale);
         }
 
         String inheritanceExplanation = inherited
-                ? "Overgenomen van bovenliggende OU: " + sourceOuPath + "."
-                : "Rechtstreeks ingesteld op deze OU.";
-        String details = String.format("Geblokkeerd: %d • Force-installed: %d • Toegestaan: %d",
-                counts.blocked, counts.forceInstalled, counts.allowed);
+                ? messageSource.getMessage("orgUnits.inherited", null, locale)+": " + sourceOuPath + "."
+                : messageSource.getMessage("orgUnits.not_inherited", null, locale)+".";
+
+        String details = messageSource.getMessage("orgUnits.extension.status.details.blocked", new Object[]{counts.blocked}, locale)
+                + "."
+                + messageSource.getMessage("orgUnits.extension.status.details.force_installed", new Object[]{counts.forceInstalled}, locale)
+                + "."
+                + messageSource.getMessage("orgUnits.extension.status.details.allowed", new Object[]{counts.allowed}, locale);
 
         return new OrgUnitPolicyDto(
                 key(),
-                "Chrome-extensies",
+                messageSource.getMessage("orgUnits.chrome_extension", null, locale),
                 description,
                 status,
                 statusClass,
-                BASE_EXPLANATION,
+                messageSource.getMessage("orgUnits.base_explanation", null, locale),
                 inheritanceExplanation,
                 inherited,
-                SETTINGS_LINK_TEXT,
                 ADMIN_LINK,
                 details
         );
@@ -213,25 +217,26 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
     }
 
     private OrgUnitPolicyDto buildNotConfigured(String path, boolean apiError) {
+        Locale locale = LocaleContextHolder.getLocale();
+
         String description = apiError
-                ? "Chrome-beheer niet ingeschakeld / API niet bereikbaar"
-                : "Er is geen actief extensiebeleid";
+                ? messageSource.getMessage("orgUnits.description.api_error", null, locale)
+                : messageSource.getMessage("orgUnits.description.no_api_error", null, locale);
         String inheritanceExplanation = apiError
-                ? "Chrome Policy API niet beschikbaar of niet ingeschakeld. Schakel Chrome-beheer in voor uw domein."
-                : "Geen Chrome-extensiebeleid gevonden voor deze OU.";
+                ? messageSource.getMessage("orgUnits.inherited.api_error", null, locale)
+                : messageSource.getMessage("orgUnits.inherited.no_api_error", null, locale);
 
         return new OrgUnitPolicyDto(
                 key(),
-                "Chrome-extensies",
+                messageSource.getMessage("orgUnits.chrome_extension", null, locale),
                 description,
-                "Niet geconfigureerd",
+                messageSource.getMessage("orgUnits.not_configured", null, locale),
                 "bg-slate-100 text-slate-700",
-                BASE_EXPLANATION,
+                messageSource.getMessage("orgUnits.base_explanation", null, locale),
                 inheritanceExplanation,
                 false,
-                SETTINGS_LINK_TEXT,
                 ADMIN_LINK,
-                "Geen extensieregels gevonden."
+                messageSource.getMessage("orgUnits.details.no_found", null, locale)
         );
     }
 
