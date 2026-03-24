@@ -95,7 +95,6 @@ public class GoogleSharedDriveCacheService {
 
         DriveMetrics metrics = fetchDriveMetrics(driveService, drive, customerDomain);
 
-        String createdTime = drive.getCreatedTime() != null ? DateTimeConverter.convertToTimeAgo(drive.getCreatedTime()) : "Onbekend";
         String risk = calculateRisk(metrics.externalMembers(), metrics.totalOrganizers(), domainOnly, membersOnly);
 
         return new SharedDriveBasicDetail(
@@ -104,7 +103,8 @@ public class GoogleSharedDriveCacheService {
                 metrics.totalMembers(),
                 metrics.externalMembers(),
                 metrics.totalOrganizers(),
-                createdTime,
+                drive.getCreatedTime(),
+                "",
                 domainOnly,
                 membersOnly,
                 risk
@@ -152,12 +152,12 @@ public class GoogleSharedDriveCacheService {
         if (totalOrganizers <= 0) riskCount++;
 
         switch (riskCount) {
-            case 1, 2 -> { return "Middel";}
+            case 1, 2 -> { return "middle";}
             case 3, 4 -> {
-                return "Hoog";
+                return "high";
             }
             default -> {
-                return "Laag";
+                return "low";
             }
         }
     }

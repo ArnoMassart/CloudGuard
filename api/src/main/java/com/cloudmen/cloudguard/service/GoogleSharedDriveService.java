@@ -7,18 +7,26 @@ import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
+import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class GoogleSharedDriveService {
     private final GoogleSharedDriveCacheService sharedDriveCacheService;
+    private final MessageSource messageSource;
 
-    public GoogleSharedDriveService(GoogleSharedDriveCacheService sharedDriveCacheService) {
+    public GoogleSharedDriveService(GoogleSharedDriveCacheService sharedDriveCacheService, @Qualifier("messageSource") MessageSource messageSource) {
         this.sharedDriveCacheService = sharedDriveCacheService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -44,7 +52,21 @@ public class GoogleSharedDriveService {
 
         List<SharedDriveBasicDetail> pagedItems = (startIndex >= totalDrives)
                 ? Collections.emptyList()
-                : filteredList.subList(startIndex, endIndex);
+                : filteredList.subList(startIndex, endIndex).stream().map(item -> {
+            String time = DateTimeConverter.convertToTimeAgo(item.createdTime());
+            return new SharedDriveBasicDetail(
+                    item.id(),
+                    item.name(),
+                    item.totalMembers(),
+                    item.externalMembers(),
+                    item.totalOrganizers(),
+                    item.createdTime(),
+                    time,
+                    item.onlyDomainUsersAllowed(),
+                    item.onlyMembersCanAccess(),
+                    item.risk()
+            );
+        }).toList();
 
         String nextTokenToReturn = (endIndex < totalDrives) ? String.valueOf(page + 1) : null;
         return new SharedDrivePageResponse(pagedItems, nextTokenToReturn);
@@ -57,9 +79,9 @@ public class GoogleSharedDriveService {
             int totalDrives = drives.size();
 
         int orphanDrives = (int) drives.stream().filter(d -> d.totalOrganizers() <= 0).count();
-        int totalLowRisk = (int) drives.stream().filter(d -> d.risk().equals("Laag")).count();
-        int totalMediumRisk = (int) drives.stream().filter(d -> d.risk().equals("Middel")).count();
-        int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("Hoog")).count();
+        int totalLowRisk = (int) drives.stream().filter(d -> d.risk().equals("low")).count();
+        int totalMediumRisk = (int) drives.stream().filter(d -> d.risk().equals("middle")).count();
+        int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("high")).count();
         int totalExternalMembersCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
 
         int securityScore = totalDrives == 0 ? 100 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
@@ -95,15 +117,17 @@ public class GoogleSharedDriveService {
         int domainOnlyScore = totalDrives == 0 ? 100 : notOnlyDomainUsersAllowedCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyDomainUsersAllowedCount * 50 / totalDrives);
         int membersOnlyScore = totalDrives == 0 ? 100 : notOnlyMembersCanAccessCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyMembersCanAccessCount * 50 / totalDrives);
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Laag risico drives", totalLowRisk + " van " + totalDrives + " drives met laag risico", lowScore, 100, severity(lowScore)),
-                new SecurityScoreFactorDto("Gemiddeld risico drives", totalMediumRisk + " van " + totalDrives + " drives met gemiddeld risico", mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0)),
-                new SecurityScoreFactorDto("Hoog risico drives", totalHighRisk + " van " + totalDrives + " drives met hoog risico", highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0)),
-                new SecurityScoreFactorDto("Drives met beheerders", orphanDrives == 0 ? "Alle drives hebben beheerders" : orphanDrives + " drive(s) zonder beheerder", orphanScore, 100, severity(orphanScore)),
-                new SecurityScoreFactorDto("Alleen domeingebruikers", notOnlyDomainUsersAllowedCount == 0 ? "Alle drives staan alleen domeingebruikers toe" : notOnlyDomainUsersAllowedCount + " drive(s) staan externe gebruikers toe", domainOnlyScore, 100, severity(domainOnlyScore)),
-                new SecurityScoreFactorDto("Alleen leden toegang", notOnlyMembersCanAccessCount == 0 ? "Alle drives beperken toegang tot leden" : notOnlyMembersCanAccessCount + " drive(s) geven toegang aan niet-leden", membersOnlyScore, 100, severity(membersOnlyScore))
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.low_risk.title", null, locale), messageSource.getMessage("drives.score.factor.low_risk.description", new Object[]{totalLowRisk, totalDrives}, locale), lowScore, 100, severity(lowScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.middle_risk.title", null, locale), messageSource.getMessage("drives.score.factor.middle_risk.description", new Object[]{totalMediumRisk, totalDrives}, locale), mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0)),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.high_risk.title", null, locale), messageSource.getMessage("drives.score.factor.high_risk.description", new Object[]{totalHighRisk, totalDrives}, locale), highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0)),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.with_managers.title", null, locale), orphanDrives == 0 ? messageSource.getMessage("drives.score.factor.with_managers_not.description", null, locale) : messageSource.getMessage("drives.score.factor.with_managers.description", new Object[]{orphanDrives}, locale), orphanScore, 100, severity(orphanScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_domain.title", null, locale), notOnlyDomainUsersAllowedCount == 0 ? messageSource.getMessage("drives.score.factor.only_domain_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_domain.description", new Object[]{notOnlyDomainUsersAllowedCount}, locale), domainOnlyScore, 100, severity(domainOnlyScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_members.title", null, locale), notOnlyMembersCanAccessCount == 0 ? messageSource.getMessage("drives.score.factor.only_members_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_members.description", new Object[]{notOnlyMembersCanAccessCount}, locale), membersOnlyScore, 100, severity(membersOnlyScore))
         );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

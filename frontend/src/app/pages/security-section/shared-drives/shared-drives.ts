@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,8 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 // ==========================================
 // CONSTANTS
@@ -29,11 +31,12 @@ const ITEMS_PER_PAGE = 2;
     FormsModule,
     PageWarnings,
     PageWarningsItem,
+    TranslocoPipe,
   ],
   templateUrl: './shared-drives.html',
   styleUrl: './shared-drives.css',
 })
-export class SharedDrives implements OnInit {
+export class SharedDrives implements OnInit, OnDestroy {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -41,6 +44,7 @@ export class SharedDrives implements OnInit {
   readonly UtilityMethods = UtilityMethods;
   readonly #driveService = inject(DriveService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -75,13 +79,22 @@ export class SharedDrives implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
+  #langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#loadPageOverview();
-    this.#loadDrives();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadPageOverview();
+      this.#loadDrives();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   // ==========================================
@@ -118,10 +131,9 @@ export class SharedDrives implements OnInit {
 
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
-    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
-      overview?.securityScore ?? 0,
-      'Drives'
-    );
+    const breakdown =
+      overview?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'Drives');
     this.#securityScoreDetail.open(breakdown, 'Drives');
   }
 

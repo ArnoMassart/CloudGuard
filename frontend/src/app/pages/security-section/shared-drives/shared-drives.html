@@ -1,7 +1,7 @@
 <div class="px-10 py-6">
   <app-page-header
-    Title="Gedeelde Drives Controle"
-    Description="Controleer instellingen voor gedeelde Drives om de gegevensbeveiliging te garanderen"
+    Title="{{ 'shared-drives.title' | transloco }}"
+    Description="{{ 'shared-drives.description' | transloco }}"
     AdminLink="drive/manageshareddrives"
   />
 
@@ -9,14 +9,14 @@
     <div class="w-full flex gap-4">
       <app-section-top-card
         class="flex-1"
-        Title="Totaal drives"
+        Title="{{ 'shared-drives.total-drives' | transloco }}"
         [Value]="pageOverview()?.totalDrives"
         [Icon]="Icons.HardDrive"
       />
 
       <app-section-top-card
         class="flex-1"
-        Title="Drives zonder beheerders"
+        Title="{{ 'shared-drives.without-managers' | transloco }}"
         [Value]="pageOverview()?.orphanDrives"
         BackgroundColor="#f3e8ff"
         IconColor="#9810fa"
@@ -26,7 +26,7 @@
 
       <app-section-top-card
         class="flex-1"
-        Title="Hoog risico"
+        Title="{{ 'shared-drives.high-risk' | transloco }}"
         [Value]="pageOverview()?.totalHighRisk"
         BackgroundColor="#ffe2e2"
         IconColor="#e7000b"
@@ -36,7 +36,7 @@
 
       <app-section-top-card
         class="flex-1"
-        Title="Met externe leden"
+        Title="{{ 'shared-drives.with-external' | transloco }}"
         [Value]="pageOverview()?.externalMembersDriveCount"
         BackgroundColor="#ffedd4"
         IconColor="#f54a00"
@@ -72,9 +72,9 @@
           @if (drivePageWarnings().orphanDrivesWarning) {
             <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
               {{ pageOverview()?.orphanDrives }}
-              wees
+              {{ 'orphan' | transloco }}
               {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
-              zonder beheerder gevonden
+              {{ 'shared-drives.with-external-found' | transloco }}
             </app-page-warnings-item>
           }
 
@@ -82,9 +82,11 @@
             <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
               {{ pageOverview()?.externalMembersDriveCount }}
               {{
-                pageOverview()?.externalMembersDriveCount === 1 ? 'drive heeft' : 'drives hebben'
+                pageOverview()?.externalMembersDriveCount === 1
+                  ? ('shared-drives.drive-has' | transloco)
+                  : ('shared-drives.drives-have' | transloco)
               }}
-              externe leden buiten uw domein
+              {{ 'shared-drives.external-outside-domain' | transloco }}
             </app-page-warnings-item>
           }
 
@@ -93,10 +95,10 @@
               {{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
               {{
                 pageOverview()?.notOnlyDomainUsersAllowedCount === 1
-                  ? 'drive staat'
-                  : 'drives staan'
+                  ? ('shared-drives.drive-allows' | transloco)
+                  : ('shared-drives.drives-allow' | transloco)
               }}
-              delen met gebruikers buiten uw domein toe
+              {{ 'shared-drives.share-with-outside-domain' | transloco }}
             </app-page-warnings-item>
           }
 
@@ -104,9 +106,11 @@
             <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
               {{ pageOverview()?.notOnlyMembersCanAccessCount }}
               {{
-                pageOverview()?.notOnlyMembersCanAccessCount === 1 ? 'drive kan' : 'drives kunnen'
+                pageOverview()?.notOnlyMembersCanAccessCount === 1
+                  ? ('shared-drives.drive-can' | transloco)
+                  : ('shared-drives.drives-can' | transloco)
               }}
-              toegang verlenen aan niet-leden
+              {{ 'shared-drives.access-non-members' | transloco }}
             </app-page-warnings-item>
           }
         </div>
@@ -114,7 +118,7 @@
     }
 
     <app-search-bar
-      placeholder="Zoek gedeelde drives op naam..."
+      placeholder="{{ 'shared-drives.search' | transloco }}..."
       (searchChange)="onSearch($event)"
     />
 
@@ -123,7 +127,7 @@
         <!-- Drives list -->
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
           <div class="flex justify-between items-center mx-5.5 pb-2">
-            <span class="font-medium text-lg">Alle drives</span>
+            <span class="font-medium text-lg">{{ 'shared-drives.all' | transloco }}</span>
             <button
               (click)="refreshData()"
               [disabled]="isRefreshing()"
@@ -132,7 +136,7 @@
               <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
               </i-lucide>
 
-              {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+              {{ isRefreshing() ? ('refreshing' | transloco) + '...' : ('renew-data' | transloco) }}
             </button>
           </div>
           <div class="space-y-4 mt-1 px-6">
@@ -152,14 +156,14 @@
                   <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
                     <span
                       class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
-                      [class.bg-emerald-100]="drive.risk === 'Laag'"
-                      [class.text-emerald-800]="drive.risk === 'Laag'"
-                      [class.bg-amber-100]="drive.risk === 'Middel'"
-                      [class.text-amber-800]="drive.risk === 'Middel'"
-                      [class.bg-rose-100]="drive.risk === 'Hoog'"
-                      [class.text-rose-800]="drive.risk === 'Hoog'"
+                      [class.bg-emerald-100]="drive.risk === 'low'"
+                      [class.text-emerald-800]="drive.risk === 'low'"
+                      [class.bg-amber-100]="drive.risk === 'middle'"
+                      [class.text-amber-800]="drive.risk === 'middle'"
+                      [class.bg-rose-100]="drive.risk === 'high'"
+                      [class.text-rose-800]="drive.risk === 'high'"
                     >
-                      {{ drive.risk }} risico
+                      {{ drive.risk | transloco }} {{ 'risk' | transloco }}
                     </span>
                   </div>
                 </div>
@@ -168,7 +172,7 @@
                 <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      TOTAAL LEDEN
+                      {{ 'groups.total-members' | transloco }}
                     </p>
                     <div class="flex items-center gap-2">
                       <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
@@ -177,7 +181,7 @@
                   </div>
                   <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      EXTERNE LEDEN
+                      {{ 'groups.external-members' | transloco }}
                     </p>
                     <span
                       class="font-medium"
@@ -189,7 +193,7 @@
                   </div>
                   <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      AANTAL BEHEERDERS
+                      {{ 'shared-drives.number-of-managers' | transloco }}
                     </p>
                     <div class="flex items-center gap-2">
                       <i-lucide
@@ -211,12 +215,12 @@
                   </div>
                   <div>
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      OPGERICHT
+                      {{ 'founded' | transloco }}
                     </p>
                     <div class="flex items-center gap-2">
                       <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
                       <span class="text-muted-foreground text-sm font-medium">
-                        {{ drive.createdTime }}
+                        {{ drive.parsedTime }}
                       </span>
                     </div>
                   </div>
@@ -228,7 +232,7 @@
                 >
                   <div class="bg-slate-50 rounded-md px-3 py-3">
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      ALLEEN DOMEINGEBRUIKERS TOEGESTAAN
+                      {{ 'only-domain-users' | transloco }}
                     </p>
                     <div
                       class="flex items-center gap-1 cursor-pointer"
@@ -245,16 +249,20 @@
                           class="text-[#f54a00] cursor-pointer"
                           size="13"
                         />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
+                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{
+                          'no' | transloco
+                        }}</span>
                       } @else {
                         <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">Ja</span>
+                        <span class="text-emerald-600 text-xs font-medium">{{
+                          'yes' | transloco
+                        }}</span>
                       }
                     </div>
                   </div>
                   <div class="bg-slate-50 rounded-md px-3 py-3">
                     <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      ALLEEN LEDEN KUNNEN TOEGANG KRIJKEN
+                      {{ 'only-members' | transloco }}
                     </p>
                     <div
                       class="flex items-center gap-1 cursor-pointer"
@@ -267,10 +275,14 @@
                     >
                       @if (!drive.onlyMembersCanAccess) {
                         <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">Nee</span>
+                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{
+                          'no' | transloco
+                        }}</span>
                       } @else {
                         <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">Ja</span>
+                        <span class="text-emerald-600 text-xs font-medium">{{
+                          'yes' | transloco
+                        }}</span>
                       }
                     </div>
                   </div>
@@ -282,7 +294,8 @@
               class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
             >
               <span class="text-sm text-gray-500">
-                Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+                {{ 'page' | transloco }}
+                <span class="font-medium text-slate-900">{{ currentPage() }}</span>
               </span>
               <div class="flex gap-2">
                 <button
@@ -291,14 +304,14 @@
                   class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <i-lucide [img]="Icons.ChevronLeft" size="16" />
-                  Vorige
+                  {{ 'previous' | transloco }}
                 </button>
                 <button
                   (click)="nextPage()"
                   [disabled]="!nextPageToken()"
                   class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Volgende
+                  {{ 'next' | transloco }}
                   <i-lucide [img]="Icons.ChevronRight" size="16" />
                 </button>
               </div>
@@ -308,7 +321,9 @@
       } @else {
         <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
           <div class="flex items-center justify-center p-5">
-            <span class="text-lg font-medium text-slate-600"> Geen drives gevonden! </span>
+            <span class="text-lg font-medium text-slate-600">
+              {{ 'shared-drives.not-found' | transloco }}!
+            </span>
           </div>
         </div>
       }
@@ -325,7 +340,7 @@
             </div>
 
             <span class="text-sm font-medium text-slate-600 animate-pulse">
-              Gedeelde drives worden geladen...
+              {{ 'shared-drives.loading' | transloco }}...
             </span>
           </div>
         </div>
