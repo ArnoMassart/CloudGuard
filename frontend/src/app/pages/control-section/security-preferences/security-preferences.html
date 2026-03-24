@@ -1,0 +1,54 @@
+<div class="px-10 py-6">
+  <app-page-header
+    Title="Beveiligingsvoorkeuren"
+    Description="Kies welke waarschuwingen en meldingen u wilt zien per sectie. Uitgeschakelde voorkeuren worden verborgen in meldingen en op sectiepagina's."
+    [NeedAdminLink]="false"
+  />
+
+  @if (loading()) {
+  <div class="flex flex-col items-center py-16">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    <span class="mt-4 text-sm text-slate-600">Voorkeuren laden...</span>
+  </div>
+  } @else {
+  <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    @for (section of sections; track section.section) {
+    <div class="rounded-xl border-2 border-slate-200/80 bg-white p-6 shadow-sm">
+      <h3 class="mb-4 font-semibold text-slate-900">{{ section.label }}</h3>
+      <ul class="space-y-3">
+        @for (pref of section.preferences; track pref.key) {
+        <li class="flex items-center justify-between gap-4">
+          <label class="flex-1 cursor-pointer text-sm text-slate-700" [for]="section.section + '-' + pref.key">
+            {{ pref.label }}
+          </label>
+          <button
+            type="button"
+            role="switch"
+            [attr.aria-checked]="isEnabled(section.section, pref.key)"
+            [attr.aria-label]="pref.label + ' ' + (isEnabled(section.section, pref.key) ? 'uit' : 'aan') + 'zetten'"
+            [id]="section.section + '-' + pref.key"
+            [disabled]="saving() !== null"
+            (click)="toggle(section.section, pref.key)"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+            [class.bg-primary]="isEnabled(section.section, pref.key)"
+            [class.bg-slate-300]="!isEnabled(section.section, pref.key)"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform"
+              [class.translate-x-5]="isEnabled(section.section, pref.key)"
+              [class.translate-x-0.5]="!isEnabled(section.section, pref.key)"
+            ></span>
+          </button>
+        </li>
+        }
+      </ul>
+    </div>
+    }
+  </div>
+
+  <p class="mt-8 text-sm text-slate-500">
+    <span class="font-medium">Aan</span> = waarschuwingen en meldingen worden getoond.
+    <span class="font-medium">Uit</span> = waarschuwingen en meldingen worden verborgen in meldingen en op sectiepagina's.
+  </p>
+  }
+</div>
