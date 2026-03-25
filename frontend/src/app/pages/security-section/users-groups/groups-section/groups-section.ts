@@ -85,6 +85,12 @@ export class GroupsSection implements OnInit, OnDestroy {
     return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
   });
 
+  readonly showHighRiskKpiAlert = computed(() => {
+    const o = this.pageOverview();
+    const n = o?.highRiskGroups ?? 0;
+    return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
+  });
+
   #langSubscription?: Subscription;
 
   ngOnInit(): void {
@@ -221,7 +227,10 @@ export class GroupsSection implements OnInit, OnDestroy {
       !!o &&
       (o.groupsWithExternal ?? 0) > 0 &&
       !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
-    const highRisk = !!o && (o.highRiskGroups ?? 0) > 0;
+    const highRisk =
+      !!o &&
+      (o.highRiskGroups ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
 
     this.groupPageWarnings.set({
       externalMember: external,

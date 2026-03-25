@@ -144,6 +144,10 @@ export class SharedDrives implements OnInit, OnDestroy {
     }
   }
 
+  isSharedDrivePrefDisabled(key: 'outsideDomain' | 'nonMemberAccess'): boolean {
+    return this.#preferencesFacade.isDisabled('shared-drives', key);
+  }
+
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
     const breakdown =
@@ -214,8 +218,14 @@ export class SharedDrives implements OnInit, OnDestroy {
 
   #loadWarnings() {
     const o = this.pageOverview();
-    const notOnlyDomain = !!o && (o.notOnlyDomainUsersAllowedCount ?? 0) > 0;
-    const notOnlyMembers = !!o && (o.notOnlyMembersCanAccessCount ?? 0) > 0;
+    const notOnlyDomain =
+      !!o &&
+      (o.notOnlyDomainUsersAllowedCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('shared-drives', 'outsideDomain');
+    const notOnlyMembers =
+      !!o &&
+      (o.notOnlyMembersCanAccessCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('shared-drives', 'nonMemberAccess');
     const external =
       !!o &&
       (o.externalMembersDriveCount ?? 0) > 0 &&

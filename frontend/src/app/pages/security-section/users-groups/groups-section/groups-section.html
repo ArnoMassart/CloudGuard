@@ -10,9 +10,11 @@
       [TextColor]="showExternalKpiAlert() ? '#f54a00' : 'black'"
       [Icon]="showExternalKpiAlert() ? Icons.ShieldAlert : Icons.Users" />
 
-    <app-section-top-card class="flex-1" Title="{{ 'groups.high-risk' | transloco }}"
-      [Value]="pageOverview()?.highRiskGroups" BackgroundColor="#fee2e2" [Icon]="Icons.TriangleAlert"
-      IconColor="#dc2626" />
+    <app-section-top-card class="flex-1" Title="{{ 'groups.high-risk' | transloco }}" [Value]="pageOverview()?.highRiskGroups"
+      [BackgroundColor]="showHighRiskKpiAlert() ? '#fee2e2' : '#dbeafe'"
+      [Icon]="showHighRiskKpiAlert() ? Icons.TriangleAlert : Icons.Users"
+      [IconColor]="showHighRiskKpiAlert() ? '#dc2626' : '#155dfc'"
+      [TextColor]="showHighRiskKpiAlert() ? '#dc2626' : 'black'" />
 
     <div
       class="flex-1 cursor-pointer transition-opacity hover:opacity-90"

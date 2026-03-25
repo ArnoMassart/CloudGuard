@@ -45,6 +45,7 @@ public class NotificationAggregationService {
 
     private static final Set<String> NOTIFICATION_TYPES_WITH_DETAILS = Set.of(
             "user-control", "group-external", "oauth-high-risk", "drive-orphan", "drive-external",
+            "drive-outside-domain", "drive-non-member-access",
             "device-lockscreen", "device-encryption", "device-os", "device-integrity",
             "password-2sv-not-enforced", "password-weak-length", "password-strong-not-required",
             "password-never-expires", "password-admins-no-security-keys"
@@ -256,6 +257,18 @@ public class NotificationAggregationService {
                         messageSource.getMessage("notifications.drives.external.description", new Object[]{drives.externalMembersDriveCount()}, locale),
                         List.of(messageSource.getMessage("notifications.drives.external.actions", null, locale)),
                         "drive-external", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
+            }
+            if (drives.notOnlyDomainUsersAllowedCount() > 0) {
+                notifications.add(create(++id, "warning", "Drives staan delen buiten het domein toe",
+                        drives.notOnlyDomainUsersAllowedCount() + " drive(s) staan delen met gebruikers buiten uw domein toe.",
+                        List.of("Beperk gedeelde drives tot alleen gebruikers van uw organisatie"),
+                        "drive-outside-domain", "shared-drives", "Gedeelde Drives", "/shared-drives"));
+            }
+            if (drives.notOnlyMembersCanAccessCount() > 0) {
+                notifications.add(create(++id, "warning", "Drives met toegang voor niet-leden",
+                        drives.notOnlyMembersCanAccessCount() + " drive(s) kunnen toegang verlenen aan niet-leden.",
+                        List.of("Beperk toegang tot leden van de drive"),
+                        "drive-non-member-access", "shared-drives", "Gedeelde Drives", "/shared-drives"));
             }
         }
 

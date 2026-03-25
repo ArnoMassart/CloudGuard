@@ -25,6 +25,8 @@ public final class PreferenceToNotificationMapping {
             // shared-drives
             Map.entry("shared-drives:drive-orphan", "shared-drives:orphan"),
             Map.entry("shared-drives:drive-external", "shared-drives:external"),
+            Map.entry("shared-drives:drive-outside-domain", "shared-drives:outsideDomain"),
+            Map.entry("shared-drives:drive-non-member-access", "shared-drives:nonMemberAccess"),
             // mobile-devices
             Map.entry("mobile-devices:device-lockscreen", "mobile-devices:lockscreen"),
             Map.entry("mobile-devices:device-encryption", "mobile-devices:encryption"),

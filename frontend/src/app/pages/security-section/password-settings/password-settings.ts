@@ -97,6 +97,44 @@ export class PasswordSettings implements OnInit, OnDestroy {
 
   #langSubscription?: Subscription;
 
+  /** True when any OU still has policy problems after applying muted preferences (matches expanded-row rules). */
+  readonly hasVisiblePasswordPolicyProblems = computed(() =>
+    (this.data()?.passwordPoliciesByOu ?? []).some((p) => this.effectivePolicyProblemCount(p) > 0),
+  );
+
+  readonly adminKeySectionAlert = computed(() => {
+    const n = this.data()?.adminsWithoutSecurityKeys.length ?? 0;
+    return n > 0 && !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys');
+  });
+
+  isPasswordPrefDisabled(
+    key: '2sv' | 'length' | 'strongPassword' | 'expiration' | 'adminsSecurityKeys',
+  ): boolean {
+    return this.#preferencesFacade.isDisabled('password-settings', key);
+  }
+
+  /**
+   * Problem count per OU for list styling: same dimensions as warnings (length &lt; 12, no expiration, weak not required, reuse)
+   * minus issues the user muted. Reuse has no preference and is always counted.
+   */
+  effectivePolicyProblemCount(policy: OuPasswordPolicy): number {
+    const f = this.#preferencesFacade;
+    let p = 0;
+    if (!f.isDisabled('password-settings', 'strongPassword') && policy.strongPasswordRequired === false) {
+      p++;
+    }
+    if (!f.isDisabled('password-settings', 'expiration') && (policy.expirationDays == null || policy.expirationDays === 0)) {
+      p++;
+    }
+    if (policy.reusePreventionCount != null && policy.reusePreventionCount === 0) {
+      p++;
+    }
+    if (!f.isDisabled('password-settings', 'length') && policy.minLength != null && policy.minLength < 12) {
+      p++;
+    }
+    return p;
+  }
+
   toggleWarnings(): void {
     this.warningsExpanded.update((v) => !v);
   }

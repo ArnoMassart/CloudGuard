@@ -243,20 +243,20 @@
                         $event.stopPropagation()
                       "
                     >
-                      @if (!drive.onlyDomainUsersAllowed) {
+                      @if (!drive.onlyDomainUsersAllowed && !isSharedDrivePrefDisabled('outsideDomain')) {
                         <i-lucide
                           [img]="Icons.TriangleAlert"
                           class="text-[#f54a00] cursor-pointer"
                           size="13"
                         />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{
-                          'no' | transloco
-                        }}</span>
+                        <span class="text-[#f54a00] text-[13px] font-medium underline">
+                            {{'no' | transloco}}</span>
+                      } @else if (drive.onlyDomainUsersAllowed) {
+                        <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
+                        <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
                       } @else {
                         <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">{{
-                          'yes' | transloco
-                        }}</span>
+                        <span class="text-emerald-600 text-xs font-medium">Nee (voorkeur)</span>
                       }
                     </div>
                   </div>
@@ -273,16 +273,15 @@
                         $event.stopPropagation()
                       "
                     >
-                      @if (!drive.onlyMembersCanAccess) {
+                      @if (!drive.onlyMembersCanAccess && !isSharedDrivePrefDisabled('nonMemberAccess')) {
                         <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{
-                          'no' | transloco
-                        }}</span>
+                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{'no' | transloco}}</span>
+                      } @else if (drive.onlyMembersCanAccess) {
+                        <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
+                        <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
                       } @else {
                         <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">{{
-                          'yes' | transloco
-                        }}</span>
+                        <span class="text-emerald-600 text-xs font-medium">Nee (voorkeur)</span>
                       }
                     </div>
                   </div>

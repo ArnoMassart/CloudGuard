@@ -18,7 +18,11 @@ export const SECTION_PREFERENCE_CONFIGS: SectionPreferenceConfig[] = [
     preferences: [
       { key: '2fa', label: 'Waarschuwingen over gebruikers zonder 2FA' },
       { key: 'activity', label: 'Waarschuwingen over gebruikeractiviteit (inactiviteit, recente login)' },
-      { key: 'groupExternal', label: 'Waarschuwingen over groepen met externe leden' },
+      {
+        key: 'groupExternal',
+        label:
+          'Waarschuwingen over groepen met externe leden en groepen met hoog risico (open of externe instellingen)',
+      },
     ],
   },
   {
@@ -28,6 +32,14 @@ export const SECTION_PREFERENCE_CONFIGS: SectionPreferenceConfig[] = [
     preferences: [
       { key: 'orphan', label: 'Waarschuwingen over drives zonder eigenaar' },
       { key: 'external', label: 'Waarschuwingen over drives met externe leden' },
+      {
+        key: 'outsideDomain',
+        label: 'Waarschuwingen over drives die delen met gebruikers buiten uw domein toestaan',
+      },
+      {
+        key: 'nonMemberAccess',
+        label: 'Waarschuwingen over drives die toegang voor niet-leden toestaan',
+      },
     ],
   },
   {

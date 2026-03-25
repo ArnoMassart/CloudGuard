@@ -2,7 +2,7 @@ import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UserOrgDetail } from '../../../../models/users/UserOrgDetails';
+import { USER_SECURITY_VIOLATION, UserOrgDetail } from '../../../../models/users/UserOrgDetails';
 import { UserService } from '../../../../services/user-service';
 import { SecurityScoreDetailService } from '../../../../services/security-score-detail.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -151,6 +151,31 @@ export class UsersSection implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Shows Conform when the user is already conform, or when every violation is covered by a disabled (muted) preference.
+   */
+  effectiveSecurityConform(user: UserOrgDetail): boolean {
+    if (user.securityConform) {
+      return true;
+    }
+    const codes = user.securityViolationCodes;
+    if (!codes?.length) {
+      return false;
+    }
+    return codes.every((code) => {
+      if (code === USER_SECURITY_VIOLATION.NO_2FA) {
+        return this.#preferencesFacade.isDisabled('users-groups', '2fa');
+      }
+      if (
+        code === USER_SECURITY_VIOLATION.ACTIVITY_STALE ||
+        code === USER_SECURITY_VIOLATION.ACTIVITY_INACTIVE_RECENT
+      ) {
+        return this.#preferencesFacade.isDisabled('users-groups', 'activity');
+      }
+      return false;
+    });
+  }
+
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
     const breakdown =
@@ -191,19 +216,20 @@ export class UsersSection implements OnInit, OnDestroy {
   #loadUsers(token: string | null = null) {
     this.isLoading.set(true);
 
-    this.#userService
-      .getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
-      .subscribe({
-        next: (res) => {
-          this.orgUsers.set(res.users);
-          this.nextPageToken.set(res.nextPageToken);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load users', err);
-          this.isLoading.set(false);
-        },
-      });
+    forkJoin({
+      page: this.#userService.getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery()),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ page }) => {
+        this.orgUsers.set(page.users);
+        this.nextPageToken.set(page.nextPageToken);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load users', err);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   #loadPageOverview() {

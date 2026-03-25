@@ -66,6 +66,7 @@ public class GoogleUsersService {
 
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
             boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
+            var security = GoogleServiceHelperMethods.evaluateUserSecurity(isActive, user.getLastLoginTime(), twoFAEnabled);
 
             return new UserOrgDetail(
                     user.getName().getFullName(),
@@ -74,7 +75,8 @@ public class GoogleUsersService {
                     isActive,
                     user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
                     twoFAEnabled,
-                    GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
+                    security.conform(),
+                    security.violationCodes()
             );
         }).toList();
 
