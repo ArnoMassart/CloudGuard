@@ -14,6 +14,7 @@ import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewRespo
 import { Risk } from '../../../models/o-auth/Risk';
 import { FilterOption } from '../../../models/FilterOption';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { KPI_COLORS } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -76,13 +77,10 @@ export class AppAccess implements OnInit, OnDestroy {
   );
 
   readonly kpiHighRiskAppsColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.totalHighRiskApps ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (!this.highRiskAlertsEnabled()) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffe2e2', icon: '#e7000b', text: '#e7000b' };
+    const n = this.pageOverview()?.totalHighRiskApps ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (!this.highRiskAlertsEnabled()) return KPI_COLORS.muted;
+    return KPI_COLORS.alertRed;
   });
 
   readonly filterOptions = computed<FilterOption[]>(() => [

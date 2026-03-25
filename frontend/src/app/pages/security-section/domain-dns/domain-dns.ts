@@ -241,11 +241,8 @@ export class DomainDns implements OnInit, OnDestroy {
     this.isRefreshing.set(true);
     this.#domainService.refreshCache().subscribe({
       next: () => {
-        forkJoin({
-          domains: this.#domainService.getDomains(),
-          _: this.#preferencesFacade.loadDisabled$(),
-        }).subscribe({
-          next: ({ domains }) => {
+        this.#domainService.getDomains().subscribe({
+          next: (domains) => {
             this.domains.set(domains);
             this.isRefreshing.set(false);
           },

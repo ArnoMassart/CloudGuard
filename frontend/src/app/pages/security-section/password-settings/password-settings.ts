@@ -16,6 +16,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { LucideAngularModule } from 'lucide-angular';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { KPI_COLORS } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -57,11 +58,9 @@ export class PasswordSettings implements OnInit, OnDestroy {
 
   readonly kpiAdminsSecurityKeysColors = computed(() => {
     const n = this.data()?.adminsWithoutSecurityKeys.length ?? 0;
-    if (n === 0) return { bg: '#dbfce7', icon: '#17b04f', text: '#166534' };
-    if (this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
+    if (n === 0) return KPI_COLORS.okGreenDark;
+    if (this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')) return KPI_COLORS.muted;
+    return KPI_COLORS.alertOrange;
   });
   readonly hasPasswordLengthWeak = computed(() =>
     !this.#preferencesFacade.isDisabled('password-settings', 'length') &&
@@ -105,15 +104,6 @@ export class PasswordSettings implements OnInit, OnDestroy {
   );
 
   #langSubscription?: Subscription;
-
-  readonly hasVisiblePasswordPolicyProblems = computed(() =>
-    (this.data()?.passwordPoliciesByOu ?? []).some((p) => this.effectivePolicyProblemCount(p) > 0),
-  );
-
-  readonly adminKeySectionAlert = computed(() => {
-    const n = this.data()?.adminsWithoutSecurityKeys.length ?? 0;
-    return n > 0 && !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys');
-  });
 
   isPasswordPrefDisabled(
     key: '2sv' | 'length' | 'strongPassword' | 'expiration' | 'adminsSecurityKeys',

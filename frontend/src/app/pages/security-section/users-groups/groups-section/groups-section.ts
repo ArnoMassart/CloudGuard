@@ -11,6 +11,7 @@ import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
+import { KPI_COLORS } from '../../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -80,23 +81,17 @@ export class GroupsSection implements OnInit, OnDestroy {
   });
 
   readonly kpiGroupsExternalColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.groupsWithExternal ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
+    const n = this.pageOverview()?.groupsWithExternal ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) return KPI_COLORS.muted;
+    return KPI_COLORS.alertOrange;
   });
 
   readonly kpiGroupsHighRiskColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.highRiskGroups ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#fee2e2', icon: '#dc2626', text: '#dc2626' };
+    const n = this.pageOverview()?.highRiskGroups ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) return KPI_COLORS.muted;
+    return KPI_COLORS.alertRedDark;
   });
 
   #langSubscription?: Subscription;
@@ -195,15 +190,11 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
-    forkJoin({
-      res: this.#groupService.getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ res }) => {
+    this.#groupService.getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize).subscribe({
+      next: (res) => {
         this.groups.set(this.mapToGroupSummary(res.groups));
         this.nextPageToken.set(res.nextPageToken ?? null);
         this.loading.set(false);
-        console.log(this.groups());
       },
       error: (error) => {
         console.error('Error fetching groups:', error);

@@ -16,12 +16,6 @@ export class SecurityPreferencesService {
     });
   }
 
-  getSectionPreferences(section: string): Observable<Record<string, boolean>> {
-    return this.#http.get<Record<string, boolean>>(`${this.#API_URL}/${section}`, {
-      withCredentials: true,
-    });
-  }
-
   getDisabledKeys(): Observable<string[]> {
     return this.#http.get<string[]>(`${this.#API_URL}/disabled`, {
       withCredentials: true,
@@ -36,11 +30,4 @@ export class SecurityPreferencesService {
     );
   }
 
-  setSectionPreferences(section: string, preferences: Record<string, boolean>): Observable<void> {
-    return this.#http.put<void>(
-      `${this.#API_URL}/section`,
-      { section, preferences },
-      { withCredentials: true }
-    );
-  }
 }

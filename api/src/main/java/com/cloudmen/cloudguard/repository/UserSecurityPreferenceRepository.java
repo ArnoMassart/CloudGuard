@@ -13,6 +13,4 @@ public interface UserSecurityPreferenceRepository extends JpaRepository<UserSecu
     List<UserSecurityPreference> findByUserIdAndSection(String userId, String section);
 
     Optional<UserSecurityPreference> findByUserIdAndSectionAndPreferenceKey(String userId, String section, String preferenceKey);
-
-    boolean existsByUserIdAndSectionAndPreferenceKey(String userId, String section, String preferenceKey);
 }

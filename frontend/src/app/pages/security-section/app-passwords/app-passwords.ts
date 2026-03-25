@@ -15,6 +15,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { KPI_COLORS } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
@@ -67,22 +68,16 @@ export class AppPasswords implements OnInit, OnDestroy {
   );
 
   readonly kpiAppPasswordAllowedColors = computed(() => {
-    const o = this.pageOverview();
-    if (!o?.allowed) return { bg: '#dbfce7', icon: '#17b04f', text: '#17b04f' };
-    if (!this.appPasswordAlertsEnabled()) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffe2e2', icon: '#e7000b', text: '#e7000b' };
+    if (!this.pageOverview()?.allowed) return KPI_COLORS.okGreen;
+    if (!this.appPasswordAlertsEnabled()) return KPI_COLORS.muted;
+    return KPI_COLORS.alertRed;
   });
 
   readonly kpiAppPasswordTotalColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.totalAppPasswords ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (!this.appPasswordAlertsEnabled()) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffe2e2', icon: '#e7000b', text: '#e7000b' };
+    const n = this.pageOverview()?.totalAppPasswords ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (!this.appPasswordAlertsEnabled()) return KPI_COLORS.muted;
+    return KPI_COLORS.alertRed;
   });
 
   #tokenHistory: (string | null)[] = [null];
@@ -163,11 +158,8 @@ export class AppPasswords implements OnInit, OnDestroy {
     this.isRefreshing.set(true);
     this.#appPasswordsService.refreshCache().subscribe({
       next: () => {
-        forkJoin({
-          overview: this.#appPasswordsService.getOverview(),
-          _: this.#preferencesFacade.loadDisabled$(),
-        }).subscribe({
-          next: ({ overview }) => this.pageOverview.set(overview),
+        this.#appPasswordsService.getOverview().subscribe({
+          next: (overview) => this.pageOverview.set(overview),
           error: () => {},
         });
         this.#tokenHistory = [null];

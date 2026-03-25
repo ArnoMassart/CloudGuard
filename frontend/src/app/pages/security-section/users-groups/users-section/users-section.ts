@@ -14,6 +14,7 @@ import { PageWarnings } from '../../../../components/page-warnings/page-warnings
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
+import { KPI_COLORS } from '../../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -77,13 +78,10 @@ export class UsersSection implements OnInit, OnDestroy {
   });
 
   readonly kpiZonder2faColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.withoutTwoFactor ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (this.#preferencesFacade.isDisabled('users-groups', '2fa')) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
+    const n = this.pageOverview()?.withoutTwoFactor ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (this.#preferencesFacade.isDisabled('users-groups', '2fa')) return KPI_COLORS.muted;
+    return KPI_COLORS.alertOrange;
   });
 
   // ==========================================
@@ -214,9 +212,7 @@ export class UsersSection implements OnInit, OnDestroy {
     this.isRefreshing.set(true);
 
     this.#userService.refreshUsersCache().subscribe({
-      next: (res) => {
-        console.log(res);
-
+      next: () => {
         this.currentPage.set(1);
         this.#tokenHistory = [null];
 
@@ -240,11 +236,8 @@ export class UsersSection implements OnInit, OnDestroy {
   #loadUsers(token: string | null = null) {
     this.isLoading.set(true);
 
-    forkJoin({
-      page: this.#userService.getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery()),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ page }) => {
+    this.#userService.getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
+      next: (page) => {
         this.orgUsers.set(page.users);
         this.nextPageToken.set(page.nextPageToken);
         this.isLoading.set(false);

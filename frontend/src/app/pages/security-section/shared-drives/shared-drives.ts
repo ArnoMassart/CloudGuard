@@ -14,6 +14,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { KPI_COLORS } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -79,23 +80,17 @@ export class SharedDrives implements OnInit, OnDestroy {
   });
 
   readonly kpiOrphanDrivesColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.orphanDrives ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (this.#preferencesFacade.isDisabled('shared-drives', 'orphan')) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#f3e8ff', icon: '#9810fa', text: '#9810fa' };
+    const n = this.pageOverview()?.orphanDrives ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (this.#preferencesFacade.isDisabled('shared-drives', 'orphan')) return KPI_COLORS.muted;
+    return KPI_COLORS.alertPurple;
   });
 
   readonly kpiExternalDrivesColors = computed(() => {
-    const o = this.pageOverview();
-    const n = o?.externalMembersDriveCount ?? 0;
-    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
-    if (this.#preferencesFacade.isDisabled('shared-drives', 'external')) {
-      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
-    }
-    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
+    const n = this.pageOverview()?.externalMembersDriveCount ?? 0;
+    if (n === 0) return KPI_COLORS.okBlue;
+    if (this.#preferencesFacade.isDisabled('shared-drives', 'external')) return KPI_COLORS.muted;
+    return KPI_COLORS.alertOrange;
   });
 
   // ==========================================
