@@ -12,6 +12,8 @@ import com.google.api.services.admin.directory.model.MobileDevice;
 import com.google.api.services.cloudidentity.v1.model.GoogleAppsCloudidentityDevicesV1Device;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,9 +23,11 @@ public class GoogleDeviceService {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleDeviceService.class);
     private final GoogleDeviceCacheService deviceCacheService;
+    private final MessageSource messageSource;
 
-    public GoogleDeviceService(GoogleDeviceCacheService deviceCacheService) {
+    public GoogleDeviceService(GoogleDeviceCacheService deviceCacheService, MessageSource messageSource) {
         this.deviceCacheService = deviceCacheService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -67,7 +71,7 @@ public class GoogleDeviceService {
                     .toList();
         }
 
-        if (filterType != null && !filterType.equals("Alle apparaat typen")) {
+        if (filterType != null && !filterType.equals("all")) {
             filteredList = filteredList.stream()
                     .filter(d -> d.os() != null && d.os().toLowerCase().startsWith(filterType.toLowerCase()))
                     .toList();
@@ -154,13 +158,15 @@ public class GoogleDeviceService {
         int osScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - osVersionCount) * 100.0 / totalDevices);
         int intScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Vergrendelscherm", lockScreenCount == 0 ? "Alle apparaten hebben vergrendelscherm" : lockScreenCount + " apparaat/apparaten zonder vergrendelscherm", lockScore, 100, severity(lockScore)),
-                new SecurityScoreFactorDto("Encryptie", encryptionCount == 0 ? "Alle apparaten hebben encryptie" : encryptionCount + " apparaat/apparaten zonder encryptie", encScore, 100, severity(encScore)),
-                new SecurityScoreFactorDto("OS versie", osVersionCount == 0 ? "Alle apparaten hebben actuele OS versie" : osVersionCount + " apparaat/apparaten met verouderde OS", osScore, 100, severity(osScore)),
-                new SecurityScoreFactorDto("Integriteit", integrityCount == 0 ? "Geen apparaten met root/jailbreak gedetecteerd" : integrityCount + " apparaat/apparaten met integriteitsproblemen", intScore, 100, severity(intScore))
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.lock_screen.title", null, locale), lockScreenCount == 0 ? messageSource.getMessage("devices.score.factor.lock_screen.description.all", null, locale) : messageSource.getMessage("devices.score.factor.lock_screen.description", new Object[]{lockScreenCount}, locale), lockScore, 100, severity(lockScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.enc.title", null, locale), encryptionCount == 0 ? messageSource.getMessage("devices.score.factor.enc.description.all", null, locale) : messageSource.getMessage("devices.score.factor.enc.description", new Object[]{encryptionCount}, locale), encScore, 100, severity(encScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.os_version.title", null, locale), osVersionCount == 0 ? messageSource.getMessage("devices.score.factor.os_version.description.all", null, locale) : messageSource.getMessage("devices.score.factor.os_version.description", new Object[]{osVersionCount}, locale), osScore, 100, severity(osScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.int.title", null, locale), integrityCount == 0 ? messageSource.getMessage("devices.score.factor.int.description.none", null, locale) : messageSource.getMessage("devices.score.factor.int.description", new Object[]{integrityCount}, locale), intScore, 100, severity(intScore))
         );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
@@ -175,24 +181,26 @@ public class GoogleDeviceService {
     // =========================================================================================
 
     private DeviceDetail mapMobile(MobileDevice d) {
-        String userEmail = (d.getName() != null && !d.getName().isEmpty()) ? d.getName().get(0) : "Onbekend";
+        Locale locale = LocaleContextHolder.getLocale();
+
+        String userEmail = (d.getName() != null && !d.getName().isEmpty()) ? d.getName().get(0) : messageSource.getMessage("unknown", null, locale);
         String userName = UtilityFunctions.capitalizeWords(userEmail.split("@")[0].replace(".", " "));
         String deviceName = userName.split(" ")[0] + "'s " + (d.getOs() != null && d.getOs().contains("iOS") ? "iPhone" : "Android");
-        String os = d.getOs() != null ? d.getOs() : "Onbekend";
-        String syncTime = d.getLastSync() != null ? DateTimeConverter.convertToTimeAgo(d.getLastSync().getValue()) : "Nooit";
-        String status = d.getStatus() != null ? UtilityFunctions.capitalizeWords(d.getStatus()) : "Onbekend";
+        String os = d.getOs() != null ? d.getOs() : messageSource.getMessage("unknown", null, locale);
+        String syncTime = d.getLastSync() != null ? DateTimeConverter.convertToTimeAgo(d.getLastSync().getValue()) : messageSource.getMessage("never", null, locale);
+        String status = d.getStatus() != null ? UtilityFunctions.capitalizeWords(d.getStatus()) : messageSource.getMessage("unknown", null, locale);
 
         boolean lockSecure = "PASSWORD_SET".equalsIgnoreCase(d.getDevicePasswordStatus());
-        String lockText = lockSecure ? "Vergrendeling actief" : "Geen vergrendeling ingesteld";
+        String lockText = lockSecure ? messageSource.getMessage("devices.detail.lock_secure", null, locale) : messageSource.getMessage("devices.detail.lock_secure.not", null, locale);
 
         boolean encSecure = "ENCRYPTED".equalsIgnoreCase(d.getEncryptionStatus()) || "ENCRYPTING".equalsIgnoreCase(d.getEncryptionStatus());
-        String encText = encSecure ? "Volledige disk encryptie actief" : "Encryptie niet actief";
+        String encText = encSecure ? messageSource.getMessage("devices.detail.enc_secure", null, locale) : messageSource.getMessage("devices.detail.enc_secure.not", null, locale);
 
         boolean intSecure = "UNCOMPROMISED".equalsIgnoreCase(d.getDeviceCompromisedStatus());
-        String intText = intSecure ? "Play Protect/Integrity actief" : "Toestel gecompromitteerd (Root/Jailbreak)";
+        String intText = intSecure ? messageSource.getMessage("devices.detail.int_secure", null, locale) : messageSource.getMessage("devices.detail.int_secure.not", null, locale);
 
         boolean osSecure = checkOsVersion(os);
-        String osText = osSecure ? os + " - Up to date" : os + " - Verouderd";
+        String osText = osSecure ? os + " - Up to date" : os + " - " + messageSource.getMessage("devices.detail.old", null, locale);
 
         int score = calculateScore(lockSecure, encSecure, intSecure, osSecure);
 
@@ -205,11 +213,13 @@ public class GoogleDeviceService {
     }
 
     private DeviceDetail mapChromeOs(ChromeOsDevice d) {
-        String userEmail = (d.getRecentUsers() != null && !d.getRecentUsers().isEmpty()) ? d.getRecentUsers().get(0).getEmail() : "Onbekend";
+        Locale locale = LocaleContextHolder.getLocale();
+
+        String userEmail = (d.getRecentUsers() != null && !d.getRecentUsers().isEmpty()) ? d.getRecentUsers().get(0).getEmail() : messageSource.getMessage("unknown", null, locale);
         String userName = UtilityFunctions.capitalizeWords(userEmail.split("@")[0].replace(".", " "));
-        String deviceName = "Chromebook (" + (d.getSerialNumber() != null ? d.getSerialNumber() : "Onbekend") + ")";
+        String deviceName = "Chromebook (" + (d.getSerialNumber() != null ? d.getSerialNumber() : messageSource.getMessage("unknown", null, locale)) + ")";
         String os = "ChromeOS " + (d.getOsVersion() != null ? d.getOsVersion() : "");
-        String syncTime = d.getLastSync() != null ? DateTimeConverter.convertToTimeAgo(d.getLastSync().getValue()) : "Nooit";
+        String syncTime = d.getLastSync() != null ? DateTimeConverter.convertToTimeAgo(d.getLastSync().getValue()) : messageSource.getMessage("never", null, locale);
         String rawStatus = d.getStatus();
         DeviceStatus status = DeviceStatus.PENDING; // default
         if ("ACTIVE".equalsIgnoreCase(rawStatus) || "PROVISIONED".equalsIgnoreCase(rawStatus)) {
@@ -221,10 +231,10 @@ public class GoogleDeviceService {
         return new DeviceDetail(
                 d.getDeviceId(), "CHROME_OS", userName, userEmail, deviceName,
                 d.getModel(), os, syncTime, status.getValue(), 100,
-                true, "Vergrendeling afgedwongen door ChromeOS",
-                true, "Volledige disk encryptie standaard actief",
-                true, os + " - Up to date",
-                true, "Verified Boot actief"
+                true, messageSource.getMessage("devices.detail.lock.text", null, locale),
+                true, messageSource.getMessage("devices.detail.enc.text", null, locale),
+                true, os + " - "+messageSource.getMessage("devices.detail.os.text", null, locale),
+                true, messageSource.getMessage("devices.detail.int.text", null, locale)
         );
     }
 
@@ -233,14 +243,16 @@ public class GoogleDeviceService {
         var d = wrapper.device();
         var users = wrapper.deviceUsers();
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         String type = d.getDeviceType();
-        String userEmail = "Onbekend";
+        String userEmail = messageSource.getMessage("unknown", null, locale);
         DeviceStatus status = DeviceStatus.APPROVED;
 
         // Lees uit de meegeleverde gebruikerslijst
         if (users != null && !users.isEmpty()) {
             var firstUser = users.get(0);
-            userEmail = firstUser.getUserEmail() != null ? firstUser.getUserEmail() : "Onbekend";
+            userEmail = firstUser.getUserEmail() != null ? firstUser.getUserEmail() : messageSource.getMessage("unknown", null, locale);
 
             if (firstUser.getCompromisedState() != null && "COMPROMISED".equalsIgnoreCase(firstUser.getCompromisedState())) {
                 status = DeviceStatus.BLOCKED;
@@ -253,7 +265,7 @@ public class GoogleDeviceService {
         String os = ("MAC".equals(deviceType) ? "MacOS " : "Windows ") + (d.getOsVersion() != null ? d.getOsVersion() : "10.0");
         String model = "Endpoint (GCPW/EV)";
 
-        String syncTime = "Nooit";
+        String syncTime = messageSource.getMessage("never", null, locale);
         if (d.getLastSyncTime() != null) {
             try {
                 long millis = java.time.Instant.parse(d.getLastSyncTime()).toEpochMilli();
@@ -262,13 +274,13 @@ public class GoogleDeviceService {
         }
 
         boolean encSecure = "ENCRYPTED".equalsIgnoreCase(d.getEncryptionState());
-        String encText = encSecure ? "BitLocker/FileVault actief" : "Geen schijfversleuteling gedetecteerd";
+        String encText = encSecure ? messageSource.getMessage("devices.endpoint.enc_secure", null, locale) : messageSource.getMessage("devices.endpoint.enc_secure.not", null, locale);
 
         boolean intSecure = "UNCOMPROMISED".equalsIgnoreCase(d.getCompromisedState());
-        String intText = intSecure ? "Systeem integer" : "Systeem gecompromitteerd";
+        String intText = intSecure ? messageSource.getMessage("devices.endpoint.int_secure", null, locale) : messageSource.getMessage("devices.endpoint.int_secure.not", null, locale);
 
         boolean lockSecure = true;
-        String lockText = "Systeemvergrendeling (OS niveau)";
+        String lockText = messageSource.getMessage("devices.endpoint.lock", null, locale);
         boolean osSecure = true;
         String osText = os;
 

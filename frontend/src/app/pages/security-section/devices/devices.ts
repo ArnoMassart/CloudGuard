@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +15,8 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 // ==========================================
 // CONSTANTS
@@ -32,11 +34,12 @@ const ITEMS_PER_PAGE = 5;
     SectionTopCard,
     PageWarnings,
     PageWarningsItem,
+    TranslocoPipe,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.css',
 })
-export class Devices implements OnInit {
+export class Devices implements OnInit, OnDestroy {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -45,7 +48,7 @@ export class Devices implements OnInit {
   readonly UtilityMethods = UtilityMethods;
   readonly #deviceService = inject(DeviceService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
-
+  readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -56,8 +59,8 @@ export class Devices implements OnInit {
   readonly pageOverview = signal<DevicesOverviewResponse | null>(null);
   readonly expandedDevice = signal<string | null>(null);
 
-  readonly uniqueDeviceTypes = signal<string[]>(['Alle apparaat typen']);
-  readonly selectedDeviceType = signal<string>('Alle apparaat typen');
+  readonly uniqueDeviceTypes = signal<string[]>(['all']);
+  readonly selectedDeviceType = signal<string>('all');
 
   readonly selectedStatus = signal<DeviceStatus>(DeviceStatus.All);
   readonly statusOptions = Object.values(DeviceStatus);
@@ -85,14 +88,23 @@ export class Devices implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
+  #langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
     this.#loadDeviceTypes();
-    this.#loadPageOverview();
-    this.#loadDevices();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadPageOverview();
+      this.#loadDevices();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   // ==========================================
@@ -140,10 +152,9 @@ export class Devices implements OnInit {
 
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
-    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
-      overview?.securityScore ?? 0,
-      'Apparaten'
-    );
+    const breakdown =
+      overview?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'Apparaten');
     this.#securityScoreDetail.open(breakdown, 'Apparaten');
   }
 
@@ -182,7 +193,7 @@ export class Devices implements OnInit {
         token || undefined,
         this.selectedStatus(),
         this.selectedDeviceType(),
-        ITEMS_PER_PAGE,
+        ITEMS_PER_PAGE
       )
       .subscribe({
         next: (res) => {
@@ -234,7 +245,7 @@ export class Devices implements OnInit {
   #loadDeviceTypes() {
     this.#deviceService.getUniqueDeviceTypes().subscribe({
       next: (types) => {
-        this.uniqueDeviceTypes.set(['Alle apparaat typen', ...types]);
+        this.uniqueDeviceTypes.set(['all', ...types]);
       },
       error: (err) => {
         console.error('Kon apparaat typen niet laden', err);

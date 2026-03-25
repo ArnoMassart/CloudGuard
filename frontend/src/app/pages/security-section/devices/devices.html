@@ -1,31 +1,21 @@
 <div class="px-10 py-6">
-  <app-page-header Title="Apparaten Controle"
-    Description="Controleer apparaten die zijn verbonden met Google Workspace op naleving van beveiligingsvereisten"
+  <app-page-header Title="{{ 'devices.title' | transloco }}" Description="{{ 'devices.description' | transloco }}"
     AdminLink="devices/list" />
 
   <div class="w-full flex flex-col gap-5 pt-6">
     <div class="w-full flex gap-4">
-      <app-section-top-card class="flex-1" Title="Totaal apparaten" [Value]="pageOverview()?.totalDevices"
-        [Icon]="Icons.SmartPhone" />
+      <app-section-top-card class="flex-1" Title="{{ 'devices.total' | transloco }}"
+        [Value]="pageOverview()?.totalDevices" [Icon]="Icons.SmartPhone" />
       <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
         BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
-      <app-section-top-card class="flex-1" Title="Goedgekeurde apparaten" [Value]="pageOverview()?.totalApprovedDevices"
-        BackgroundColor="#dbfce7" IconColor="#17b04f" [Icon]="Icons.CircleCheck" />
-      <div
-        class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-        (click)="openSecurityScoreDetail()"
-        role="button"
-        tabindex="0"
-        (keydown.enter)="openSecurityScoreDetail()"
-        (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-      >
-        <app-section-top-card
-          Title="Security Score"
-          [Value]="pageOverview()?.securityScore"
-          [IsPercentage]="true"
-          BackgroundColor="#fef9c2"
-          IconColor="#d69518"
-        />
+      <app-section-top-card class="flex-1" Title="{{ 'devices.allowed' | transloco }}"
+        [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f"
+        [Icon]="Icons.CircleCheck" />
+      <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+        role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+        (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+        <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
+          BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
     </div>
 
@@ -36,32 +26,32 @@
         @if (this.devicePageWarnings().lockScreenWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
           {{ pageOverview()?.lockScreenCount }}
-          {{ pageOverview()?.lockScreenCount === 1 ? 'apparaat' : 'apparaten' }} zonder
-          vergrendelscherm beveiliging
+          {{ pageOverview()?.lockScreenCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
+          | transloco) }} {{ 'devices.without-lock' | transloco }}
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().encryptionWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
           {{ pageOverview()?.encryptionCount }}
-          {{ pageOverview()?.encryptionCount === 1 ? 'apparaat' : 'apparaten' }} zonder
-          encryptie geactiveerd
+          {{ pageOverview()?.encryptionCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
+          | transloco) }} {{ 'devices.without-enc' | transloco }}
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().osVersionWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
           {{ pageOverview()?.osVersionCount }}
-          {{ pageOverview()?.osVersionCount === 1 ? 'apparaat' : 'apparaten' }} met verouderde
-          OS versie
+          {{ pageOverview()?.osVersionCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
+          | transloco) }} {{ 'devices.with-old-os' | transloco }}
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().integrityWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
           {{ pageOverview()?.integrityCount }}
-          {{ pageOverview()?.integrityCount === 1 ? 'apparaat' : 'apparaten' }} met integriteits
-          problemen (root/jailbreak)
+          {{ pageOverview()?.integrityCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
+          | transloco) }} {{ 'devices.with-int' | transloco }}
         </app-page-warnings-item>
         }
       </div>
@@ -84,7 +74,8 @@
             [class.ring-1]="selectedStatus() !== statusEnum.All"
             [class.ring-primary]="selectedStatus() !== statusEnum.All">
             @for (status of statusOptions; track status) {
-            <option [value]="status">{{ status }}</option>
+            <option [value]="status">{{ status === statusEnum.All ? ('devices.all-states' | transloco) : status }}
+            </option>
             }
           </select>
           <i-lucide [img]="Icons.ChevronDown" size="18"
@@ -96,11 +87,10 @@
         <div class="relative">
           <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
             class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
-            [class.border-primary]="selectedDeviceType() !== 'Alle apparaat typen'"
-            [class.ring-1]="selectedDeviceType() !== 'Alle apparaat typen'"
-            [class.ring-primary]="selectedDeviceType() !== 'Alle apparaat typen'">
+            [class.border-primary]="selectedDeviceType() !== 'all'" [class.ring-1]="selectedDeviceType() !== 'all'"
+            [class.ring-primary]="selectedDeviceType() !== 'all'">
             @for (type of uniqueDeviceTypes(); track type) {
-            <option [value]="type">{{ type }}</option>
+            <option [value]="type">{{ type === 'all' ? ('devices.all-types' | transloco) : type }}</option>
             }
           </select>
           <i-lucide [img]="Icons.ChevronDown" size="18"
@@ -114,13 +104,13 @@
     @if (devices().length > 0) {
     <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
       <div class="flex justify-between items-center mx-5.5">
-        <span class="font-medium text-lg">Alle apparaten</span>
+        <span class="font-medium text-lg">{{ 'devices.all' | transloco }}</span>
         <button (click)="refreshData()" [disabled]="isRefreshing()"
           class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
           <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
           </i-lucide>
 
-          {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+          {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
         </button>
       </div>
 
@@ -128,10 +118,10 @@
         <thead>
           <tr class="border-b border-t border-gray-200 bg-gray-50/50">
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase"></th>
-            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Gebruiker</th>
-            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Apparaat</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'user-cap' | transloco }}</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'device-cap' | transloco }}</th>
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">OS & Model</th>
-            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste sync</th>
+            <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'devices.last-sync' | transloco }}</th>
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Compliance</th>
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Status</th>
           </tr>
@@ -228,7 +218,7 @@
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm" [ngClass]="
                                   device.lockSecure ? 'text-emerald-700' : 'text-[#e7000b]'
-                                ">Vergrendelscherm</span>
+                                ">{{ 'devices.lock-screen' | transloco }}</span>
                       @if (!device.lockSecure) {
                       <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
@@ -254,7 +244,8 @@
                   <div class="flex flex-col">
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm"
-                        [ngClass]="device.encSecure ? 'text-emerald-700' : 'text-[#e7000b]'">Encryptie</span>
+                        [ngClass]="device.encSecure ? 'text-emerald-700' : 'text-[#e7000b]'">{{ 'devices.encryption' |
+                        transloco }}</span>
                       @if (!device.encSecure) {
                       <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
@@ -280,7 +271,8 @@
                   <div class="flex flex-col">
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm"
-                        [ngClass]="device.osSecure ? 'text-emerald-700' : 'text-[#e7000b]'">OS Versie</span>
+                        [ngClass]="device.osSecure ? 'text-emerald-700' : 'text-[#e7000b]'">OS {{ 'devices.version' |
+                        transloco }}</span>
                       @if (!device.osSecure) {
                       <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
@@ -307,7 +299,8 @@
                   <div class="flex flex-col">
                     <div class="flex items-center gap-2">
                       <span class="font-medium text-sm"
-                        [ngClass]="device.intSecure ? 'text-emerald-700' : 'text-[#e7000b]'">Integriteit</span>
+                        [ngClass]="device.intSecure ? 'text-emerald-700' : 'text-[#e7000b]'">{{ 'devices.integrity' |
+                        transloco }}</span>
                       @if (!device.intSecure) {
                       <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
                                     UtilityMethods.openAdminPage(
@@ -331,19 +324,19 @@
 
       <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
         <span class="text-sm text-gray-500">
-          Pagina <span class="font-medium text-gray-900">{{ currentPage() }}</span>
+          {{ 'page' | transloco }} <span class="font-medium text-gray-900">{{ currentPage() }}</span>
         </span>
 
         <div class="flex gap-2">
           <button (click)="prevPage()" [disabled]="currentPage() === 1"
             class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
             <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
-            Vorige
+            {{ 'previous' | transloco }}
           </button>
 
           <button (click)="nextPage()" [disabled]="!nextPageToken()"
             class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
-            Volgende
+            {{ 'next' | transloco }}
             <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
           </button>
         </div>
@@ -353,7 +346,7 @@
     <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
       <div class="flex items-center justify-center p-5">
         <span class="text-lg font-medium text-slate-600">
-          Geen apparaten gevonden!
+          {{ 'devices.no-found' | transloco }}!
         </span>
       </div>
     </div>
@@ -370,7 +363,7 @@
           </div>
 
           <span class="text-sm font-medium text-slate-600 animate-pulse">
-            Apparaten worden geladen...
+            {{ 'devices.loading' | transloco }}...
           </span>
         </div>
       </div>
