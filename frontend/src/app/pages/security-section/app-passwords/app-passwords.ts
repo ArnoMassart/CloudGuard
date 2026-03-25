@@ -15,7 +15,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { KPI_COLORS } from '../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
@@ -67,28 +67,28 @@ export class AppPasswords implements OnInit, OnDestroy {
     () => !this.#preferencesFacade.isDisabled('app-passwords', 'appPassword'),
   );
 
-  readonly kpiAppPasswordAllowedColors = computed(() => {
-    if (!this.pageOverview()?.allowed) return KPI_COLORS.okGreen;
-    if (!this.appPasswordAlertsEnabled()) return KPI_COLORS.muted;
-    return KPI_COLORS.alertRed;
-  });
+  readonly kpiAppPasswordAllowedColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.allowed ? 1 : 0,
+      !this.appPasswordAlertsEnabled(),
+      KPI_COLORS.okGreen, KPI_COLORS.alertRed,
+    )
+  );
 
-  readonly kpiAppPasswordTotalColors = computed(() => {
-    const n = this.pageOverview()?.totalAppPasswords ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (!this.appPasswordAlertsEnabled()) return KPI_COLORS.muted;
-    return KPI_COLORS.alertRed;
-  });
+  readonly kpiAppPasswordTotalColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.totalAppPasswords ?? 0,
+      !this.appPasswordAlertsEnabled(),
+      KPI_COLORS.okBlue, KPI_COLORS.alertRed,
+    )
+  );
 
   #tokenHistory: (string | null)[] = [null];
   #langSubscription?: Subscription;
 
   ngOnInit(): void {
-    forkJoin({
-      overview: this.#appPasswordsService.getOverview(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ overview }) => this.pageOverview.set(overview),
+    this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
       error: () => {},
     });
     this.#loadAppPasswords(null);
@@ -221,6 +221,20 @@ export class AppPasswords implements OnInit, OnDestroy {
     const d = typeof value === 'string' ? new Date(Number(value) || value) : value;
     if (Number.isNaN(d.getTime())) return '–';
     return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric' });
+  }
+
+  formatLastUsed(value: Date | string | null): string {
+    if (!value) return 'nooit';
+    const d = typeof value === 'string' ? new Date(Number(value) || value) : value;
+    if (Number.isNaN(d.getTime())) return 'nooit';
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'vandaag';
+    if (diffDays === 1) return 'gisteren';
+    if (diffDays < 7) return `${diffDays} dagen geleden`;
+    if (diffDays < 31) return `${Math.floor(diffDays / 7)} weken geleden`;
+    return `${Math.floor(diffDays / 31)} maanden geleden`;
   }
 
   openSecurityScoreDetail(): void {

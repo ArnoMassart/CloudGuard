@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SecurityPreferencesService } from './security-preferences-service';
 
@@ -20,6 +20,13 @@ export class SecurityPreferencesFacade {
         this.disabledKeys.set(new Set());
         return of(undefined);
       }),
+    );
+  }
+
+  /** Loads overview data alongside disabled preferences in a single forkJoin. */
+  loadWithPrefs$<T>(overview$: Observable<T>): Observable<T> {
+    return forkJoin({ data: overview$, _: this.loadDisabled$() }).pipe(
+      map(({ data }) => data),
     );
   }
 

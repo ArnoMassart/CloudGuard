@@ -260,11 +260,8 @@ export class DomainDns implements OnInit, OnDestroy {
   }
 
   #loadDomains() {
-    forkJoin({
-      domains: this.#domainService.getDomains(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ domains }) => {
+    this.#preferencesFacade.loadWithPrefs$(this.#domainService.getDomains()).subscribe({
+      next: (domains) => {
         this.domains.set(domains);
         this.isLoading.set(false);
         const primary = domains.find((d) => d.domainType === 'Primary Domain');

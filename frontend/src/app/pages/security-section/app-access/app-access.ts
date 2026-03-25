@@ -14,7 +14,7 @@ import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewRespo
 import { Risk } from '../../../models/o-auth/Risk';
 import { FilterOption } from '../../../models/FilterOption';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { KPI_COLORS } from '../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -76,12 +76,13 @@ export class AppAccess implements OnInit, OnDestroy {
     () => !this.#preferencesFacade.isDisabled('app-access', 'highRisk'),
   );
 
-  readonly kpiHighRiskAppsColors = computed(() => {
-    const n = this.pageOverview()?.totalHighRiskApps ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (!this.highRiskAlertsEnabled()) return KPI_COLORS.muted;
-    return KPI_COLORS.alertRed;
-  });
+  readonly kpiHighRiskAppsColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.totalHighRiskApps ?? 0,
+      !this.highRiskAlertsEnabled(),
+      KPI_COLORS.okBlue, KPI_COLORS.alertRed,
+    )
+  );
 
   readonly filterOptions = computed<FilterOption[]>(() => [
     {
@@ -226,16 +227,9 @@ export class AppAccess implements OnInit, OnDestroy {
   }
 
   #loadPageOverview(): void {
-    forkJoin({
-      overview: this.#oAuthService.getOAuthPageOverview(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ overview }) => {
-        this.pageOverview.set(overview);
-      },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+    this.#preferencesFacade.loadWithPrefs$(this.#oAuthService.getOAuthPageOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
+      error: (err) => console.error('Failed to load page overview', err),
     });
   }
 

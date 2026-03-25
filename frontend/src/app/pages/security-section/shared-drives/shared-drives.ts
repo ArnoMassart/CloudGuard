@@ -14,7 +14,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { KPI_COLORS } from '../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors, evaluateWarnings } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -79,19 +79,21 @@ export class SharedDrives implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
-  readonly kpiOrphanDrivesColors = computed(() => {
-    const n = this.pageOverview()?.orphanDrives ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (this.#preferencesFacade.isDisabled('shared-drives', 'orphan')) return KPI_COLORS.muted;
-    return KPI_COLORS.alertPurple;
-  });
+  readonly kpiOrphanDrivesColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.orphanDrives ?? 0,
+      this.#preferencesFacade.isDisabled('shared-drives', 'orphan'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertPurple,
+    )
+  );
 
-  readonly kpiExternalDrivesColors = computed(() => {
-    const n = this.pageOverview()?.externalMembersDriveCount ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (this.#preferencesFacade.isDisabled('shared-drives', 'external')) return KPI_COLORS.muted;
-    return KPI_COLORS.alertOrange;
-  });
+  readonly kpiExternalDrivesColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.externalMembersDriveCount ?? 0,
+      this.#preferencesFacade.isDisabled('shared-drives', 'external'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+    )
+  );
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -205,45 +207,28 @@ export class SharedDrives implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    forkJoin({
-      overview: this.#driveService.getDrivesPageOverview(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ overview }) => {
+    this.#preferencesFacade.loadWithPrefs$(this.#driveService.getDrivesPageOverview()).subscribe({
+      next: (overview) => {
         this.pageOverview.set(overview);
         this.#loadWarnings();
       },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+      error: (err) => console.error('Failed to load page overview', err),
     });
   }
 
   #loadWarnings() {
     const o = this.pageOverview();
-    const notOnlyDomain =
-      !!o &&
-      (o.notOnlyDomainUsersAllowedCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('shared-drives', 'outsideDomain');
-    const notOnlyMembers =
-      !!o &&
-      (o.notOnlyMembersCanAccessCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('shared-drives', 'nonMemberAccess');
-    const external =
-      !!o &&
-      (o.externalMembersDriveCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('shared-drives', 'external');
-    const orphan =
-      !!o &&
-      (o.orphanDrives ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('shared-drives', 'orphan');
-
-    this.drivePageWarnings.set({
-      notOnlyDomainUsersAllowedWarning: notOnlyDomain,
-      notOnlyMembersCanAccessWarning: notOnlyMembers,
-      externalMembersWarning: external,
-      orphanDrivesWarning: orphan,
-    });
-    this.hasWarnings.set(notOnlyDomain || notOnlyMembers || external || orphan);
+    if (!o) return;
+    const { warnings, hasWarnings } = evaluateWarnings(
+      [
+        { key: 'notOnlyDomainUsersAllowedWarning' as const, count: o.notOnlyDomainUsersAllowedCount ?? 0, section: 'shared-drives', prefKey: 'outsideDomain' },
+        { key: 'notOnlyMembersCanAccessWarning' as const, count: o.notOnlyMembersCanAccessCount ?? 0, section: 'shared-drives', prefKey: 'nonMemberAccess' },
+        { key: 'externalMembersWarning' as const, count: o.externalMembersDriveCount ?? 0, section: 'shared-drives', prefKey: 'external' },
+        { key: 'orphanDrivesWarning' as const, count: o.orphanDrives ?? 0, section: 'shared-drives', prefKey: 'orphan' },
+      ],
+      (s, k) => this.#preferencesFacade.isDisabled(s, k),
+    );
+    this.drivePageWarnings.set(warnings);
+    this.hasWarnings.set(hasWarnings);
   }
 }

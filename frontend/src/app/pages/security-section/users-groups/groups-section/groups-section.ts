@@ -11,7 +11,7 @@ import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
-import { KPI_COLORS } from '../../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors, evaluateWarnings } from '../../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -80,19 +80,21 @@ export class GroupsSection implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
-  readonly kpiGroupsExternalColors = computed(() => {
-    const n = this.pageOverview()?.groupsWithExternal ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) return KPI_COLORS.muted;
-    return KPI_COLORS.alertOrange;
-  });
+  readonly kpiGroupsExternalColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.groupsWithExternal ?? 0,
+      this.#preferencesFacade.isDisabled('users-groups', 'groupExternal'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+    )
+  );
 
-  readonly kpiGroupsHighRiskColors = computed(() => {
-    const n = this.pageOverview()?.highRiskGroups ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) return KPI_COLORS.muted;
-    return KPI_COLORS.alertRedDark;
-  });
+  readonly kpiGroupsHighRiskColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.highRiskGroups ?? 0,
+      this.#preferencesFacade.isDisabled('users-groups', 'groupExternal'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertRedDark,
+    )
+  );
 
   #langSubscription?: Subscription;
 
@@ -110,11 +112,8 @@ export class GroupsSection implements OnInit, OnDestroy {
   }
 
   private loadGroupsOverview(): void {
-    forkJoin({
-      overview: this.#groupService.getGroupsOverview(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ overview }) => {
+    this.#preferencesFacade.loadWithPrefs$(this.#groupService.getGroupsOverview()).subscribe({
+      next: (overview) => {
         this.pageOverview.set(overview);
         this.loadWarnings();
       },
@@ -228,19 +227,15 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadWarnings() {
     const o = this.pageOverview();
-    const external =
-      !!o &&
-      (o.groupsWithExternal ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
-    const highRisk =
-      !!o &&
-      (o.highRiskGroups ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
-
-    this.groupPageWarnings.set({
-      externalMember: external,
-      highRisk,
-    });
-    this.hasWarnings.set(external || highRisk);
+    if (!o) return;
+    const { warnings, hasWarnings } = evaluateWarnings(
+      [
+        { key: 'externalMember' as const, count: o.groupsWithExternal ?? 0, section: 'users-groups', prefKey: 'groupExternal' },
+        { key: 'highRisk' as const, count: o.highRiskGroups ?? 0, section: 'users-groups', prefKey: 'groupExternal' },
+      ],
+      (s, k) => this.#preferencesFacade.isDisabled(s, k),
+    );
+    this.groupPageWarnings.set(warnings);
+    this.hasWarnings.set(hasWarnings);
   }
 }

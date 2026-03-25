@@ -16,6 +16,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { evaluateWarnings } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -213,46 +214,29 @@ export class Devices implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    forkJoin({
-      overview: this.#deviceService.getDevicesPageOverview(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ overview }) => {
+    this.#preferencesFacade.loadWithPrefs$(this.#deviceService.getDevicesPageOverview()).subscribe({
+      next: (overview) => {
         this.pageOverview.set(overview);
         this.#loadWarnings();
       },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+      error: (err) => console.error('Failed to load page overview', err),
     });
   }
 
   #loadWarnings() {
     const o = this.pageOverview();
-    const lock =
-      !!o &&
-      (o.lockScreenCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('mobile-devices', 'lockscreen');
-    const enc =
-      !!o &&
-      (o.encryptionCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('mobile-devices', 'encryption');
-    const os =
-      !!o &&
-      (o.osVersionCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('mobile-devices', 'osVersion');
-    const integrity =
-      !!o &&
-      (o.integrityCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('mobile-devices', 'integrity');
-
-    this.devicePageWarnings.set({
-      lockScreenWarning: lock,
-      encryptionWarning: enc,
-      osVersionWarning: os,
-      integrityWarning: integrity,
-    });
-    this.hasWarnings.set(lock || enc || os || integrity);
+    if (!o) return;
+    const { warnings, hasWarnings } = evaluateWarnings(
+      [
+        { key: 'lockScreenWarning' as const, count: o.lockScreenCount ?? 0, section: 'mobile-devices', prefKey: 'lockscreen' },
+        { key: 'encryptionWarning' as const, count: o.encryptionCount ?? 0, section: 'mobile-devices', prefKey: 'encryption' },
+        { key: 'osVersionWarning' as const, count: o.osVersionCount ?? 0, section: 'mobile-devices', prefKey: 'osVersion' },
+        { key: 'integrityWarning' as const, count: o.integrityCount ?? 0, section: 'mobile-devices', prefKey: 'integrity' },
+      ],
+      (s, k) => this.#preferencesFacade.isDisabled(s, k),
+    );
+    this.devicePageWarnings.set(warnings);
+    this.hasWarnings.set(hasWarnings);
   }
 
   #loadDeviceTypes() {

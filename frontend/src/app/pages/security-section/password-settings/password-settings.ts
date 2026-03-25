@@ -16,7 +16,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { LucideAngularModule } from 'lucide-angular';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { KPI_COLORS } from '../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -56,12 +56,13 @@ export class PasswordSettings implements OnInit, OnDestroy {
     !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')
   );
 
-  readonly kpiAdminsSecurityKeysColors = computed(() => {
-    const n = this.data()?.adminsWithoutSecurityKeys.length ?? 0;
-    if (n === 0) return KPI_COLORS.okGreenDark;
-    if (this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')) return KPI_COLORS.muted;
-    return KPI_COLORS.alertOrange;
-  });
+  readonly kpiAdminsSecurityKeysColors = computed(() =>
+    kpiColors(
+      this.data()?.adminsWithoutSecurityKeys.length ?? 0,
+      this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys'),
+      KPI_COLORS.okGreenDark, KPI_COLORS.alertOrange,
+    )
+  );
   readonly hasPasswordLengthWeak = computed(() =>
     !this.#preferencesFacade.isDisabled('password-settings', 'length') &&
     (this.data()?.passwordPoliciesByOu ?? []).some(
@@ -166,11 +167,8 @@ export class PasswordSettings implements OnInit, OnDestroy {
       this.loading.set(true);
     }
     this.error.set(null);
-    forkJoin({
-      settings: this.#passwordSettingsService.getPasswordSettings(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ settings }) => {
+    this.#preferencesFacade.loadWithPrefs$(this.#passwordSettingsService.getPasswordSettings()).subscribe({
+      next: (settings) => {
         this.data.set(settings);
         this.loading.set(false);
         onComplete?.();

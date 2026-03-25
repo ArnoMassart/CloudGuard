@@ -14,7 +14,7 @@ import { PageWarnings } from '../../../../components/page-warnings/page-warnings
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
-import { KPI_COLORS } from '../../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors, evaluateWarnings } from '../../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
@@ -40,7 +40,7 @@ const ITEMS_PER_PAGE = 4;
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
 })
-export class UsersSection implements OnInit, OnDestroy {
+export class UsersSection implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -77,12 +77,13 @@ export class UsersSection implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
-  readonly kpiZonder2faColors = computed(() => {
-    const n = this.pageOverview()?.withoutTwoFactor ?? 0;
-    if (n === 0) return KPI_COLORS.okBlue;
-    if (this.#preferencesFacade.isDisabled('users-groups', '2fa')) return KPI_COLORS.muted;
-    return KPI_COLORS.alertOrange;
-  });
+  readonly kpiZonder2faColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.withoutTwoFactor ?? 0,
+      this.#preferencesFacade.isDisabled('users-groups', '2fa'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+    )
+  );
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -250,40 +251,27 @@ export class UsersSection implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    forkJoin({
-      overview: this.#userService.getUsersPageOverview(),
-      _: this.#preferencesFacade.loadDisabled$(),
-    }).subscribe({
-      next: ({ overview }) => {
+    this.#preferencesFacade.loadWithPrefs$(this.#userService.getUsersPageOverview()).subscribe({
+      next: (overview) => {
         this.pageOverview.set(overview);
         this.#loadWarnings();
       },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+      error: (err) => console.error('Failed to load page overview', err),
     });
   }
 
   #loadWarnings() {
     const o = this.pageOverview();
-    const twoFactor =
-      !!o &&
-      (o.withoutTwoFactor ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('users-groups', '2fa');
-    const activityLong =
-      !!o &&
-      (o.activeLongNoLoginCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('users-groups', 'activity');
-    const activityInactive =
-      !!o &&
-      (o.inactiveRecentLoginCount ?? 0) > 0 &&
-      !this.#preferencesFacade.isDisabled('users-groups', 'activity');
-
-    this.userPageWarnings.set({
-      twoFactorWarning: twoFactor,
-      activeWithLongNoLogin: activityLong,
-      notActiveWithRecentLogin: activityInactive,
-    });
-    this.hasWarnings.set(twoFactor || activityLong || activityInactive);
+    if (!o) return;
+    const { warnings, hasWarnings } = evaluateWarnings(
+      [
+        { key: 'twoFactorWarning' as const, count: o.withoutTwoFactor ?? 0, section: 'users-groups', prefKey: '2fa' },
+        { key: 'activeWithLongNoLogin' as const, count: o.activeLongNoLoginCount ?? 0, section: 'users-groups', prefKey: 'activity' },
+        { key: 'notActiveWithRecentLogin' as const, count: o.inactiveRecentLoginCount ?? 0, section: 'users-groups', prefKey: 'activity' },
+      ],
+      (s, k) => this.#preferencesFacade.isDisabled(s, k),
+    );
+    this.userPageWarnings.set(warnings);
+    this.hasWarnings.set(hasWarnings);
   }
 }
