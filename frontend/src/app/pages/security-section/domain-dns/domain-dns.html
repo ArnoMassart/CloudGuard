@@ -1,28 +1,19 @@
 <div class="px-10 py-6">
-    <app-page-header Title="Domein & DNS" Description="Monitor domeinen en DNS-instellingen"
+    <app-page-header Title="{{ 'domain-dns' | transloco }}" Description="{{ 'domain.description' | transloco }}"
         AdminLink="domains/manage" />
 
     <div class="w-full flex flex-col gap-5 pt-6">
         <div class="w-full flex gap-4">
-            <app-section-top-card class="flex-1" Title="Totaal domeinen" [Value]="totalDomains()"
+            <app-section-top-card class="flex-1" Title="{{ 'domain.total' | transloco }}" [Value]="totalDomains()"
                 [Icon]="Icons.Globe" />
-            <app-section-top-card class="flex-1" Title="Geldige DNS records" [Value]="validDnsRecords()"
-                BackgroundColor="#dbfce7" IconColor="#17b04f" TextColor="#17b04f" [Icon]="Icons.CircleCheck" />
-            <div
-                class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-                (click)="openSecurityScoreDetail()"
-                role="button"
-                tabindex="0"
-                (keydown.enter)="openSecurityScoreDetail()"
-                (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-            >
-                <app-section-top-card
-                    Title="Security Score"
-                    [Value]="securityScore()"
-                    [IsPercentage]="true"
-                    BackgroundColor="#fef9c2"
-                    IconColor="#d69518"
-                />
+            <app-section-top-card class="flex-1" Title="{{ 'domain.valid-dns' | transloco }}"
+                [Value]="validDnsRecords()" BackgroundColor="#dbfce7" IconColor="#17b04f" TextColor="#17b04f"
+                [Icon]="Icons.CircleCheck" />
+            <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+                role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+                (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+                <app-section-top-card Title="Security Score" [Value]="securityScore()" [IsPercentage]="true"
+                    BackgroundColor="#fef9c2" IconColor="#d69518" />
             </div>
         </div>
 
@@ -36,26 +27,29 @@
                         <i-lucide [img]="Icons.Globe" size="22" />
                     </div>
                     <div>
-                        <h2 class="text-lg font-medium text-gray-900">Alle domeinen</h2>
+                        <h2 class="text-lg font-medium text-gray-900">{{ 'domain.all' | transloco }}</h2>
                         <p class="text-sm text-gray-500 mt-0.5">
-                            Alle domeinen gekoppeld aan je Workspace
+                            {{ 'domain.all-linked' | transloco }}
                         </p>
                     </div>
                 </div>
                 <button (click)="refreshData()" [disabled]="isRefreshing()"
                     class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                     <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
-                    {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+                    {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
                 </button>
             </div>
 
             <table class="w-full text-center border-collapse mt-6">
                 <thead>
                     <tr class="border-b border-t border-gray-200 bg-gray-50/50">
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Domeinnaam</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'domain.domain-name' |
+                            transloco }}</th>
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Type</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Verificatiestatus</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Aantal Gebruikers</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{
+                            'domain.verification-status' | transloco }}</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'domain.number-users' |
+                            transloco }}</th>
                     </tr>
                 </thead>
 
@@ -87,7 +81,7 @@
                                 [class.text-amber-700]="!domain.isVerified" [class.bg-amber-100]="!domain.isVerified">
                                 <lucide-icon [img]="domain.isVerified ? Icons.CircleCheck : Icons.TriangleAlert"
                                     size="14"></lucide-icon>
-                                {{ domain.isVerified ? 'Geverifieerd' : 'Niet geverifieerd' }}
+                                {{ domain.isVerified ? ('verified' | transloco) : ('not-verified' | transloco) }}
                             </div>
                         </td>
 
@@ -105,7 +99,7 @@
         } @else {
         <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
             <div class="flex flex-col items-center justify-center p-8 gap-4">
-                <span class="text-lg font-medium text-slate-600">Geen domeinen gevonden.</span>
+                <span class="text-lg font-medium text-slate-600">{{ 'domain.none' | transloco }}.</span>
             </div>
         </div>
         }
@@ -119,7 +113,8 @@
                             class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
                         </div>
                     </div>
-                    <span class="text-sm font-medium text-slate-600 animate-pulse">Domeinen worden geladen...</span>
+                    <span class="text-sm font-medium text-slate-600 animate-pulse">{{ 'domain.loading' | transloco
+                        }}...</span>
                 </div>
             </div>
         </div>
@@ -134,13 +129,13 @@
                 <i-lucide [img]="Icons.Shield" size="22" />
             </div>
             <div class="flex-1 min-w-0">
-                <h2 class="text-lg font-medium text-gray-900">Beveiligingscontroles</h2>
-                <p class="text-sm text-gray-500 mt-0.5">Status van authenticatie</p>
+                <h2 class="text-lg font-medium text-gray-900">{{ 'domain.security-checks' | transloco }}</h2>
+                <p class="text-sm text-gray-500 mt-0.5">{{ 'domain.authentication-state' | transloco }}</p>
             </div>
             @if (domains().length > 0) {
             <select [ngModel]="selectedDnsDomain() ?? ''" (ngModelChange)="selectDnsDomain($event)"
                 class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                <option value="" disabled>Selecteer domein</option>
+                <option value="" disabled>{{ 'select-domain' | transloco }}</option>
                 @for (d of domains(); track d.domainName) {
                 <option [value]="d.domainName">{{ d.domainName }}</option>
                 }
@@ -151,7 +146,7 @@
         @if (isLoadingDns()) {
         <div class="flex flex-col items-center p-8">
             <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <span class="text-sm text-gray-500 mt-1">Beveiligingscontroles worden geladen...</span>
+            <span class="text-sm text-gray-500 mt-1">{{ 'domain.security-checks.loading' | transloco }}...</span>
         </div>
         } @else if (rows().length > 0) {
         @if (hasCriticalProblems() || hasWarnings()) {
@@ -168,14 +163,14 @@
                     <p class="font-medium text-sm" [class.text-red-800]="hasCriticalProblems()"
                         [class.text-amber-800]="!hasCriticalProblems() && hasWarnings()">
                         @if (hasCriticalProblems()) {
-                        Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
+                        {{ 'domain.security-checks.critical-problems' | transloco }}
                         } @else {
-                        Er zijn waarschuwingen voor dit domein.
+                        {{ 'domain.security-checks.problems' | transloco }}
                         }
                     </p>
                     <p class="text-sm mt-1" [class.text-red-700]="hasCriticalProblems()"
                         [class.text-amber-700]="!hasCriticalProblems() && hasWarnings()">
-                        Raadpleeg de help-artikelen om deze te verhelpen.
+                        {{ 'domain.security-checks.advices' | transloco }}
                     </p>
                 </div>
             </div>
@@ -202,7 +197,8 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="font-medium text-gray-900 text-sm">{{ getControlTitle(row.type) }}</span>
+                            <span class="font-medium text-gray-900 text-sm">{{ getControlTitle(row.type) | transloco
+                                }}</span>
                             @if (getControlArticleUrl(row.type)) {
                             <a [href]="getControlArticleUrl(row.type)!" target="_blank" rel="noopener noreferrer"
                                 class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -210,13 +206,13 @@
                             </a>
                             }
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">{{ getControlStatusDescription(row) }}</p>
+                        <p class="text-sm text-gray-600 mt-1">{{ getControlStatusDescription(row) | transloco }}</p>
                         @if (getControlTip(row.type, row.status)) {
                         <p class="text-sm mt-2">
                             <span class="text-gray-600">Tip: </span>
                             <span [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
                                 [class.text-red-600]="getDnsStatusClass(row.status, row.type) === 'error'">
-                                {{ getControlTip(row.type, row.status) }}
+                                {{ getControlTip(row.type, row.status) | transloco }}
                             </span>
                         </p>
                         }
@@ -234,7 +230,7 @@
                             <lucide-icon
                                 [img]="getDnsStatusClass(row.status, row.type) === 'valid' ? Icons.CircleCheck : (getDnsStatusClass(row.status, row.type) === 'error' ? Icons.CircleX : Icons.TriangleAlert)"
                                 size="12"></lucide-icon>
-                            {{ getDnsStatusLabel(row.status) }}
+                            {{ getDnsStatusLabel(row.status) | transloco}}
                         </span>
                     </div>
                 </div>
@@ -243,11 +239,11 @@
         </div>
         } @else if (selectedDnsDomain()) {
         <div class="flex flex-col items-center justify-center p-8">
-            <span class="text-sm text-gray-500">Geen beveiligingscontroles gevonden voor dit domein.</span>
+            <span class="text-sm text-gray-500">{{ 'domain.security-checks.none' | transloco }}.</span>
         </div>
         } @else {
         <div class="flex flex-col items-center justify-center p-8">
-            <span class="text-sm text-gray-500">Selecteer een domein om beveiligingscontroles te bekijken.</span>
+            <span class="text-sm text-gray-500">{{ 'domain.none-selected' | transloco }}.</span>
         </div>
         }
     </div>
@@ -261,13 +257,13 @@
             <div class="flex-1 min-w-0">
                 <h2 class="text-lg font-medium text-gray-900">DNS Records</h2>
                 <p class="text-sm text-gray-500 mt-0.5">
-                    Belangrijke DNS records voor e-mail authenticatie en beveiliging
+                    {{ 'domain.dns-records.important' | transloco }}
                 </p>
             </div>
             @if (domains().length > 0) {
             <select [ngModel]="selectedDnsDomain() ?? ''" (ngModelChange)="selectDnsDomain($event)"
                 class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                <option value="" disabled>Selecteer domein</option>
+                <option value="" disabled>{{ 'select-domain' | transloco }}</option>
                 @for (d of domains(); track d.domainName) {
                 <option [value]="d.domainName">{{ d.domainName }}</option>
                 }
@@ -278,7 +274,7 @@
         @if (isLoadingDns()) {
         <div class="flex flex-col items-center p-8">
             <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <span class="text-sm text-gray-500 mt-1">DNS records worden geladen...</span>
+            <span class="text-sm text-gray-500 mt-1">{{ 'domain.dns-records.loading' | transloco }}...</span>
         </div>
         } @else if (rows().length > 0) {
         <div class="overflow-x-auto">
@@ -293,8 +289,10 @@
                     <tr class="border-b border-t border-gray-200 bg-gray-50/80">
                         <th class="px-4 py-4 text-left"></th>
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Naam</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">Waarde</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{ 'name-caps' |
+                            transloco }}</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{ 'value-caps'
+                            | transloco }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -318,11 +316,13 @@
                         <td colspan="4" class="px-6 py-4 pl-14">
                             <div class="flex flex-col gap-4">
                                 <div>
-                                    <p class="font-medium text-gray-900 text-sm mb-1">Beschrijving</p>
-                                    <p class="text-sm text-gray-700">{{ getDnsRecordDescription(row.type) || '–' }}</p>
+                                    <p class="font-medium text-gray-900 text-sm mb-1">{{ 'description' | transloco }}
+                                    </p>
+                                    <p class="text-sm text-gray-700">{{ (getDnsRecordDescription(row.type) | transloco)
+                                        || '–' }}</p>
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-900 text-sm mb-1">Volledige waarde</p>
+                                    <p class="font-medium text-gray-900 text-sm mb-1">{{ 'full-value' | transloco }}</p>
                                     <div
                                         class="text-sm text-gray-600 break-all font-mono bg-white rounded px-3 py-2 border border-gray-200">
                                         {{ row.values.join(' ') || row.message || '–' }}
@@ -338,11 +338,11 @@
         </div>
         } @else if (selectedDnsDomain()) {
         <div class="flex flex-col items-center justify-center p-8">
-            <span class="text-sm text-gray-500">Geen DNS records gevonden voor dit domein.</span>
+            <span class="text-sm text-gray-500">{{ 'domain.dns-records.none' | transloco }}.</span>
         </div>
         } @else {
         <div class="flex flex-col items-center justify-center p-8">
-            <span class="text-sm text-gray-500">Selecteer een domein om DNS records te bekijken.</span>
+            <span class="text-sm text-gray-500">{{ 'domain.dns-records.select-domain' | transloco }}.</span>
         </div>
         }
     </div>
