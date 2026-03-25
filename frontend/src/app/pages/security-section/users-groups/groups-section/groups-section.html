@@ -5,16 +5,16 @@
       [Value]="pageOverview()?.totalGroups" [Icon]="Icons.Users" />
 
     <app-section-top-card class="flex-1" Title="{{ 'groups.withExternal' | transloco }}" [Value]="pageOverview()?.groupsWithExternal"
-      [BackgroundColor]="showExternalKpiAlert() ? '#ffedd4' : '#dbeafe'"
-      [IconColor]="showExternalKpiAlert() ? '#f54a00' : '#155dfc'"
-      [TextColor]="showExternalKpiAlert() ? '#f54a00' : 'black'"
-      [Icon]="showExternalKpiAlert() ? Icons.ShieldAlert : Icons.Users" />
+      [BackgroundColor]="kpiGroupsExternalColors().bg"
+      [IconColor]="kpiGroupsExternalColors().icon"
+      [TextColor]="kpiGroupsExternalColors().text"
+      [Icon]="(pageOverview()?.groupsWithExternal ?? 0) > 0 ? Icons.ShieldAlert : Icons.Users" />
 
     <app-section-top-card class="flex-1" Title="{{ 'groups.high-risk' | transloco }}" [Value]="pageOverview()?.highRiskGroups"
-      [BackgroundColor]="showHighRiskKpiAlert() ? '#fee2e2' : '#dbeafe'"
-      [Icon]="showHighRiskKpiAlert() ? Icons.TriangleAlert : Icons.Users"
-      [IconColor]="showHighRiskKpiAlert() ? '#dc2626' : '#155dfc'"
-      [TextColor]="showHighRiskKpiAlert() ? '#dc2626' : 'black'" />
+      [BackgroundColor]="kpiGroupsHighRiskColors().bg"
+      [Icon]="(pageOverview()?.highRiskGroups ?? 0) > 0 ? Icons.TriangleAlert : Icons.Users"
+      [IconColor]="kpiGroupsHighRiskColors().icon"
+      [TextColor]="kpiGroupsHighRiskColors().text" />
 
     <div
       class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
@@ -125,7 +125,12 @@
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
               {{ 'groups.external-members' | transloco }}
             </p>
-            <span class="font-medium" [ngClass]="group.externalMembers > 0 ? 'text-rose-600' : 'text-emerald-600'">
+            <span
+              class="font-medium"
+              [class.text-rose-600]="group.externalMembers > 0 && !isGroupExternalPrefDisabled()"
+              [class.text-slate-600]="group.externalMembers > 0 && isGroupExternalPrefDisabled()"
+              [class.text-emerald-600]="group.externalMembers <= 0"
+            >
               {{ group.externalMembers }}
             </span>
           </div>
@@ -133,12 +138,24 @@
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
               {{ 'groups.external-allowed' | transloco }}
             </p>
-            <a class="inline-flex items-center gap-1 font-medium hover:opacity-80"
-              [ngClass]="group.externalAllowed ? 'text-rose-600 underline' : 'text-emerald-600'"
-              [href]="getGroupAdminUrl(group)" target="_blank" rel="noopener noreferrer">
+            <a
+              class="inline-flex items-center gap-1 font-medium hover:opacity-80"
+              [class.text-emerald-600]="!group.externalAllowed"
+              [class.text-rose-600]="group.externalAllowed && !isGroupExternalPrefDisabled()"
+              [class.underline]="group.externalAllowed"
+              [class.text-slate-600]="group.externalAllowed && isGroupExternalPrefDisabled()"
+              [href]="getGroupAdminUrl(group)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <ng-container *ngIf="group.externalAllowed; else externalNo">
-                <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                {{ 'yes' | transloco }}
+                <ng-container *ngIf="isGroupExternalPrefDisabled(); else externalAllowedAlert">
+                  <span>{{ 'yes' | transloco }}</span>
+                </ng-container>
+                <ng-template #externalAllowedAlert>
+                  <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
+                  <span>{{ 'yes' | transloco }}</span>
+                </ng-template>
               </ng-container>
               <ng-template #externalNo>{{ 'no' | transloco }}</ng-template>
             </a>

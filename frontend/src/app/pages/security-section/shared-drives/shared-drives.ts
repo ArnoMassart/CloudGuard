@@ -78,16 +78,24 @@ export class SharedDrives implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
-  readonly showOrphanKpiAlert = computed(() => {
+  readonly kpiOrphanDrivesColors = computed(() => {
     const o = this.pageOverview();
     const n = o?.orphanDrives ?? 0;
-    return n > 0 && !this.#preferencesFacade.isDisabled('shared-drives', 'orphan');
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (this.#preferencesFacade.isDisabled('shared-drives', 'orphan')) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#f3e8ff', icon: '#9810fa', text: '#9810fa' };
   });
 
-  readonly showExternalMembersKpiAlert = computed(() => {
+  readonly kpiExternalDrivesColors = computed(() => {
     const o = this.pageOverview();
     const n = o?.externalMembersDriveCount ?? 0;
-    return n > 0 && !this.#preferencesFacade.isDisabled('shared-drives', 'external');
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (this.#preferencesFacade.isDisabled('shared-drives', 'external')) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
   });
 
   // ==========================================

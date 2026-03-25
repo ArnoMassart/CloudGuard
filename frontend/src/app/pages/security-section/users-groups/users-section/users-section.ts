@@ -76,10 +76,14 @@ export class UsersSection implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
-  readonly show2faKpiAlert = computed(() => {
+  readonly kpiZonder2faColors = computed(() => {
     const o = this.pageOverview();
     const n = o?.withoutTwoFactor ?? 0;
-    return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', '2fa');
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (this.#preferencesFacade.isDisabled('users-groups', '2fa')) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
   });
 
   // ==========================================

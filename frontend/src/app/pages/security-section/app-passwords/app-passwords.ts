@@ -66,14 +66,23 @@ export class AppPasswords implements OnInit, OnDestroy {
     () => !this.#preferencesFacade.isDisabled('app-passwords', 'appPassword'),
   );
 
-  readonly showAllowedKpiAlert = computed(() => {
+  readonly kpiAppPasswordAllowedColors = computed(() => {
     const o = this.pageOverview();
-    return !!o?.allowed && this.appPasswordAlertsEnabled();
+    if (!o?.allowed) return { bg: '#dbfce7', icon: '#17b04f', text: '#17b04f' };
+    if (!this.appPasswordAlertsEnabled()) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffe2e2', icon: '#e7000b', text: '#e7000b' };
   });
 
-  readonly showTotalAppPasswordsKpiAlert = computed(() => {
+  readonly kpiAppPasswordTotalColors = computed(() => {
     const o = this.pageOverview();
-    return (o?.totalAppPasswords ?? 0) > 0 && this.appPasswordAlertsEnabled();
+    const n = o?.totalAppPasswords ?? 0;
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (!this.appPasswordAlertsEnabled()) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffe2e2', icon: '#e7000b', text: '#e7000b' };
   });
 
   #tokenHistory: (string | null)[] = [null];

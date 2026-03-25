@@ -75,9 +75,14 @@ export class AppAccess implements OnInit, OnDestroy {
     () => !this.#preferencesFacade.isDisabled('app-access', 'highRisk'),
   );
 
-  readonly showHighRiskKpiAlert = computed(() => {
+  readonly kpiHighRiskAppsColors = computed(() => {
     const o = this.pageOverview();
-    return (o?.totalHighRiskApps ?? 0) > 0 && this.highRiskAlertsEnabled();
+    const n = o?.totalHighRiskApps ?? 0;
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (!this.highRiskAlertsEnabled()) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffe2e2', icon: '#e7000b', text: '#e7000b' };
   });
 
   readonly filterOptions = computed<FilterOption[]>(() => [

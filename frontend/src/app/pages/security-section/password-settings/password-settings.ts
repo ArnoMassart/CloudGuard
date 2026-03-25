@@ -54,6 +54,15 @@ export class PasswordSettings implements OnInit, OnDestroy {
     (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0 &&
     !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')
   );
+
+  readonly kpiAdminsSecurityKeysColors = computed(() => {
+    const n = this.data()?.adminsWithoutSecurityKeys.length ?? 0;
+    if (n === 0) return { bg: '#dbfce7', icon: '#17b04f', text: '#166534' };
+    if (this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
+  });
   readonly hasPasswordLengthWeak = computed(() =>
     !this.#preferencesFacade.isDisabled('password-settings', 'length') &&
     (this.data()?.passwordPoliciesByOu ?? []).some(
@@ -97,7 +106,6 @@ export class PasswordSettings implements OnInit, OnDestroy {
 
   #langSubscription?: Subscription;
 
-  /** True when any OU still has policy problems after applying muted preferences (matches expanded-row rules). */
   readonly hasVisiblePasswordPolicyProblems = computed(() =>
     (this.data()?.passwordPoliciesByOu ?? []).some((p) => this.effectivePolicyProblemCount(p) > 0),
   );

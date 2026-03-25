@@ -79,16 +79,24 @@ export class GroupsSection implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
-  readonly showExternalKpiAlert = computed(() => {
+  readonly kpiGroupsExternalColors = computed(() => {
     const o = this.pageOverview();
     const n = o?.groupsWithExternal ?? 0;
-    return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#ffedd4', icon: '#f54a00', text: '#f54a00' };
   });
 
-  readonly showHighRiskKpiAlert = computed(() => {
+  readonly kpiGroupsHighRiskColors = computed(() => {
     const o = this.pageOverview();
     const n = o?.highRiskGroups ?? 0;
-    return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
+    if (n === 0) return { bg: '#dbeafe', icon: '#155dfc', text: 'black' };
+    if (this.#preferencesFacade.isDisabled('users-groups', 'groupExternal')) {
+      return { bg: '#f3f4f6', icon: '#6b7280', text: '#6b7280' };
+    }
+    return { bg: '#fee2e2', icon: '#dc2626', text: '#dc2626' };
   });
 
   #langSubscription?: Subscription;
@@ -148,6 +156,11 @@ export class GroupsSection implements OnInit, OnDestroy {
     this.isExpanded.update((v) => !v);
   }
 
+  /** When true, externe-leden alerts in group cards use neutral gray (still show real counts/Ja-Nee). */
+  isGroupExternalPrefDisabled(): boolean {
+    return this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
+  }
+
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
     const breakdown =
@@ -182,21 +195,22 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
-    this.#groupService
-      .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)
-      .subscribe({
-        next: (res) => {
-          this.groups.set(this.mapToGroupSummary(res.groups));
-          this.nextPageToken.set(res.nextPageToken ?? null);
-          this.loading.set(false);
-          console.log(this.groups());
-        },
-        error: (error) => {
-          console.error('Error fetching groups:', error);
-          this.groups.set([]);
-          this.loading.set(false);
-        },
-      });
+    forkJoin({
+      res: this.#groupService.getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ res }) => {
+        this.groups.set(this.mapToGroupSummary(res.groups));
+        this.nextPageToken.set(res.nextPageToken ?? null);
+        this.loading.set(false);
+        console.log(this.groups());
+      },
+      error: (error) => {
+        console.error('Error fetching groups:', error);
+        this.groups.set([]);
+        this.loading.set(false);
+      },
+    });
   }
 
   private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {

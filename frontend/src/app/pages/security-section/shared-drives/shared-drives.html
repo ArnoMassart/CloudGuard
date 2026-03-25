@@ -18,10 +18,10 @@
         class="flex-1"
         Title="{{ 'shared-drives.without-managers' | transloco }}"
         [Value]="pageOverview()?.orphanDrives"
-        [BackgroundColor]="showOrphanKpiAlert() ? '#f3e8ff' : '#dbeafe'"
-        [IconColor]="showOrphanKpiAlert() ? '#9810fa' : '#155dfc'"
-        [TextColor]="showOrphanKpiAlert() ? '#9810fa' : 'black'"
-        [Icon]="showOrphanKpiAlert() ? Icons.Settings : Icons.HardDrive"
+        [BackgroundColor]="kpiOrphanDrivesColors().bg"
+        [IconColor]="kpiOrphanDrivesColors().icon"
+        [TextColor]="kpiOrphanDrivesColors().text"
+        [Icon]="(pageOverview()?.orphanDrives ?? 0) > 0 ? Icons.Settings : Icons.HardDrive"
       />
 
       <app-section-top-card
@@ -38,10 +38,10 @@
         class="flex-1"
         Title="{{ 'shared-drives.with-external' | transloco }}"
         [Value]="pageOverview()?.externalMembersDriveCount"
-        [BackgroundColor]="showExternalMembersKpiAlert() ? '#ffedd4' : '#dbeafe'"
-        [IconColor]="showExternalMembersKpiAlert() ? '#f54a00' : '#155dfc'"
-        [TextColor]="showExternalMembersKpiAlert() ? '#f54a00' : 'black'"
-        [Icon]="showExternalMembersKpiAlert() ? Icons.Users : Icons.HardDrive"
+        [BackgroundColor]="kpiExternalDrivesColors().bg"
+        [IconColor]="kpiExternalDrivesColors().icon"
+        [TextColor]="kpiExternalDrivesColors().text"
+        [Icon]="(pageOverview()?.externalMembersDriveCount ?? 0) > 0 ? Icons.Users : Icons.HardDrive"
       />
 
       <div

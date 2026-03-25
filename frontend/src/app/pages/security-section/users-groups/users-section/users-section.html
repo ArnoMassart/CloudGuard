@@ -2,10 +2,10 @@
   <div class="w-full flex gap-4">
     <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}" [Value]="pageOverview()?.totalUsers" />
     <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}" [Value]="pageOverview()?.withoutTwoFactor"
-      [BackgroundColor]="show2faKpiAlert() ? '#ffedd4' : '#dbeafe'"
-      [IconColor]="show2faKpiAlert() ? '#f54a00' : '#155dfc'"
-      [TextColor]="show2faKpiAlert() ? '#f54a00' : 'black'"
-      [Icon]="show2faKpiAlert() ? Icons.TriangleAlert : Icons.Shield" />
+      [BackgroundColor]="kpiZonder2faColors().bg"
+      [IconColor]="kpiZonder2faColors().icon"
+      [TextColor]="kpiZonder2faColors().text"
+      [Icon]="(pageOverview()?.withoutTwoFactor ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
     <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}" [Value]="pageOverview()?.adminUsers"
       BackgroundColor="#f3e8ff" IconColor="#9810fa" />
     <div

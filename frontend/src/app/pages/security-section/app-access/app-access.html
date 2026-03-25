@@ -9,10 +9,10 @@
                     [Value]="pageOverview()?.totalThirdPartyApps" />
 
                 <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}" [Value]="pageOverview()?.totalHighRiskApps"
-                    [BackgroundColor]="showHighRiskKpiAlert() ? '#ffe2e2' : '#dbeafe'"
-                    [IconColor]="showHighRiskKpiAlert() ? '#e7000b' : '#155dfc'"
-                    [TextColor]="showHighRiskKpiAlert() ? '#e7000b' : 'black'"
-                    [Icon]="showHighRiskKpiAlert() ? Icons.TriangleAlert : Icons.Shield" />
+                    [BackgroundColor]="kpiHighRiskAppsColors().bg"
+                    [IconColor]="kpiHighRiskAppsColors().icon"
+                    [TextColor]="kpiHighRiskAppsColors().text"
+                    [Icon]="(pageOverview()?.totalHighRiskApps ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
 
                 <app-section-top-card class="flex-1" Title="{{ 'app-access.permissions' | transloco }}"
                     [Value]="pageOverview()?.totalPermissionsGranted" BackgroundColor="#f3e8ff" IconColor="#9810fa"
