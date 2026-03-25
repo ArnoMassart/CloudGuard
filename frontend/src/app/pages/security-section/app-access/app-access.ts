@@ -84,29 +84,32 @@ export class AppAccess implements OnInit, OnDestroy {
     )
   );
 
-  readonly filterOptions = computed<FilterOption[]>(() => [
-    {
-      value: 'all',
-      label: 'Alle apps',
-      count: this.allFilteredApps(),
-      activeClass: 'bg-[#3ABFAD] text-white',
-      inactiveClass: '',
-    },
-    {
-      value: 'high',
-      label: 'Hoog risico',
-      count: this.allHighRiskApps(),
-      activeClass: 'bg-red-100 text-red-800',
-      inactiveClass: '',
-    },
-    {
-      value: 'not-high',
-      label: 'Geen risico',
-      count: this.allNotHighRiskApps(),
-      activeClass: 'bg-emerald-100 text-emerald-800',
-      inactiveClass: '',
-    },
-  ]);
+  readonly filterOptions = computed<FilterOption[]>(() => {
+    const highRiskChipMuted = !this.highRiskAlertsEnabled();
+    return [
+      {
+        value: 'all',
+        label: 'Alle apps',
+        count: this.allFilteredApps(),
+        activeClass: 'bg-[#3ABFAD] text-white',
+        inactiveClass: '',
+      },
+      {
+        value: 'high',
+        label: 'Hoog risico',
+        count: this.allHighRiskApps(),
+        activeClass: highRiskChipMuted ? 'bg-[#f3f4f6] text-[#6b7280]' : 'bg-red-100 text-red-800',
+        inactiveClass: '',
+      },
+      {
+        value: 'not-high',
+        label: 'Geen risico',
+        count: this.allNotHighRiskApps(),
+        activeClass: 'bg-emerald-100 text-emerald-800',
+        inactiveClass: '',
+      },
+    ];
+  });
 
   // ==========================================
   // PRIVATE PROPERTIES
