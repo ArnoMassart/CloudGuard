@@ -13,6 +13,8 @@ import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
 import { Risk } from '../../../models/o-auth/Risk';
 import { FilterOption } from '../../../models/FilterOption';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -43,6 +45,7 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly UtilityMethods = UtilityMethods;
   readonly #oAuthService = inject(OAuthService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -67,6 +70,15 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly allFilteredApps = signal(0);
   readonly allHighRiskApps = signal(0);
   readonly allNotHighRiskApps = signal(0);
+
+  readonly highRiskAlertsEnabled = computed(
+    () => !this.#preferencesFacade.isDisabled('app-access', 'highRisk'),
+  );
+
+  readonly showHighRiskKpiAlert = computed(() => {
+    const o = this.pageOverview();
+    return (o?.totalHighRiskApps ?? 0) > 0 && this.highRiskAlertsEnabled();
+  });
 
   readonly filterOptions = computed<FilterOption[]>(() => [
     {
@@ -211,9 +223,12 @@ export class AppAccess implements OnInit, OnDestroy {
   }
 
   #loadPageOverview(): void {
-    this.#oAuthService.getOAuthPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
+    forkJoin({
+      overview: this.#oAuthService.getOAuthPageOverview(),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ overview }) => {
+        this.pageOverview.set(overview);
       },
       error: (err) => {
         console.error('Failed to load page overview', err);

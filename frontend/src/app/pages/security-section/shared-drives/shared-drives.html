@@ -18,10 +18,10 @@
         class="flex-1"
         Title="{{ 'shared-drives.without-managers' | transloco }}"
         [Value]="pageOverview()?.orphanDrives"
-        BackgroundColor="#f3e8ff"
-        IconColor="#9810fa"
-        TextColor="#9810fa"
-        [Icon]="Icons.Settings"
+        [BackgroundColor]="showOrphanKpiAlert() ? '#f3e8ff' : '#dbeafe'"
+        [IconColor]="showOrphanKpiAlert() ? '#9810fa' : '#155dfc'"
+        [TextColor]="showOrphanKpiAlert() ? '#9810fa' : 'black'"
+        [Icon]="showOrphanKpiAlert() ? Icons.Settings : Icons.HardDrive"
       />
 
       <app-section-top-card
@@ -38,10 +38,10 @@
         class="flex-1"
         Title="{{ 'shared-drives.with-external' | transloco }}"
         [Value]="pageOverview()?.externalMembersDriveCount"
-        BackgroundColor="#ffedd4"
-        IconColor="#f54a00"
-        TextColor="#f54a00"
-        [Icon]="Icons.Users"
+        [BackgroundColor]="showExternalMembersKpiAlert() ? '#ffedd4' : '#dbeafe'"
+        [IconColor]="showExternalMembersKpiAlert() ? '#f54a00' : '#155dfc'"
+        [TextColor]="showExternalMembersKpiAlert() ? '#f54a00' : 'black'"
+        [Icon]="showExternalMembersKpiAlert() ? Icons.Users : Icons.HardDrive"
       />
 
       <div

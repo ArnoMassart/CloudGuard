@@ -14,6 +14,8 @@ import { Subject, Subscription } from 'rxjs';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../components/search-bar/search-bar';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 const ITEMS_PER_PAGE = 4;
@@ -38,6 +40,7 @@ export class AppPasswords implements OnInit, OnDestroy {
   readonly pageOverview = signal<AppPasswordOverviewResponse | null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   readonly userAppPasswords = signal<UserAppPasswords[]>([]);
@@ -59,10 +62,32 @@ export class AppPasswords implements OnInit, OnDestroy {
   readonly #searchSubject = new Subject<string>();
   readonly isExpanded = signal(true);
 
+  readonly appPasswordAlertsEnabled = computed(
+    () => !this.#preferencesFacade.isDisabled('app-passwords', 'appPassword'),
+  );
+
+  readonly showAllowedKpiAlert = computed(() => {
+    const o = this.pageOverview();
+    return !!o?.allowed && this.appPasswordAlertsEnabled();
+  });
+
+  readonly showTotalAppPasswordsKpiAlert = computed(() => {
+    const o = this.pageOverview();
+    return (o?.totalAppPasswords ?? 0) > 0 && this.appPasswordAlertsEnabled();
+  });
+
   #tokenHistory: (string | null)[] = [null];
   #langSubscription?: Subscription;
 
   ngOnInit(): void {
+    forkJoin({
+      overview: this.#appPasswordsService.getOverview(),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ overview }) => this.pageOverview.set(overview),
+      error: () => {},
+    });
+    this.#loadAppPasswords(null);
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadOverview();
       this.#loadAppPasswords(null);
@@ -129,7 +154,13 @@ export class AppPasswords implements OnInit, OnDestroy {
     this.isRefreshing.set(true);
     this.#appPasswordsService.refreshCache().subscribe({
       next: () => {
-        this.#loadOverview();
+        forkJoin({
+          overview: this.#appPasswordsService.getOverview(),
+          _: this.#preferencesFacade.loadDisabled$(),
+        }).subscribe({
+          next: ({ overview }) => this.pageOverview.set(overview),
+          error: () => {},
+        });
         this.#tokenHistory = [null];
         this.currentPage.set(1);
         this.#loadAppPasswords(null);
@@ -141,13 +172,6 @@ export class AppPasswords implements OnInit, OnDestroy {
       complete: () => {
         this.isRefreshing.set(false);
       },
-    });
-  }
-
-  #loadOverview() {
-    this.#appPasswordsService.getOverview().subscribe({
-      next: (overview) => this.pageOverview.set(overview),
-      error: () => {},
     });
   }
 

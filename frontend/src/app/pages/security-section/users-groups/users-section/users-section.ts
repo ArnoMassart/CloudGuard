@@ -13,6 +13,8 @@ import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
+import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -44,6 +46,7 @@ export class UsersSection implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -71,6 +74,12 @@ export class UsersSection implements OnInit, OnDestroy {
     const warnings = this.userPageWarnings();
     const activeCount = Object.values(warnings).filter((val) => val === true).length;
     return activeCount > 1;
+  });
+
+  readonly show2faKpiAlert = computed(() => {
+    const o = this.pageOverview();
+    const n = o?.withoutTwoFactor ?? 0;
+    return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', '2fa');
   });
 
   // ==========================================
@@ -198,9 +207,12 @@ export class UsersSection implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    this.#userService.getUsersPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
+    forkJoin({
+      overview: this.#userService.getUsersPageOverview(),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ overview }) => {
+        this.pageOverview.set(overview);
         this.#loadWarnings();
       },
       error: (err) => {
@@ -210,19 +222,25 @@ export class UsersSection implements OnInit, OnDestroy {
   }
 
   #loadWarnings() {
-    if (this.pageOverview()?.withoutTwoFactor! > 0) {
-      this.hasWarnings.set(true);
-      this.userPageWarnings().twoFactorWarning = true;
-    }
+    const o = this.pageOverview();
+    const twoFactor =
+      !!o &&
+      (o.withoutTwoFactor ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('users-groups', '2fa');
+    const activityLong =
+      !!o &&
+      (o.activeLongNoLoginCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('users-groups', 'activity');
+    const activityInactive =
+      !!o &&
+      (o.inactiveRecentLoginCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('users-groups', 'activity');
 
-    if (this.pageOverview()?.activeLongNoLoginCount! > 0) {
-      this.hasWarnings.set(true);
-      this.userPageWarnings().activeWithLongNoLogin = true;
-    }
-
-    if (this.pageOverview()?.inactiveRecentLoginCount! > 0) {
-      this.hasWarnings.set(true);
-      this.userPageWarnings().notActiveWithRecentLogin = true;
-    }
+    this.userPageWarnings.set({
+      twoFactorWarning: twoFactor,
+      activeWithLongNoLogin: activityLong,
+      notActiveWithRecentLogin: activityInactive,
+    });
+    this.hasWarnings.set(twoFactor || activityLong || activityInactive);
   }
 }

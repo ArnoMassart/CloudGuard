@@ -1,17 +1,28 @@
 <div class="w-full flex flex-col gap-5">
   <div class="w-full flex gap-4">
-    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}"
-      [Value]="pageOverview()?.totalUsers" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}"
-      [Value]="pageOverview()?.withoutTwoFactor" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
-      [Icon]="Icons.TriangleAlert" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}"
-      [Value]="pageOverview()?.adminUsers" BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
-      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
-      <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
-        BackgroundColor="#fef9c2" IconColor="#d69518" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}" [Value]="pageOverview()?.totalUsers" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}" [Value]="pageOverview()?.withoutTwoFactor"
+      [BackgroundColor]="show2faKpiAlert() ? '#ffedd4' : '#dbeafe'"
+      [IconColor]="show2faKpiAlert() ? '#f54a00' : '#155dfc'"
+      [TextColor]="show2faKpiAlert() ? '#f54a00' : 'black'"
+      [Icon]="show2faKpiAlert() ? Icons.TriangleAlert : Icons.Shield" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}" [Value]="pageOverview()?.adminUsers"
+      BackgroundColor="#f3e8ff" IconColor="#9810fa" />
+    <div
+      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+      (click)="openSecurityScoreDetail()"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
+    >
+      <app-section-top-card
+        Title="Security Score"
+        [Value]="pageOverview()?.securityScore"
+        [IsPercentage]="true"
+        BackgroundColor="#fef9c2"
+        IconColor="#d69518"
+      />
     </div>
   </div>
 

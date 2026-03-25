@@ -4,19 +4,31 @@
     <app-section-top-card class="flex-1" Title="{{ 'groups.total-groups' | transloco }}"
       [Value]="pageOverview()?.totalGroups" [Icon]="Icons.Users" />
 
-    <app-section-top-card class="flex-1" Title="{{ 'groups.withExternal' | transloco }}"
-      [Value]="pageOverview()?.groupsWithExternal" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
-      [Icon]="Icons.ShieldAlert" />
+    <app-section-top-card class="flex-1" Title="{{ 'groups.withExternal' | transloco }}" [Value]="pageOverview()?.groupsWithExternal"
+      [BackgroundColor]="showExternalKpiAlert() ? '#ffedd4' : '#dbeafe'"
+      [IconColor]="showExternalKpiAlert() ? '#f54a00' : '#155dfc'"
+      [TextColor]="showExternalKpiAlert() ? '#f54a00' : 'black'"
+      [Icon]="showExternalKpiAlert() ? Icons.ShieldAlert : Icons.Users" />
 
     <app-section-top-card class="flex-1" Title="{{ 'groups.high-risk' | transloco }}"
       [Value]="pageOverview()?.highRiskGroups" BackgroundColor="#fee2e2" [Icon]="Icons.TriangleAlert"
       IconColor="#dc2626" />
 
-    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
-      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
-      <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
-        BackgroundColor="#fef9c2" IconColor="#d69518" />
+    <div
+      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+      (click)="openSecurityScoreDetail()"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
+    >
+      <app-section-top-card
+        Title="Security Score"
+        [Value]="pageOverview()?.securityScore"
+        [IsPercentage]="true"
+        BackgroundColor="#fef9c2"
+        IconColor="#d69518"
+      />
     </div>
   </div>
 

@@ -4,6 +4,7 @@ import { PageHeader } from '../../../components/page-header/page-header';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../shared/AppIcons';
 import { SecurityPreferencesService } from '../../../services/security-preferences-service';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { SECTION_PREFERENCE_CONFIGS } from '../../../models/preferences/section-preference-config';
 
 @Component({
@@ -18,6 +19,7 @@ export class SecurityPreferences implements OnInit {
   readonly sections = SECTION_PREFERENCE_CONFIGS;
 
   readonly #preferencesService = inject(SecurityPreferencesService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
 
   readonly preferences = signal<Record<string, boolean>>({});
   readonly loading = signal(true);
@@ -50,6 +52,7 @@ export class SecurityPreferences implements OnInit {
     this.#preferencesService.setPreference(section, key, newValue).subscribe({
       next: () => {
         this.preferences.update((p) => ({ ...p, [fullKey]: newValue }));
+        this.#preferencesFacade.refresh();
       },
       error: () => this.#loadPreferences(),
       complete: () => this.saving.set(null),

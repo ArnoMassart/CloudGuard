@@ -15,6 +15,8 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -48,6 +50,8 @@ export class Devices implements OnInit, OnDestroy {
   readonly UtilityMethods = UtilityMethods;
   readonly #deviceService = inject(DeviceService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
+
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -209,9 +213,12 @@ export class Devices implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    this.#deviceService.getDevicesPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
+    forkJoin({
+      overview: this.#deviceService.getDevicesPageOverview(),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ overview }) => {
+        this.pageOverview.set(overview);
         this.#loadWarnings();
       },
       error: (err) => {
@@ -221,25 +228,31 @@ export class Devices implements OnInit, OnDestroy {
   }
 
   #loadWarnings() {
-    if (this.pageOverview()?.lockScreenCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().lockScreenWarning = true;
-    }
+    const o = this.pageOverview();
+    const lock =
+      !!o &&
+      (o.lockScreenCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('mobile-devices', 'lockscreen');
+    const enc =
+      !!o &&
+      (o.encryptionCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('mobile-devices', 'encryption');
+    const os =
+      !!o &&
+      (o.osVersionCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('mobile-devices', 'osVersion');
+    const integrity =
+      !!o &&
+      (o.integrityCount ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('mobile-devices', 'integrity');
 
-    if (this.pageOverview()?.encryptionCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().encryptionWarning = true;
-    }
-
-    if (this.pageOverview()?.osVersionCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().osVersionWarning = true;
-    }
-
-    if (this.pageOverview()?.integrityCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().integrityWarning = true;
-    }
+    this.devicePageWarnings.set({
+      lockScreenWarning: lock,
+      encryptionWarning: enc,
+      osVersionWarning: os,
+      integrityWarning: integrity,
+    });
+    this.hasWarnings.set(lock || enc || os || integrity);
   }
 
   #loadDeviceTypes() {

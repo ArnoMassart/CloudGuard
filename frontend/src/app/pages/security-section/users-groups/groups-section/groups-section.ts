@@ -10,6 +10,8 @@ import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -50,6 +52,7 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   readonly #groupService = inject(GroupService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
   readonly isRefreshing = signal<boolean>(false);
@@ -76,6 +79,12 @@ export class GroupsSection implements OnInit, OnDestroy {
     return activeCount > 1;
   });
 
+  readonly showExternalKpiAlert = computed(() => {
+    const o = this.pageOverview();
+    const n = o?.groupsWithExternal ?? 0;
+    return n > 0 && !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
+  });
+
   #langSubscription?: Subscription;
 
   ngOnInit(): void {
@@ -92,9 +101,12 @@ export class GroupsSection implements OnInit, OnDestroy {
   }
 
   private loadGroupsOverview(): void {
-    this.#groupService.getGroupsOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
+    forkJoin({
+      overview: this.#groupService.getGroupsOverview(),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ overview }) => {
+        this.pageOverview.set(overview);
         this.loadWarnings();
       },
       error: (err) => console.error('Failed to load groups overview', err),
@@ -171,6 +183,7 @@ export class GroupsSection implements OnInit, OnDestroy {
           this.groups.set(this.mapToGroupSummary(res.groups));
           this.nextPageToken.set(res.nextPageToken ?? null);
           this.loading.set(false);
+          console.log(this.groups());
         },
         error: (error) => {
           console.error('Error fetching groups:', error);
@@ -203,14 +216,17 @@ export class GroupsSection implements OnInit, OnDestroy {
   }
 
   private loadWarnings() {
-    if (this.pageOverview()?.groupsWithExternal! > 0) {
-      this.groupPageWarnings().externalMember = true;
-      this.hasWarnings.set(true);
-    }
+    const o = this.pageOverview();
+    const external =
+      !!o &&
+      (o.groupsWithExternal ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
+    const highRisk = !!o && (o.highRiskGroups ?? 0) > 0;
 
-    if (this.pageOverview()?.highRiskGroups! > 0) {
-      this.groupPageWarnings().highRisk = true;
-      this.hasWarnings.set(true);
-    }
+    this.groupPageWarnings.set({
+      externalMember: external,
+      highRisk,
+    });
+    this.hasWarnings.set(external || highRisk);
   }
 }

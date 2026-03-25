@@ -15,6 +15,8 @@ import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminW
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { LucideAngularModule } from 'lucide-angular';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -35,6 +37,7 @@ export class PasswordSettings implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
   readonly #passwordSettingsService = inject(PasswordSettingsService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   readonly data = signal<PasswordSettingsData | null>(null);
@@ -47,21 +50,30 @@ export class PasswordSettings implements OnInit, OnDestroy {
   readonly warningsExpanded = signal(true);
   readonly criticalWarningsExpanded = signal(true);
 
-  readonly hasAdminsWithoutSecurityKeys = computed(
-    () => (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0
+  readonly hasAdminsWithoutSecurityKeys = computed(() =>
+    (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0 &&
+    !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')
   );
   readonly hasPasswordLengthWeak = computed(() =>
-    (this.data()?.passwordPoliciesByOu ?? []).some((p) => p.minLength != null && p.minLength < 12)
+    !this.#preferencesFacade.isDisabled('password-settings', 'length') &&
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.minLength != null && p.minLength < 12
+    )
   );
   readonly hasStrongPasswordNotRequired = computed(() =>
-    (this.data()?.passwordPoliciesByOu ?? []).some((p) => p.strongPasswordRequired === false)
+    !this.#preferencesFacade.isDisabled('password-settings', 'strongPassword') &&
+    (this.data()?.passwordPoliciesByOu ?? []).some(
+      (p) => p.strongPasswordRequired === false
+    )
   );
   readonly hasPasswordNeverExpires = computed(() =>
+    !this.#preferencesFacade.isDisabled('password-settings', 'expiration') &&
     (this.data()?.passwordPoliciesByOu ?? []).some(
       (p) => p.expirationDays == null || p.expirationDays === 0
     )
   );
   readonly has2SvNotEnforced = computed(() =>
+    !this.#preferencesFacade.isDisabled('password-settings', '2sv') &&
     (this.data()?.twoStepVerification.byOrgUnit ?? []).some((ou) => !ou.enforced)
   );
 
@@ -118,8 +130,11 @@ export class PasswordSettings implements OnInit, OnDestroy {
       this.loading.set(true);
     }
     this.error.set(null);
-    this.#passwordSettingsService.getPasswordSettings().subscribe({
-      next: (settings: PasswordSettingsData) => {
+    forkJoin({
+      settings: this.#passwordSettingsService.getPasswordSettings(),
+      _: this.#preferencesFacade.loadDisabled$(),
+    }).subscribe({
+      next: ({ settings }) => {
         this.data.set(settings);
         this.loading.set(false);
         onComplete?.();
@@ -183,6 +198,11 @@ export class PasswordSettings implements OnInit, OnDestroy {
   getUserUrl(email: string): string {
     if (!email?.trim()) return 'https://admin.google.com/u/1/ac/users';
     return `https://admin.google.com/u/1/ac/users/${encodeURIComponent(email.trim())}`;
+  }
+
+  formatForcedChangeReason(reason: string): string {
+    if (reason === 'changePasswordAtNextLogin') return 'Verplicht bij volgende login';
+    return reason || 'Onbekend';
   }
 
   openSecurityScoreDetail(): void {
