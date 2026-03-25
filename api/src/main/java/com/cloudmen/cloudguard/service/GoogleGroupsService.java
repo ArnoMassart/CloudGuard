@@ -3,7 +3,9 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.groups.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleGroupsCacheService;
+import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
@@ -80,8 +83,20 @@ public class GoogleGroupsService {
                 totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore);
 
         return new GroupOverviewResponse(
-                totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore, breakdown
+                totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore, breakdown, null
         );
+    }
+
+    public GroupOverviewResponse getGroupsOverview(String loggedInEmail, Set<String> disabledKeys) {
+        GroupOverviewResponse base = getGroupsOverview(loggedInEmail);
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(disabledKeys)
+                .check("externalMember", base.groupsWithExternal(), "users-groups", "groupExternal")
+                .check("highRisk", base.highRiskGroups(), "users-groups", "groupExternal")
+                .build();
+        return new GroupOverviewResponse(
+                base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
+                base.mediumRiskGroups(), base.lowRiskGroups(), base.securityScore(),
+                base.securityScoreBreakdown(), warnings);
     }
 
     private SecurityScoreBreakdownDto buildGroupsBreakdown(long totalGroups, long groupsWithExternal, long highRiskGroups, long mediumRiskGroups, long lowRiskGroups, int securityScore) {
@@ -100,5 +115,11 @@ public class GoogleGroupsService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 }

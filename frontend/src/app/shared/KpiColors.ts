@@ -22,27 +22,3 @@ export function kpiColors(count: number, prefDisabled: boolean, ok: KpiColorSet,
   return alert;
 }
 
-export interface WarningCheck<K extends string> {
-  key: K;
-  count: number;
-  section: string;
-  prefKey: string;
-}
-
-/**
- * Evaluates a list of warning checks against the preference facade,
- * returning a warnings record, hasWarnings, and hasMultipleWarnings.
- */
-export function evaluateWarnings<K extends string>(
-  checks: WarningCheck<K>[],
-  isDisabled: (section: string, prefKey: string) => boolean,
-): { warnings: Record<K, boolean>; hasWarnings: boolean; hasMultipleWarnings: boolean } {
-  const warnings = {} as Record<K, boolean>;
-  let activeCount = 0;
-  for (const c of checks) {
-    const active = c.count > 0 && !isDisabled(c.section, c.prefKey);
-    warnings[c.key] = active;
-    if (active) activeCount++;
-  }
-  return { warnings, hasWarnings: activeCount > 0, hasMultipleWarnings: activeCount > 1 };
-}

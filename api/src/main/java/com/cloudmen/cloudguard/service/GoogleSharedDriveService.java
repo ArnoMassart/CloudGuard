@@ -6,7 +6,9 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
+import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
@@ -105,9 +108,23 @@ public class GoogleSharedDriveService {
                     notOnlyDomainUsersAllowedCount,
                     notOnlyMembersCanAccessCount,
                     externalMembersDriveCount,
-                    breakdown
+                    breakdown,
+                    null
             );
+    }
 
+    public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        SharedDriveOverviewResponse base = getDrivesPageOverview(loggedInEmail);
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(disabledKeys)
+                .check("notOnlyDomainUsersAllowedWarning", base.notOnlyDomainUsersAllowedCount(), "shared-drives", "outsideDomain")
+                .check("notOnlyMembersCanAccessWarning", base.notOnlyMembersCanAccessCount(), "shared-drives", "nonMemberAccess")
+                .check("externalMembersWarning", base.externalMembersDriveCount(), "shared-drives", "external")
+                .check("orphanDrivesWarning", base.orphanDrives(), "shared-drives", "orphan")
+                .build();
+        return new SharedDriveOverviewResponse(
+                base.totalDrives(), base.orphanDrives(), base.totalHighRisk(), base.totalExternalMembersCount(),
+                base.securityScore(), base.notOnlyDomainUsersAllowedCount(), base.notOnlyMembersCanAccessCount(),
+                base.externalMembersDriveCount(), base.securityScoreBreakdown(), warnings);
     }
 
     private SecurityScoreBreakdownDto buildDrivesBreakdown(int totalDrives, int totalLowRisk, int totalMediumRisk, int totalHighRisk, int orphanDrives,
@@ -132,4 +149,11 @@ public class GoogleSharedDriveService {
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
+    }
+
 }

@@ -67,17 +67,14 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   readonly isExpanded = signal(true);
 
-  hasWarnings = signal(false);
-
-  groupPageWarnings = signal({
-    externalMember: false,
-    highRisk: false,
-  });
-
-  hasMultipleWarnings = computed(() => {
-    const warnings = this.groupPageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly groupPageWarnings = computed(() => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      externalMember: items['externalMember'] ?? false,
+      highRisk: items['highRisk'] ?? false,
+    };
   });
 
   readonly kpiGroupsExternalColors = computed(() =>
@@ -113,10 +110,7 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadGroupsOverview(): void {
     this.#preferencesFacade.loadWithPrefs$(this.#groupService.getGroupsOverview()).subscribe({
-      next: (overview) => {
-        this.pageOverview.set(overview);
-        this.loadWarnings();
-      },
+      next: (overview) => this.pageOverview.set(overview),
       error: (err) => console.error('Failed to load groups overview', err),
     });
   }
@@ -225,17 +219,4 @@ export class GroupsSection implements OnInit, OnDestroy {
     return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
   }
 
-  private loadWarnings() {
-    const o = this.pageOverview();
-    if (!o) return;
-    const { warnings, hasWarnings } = evaluateWarnings(
-      [
-        { key: 'externalMember' as const, count: o.groupsWithExternal ?? 0, section: 'users-groups', prefKey: 'groupExternal' },
-        { key: 'highRisk' as const, count: o.highRiskGroups ?? 0, section: 'users-groups', prefKey: 'groupExternal' },
-      ],
-      (s, k) => this.#preferencesFacade.isDisabled(s, k),
-    );
-    this.groupPageWarnings.set(warnings);
-    this.hasWarnings.set(hasWarnings);
-  }
 }

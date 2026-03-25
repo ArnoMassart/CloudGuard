@@ -3,7 +3,9 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.devices.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
+import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.cloudmen.cloudguard.utility.UtilityFunctions;
@@ -150,8 +152,22 @@ public class GoogleDeviceService {
         return new DeviceOverviewResponse(
                 totalDevices, nonCompliantDevices, approvedDevices, securityScore,
                 totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,
-                breakdown
+                breakdown, null
         );
+    }
+
+    public DeviceOverviewResponse getDevicesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        DeviceOverviewResponse base = getDevicesPageOverview(loggedInEmail);
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(disabledKeys)
+                .check("lockScreenWarning", base.lockScreenCount(), "mobile-devices", "lockscreen")
+                .check("encryptionWarning", base.encryptionCount(), "mobile-devices", "encryption")
+                .check("osVersionWarning", base.osVersionCount(), "mobile-devices", "osVersion")
+                .check("integrityWarning", base.integrityCount(), "mobile-devices", "integrity")
+                .build();
+        return new DeviceOverviewResponse(
+                base.totalDevices(), base.totalNonCompliant(), base.totalApprovedDevices(), base.securityScore(),
+                base.lockScreenCount(), base.encryptionCount(), base.osVersionCount(), base.integrityCount(),
+                base.securityScoreBreakdown(), warnings);
     }
 
     private SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore) {

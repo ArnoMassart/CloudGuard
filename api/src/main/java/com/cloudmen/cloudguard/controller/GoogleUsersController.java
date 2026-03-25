@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.dto.users.UserPageResponse;
 import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
 import com.cloudmen.cloudguard.service.GoogleUsersService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,11 +15,12 @@ import org.springframework.web.bind.annotation.*;
 public class GoogleUsersController {
     private final JwtService jwtService;
     private final GoogleUsersService googleUserService;
+    private final UserSecurityPreferenceService preferenceService;
 
-
-    public GoogleUsersController(JwtService jwtService, GoogleUsersService googleUserService ) {
+    public GoogleUsersController(JwtService jwtService, GoogleUsersService googleUserService, UserSecurityPreferenceService preferenceService) {
         this.jwtService = jwtService;
         this.googleUserService = googleUserService;
+        this.preferenceService = preferenceService;
     }
 
     @GetMapping
@@ -54,7 +56,7 @@ public class GoogleUsersController {
         }
 
         String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserService.getUsersPageOverview(adminEmail));
+        return ResponseEntity.ok(googleUserService.getUsersPageOverview(adminEmail, preferenceService.getDisabledPreferenceKeys(adminEmail)));
     }
 
     @PostMapping("/refresh")

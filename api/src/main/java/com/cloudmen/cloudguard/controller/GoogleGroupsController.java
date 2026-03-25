@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.groups.GroupPageResponse;
 import com.cloudmen.cloudguard.service.GoogleGroupsService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +14,12 @@ import org.springframework.web.bind.annotation.*;
 public class GoogleGroupsController {
     private final GoogleGroupsService googleGroupsService;
     private final JwtService jwtService;
+    private final UserSecurityPreferenceService preferenceService;
 
-    public GoogleGroupsController(GoogleGroupsService googleGroupsService, JwtService jwtService) {
+    public GoogleGroupsController(GoogleGroupsService googleGroupsService, JwtService jwtService, UserSecurityPreferenceService preferenceService) {
         this.googleGroupsService = googleGroupsService;
         this.jwtService = jwtService;
+        this.preferenceService = preferenceService;
     }
 
     @GetMapping
@@ -41,7 +44,7 @@ public class GoogleGroupsController {
         }
 
         String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsService.getGroupsOverview(email));
+        return ResponseEntity.ok(googleGroupsService.getGroupsOverview(email, preferenceService.getDisabledPreferenceKeys(email)));
     }
 
     @PostMapping("/refresh")

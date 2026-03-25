@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.DevicePageResponse;
 import com.cloudmen.cloudguard.service.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +16,12 @@ import java.util.List;
 public class GoogleDeviceController {
     private final GoogleDeviceService googleDeviceService;
     private final JwtService jwtService;
+    private final UserSecurityPreferenceService preferenceService;
 
-    public GoogleDeviceController(GoogleDeviceService googleDeviceService, JwtService jwtService) {
+    public GoogleDeviceController(GoogleDeviceService googleDeviceService, JwtService jwtService, UserSecurityPreferenceService preferenceService) {
         this.googleDeviceService = googleDeviceService;
         this.jwtService = jwtService;
+        this.preferenceService = preferenceService;
     }
 
     @GetMapping()
@@ -58,7 +61,7 @@ public class GoogleDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleDeviceService.getDevicesPageOverview(loggedInEmail));
+        return ResponseEntity.ok(googleDeviceService.getDevicesPageOverview(loggedInEmail, preferenceService.getDisabledPreferenceKeys(loggedInEmail)));
     }
 
     @PostMapping("/refresh")

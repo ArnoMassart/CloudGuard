@@ -75,18 +75,16 @@ export class Devices implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
 
-  readonly hasWarnings = signal(false);
-  readonly devicePageWarnings = signal<DevicesPageWarnings>({
-    lockScreenWarning: false,
-    encryptionWarning: false,
-    osVersionWarning: false,
-    integrityWarning: false,
-  });
-
-  readonly hasMultipleWarnings = computed(() => {
-    const warnings = this.devicePageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly devicePageWarnings = computed((): DevicesPageWarnings => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      lockScreenWarning: items['lockScreenWarning'] ?? false,
+      encryptionWarning: items['encryptionWarning'] ?? false,
+      osVersionWarning: items['osVersionWarning'] ?? false,
+      integrityWarning: items['integrityWarning'] ?? false,
+    };
   });
 
   // ==========================================
@@ -215,28 +213,9 @@ export class Devices implements OnInit, OnDestroy {
 
   #loadPageOverview() {
     this.#preferencesFacade.loadWithPrefs$(this.#deviceService.getDevicesPageOverview()).subscribe({
-      next: (overview) => {
-        this.pageOverview.set(overview);
-        this.#loadWarnings();
-      },
+      next: (overview) => this.pageOverview.set(overview),
       error: (err) => console.error('Failed to load page overview', err),
     });
-  }
-
-  #loadWarnings() {
-    const o = this.pageOverview();
-    if (!o) return;
-    const { warnings, hasWarnings } = evaluateWarnings(
-      [
-        { key: 'lockScreenWarning' as const, count: o.lockScreenCount ?? 0, section: 'mobile-devices', prefKey: 'lockscreen' },
-        { key: 'encryptionWarning' as const, count: o.encryptionCount ?? 0, section: 'mobile-devices', prefKey: 'encryption' },
-        { key: 'osVersionWarning' as const, count: o.osVersionCount ?? 0, section: 'mobile-devices', prefKey: 'osVersion' },
-        { key: 'integrityWarning' as const, count: o.integrityCount ?? 0, section: 'mobile-devices', prefKey: 'integrity' },
-      ],
-      (s, k) => this.#preferencesFacade.isDisabled(s, k),
-    );
-    this.devicePageWarnings.set(warnings);
-    this.hasWarnings.set(hasWarnings);
   }
 
   #loadDeviceTypes() {

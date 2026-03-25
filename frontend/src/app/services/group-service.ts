@@ -4,6 +4,7 @@ import { RouteService } from './route-service';
 import { Observable } from 'rxjs';
 import { GroupOrgDetail } from '../models/groups/GroupOrgDetail';
 import type { SecurityScoreBreakdown } from '../models/password/PasswordSettings';
+import type { SectionWarnings } from '../models/SectionWarnings';
 
 @Injectable({
   providedIn: 'root',
@@ -60,6 +61,7 @@ export interface GroupOverviewResponse {
   lowRiskGroups: number;
   securityScore: number;
   securityScoreBreakdown?: SecurityScoreBreakdown;
+  warnings?: SectionWarnings;
 }
 
 export interface GroupSettingsDto {

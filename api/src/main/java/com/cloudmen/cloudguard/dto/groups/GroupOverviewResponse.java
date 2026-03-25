@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.dto.groups;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 
 public record GroupOverviewResponse(
         long totalGroups,
@@ -9,5 +10,6 @@ public record GroupOverviewResponse(
         long mediumRiskGroups,
         long lowRiskGroups,
         int securityScore,
-        SecurityScoreBreakdownDto securityScoreBreakdown
+        SecurityScoreBreakdownDto securityScoreBreakdown,
+        SectionWarningsDto warnings
 ) {}

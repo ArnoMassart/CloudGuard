@@ -65,18 +65,16 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
-  readonly hasWarnings = signal(false);
-  readonly drivePageWarnings = signal<SharedDrivesPageWarnings>({
-    notOnlyDomainUsersAllowedWarning: false,
-    notOnlyMembersCanAccessWarning: false,
-    externalMembersWarning: false,
-    orphanDrivesWarning: false,
-  });
-
-  readonly hasMultipleWarnings = computed(() => {
-    const warnings = this.drivePageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly drivePageWarnings = computed((): SharedDrivesPageWarnings => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      notOnlyDomainUsersAllowedWarning: items['notOnlyDomainUsersAllowedWarning'] ?? false,
+      notOnlyMembersCanAccessWarning: items['notOnlyMembersCanAccessWarning'] ?? false,
+      externalMembersWarning: items['externalMembersWarning'] ?? false,
+      orphanDrivesWarning: items['orphanDrivesWarning'] ?? false,
+    };
   });
 
   readonly kpiOrphanDrivesColors = computed(() =>
@@ -208,27 +206,8 @@ export class SharedDrives implements OnInit, OnDestroy {
 
   #loadPageOverview() {
     this.#preferencesFacade.loadWithPrefs$(this.#driveService.getDrivesPageOverview()).subscribe({
-      next: (overview) => {
-        this.pageOverview.set(overview);
-        this.#loadWarnings();
-      },
+      next: (overview) => this.pageOverview.set(overview),
       error: (err) => console.error('Failed to load page overview', err),
     });
-  }
-
-  #loadWarnings() {
-    const o = this.pageOverview();
-    if (!o) return;
-    const { warnings, hasWarnings } = evaluateWarnings(
-      [
-        { key: 'notOnlyDomainUsersAllowedWarning' as const, count: o.notOnlyDomainUsersAllowedCount ?? 0, section: 'shared-drives', prefKey: 'outsideDomain' },
-        { key: 'notOnlyMembersCanAccessWarning' as const, count: o.notOnlyMembersCanAccessCount ?? 0, section: 'shared-drives', prefKey: 'nonMemberAccess' },
-        { key: 'externalMembersWarning' as const, count: o.externalMembersDriveCount ?? 0, section: 'shared-drives', prefKey: 'external' },
-        { key: 'orphanDrivesWarning' as const, count: o.orphanDrives ?? 0, section: 'shared-drives', prefKey: 'orphan' },
-      ],
-      (s, k) => this.#preferencesFacade.isDisabled(s, k),
-    );
-    this.drivePageWarnings.set(warnings);
-    this.hasWarnings.set(hasWarnings);
   }
 }

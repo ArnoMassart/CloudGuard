@@ -2,7 +2,9 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.dto.users.*;
+import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -18,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
@@ -122,7 +125,19 @@ public class GoogleUsersService {
 
         SecurityScoreBreakdownDto breakdown = buildUsersBreakdown(googleUsers, (int) totalUsers, (int) securityScore);
 
-        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, (int) securityScore, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown);
+        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, (int) securityScore, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown, null);
+    }
+
+    public UserOverviewResponse getUsersPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        UserOverviewResponse base = getUsersPageOverview(loggedInEmail);
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(disabledKeys)
+                .check("twoFactorWarning", base.withoutTwoFactor(), "users-groups", "2fa")
+                .check("activeWithLongNoLogin", base.activeLongNoLoginCount(), "users-groups", "activity")
+                .check("notActiveWithRecentLogin", base.inactiveRecentLoginCount(), "users-groups", "activity")
+                .build();
+        return new UserOverviewResponse(
+                base.totalUsers(), base.withoutTwoFactor(), base.adminUsers(), base.securityScore(),
+                base.activeLongNoLoginCount(), base.inactiveRecentLoginCount(), base.securityScoreBreakdown(), warnings);
     }
 
     /**
@@ -181,6 +196,12 @@ public class GoogleUsersService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     private int calculateSecurityScore(List<User> googleUsers) {

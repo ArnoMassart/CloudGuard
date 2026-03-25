@@ -64,17 +64,15 @@ export class UsersSection implements OnInit {
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
-  readonly hasWarnings = signal(false);
-  readonly userPageWarnings = signal<UsersPageWarnings>({
-    twoFactorWarning: true,
-    activeWithLongNoLogin: true,
-    notActiveWithRecentLogin: true,
-  });
-
-  readonly hasMultipleWarnings = computed(() => {
-    const warnings = this.userPageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly userPageWarnings = computed((): UsersPageWarnings => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      twoFactorWarning: items['twoFactorWarning'] ?? false,
+      activeWithLongNoLogin: items['activeWithLongNoLogin'] ?? false,
+      notActiveWithRecentLogin: items['notActiveWithRecentLogin'] ?? false,
+    };
   });
 
   readonly kpiZonder2faColors = computed(() =>
@@ -252,26 +250,8 @@ export class UsersSection implements OnInit {
 
   #loadPageOverview() {
     this.#preferencesFacade.loadWithPrefs$(this.#userService.getUsersPageOverview()).subscribe({
-      next: (overview) => {
-        this.pageOverview.set(overview);
-        this.#loadWarnings();
-      },
+      next: (overview) => this.pageOverview.set(overview),
       error: (err) => console.error('Failed to load page overview', err),
     });
-  }
-
-  #loadWarnings() {
-    const o = this.pageOverview();
-    if (!o) return;
-    const { warnings, hasWarnings } = evaluateWarnings(
-      [
-        { key: 'twoFactorWarning' as const, count: o.withoutTwoFactor ?? 0, section: 'users-groups', prefKey: '2fa' },
-        { key: 'activeWithLongNoLogin' as const, count: o.activeLongNoLoginCount ?? 0, section: 'users-groups', prefKey: 'activity' },
-        { key: 'notActiveWithRecentLogin' as const, count: o.inactiveRecentLoginCount ?? 0, section: 'users-groups', prefKey: 'activity' },
-      ],
-      (s, k) => this.#preferencesFacade.isDisabled(s, k),
-    );
-    this.userPageWarnings.set(warnings);
-    this.hasWarnings.set(hasWarnings);
   }
 }
