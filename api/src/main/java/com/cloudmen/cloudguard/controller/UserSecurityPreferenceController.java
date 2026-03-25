@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.dto.preferences.PreferencesResponse;
 import com.cloudmen.cloudguard.dto.preferences.SectionPreferencesRequest;
 import com.cloudmen.cloudguard.dto.preferences.SetPreferenceRequest;
 import com.cloudmen.cloudguard.service.JwtService;
@@ -23,15 +24,13 @@ public class UserSecurityPreferenceController {
     }
 
     /**
-     * Get all security preferences for the current user.
-     * Returns Map of "section:preferenceKey" -> enabled (boolean).
-     * Missing keys default to true.
+     * Get all security preferences: boolean toggles plus per–DNS-type effective importance (SPF, DKIM, …).
      */
     @GetMapping
-    public ResponseEntity<Map<String, Boolean>> getAllPreferences(
+    public ResponseEntity<PreferencesResponse> getAllPreferences(
             @CookieValue(name = "AuthToken") String token) {
         String userId = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(preferenceService.getAllPreferences(userId));
+        return ResponseEntity.ok(preferenceService.getPreferencesResponse(userId));
     }
 
     /**
@@ -65,7 +64,7 @@ public class UserSecurityPreferenceController {
             @CookieValue(name = "AuthToken") String token,
             @RequestBody SetPreferenceRequest request) {
         String userId = jwtService.validateInternalToken(token);
-        preferenceService.setPreference(userId, request.section(), request.preferenceKey(), request.enabled());
+        preferenceService.setPreference(userId, request.section(), request.preferenceKey(), request.enabled(), request.value());
         return ResponseEntity.ok().build();
     }
 

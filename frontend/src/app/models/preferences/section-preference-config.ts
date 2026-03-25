@@ -1,6 +1,12 @@
+export type PreferenceControl = 'toggle' | 'dnsImportance';
+
 export interface PreferenceItem {
   key: string;
   label: string;
+  /** Default: toggle */
+  control?: PreferenceControl;
+  /** SPF, DKIM, … when control is dnsImportance */
+  dnsType?: string;
 }
 
 export interface SectionPreferenceConfig {
@@ -82,8 +88,14 @@ export const SECTION_PREFERENCE_CONFIGS: SectionPreferenceConfig[] = [
     label: 'Domein & DNS',
     route: '/domain-dns',
     preferences: [
-      { key: 'dnsCritical', label: 'DNS records ontbreken of incorrect' },
-      { key: 'dnsAttention', label: 'DNS records vereisen aandacht' },
+      { key: 'impSpf', label: 'SPF', control: 'dnsImportance', dnsType: 'SPF' },
+      { key: 'impDkim', label: 'DKIM', control: 'dnsImportance', dnsType: 'DKIM' },
+      { key: 'impDmarc', label: 'DMARC', control: 'dnsImportance', dnsType: 'DMARC' },
+      { key: 'impMx', label: 'MX', control: 'dnsImportance', dnsType: 'MX' },
+      { key: 'impDnssec', label: 'DNSSEC', control: 'dnsImportance', dnsType: 'DNSSEC' },
+      { key: 'impCaa', label: 'CAA', control: 'dnsImportance', dnsType: 'CAA' },
+      { key: 'impTxt', label: 'Siteverificatie (TXT)', control: 'dnsImportance', dnsType: 'TXT' },
+      { key: 'impCname', label: 'Mail subdomein (CNAME)', control: 'dnsImportance', dnsType: 'CNAME' },
     ],
   },
 ];

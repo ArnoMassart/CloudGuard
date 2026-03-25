@@ -1,7 +1,7 @@
 <div class="px-10 py-6">
   <app-page-header
     Title="Beveiligingsvoorkeuren"
-    Description="Kies welke waarschuwingen en meldingen u wilt zien per sectie. Uitgeschakelde voorkeuren worden verborgen in meldingen en op sectiepagina's."
+    Description="Kies welke waarschuwingen en meldingen u wilt zien per sectie. Uitgeschakelde voorkeuren worden verborgen in meldingen en op sectiepagina's. Voor DNS kunt u per recordtype aangeven hoe zwaar het telt (standaard volgt het systeem)."
     [NeedAdminLink]="false"
   />
 
@@ -14,13 +14,30 @@
   <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
     @for (section of sections; track section.section) {
     <div class="rounded-xl border-2 border-slate-200/80 bg-white p-6 shadow-sm">
-      <h3 class="mb-4 font-semibold text-slate-900">{{ section.label }}</h3>
+      <h3 class="mb-4 font-medium text-slate-900">{{ section.label }}</h3>
       <ul class="space-y-3">
         @for (pref of section.preferences; track pref.key) {
         <li class="flex items-center justify-between gap-4">
-          <label class="flex-1 cursor-pointer text-sm text-slate-700" [for]="section.section + '-' + pref.key">
+          <label
+            class="flex-1 cursor-pointer text-sm text-slate-700"
+            [for]="section.section + '-' + pref.key"
+          >
             {{ pref.label }}
           </label>
+          @if (pref.control === 'dnsImportance' && pref.dnsType) {
+          <select
+            [id]="section.section + '-' + pref.key"
+            [disabled]="saving() !== null"
+            class="max-w-[11rem] shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
+            [value]="dnsSelectValue(pref.dnsType)"
+            (change)="setDnsImportance(section.section, pref.key, pref.dnsType, $any($event.target).value)"
+          >
+            <option value="">Standaard</option>
+            <option value="REQUIRED">Cruciaal</option>
+            <option value="RECOMMENDED">Aanbevolen</option>
+            <option value="OPTIONAL">Optioneel</option>
+          </select>
+          } @else {
           <button
             type="button"
             role="switch"
@@ -39,6 +56,7 @@
               [class.translate-x-0.5]="!isEnabled(section.section, pref.key)"
             ></span>
           </button>
+          }
         </li>
         }
       </ul>
@@ -49,6 +67,7 @@
   <p class="mt-8 text-sm text-slate-500">
     <span class="font-medium">Aan</span> = waarschuwingen en meldingen worden getoond.
     <span class="font-medium">Uit</span> = waarschuwingen en meldingen worden verborgen in meldingen en op sectiepagina's.
+    Bij <span class="font-medium">Domein &amp; DNS</span> bepaalt u per type hoe streng de status wordt berekend; <span class="font-medium">Standaard</span> gebruikt de ingebouwde prioriteit van het product.
   </p>
   }
 </div>

@@ -22,6 +22,8 @@ export class SecurityPreferences implements OnInit {
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
 
   readonly preferences = signal<Record<string, boolean>>({});
+  readonly dnsImportance = signal<Record<string, string>>({});
+  readonly dnsOverrideTypes = signal<ReadonlySet<string>>(new Set());
   readonly loading = signal(true);
   readonly saving = signal<string | null>(null);
 
@@ -32,15 +34,42 @@ export class SecurityPreferences implements OnInit {
   #loadPreferences(): void {
     this.loading.set(true);
     this.#preferencesService.getAllPreferences().subscribe({
-      next: (prefs) => this.preferences.set(prefs),
-      error: () => this.preferences.set({}),
+      next: (res) => this.#applyPreferencesPayload(res),
+      error: () => {
+        this.preferences.set({});
+        this.dnsImportance.set({});
+        this.dnsOverrideTypes.set(new Set());
+        this.loading.set(false);
+      },
       complete: () => this.loading.set(false),
     });
+  }
+
+  #reloadPrefsQuiet(): void {
+    this.#preferencesService.getAllPreferences().subscribe({
+      next: (res) => this.#applyPreferencesPayload(res),
+      error: () => {},
+    });
+  }
+
+  #applyPreferencesPayload(res: {
+    preferences?: Record<string, boolean>;
+    dnsImportance?: Record<string, string>;
+    dnsImportanceOverrideTypes?: string[];
+  }): void {
+    this.preferences.set(res.preferences ?? {});
+    this.dnsImportance.set(res.dnsImportance ?? {});
+    this.dnsOverrideTypes.set(new Set(res.dnsImportanceOverrideTypes ?? []));
   }
 
   isEnabled(section: string, key: string): boolean {
     const fullKey = `${section}:${key}`;
     return this.preferences()[fullKey] !== false;
+  }
+
+  dnsSelectValue(dnsType: string | undefined): string {
+    if (!dnsType) return '';
+    return this.dnsOverrideTypes().has(dnsType) ? (this.dnsImportance()[dnsType] ?? '') : '';
   }
 
   toggle(section: string, key: string): void {
@@ -53,6 +82,22 @@ export class SecurityPreferences implements OnInit {
       next: () => {
         this.preferences.update((p) => ({ ...p, [fullKey]: newValue }));
         this.#preferencesFacade.refresh();
+      },
+      error: () => this.#loadPreferences(),
+      complete: () => this.saving.set(null),
+    });
+  }
+
+  setDnsImportance(section: string, prefKey: string, dnsType: string, raw: string): void {
+    const fullKey = `${section}:${prefKey}`;
+    const previous = this.dnsSelectValue(dnsType);
+    if (raw === previous) return;
+
+    this.saving.set(fullKey);
+    this.#preferencesService.setPreference(section, prefKey, true, raw).subscribe({
+      next: () => {
+        this.#preferencesFacade.refresh();
+        this.#reloadPrefsQuiet();
       },
       error: () => this.#loadPreferences(),
       complete: () => this.saving.set(null),

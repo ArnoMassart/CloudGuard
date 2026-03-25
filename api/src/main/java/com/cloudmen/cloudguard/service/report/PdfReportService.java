@@ -17,6 +17,7 @@ import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
@@ -57,8 +58,9 @@ public class PdfReportService {
     private final PasswordSettingsService passwordSettingsService;
     private final TeamleaderCompanyService teamleaderCompanyService;
     private final TeamleaderService teamleaderService;
+    private final UserSecurityPreferenceService userSecurityPreferenceService;
 
-    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService) {
+    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService, UserSecurityPreferenceService userSecurityPreferenceService) {
         this.templateEngine = templateEngine;
         this.dashboardService = dashboardService;
         this.notificationAggregationService = notificationAggregationService;
@@ -73,6 +75,7 @@ public class PdfReportService {
         this.passwordSettingsService = passwordSettingsService;
         this.teamleaderCompanyService = teamleaderCompanyService;
         this.teamleaderService = teamleaderService;
+        this.userSecurityPreferenceService = userSecurityPreferenceService;
     }
 
     public record ReportResponse(
@@ -257,7 +260,8 @@ public class PdfReportService {
         for (DomainDto d : domains) {
             String domain = d.domainName();
 
-            DnsRecordResponseDto dnsResponse = dnsRecordsService.getImportantRecords(domain,"google");
+            var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(adminEmail);
+            DnsRecordResponseDto dnsResponse = dnsRecordsService.getImportantRecords(domain, "google", dnsOverrides);
             List<DnsRecordDto> rows = dnsResponse.rows();
             int score = dnsResponse.securityScore();
 

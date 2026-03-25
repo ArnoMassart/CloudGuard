@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.dto.dashboard.DashboardPageResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardScores;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +27,9 @@ public class DashboardService {
     private final GoogleDomainService domainService;
     private final NotificationAggregationService notificationService;
     private final PasswordSettingsService passwordSettingsService;
+    private final UserSecurityPreferenceService userSecurityPreferenceService;
 
-    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService, PasswordSettingsService passwordSettingsService) {
+    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService, PasswordSettingsService passwordSettingsService, UserSecurityPreferenceService userSecurityPreferenceService) {
         this.usersService = usersService;
         this.groupsService = groupsService;
         this.sharedDriveService = sharedDriveService;
@@ -38,6 +40,7 @@ public class DashboardService {
         this.domainService = domainService;
         this.notificationService = notificationService;
         this.passwordSettingsService = passwordSettingsService;
+        this.userSecurityPreferenceService = userSecurityPreferenceService;
     }
 
     public DashboardPageResponse getDashboardSecurityScores(String loggedInEmail) {
@@ -89,9 +92,10 @@ public class DashboardService {
                         return CompletableFuture.completedFuture(0);
                     }
 
+                    var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
                     List<CompletableFuture<Integer>> dnsTasks = domains.stream()
                             .map(dto -> CompletableFuture.supplyAsync(() ->
-                                    dnsRecordsService.getImportantRecords(dto.domainName(), "google").securityScore()
+                                    dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
                             ))
                             .toList();
 

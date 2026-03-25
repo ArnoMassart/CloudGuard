@@ -69,15 +69,11 @@ export class DomainDns implements OnInit, OnDestroy {
   );
   readonly hasWarnings = computed(() => this.rows().some((r) => r.status === 'ATTENTION'));
 
-  readonly showDnsCriticalBanner = computed(() => {
-    if (this.#preferencesFacade.isDisabled('domain-dns', 'dnsCritical')) return false;
-    return this.hasCriticalProblems();
-  });
+  readonly showDnsCriticalBanner = computed(() => this.hasCriticalProblems());
 
-  readonly showDnsAttentionBanner = computed(() => {
-    if (this.#preferencesFacade.isDisabled('domain-dns', 'dnsAttention')) return false;
-    return this.hasWarnings() && !this.showDnsCriticalBanner();
-  });
+  readonly showDnsAttentionBanner = computed(
+    () => this.hasWarnings() && !this.showDnsCriticalBanner(),
+  );
 
   ngOnInit() {
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {

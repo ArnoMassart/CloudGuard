@@ -15,9 +15,6 @@ public final class PreferenceToNotificationMapping {
      * Maps "source:notificationType" -> "section:preferenceKey"
      */
     private static final Map<String, String> NOTIFICATION_TO_PREFERENCE = Map.ofEntries(
-            // domain-dns
-            Map.entry("domain-dns:dns-critical", "domain-dns:dnsCritical"),
-            Map.entry("domain-dns:dns-attention", "domain-dns:dnsAttention"),
             // users-groups
             Map.entry("users-groups:user-control", "users-groups:2fa"),
             Map.entry("users-groups:user-activity", "users-groups:activity"),

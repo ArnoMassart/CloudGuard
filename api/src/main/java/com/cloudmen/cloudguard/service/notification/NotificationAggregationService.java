@@ -401,7 +401,8 @@ public class NotificationAggregationService {
             if (primaryDomain == null || primaryDomain.isBlank()) {
                 return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
             }
-            return dnsRecordsService.getImportantRecords(primaryDomain, "google");
+            return dnsRecordsService.getImportantRecords(primaryDomain, "google",
+                    preferenceService.getDnsImportanceOverrides(adminEmail));
         } catch (Exception e) {
             log.warn("Failed to fetch DNS data for notifications: {}", e.getMessage());
             return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);

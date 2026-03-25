@@ -27,6 +27,10 @@ public class UserSecurityPreference {
 
     private boolean enabled = true;
 
+    /** Optional string value (e.g. DNS importance: REQUIRED, RECOMMENDED, OPTIONAL). */
+    @Column(name = "preference_value", length = 64)
+    private String preferenceValue;
+
     @Column(name = "updated_at")
     private java.time.LocalDateTime updatedAt;
 }
