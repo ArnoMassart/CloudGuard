@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.apppasswords.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -15,13 +16,14 @@ import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
 public class AppPasswordsService {
@@ -38,9 +40,11 @@ public class AppPasswordsService {
             DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY,
             DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
     );
+    private final MessageSource messageSource;
 
-    public AppPasswordsService(GoogleApiFactory apiFactory) {
+    public AppPasswordsService(GoogleApiFactory apiFactory, MessageSource messageSource) {
         this.apiFactory = apiFactory;
+        this.messageSource = messageSource;
     }
 
     public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size, String query, boolean isTestMode) {
@@ -94,22 +98,22 @@ public class AppPasswordsService {
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
         int totalCountScore = totalAppPasswords == 0 ? 100 : (int) Math.max(0, 100 - Math.min(totalAppPasswords, 50) * 2);
 
-        var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Gebruikers zonder app-wachtwoorden",
-                        usersWithAppPasswords == 0 ? "Geen gebruikers met app-wachtwoorden" : usersWithAppPasswords + " van " + totalUserCount + " gebruikers hebben app-wachtwoorden",
-                        usersWithoutScore, 100, severity(usersWithoutScore)),
-                new SecurityScoreFactorDto("Totaal app-wachtwoorden",
-                        totalAppPasswords == 0 ? "Geen app-wachtwoorden in gebruik" : totalAppPasswords + " app-wachtwoord(en) actief. Minder is beter.",
-                        totalCountScore, 100, severity(totalCountScore))
-        );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
-        return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
+        Locale locale = LocaleContextHolder.getLocale();
 
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
+        var factors = java.util.List.of(
+                new SecurityScoreFactorDto(messageSource.getMessage("app-passwords.score.factor.users_without.title", null, locale),
+                        usersWithAppPasswords == 0
+                                ? messageSource.getMessage("app-passwords.score.factor.users_without.description.none", null, locale)
+                                : messageSource.getMessage("app-passwords.score.factor.users_without.description", new Object[]{usersWithAppPasswords, totalUserCount}, locale),
+                        usersWithoutScore, 100, severity(usersWithoutScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("app-passwords.score.factor.total.title", null, locale),
+                        totalAppPasswords == 0
+                                ? messageSource.getMessage("app-passwords.score.factor.total.description.none", null, locale)
+                                : messageSource.getMessage("app-passwords.score.factor.total.description", new Object[]{totalAppPasswords}, locale),
+                        totalCountScore, 100, severity(totalCountScore, true))
+        );
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -174,13 +178,13 @@ public class AppPasswordsService {
         long now = System.currentTimeMillis();
         long dayMs = 24L * 60 * 60 * 1000;
 
-        AppPasswordDto p1 = new AppPasswordDto(101, "Outlook Desktop", String.valueOf(now - 350 * dayMs), String.valueOf(now - 27 * dayMs));
-        AppPasswordDto p2 = new AppPasswordDto(102, "Thunderbird", String.valueOf(now - 200 * dayMs), String.valueOf(now - 3 * dayMs));
-        AppPasswordDto p3a = new AppPasswordDto(103, "Apple Mail", String.valueOf(now - 180 * dayMs), String.valueOf(now - 1 * dayMs));
+        AppPasswordDto p1 = new AppPasswordDto(101, "Outlook Desktop", String.valueOf(now - 350 * dayMs), DateTimeConverter.convertToTimeAgo(now - 27 * dayMs));
+        AppPasswordDto p2 = new AppPasswordDto(102, "Thunderbird", String.valueOf(now - 200 * dayMs), DateTimeConverter.convertToTimeAgo(now - 3 * dayMs));
+        AppPasswordDto p3a = new AppPasswordDto(103, "Apple Mail", String.valueOf(now - 180 * dayMs), DateTimeConverter.convertToTimeAgo(now - dayMs));
         AppPasswordDto p3b = new AppPasswordDto(104, "Outlook Desktop", String.valueOf(now - 90 * dayMs), null);
-        AppPasswordDto p4 = new AppPasswordDto(105, "Google Calendar Sync", String.valueOf(now - 60 * dayMs), String.valueOf(now - 14 * dayMs));
-        AppPasswordDto p5a = new AppPasswordDto(106, "Thunderbird", String.valueOf(now - 400 * dayMs), String.valueOf(now - 45 * dayMs));
-        AppPasswordDto p5b = new AppPasswordDto(107, "Outlook Mobile", String.valueOf(now - 120 * dayMs), String.valueOf(now));
+        AppPasswordDto p4 = new AppPasswordDto(105, "Google Calendar Sync", String.valueOf(now - 60 * dayMs), DateTimeConverter.convertToTimeAgo(now - 14 * dayMs));
+        AppPasswordDto p5a = new AppPasswordDto(106, "Thunderbird", String.valueOf(now - 400 * dayMs), DateTimeConverter.convertToTimeAgo(now - 45 * dayMs));
+        AppPasswordDto p5b = new AppPasswordDto(107, "Outlook Mobile", String.valueOf(now - 120 * dayMs), DateTimeConverter.convertToTimeAgo(now));
 
         List<UserAppPasswordsDto> users = List.of(
                 new UserAppPasswordsDto("demo-1", "Pieter de Vries", "pieter.devries@bedrijf.nl", "User", false, List.of(p1)),

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../../shared/AppIcons';
@@ -10,10 +10,11 @@ import { AppPasswordOverviewResponse } from '../../../models/app-password/AppPas
 import { UserAppPasswords } from '../../../models/app-password/UserAppPasswords';
 
 import { LucideAngularModule } from 'lucide-angular';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../components/search-bar/search-bar';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -27,15 +28,18 @@ const ITEMS_PER_PAGE = 4;
     LucideAngularModule,
     PageWarnings,
     PageWarningsItem,
+    TranslocoPipe,
   ],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
 })
-export class AppPasswords implements OnInit {
+export class AppPasswords implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
   readonly pageOverview = signal<AppPasswordOverviewResponse | null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #translocoService = inject(TranslocoService);
+
   readonly userAppPasswords = signal<UserAppPasswords[]>([]);
   readonly expandedAppPassword = signal<string | null>(null);
   readonly currentPage = signal(1);
@@ -49,17 +53,26 @@ export class AppPasswords implements OnInit {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return users;
     return users.filter(
-      (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q),
+      (u) => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
     );
   });
   readonly #searchSubject = new Subject<string>();
   readonly isExpanded = signal(true);
 
   #tokenHistory: (string | null)[] = [null];
+  #langSubscription?: Subscription;
 
   ngOnInit(): void {
-    this.#loadOverview();
-    this.#loadAppPasswords(null);
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadOverview();
+      this.#loadAppPasswords(null);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   onSearch(value: string) {
@@ -185,26 +198,14 @@ export class AppPasswords implements OnInit {
     return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric' });
   }
 
-  formatLastUsed(value: Date | string | null): string {
-    if (!value) return 'nooit';
-    const d = typeof value === 'string' ? new Date(Number(value) || value) : value;
-    if (Number.isNaN(d.getTime())) return 'nooit';
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'vandaag';
-    if (diffDays === 1) return 'gisteren';
-    if (diffDays < 7) return `${diffDays} dagen geleden`;
-    if (diffDays < 31) return `${Math.floor(diffDays / 7)} weken geleden`;
-    return `${Math.floor(diffDays / 31)} maanden geleden`;
-  }
-
   openSecurityScoreDetail(): void {
     const overview = this.pageOverview();
-    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
-      overview?.securityScore ?? 0,
-      'App Wachtwoorden'
-    );
-    this.#securityScoreDetail.open(breakdown, 'App Wachtwoorden');
+    const breakdown =
+      overview?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(
+        overview?.securityScore ?? 0,
+        'App Wachtwoorden'
+      );
+    this.#securityScoreDetail.open(breakdown, 'app-passwords');
   }
 }

@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+
 @Service
 public class GoogleSharedDriveService {
     private final GoogleSharedDriveCacheService sharedDriveCacheService;
@@ -122,7 +124,7 @@ public class GoogleSharedDriveService {
         var factors = java.util.List.of(
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.low_risk.title", null, locale), messageSource.getMessage("drives.score.factor.low_risk.description", new Object[]{totalLowRisk, totalDrives}, locale), lowScore, 100, severity(lowScore)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.middle_risk.title", null, locale), messageSource.getMessage("drives.score.factor.middle_risk.description", new Object[]{totalMediumRisk, totalDrives}, locale), mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0)),
-                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.high_risk.title", null, locale), messageSource.getMessage("drives.score.factor.high_risk.description", new Object[]{totalHighRisk, totalDrives}, locale), highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0)),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.high_risk.title", null, locale), messageSource.getMessage("drives.score.factor.high_risk.description", new Object[]{totalHighRisk, totalDrives}, locale), highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0, true)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.with_managers.title", null, locale), orphanDrives == 0 ? messageSource.getMessage("drives.score.factor.with_managers_not.description", null, locale) : messageSource.getMessage("drives.score.factor.with_managers.description", new Object[]{orphanDrives}, locale), orphanScore, 100, severity(orphanScore)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_domain.title", null, locale), notOnlyDomainUsersAllowedCount == 0 ? messageSource.getMessage("drives.score.factor.only_domain_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_domain.description", new Object[]{notOnlyDomainUsersAllowedCount}, locale), domainOnlyScore, 100, severity(domainOnlyScore)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_members.title", null, locale), notOnlyMembersCanAccessCount == 0 ? messageSource.getMessage("drives.score.factor.only_members_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_members.description", new Object[]{notOnlyMembersCanAccessCount}, locale), membersOnlyScore, 100, severity(membersOnlyScore))
@@ -130,11 +132,4 @@ public class GoogleSharedDriveService {
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
-    }
-
 }

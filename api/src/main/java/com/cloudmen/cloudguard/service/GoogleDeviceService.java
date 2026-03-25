@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+
 @Service
 public class GoogleDeviceService {
 
@@ -168,12 +170,6 @@ public class GoogleDeviceService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 
     // =========================================================================================

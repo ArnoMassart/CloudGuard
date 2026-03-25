@@ -5,10 +5,14 @@ import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
 public class GoogleOAuthService {
@@ -18,83 +22,85 @@ public class GoogleOAuthService {
             "1046230096039-0c4fqtecqs3fe7t762cn1922garmr4p5.apps.googleusercontent.com"
     );
 
-    private static final String FULL_ACCESS_READ_WRITE_TEXT = "Volledige toegang (Lezen/Schrijven)";
+    private static final String FULL_ACCESS_READ_WRITE_TEXT = "app-access.rights.full-access";
+    private final MessageSource messageSource;
 
     private record ScopeMapping(String keyword, ScopeCategory category, String description, boolean isCritical) {}
 
     private static final List<ScopeMapping> SCOPE_MAPPINGS = List.of(
             // --- 1. IDENTITEIT & INLOGGEN (SSO) ---
-            new ScopeMapping("openid", ScopeCategory.SIGN_IN, "Basis profielgegevens", false),
-            new ScopeMapping("userinfo.profile", ScopeCategory.SIGN_IN, "Basis profielgegevens", false),
-            new ScopeMapping("userinfo.email", ScopeCategory.SIGN_IN, "E-mailadres inzien", false),
+            new ScopeMapping("openid", ScopeCategory.SIGN_IN, "app-access.rights.basic-profile", false),
+            new ScopeMapping("userinfo.profile", ScopeCategory.SIGN_IN, "app-access.rights.basic-profile", false),
+            new ScopeMapping("userinfo.email", ScopeCategory.SIGN_IN, "app-access.rights.email-viewing", false),
 
             // --- 2. GMAIL ---
-            new ScopeMapping("/auth/gmail.readonly", ScopeCategory.GMAIL, "E-mails lezen", false),
-            new ScopeMapping("/auth/gmail.send", ScopeCategory.GMAIL, "Berichten verzenden", false),
-            new ScopeMapping("/auth/gmail.compose", ScopeCategory.GMAIL, "Concepten aanmaken", false),
-            new ScopeMapping("/auth/gmail.modify", ScopeCategory.GMAIL, "E-mails wijzigen/verwijderen", true),
-            new ScopeMapping("/auth/gmail.settings.basic", ScopeCategory.GMAIL_SETTINGS, "Mailbox instellingen inzien", false),
+            new ScopeMapping("/auth/gmail.readonly", ScopeCategory.GMAIL, "app-access.rights.email-reading", false),
+            new ScopeMapping("/auth/gmail.send", ScopeCategory.GMAIL, "app-access.rights.sending-messages", false),
+            new ScopeMapping("/auth/gmail.compose", ScopeCategory.GMAIL, "app-access.rights.making-concepts", false),
+            new ScopeMapping("/auth/gmail.modify", ScopeCategory.GMAIL, "app-access.rights.email-changing", true),
+            new ScopeMapping("/auth/gmail.settings.basic", ScopeCategory.GMAIL_SETTINGS, "app-access.rights.mailbox-settings", false),
             new ScopeMapping("/auth/gmail", ScopeCategory.GMAIL, FULL_ACCESS_READ_WRITE_TEXT, true),
             new ScopeMapping("/mail.google.com", ScopeCategory.GMAIL, FULL_ACCESS_READ_WRITE_TEXT, true),
 
             // --- 3. GOOGLE DRIVE ---
-            new ScopeMapping("/auth/drive.readonly", ScopeCategory.DRIVE, "Alle bestanden lezen", false),
-            new ScopeMapping("/auth/drive.file", ScopeCategory.DRIVE, "Alleen eigen gemaakte bestanden inzien", false),
-            new ScopeMapping("/auth/drive.appdata", ScopeCategory.DRIVE, "Verborgen app-data opslaan", false),
-            new ScopeMapping("/auth/drive.metadata", ScopeCategory.DRIVE, "Bestandsnamen & mappenstructuur inzien", false),
+            new ScopeMapping("/auth/drive.readonly", ScopeCategory.DRIVE, "app-access.rights.reading-files", false),
+            new ScopeMapping("/auth/drive.file", ScopeCategory.DRIVE, "app-access.rights.only-own-files", false),
+            new ScopeMapping("/auth/drive.appdata", ScopeCategory.DRIVE, "app-access.rights.hidden-app-saving", false),
+            new ScopeMapping("/auth/drive.metadata", ScopeCategory.DRIVE, "app-access.rights.file-names-viewing", false),
             new ScopeMapping("/auth/drive", ScopeCategory.DRIVE, FULL_ACCESS_READ_WRITE_TEXT, true),
 
             // --- 4. OFFICE APPS (Docs, Sheets, Forms) ---
-            new ScopeMapping("/auth/spreadsheets.readonly", ScopeCategory.SHEETS, "Spreadsheets inzien", false),
-            new ScopeMapping("/auth/spreadsheets", ScopeCategory.SHEETS, "Spreadsheets bewerken", true),
-            new ScopeMapping("/auth/documents.readonly", ScopeCategory.DOCS, "Documenten inzien", false),
-            new ScopeMapping("/auth/documents", ScopeCategory.DOCS, "Documenten bewerken", true),
-            new ScopeMapping("/auth/forms.responses.readonly", ScopeCategory.FORMS, "Ingevulde antwoorden inzien", false),
-            new ScopeMapping("/auth/forms", ScopeCategory.FORMS, "Formulieren beheren", true),
+            new ScopeMapping("/auth/spreadsheets.readonly", ScopeCategory.SHEETS, "app-access.rights.viewing-spreadsheets", false),
+            new ScopeMapping("/auth/spreadsheets", ScopeCategory.SHEETS, "app-access.rights.editing-spreadsheets", true),
+            new ScopeMapping("/auth/documents.readonly", ScopeCategory.DOCS, "app-access.rights.viewing-documents", false),
+            new ScopeMapping("/auth/documents", ScopeCategory.DOCS, "app-access.rights.editing-documents", true),
+            new ScopeMapping("/auth/forms.responses.readonly", ScopeCategory.FORMS, "app-access.rights.forms-answers-viewing", false),
+            new ScopeMapping("/auth/forms", ScopeCategory.FORMS, "app-access.rights.forms-managing", true),
 
             // --- 5. AGENDA & CONTACTEN ---
-            new ScopeMapping("/auth/calendar.readonly", ScopeCategory.CALENDAR, "Agenda lezen", false),
-            new ScopeMapping("/auth/calendar.events", ScopeCategory.CALENDAR, "Afspraken beheren", false),
-            new ScopeMapping("/auth/calendar", ScopeCategory.CALENDAR, "Volledige agenda-toegang", true),
-            new ScopeMapping("/auth/contacts.readonly", ScopeCategory.CONTACTS, "Contactpersonen inzien", false),
-            new ScopeMapping("/auth/contacts.other.readonly", ScopeCategory.CONTACTS, "Gedeelde contacten inzien", false),
-            new ScopeMapping("/auth/contacts", ScopeCategory.CONTACTS, "Contactpersonen beheren", true),
+            new ScopeMapping("/auth/calendar.readonly", ScopeCategory.CALENDAR, "app-access.rights.reading-agenda", false),
+            new ScopeMapping("/auth/calendar.events", ScopeCategory.CALENDAR, "app-access.rights.appointment-managing", false),
+            new ScopeMapping("/auth/calendar", ScopeCategory.CALENDAR, "app-access.rights.full-agenda-access", true),
+            new ScopeMapping("/auth/contacts.readonly", ScopeCategory.CONTACTS, "app-access.rights.contact-person-viewing", false),
+            new ScopeMapping("/auth/contacts.other.readonly", ScopeCategory.CONTACTS, "app-access.rights.shared-contacts-viewing", false),
+            new ScopeMapping("/auth/contacts", ScopeCategory.CONTACTS, "app-access.rights.contact-person-managing", true),
 
             // --- 6. BEHEERDERS & DIRECTORY (KRITIEK!) ---
-            new ScopeMapping("/auth/admin.directory.user.readonly", ScopeCategory.ORG_STRUCTURE, "Gebruikerslijst inzien", false),
-            new ScopeMapping("/auth/admin.directory.user", ScopeCategory.ADMIN_DIRECTORY, "Gebruikers beheren (Kritiek)", true),
-            new ScopeMapping("/auth/admin.directory.group.readonly", ScopeCategory.ORG_STRUCTURE, "Groepen inzien", false),
-            new ScopeMapping("/auth/admin.directory.group", ScopeCategory.ADMIN_DIRECTORY, "Groepen beheren (Kritiek)", true),
-            new ScopeMapping("/auth/admin.directory.device", ScopeCategory.ADMIN_DIRECTORY, "Apparaten beheren", true),
-            new ScopeMapping("/auth/admin.directory", ScopeCategory.ADMIN_DIRECTORY, "Volledige beheerdersrechten", true),
-            new ScopeMapping("/auth/cloud-platform", ScopeCategory.GCP, "Infrastructuur beheren", true),
+            new ScopeMapping("/auth/admin.directory.user.readonly", ScopeCategory.ORG_STRUCTURE, "app-access.rights.users-list-viewing", false),
+            new ScopeMapping("/auth/admin.directory.user", ScopeCategory.ADMIN_DIRECTORY, "app-access.rights.users-managing", true),
+            new ScopeMapping("/auth/admin.directory.group.readonly", ScopeCategory.ORG_STRUCTURE, "app-access.rights.viewing-groups", false),
+            new ScopeMapping("/auth/admin.directory.group", ScopeCategory.ADMIN_DIRECTORY, "app-access.rights.managing-groups", true),
+            new ScopeMapping("/auth/admin.directory.device", ScopeCategory.ADMIN_DIRECTORY, "app-access.rights.managing-devices", true),
+            new ScopeMapping("/auth/admin.directory", ScopeCategory.ADMIN_DIRECTORY, "app-access.rights.full-managing", true),
+            new ScopeMapping("/auth/cloud-platform", ScopeCategory.GCP, "app-access.rights.infrastructure-managing", true),
 
             // --- 7. WORKSPACE EXTRA'S (Groups, Licensing, Chat) ---
-            new ScopeMapping("apps.groups.settings", ScopeCategory.GROUP_SETTINGS, "Beveiligingsinstellingen groepen inzien/wijzigen", false),
-            new ScopeMapping("apps.licensing", ScopeCategory.LICENSING, "Licenties toewijzen/verwijderen", false),
-            new ScopeMapping("/auth/chat.messages", ScopeCategory.CHAT, "Berichten lezen & sturen", true),
-            new ScopeMapping("/auth/chat.spaces", ScopeCategory.CHAT, "Kanalen beheren", false),
+            new ScopeMapping("apps.groups.settings", ScopeCategory.GROUP_SETTINGS, "app-access.rights.security-settings", false),
+            new ScopeMapping("apps.licensing", ScopeCategory.LICENSING, "app-access.rights.licensing", false),
+            new ScopeMapping("/auth/chat.messages", ScopeCategory.CHAT, "app-access.rights.messages", true),
+            new ScopeMapping("/auth/chat.spaces", ScopeCategory.CHAT, "app-access.rights.chat-spaces", false),
 
             // --- 8. YOUTUBE ---
-            new ScopeMapping("/auth/youtube.readonly", ScopeCategory.YOUTUBE, "Kanaalgegevens inzien", false),
-            new ScopeMapping("/auth/youtube.upload", ScopeCategory.YOUTUBE, "Video's uploaden", false),
-            new ScopeMapping("/auth/youtube.force-ssl", ScopeCategory.YOUTUBE, "Kanaal volledig beheren", true),
-            new ScopeMapping("/auth/youtube", ScopeCategory.YOUTUBE, "Kanaal volledig beheren", true),
+            new ScopeMapping("/auth/youtube.readonly", ScopeCategory.YOUTUBE, "app-access.rights.youtube-viewing", false),
+            new ScopeMapping("/auth/youtube.upload", ScopeCategory.YOUTUBE, "app-access.rights.youtube-upload", false),
+            new ScopeMapping("/auth/youtube.force-ssl", ScopeCategory.YOUTUBE, "app-access.rights.youtube-full", true),
+            new ScopeMapping("/auth/youtube", ScopeCategory.YOUTUBE, "app-access.rights.youtube-full", true),
 
             // --- 9. APPS SCRIPT, AUTOMATISERING & DATA TRANSFER ---
-            new ScopeMapping("external_request", ScopeCategory.EXTERNAL_API, "Data naar externe servers sturen (Risico op datalek)", true),
-            new ScopeMapping("send_mail", ScopeCategory.APPS_SCRIPT_MAIL, "Geautomatiseerde e-mails versturen", true),
-            new ScopeMapping("scriptapp", ScopeCategory.APPS_SCRIPT, "Aangepaste scripts uitvoeren", true),
-            new ScopeMapping("datatransfer", ScopeCategory.DATA_TRANSFER, "Bedrijfsdata en eigenaarschap migreren/overdragen", true),
-            new ScopeMapping("com/auth/flexible-api", ScopeCategory.FLEXIBLE_API, "Aangepaste API toegang", false),
+            new ScopeMapping("external_request", ScopeCategory.EXTERNAL_API, "app-access.rights.external-request", true),
+            new ScopeMapping("send_mail", ScopeCategory.APPS_SCRIPT_MAIL, "app-access.rights.send-mail", true),
+            new ScopeMapping("scriptapp", ScopeCategory.APPS_SCRIPT, "app-access.rights.script-app", true),
+            new ScopeMapping("datatransfer", ScopeCategory.DATA_TRANSFER, "app-access.rights.data-transfer", true),
+            new ScopeMapping("com/auth/flexible-api", ScopeCategory.FLEXIBLE_API, "app-access.rights.flexible-api", false),
 
             // --- FALLBACK READONLY ---
-            new ScopeMapping("Readonly", ScopeCategory.READONLY, "Basis leesrechten (Specifiek domein onbekend)", false),
-            new ScopeMapping("readonly", ScopeCategory.READONLY, "Basis leesrechten (Specifiek domein onbekend)", false)
+            new ScopeMapping("Readonly", ScopeCategory.READONLY, "app-access.rights.basic-reading", false),
+            new ScopeMapping("readonly", ScopeCategory.READONLY, "app-access.rights.basic-reading", false)
     );
 
-    public GoogleOAuthService(GoogleOAuthCacheService oAuthCacheService) {
+    public GoogleOAuthService(GoogleOAuthCacheService oAuthCacheService, MessageSource messageSource) {
         this.oAuthCacheService = oAuthCacheService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -190,18 +196,18 @@ public class GoogleOAuthService {
         int highRiskScore = totalThirdPartyApps == 0 ? 100 : (int) Math.round((totalThirdPartyApps - totalHighRiskApps) * 100.0 / totalThirdPartyApps);
         int noAppsScore = totalThirdPartyApps == 0 ? 100 : 100;
 
-        var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Apps zonder hoog risico", totalHighRiskApps == 0 ? "Geen apps met hoog risico gedetecteerd" : totalHighRiskApps + " van " + totalThirdPartyApps + " apps hebben hoog risico (kritieke toegang)", highRiskScore, 100, severity(highRiskScore)),
-                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? "Geen 3rd-party apps gekoppeld" : totalThirdPartyApps + " 3rd-party app(s) met " + totalPermissionsGranted + " verleende permissies", noAppsScore, 100, severity(noAppsScore))
-        );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
-        return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
+        Locale locale = LocaleContextHolder.getLocale();
 
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
+        var factors = java.util.List.of(
+                new SecurityScoreFactorDto(messageSource.getMessage("apps.score.factor.without_high_risk.title", null, locale),
+                        totalHighRiskApps == 0
+                                ? messageSource.getMessage("apps.score.factor.without_high_risk.description.none", null, locale)
+                                : messageSource.getMessage("apps.score.factor.without_high_risk.description", new Object[]{totalHighRiskApps, totalThirdPartyApps}, locale),
+                        highRiskScore, 100, severity(highRiskScore)),
+                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore))
+        );
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
     private List<AggregatedAppBuilder> aggregateTokens(List<RawUserToken> rawTokens) {
@@ -226,7 +232,9 @@ public class GoogleOAuthService {
         int highRiskCount = (int) accessList.stream().filter(DataAccessDto::risk).count();
         boolean isHighRisk = highRiskCount > 0;
 
-        String appType = builder.isNative ? "Geïnstalleerde App (Lokaal)" : "Web Applicatie (Cloud)";
+        Locale locale = LocaleContextHolder.getLocale();
+
+        String appType = builder.isNative ? messageSource.getMessage("apps.details.type.is_native", null, locale) : messageSource.getMessage("apps.details.type.is_not_native", null, locale);
 
         int exposure = 0;
         if (totalDomainUsers > 0) {
@@ -235,11 +243,11 @@ public class GoogleOAuthService {
 
         boolean isInternalApp = builder.isAnonymous || INTERNAL_CLIENT_IDS.contains(builder.clientId);
         boolean isThirdParty = !isInternalApp;
-        String appSource = isThirdParty ? "Third party" : "Intern";
+        String appSource = isThirdParty ? "Third party" : messageSource.getMessage("apps.details.source.internal", null, locale);
 
         return new AggregatedAppDto(
                 builder.clientId,
-                builder.name != null ? builder.name : "Onbekende App",
+                builder.name != null ? builder.name : messageSource.getMessage("apps.details.name.unknown", null, locale),
                 appType,
                 appSource,
                 isThirdParty,
@@ -254,8 +262,10 @@ public class GoogleOAuthService {
     }
 
     private DataAccessDto translateScopeDetails(String scopeUrl) {
+        Locale locale = LocaleContextHolder.getLocale();
+
         if (scopeUrl == null) {
-            return new DataAccessDto("Onbekend", "Geen scope data beschikbaar", false);
+            return new DataAccessDto(messageSource.getMessage("unknown", null, locale), messageSource.getMessage("apps.details.scope.rights.no_scope", null, locale), false);
         }
 
         for (ScopeMapping mapping : SCOPE_MAPPINGS) {
@@ -278,7 +288,9 @@ public class GoogleOAuthService {
             fallbackName = fallbackName.substring(0, 1).toUpperCase() + fallbackName.substring(1);
         }
 
-        return new DataAccessDto("Overige (" + fallbackName + ")", "Beperkte toegang", false);
+        Locale locale = LocaleContextHolder.getLocale();
+
+        return new DataAccessDto(messageSource.getMessage("app.details.fallback.name", new Object[]{fallbackName}, locale), messageSource.getMessage("app.details.fallback.rights", null, locale), false);
     }
 
     private boolean isAppHighRisk(Set<String> scopes) {

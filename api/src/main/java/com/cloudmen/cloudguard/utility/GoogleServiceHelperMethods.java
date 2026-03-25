@@ -65,4 +65,22 @@ public class GoogleServiceHelperMethods {
                 })
                 .toList();
     }
+
+
+
+    public static String severity(double score) {
+        return severity(score, false);
+    }
+
+    public static String severity(double score, boolean reverse) {
+        if (reverse) {
+            if (score >= 75) return "error";
+            if (score >= 50) return "warning";
+            return "success";
+        } else {
+            if (score >= 75) return "success";
+            if (score >= 50) return "warning";
+            return "error";
+        }
+    }
 }

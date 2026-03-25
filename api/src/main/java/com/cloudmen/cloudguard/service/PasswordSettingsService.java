@@ -13,11 +13,15 @@ import com.google.api.services.admin.directory.model.OrgUnit;
 import com.google.api.services.admin.directory.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
 public class PasswordSettingsService {
@@ -32,15 +36,17 @@ public class PasswordSettingsService {
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
+    private final MessageSource messageSource;
 
     public PasswordSettingsService(PolicyApiCacheService policyCache,
-                                  GoogleUsersCacheService usersCache,
-                                  GoogleOrgUnitCacheService orgUnitCache,
-                                  AdminSecurityKeysService adminSecurityKeysService) {
+                                   GoogleUsersCacheService usersCache,
+                                   GoogleOrgUnitCacheService orgUnitCache,
+                                   AdminSecurityKeysService adminSecurityKeysService, MessageSource messageSource) {
         this.policyCache = policyCache;
         this.usersCache = usersCache;
         this.orgUnitCache = orgUnitCache;
         this.adminSecurityKeysService = adminSecurityKeysService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -394,47 +400,43 @@ public class PasswordSettingsService {
 
         int totalScore = (int) Math.round(Math.max(0, Math.min(100, weighted)));
 
-        String adminKeysDesc = totalAdmins == 0 ? "Geen admins gevonden"
-                : adminsWithoutKeys == 0 ? "Alle admins hebben een security key"
-                : adminsWithoutKeys + " van " + totalAdmins + " admins missen nog een security key (hardware 2FA)";
+        Locale locale = LocaleContextHolder.getLocale();
 
-        String usersNeedChangeDesc = summary.totalUsers() == 0 ? "Geen gebruikers"
-                : summary.usersWithForcedChange() == 0 ? "Geen gebruikers met verplichte wachtwoordwijziging"
-                : summary.usersWithForcedChange() + " gebruiker(s) moeten bij volgende login hun wachtwoord wijzigen";
+        String adminKeysDesc = totalAdmins == 0 ? messageSource.getMessage("password-settings.score.factor.admin_keys.description.no_admins", null, locale)
+                : adminsWithoutKeys == 0 ? messageSource.getMessage("password-settings.score.factor.admin_keys.description.admins_with_keys", null, locale)
+                : messageSource.getMessage("password-settings.score.factor.admin_keys.description.admins_without_keys", new Object[]{adminsWithoutKeys, totalAdmins}, locale);
 
-        String twoFaDesc = totalUsers2Fa == 0 ? "Geen gebruikers"
-                : (int) twoFaScore == 100 ? "2-Step Verification is verplicht voor alle OUs"
-                : "2-Step Verification is niet verplicht gesteld voor alle organisatie-eenheden";
+        String usersNeedChangeDesc = summary.totalUsers() == 0 ? messageSource.getMessage("password-settings.score.factor.users_change.description.no_users", null, locale)
+                : summary.usersWithForcedChange() == 0 ? messageSource.getMessage("password-settings.score.factor.users_change.description.no_force_change", null, locale)
+                : messageSource.getMessage("password-settings.score.factor.users_change.description.force_change", new Object[]{summary.usersWithForcedChange()}, locale);
 
-        String lengthDesc = totalPolicyUsers == 0 ? "Geen OUs met beleid"
-                : (int) lengthScore >= 90 ? "Alle OUs hanteren minimaal 12 tekens als wachtwoordlengte"
-                : "Niet alle OUs hanteren minimaal 12 tekens als wachtwoordlengte";
+        String twoFaDesc = totalUsers2Fa == 0 ? messageSource.getMessage("password-settings.score.factor.users_change.description.no_users", null, locale)
+                : (int) twoFaScore == 100 ? messageSource.getMessage("password-settings.score.factor.two_FA.description.full", null, locale)
+                : messageSource.getMessage("password-settings.score.factor.two_FA.description.not_full", null, locale);
 
-        String expirationDesc = totalPolicyUsers == 0 ? "Geen OUs met beleid"
-                : (int) expirationScore == 100 ? "Alle OUs hanteren wachtwoordverloop"
-                : "Sommige OUs hanteren geen wachtwoordverloop of te lange periodes";
+        String lengthDesc = totalPolicyUsers == 0 ? messageSource.getMessage("password-settings.score.factor.description.no_OU", null, locale)
+                : (int) lengthScore >= 90 ? messageSource.getMessage("password-settings.score.factor.length.description.full", null, locale)
+                : messageSource.getMessage("password-settings.score.factor.length.description.not_full", null, locale);
 
-        String strengthDesc = totalPolicyUsers == 0 ? "Geen OUs met beleid"
-                : (int) strengthScore == 100 ? "Sterke wachtwoorden zijn verplicht voor alle OUs"
-                : "Sterke wachtwoorden zijn niet verplicht voor sommige OUs";
+        String expirationDesc = totalPolicyUsers == 0 ? messageSource.getMessage("password-settings.score.factor.description.no_OU", null, locale)
+                : (int) expirationScore == 100 ? messageSource.getMessage("password-settings.score.factor.expiration.description.full", null, locale)
+                : messageSource.getMessage("password-settings.score.factor.expiration.description.not_full", null, locale);
+
+        String strengthDesc = totalPolicyUsers == 0 ? messageSource.getMessage("password-settings.score.factor.description.no_OU", null, locale)
+                : (int) strengthScore == 100 ? messageSource.getMessage("password-settings.score.factor.strength.description.full", null, locale)
+                : messageSource.getMessage("password-settings.score.factor.strength.description.not_full", null, locale);
 
         List<SecurityScoreFactorDto> factors = List.of(
                 new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, (int) Math.round(adminKeysScore), 100, severity(adminKeysScore)),
-                new SecurityScoreFactorDto("Verplichte wachtwoordwijziging", usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
                 new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, (int) Math.round(twoFaScore), 100, severity(twoFaScore)),
-                new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, (int) Math.round(lengthScore), 100, severity(lengthScore)),
-                new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, (int) Math.round(expirationScore), 100, severity(expirationScore)),
-                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, (int) Math.round(strengthScore), 100, severity(strengthScore))
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.length.title", null, locale), lengthDesc, (int) Math.round(lengthScore), 100, severity(lengthScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale), expirationDesc, (int) Math.round(expirationScore), 100, severity(expirationScore)),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.strength.title", null, locale), strengthDesc, (int) Math.round(strengthScore), 100, severity(strengthScore))
         );
 
-        String status = totalScore == 100 ? "Perfect" : totalScore >= 75 ? "Goed" : totalScore > 50 ? "Matig" : "Slecht";
+        String status = totalScore == 100 ? "perfect" : totalScore >= 75 ? "good" : totalScore > 50 ? "average" : "bad";
 
         return new SecurityScoreResult(totalScore, new SecurityScoreBreakdownDto(totalScore, status, factors));
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 }

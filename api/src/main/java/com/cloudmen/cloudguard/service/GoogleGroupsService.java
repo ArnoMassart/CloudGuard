@@ -14,6 +14,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+
 @Service
 public class GoogleGroupsService {
     private final GoogleGroupsCacheService groupsCacheService;
@@ -98,11 +100,5 @@ public class GoogleGroupsService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 }

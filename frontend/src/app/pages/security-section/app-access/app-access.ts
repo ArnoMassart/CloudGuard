@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, OnDestroy } from '@angular/core';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,8 @@ import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
 import { Risk } from '../../../models/o-auth/Risk';
 import { FilterOption } from '../../../models/FilterOption';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 // ==========================================
 // CONSTANTS
@@ -21,11 +23,19 @@ const ITEMS_PER_PAGE = 3;
 
 @Component({
   selector: 'app-app-access',
-  imports: [PageHeader, SectionTopCard, FilterChips, SearchBar, LucideAngularModule, FormsModule],
+  imports: [
+    PageHeader,
+    SectionTopCard,
+    FilterChips,
+    SearchBar,
+    LucideAngularModule,
+    FormsModule,
+    TranslocoPipe,
+  ],
   templateUrl: './app-access.html',
   styleUrl: './app-access.css',
 })
-export class AppAccess implements OnInit {
+export class AppAccess implements OnInit, OnDestroy {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -33,6 +43,7 @@ export class AppAccess implements OnInit {
   readonly UtilityMethods = UtilityMethods;
   readonly #oAuthService = inject(OAuthService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -85,13 +96,22 @@ export class AppAccess implements OnInit {
   // PRIVATE PROPERTIES
   // ==========================================
   #tokenHistory: (string | null)[] = [null];
+  #langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#loadPageOverview();
-    this.#loadApps();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadPageOverview();
+      this.#loadApps();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   // ==========================================
@@ -160,11 +180,10 @@ export class AppAccess implements OnInit {
 
   openSecurityScoreDetail(): void {
     const overview = this.pageOverview();
-    const breakdown = overview?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(
-      overview?.securityScore ?? 0,
-      'App Toegang'
-    );
-    this.#securityScoreDetail.open(breakdown, 'App Toegang');
+    const breakdown =
+      overview?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'app-access');
+    this.#securityScoreDetail.open(breakdown, 'app-access');
   }
 
   // ==========================================

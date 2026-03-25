@@ -44,7 +44,7 @@
             <i-lucide [img]="getFactorIcon(factor)" size="20"></i-lucide>
           </div>
           <div class="min-w-0 flex-1">
-            <h3 class="m-0 text-sm font-medium">{{ factor.title | transloco }}</h3>
+            <h3 class="m-0 text-sm font-medium">{{ factor.title }}</h3>
             <p class="m-0 text-sm mt-1">{{ factor.description }}</p>
             <div class="flex items-center gap-4 mt-3 text-xs" [style.opacity]="0.85">
               <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>

@@ -1,47 +1,37 @@
 <div class="px-10 py-6">
-    <app-page-header Title="App Toegang"
-        Description="Controleer apps van derden die toegang hebben tot Google Workspace data van uw gebruikers"
+    <app-page-header Title="{{ 'app-access' | transloco }}" Description="{{ 'app-access.description' | transloco }}"
         AdminLink="owl/list" />
 
     <div class="pt-6">
         <div class="w-full flex flex-col gap-5">
             <div class="w-full flex gap-4">
-                <app-section-top-card class="flex-1" Title="Gekoppelde 3rd-party apps"
+                <app-section-top-card class="flex-1" Title="{{ 'app-access.connected-apps' | transloco }}"
                     [Value]="pageOverview()?.totalThirdPartyApps" />
 
-                <app-section-top-card class="flex-1" Title="Hoog risico" [Value]="pageOverview()?.totalHighRiskApps"
-                    BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}"
+                    [Value]="pageOverview()?.totalHighRiskApps" BackgroundColor="#ffe2e2" IconColor="#e7000b"
+                    TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
 
-                <app-section-top-card class="flex-1" Title="Verleende permissies"
+                <app-section-top-card class="flex-1" Title="{{ 'app-access.permissions' | transloco }}"
                     [Value]="pageOverview()?.totalPermissionsGranted" BackgroundColor="#f3e8ff" IconColor="#9810fa"
                     TextColor="#9810fa" [Icon]="Icons.ShieldCheck" />
 
-                <div
-                  class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-                  (click)="openSecurityScoreDetail()"
-                  role="button"
-                  tabindex="0"
-                  (keydown.enter)="openSecurityScoreDetail()"
-                  (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-                >
-                  <app-section-top-card
-                    Title="Security Score"
-                    [Value]="pageOverview()?.securityScore"
-                    [IsPercentage]="true"
-                    BackgroundColor="#fef9c2"
-                    IconColor="#d69518"
-                  />
+                <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+                    (click)="openSecurityScoreDetail()" role="button" tabindex="0"
+                    (keydown.enter)="openSecurityScoreDetail()"
+                    (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+                    <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore"
+                        [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
                 </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-10">
-                <app-search-bar placeholder="Zoek verbonden apps op naam..."
-                    class="flex-1 min-w-[200px]" (searchChange)="onSearch($event)" />
+                <app-search-bar placeholder="{{ 'app-access.search' | transloco }}..." class="flex-1 min-w-50"
+                    (searchChange)="onSearch($event)" />
 
                 <div class="flex items-center justify-end">
-                    <app-filter-chips [options]="filterOptions()" [selectedValue]="riskFilter()"
-                        label="Filters:" variant="pilled" [showRefresh]="false"
-                        (filterChange)="setRiskFilter($event)" />
+                    <app-filter-chips [options]="filterOptions()" [selectedValue]="riskFilter()" label="Filters:"
+                        variant="pilled" [showRefresh]="false" (filterChange)="setRiskFilter($event)" />
                 </div>
             </div>
 
@@ -50,12 +40,12 @@
             <!-- Drives list -->
             <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
                 <div class="flex justify-between items-center mx-6 pb-2">
-                    <span class="font-medium text-lg">Verbonden Apps</span>
+                    <span class="font-medium text-lg">{{ 'app-access.all' | transloco }}</span>
                     <button (click)="refreshData()" [disabled]="isRefreshing()"
                         class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()" />
 
-                        {{ isRefreshing() ? 'Vernieuwen...' : 'Vernieuw Data' }}
+                        {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
                     </button>
                 </div>
                 <div class="space-y-4 mt-1 px-6">
@@ -92,13 +82,13 @@
                                     class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100">
                                     <i-lucide [img]="Icons.ShieldAlert" size="14" />
 
-                                    {{ app.isAnonymous ? 'Anonieme app' : '' }}
+                                    {{ app.isAnonymous ? ('app-access.anonymous-app' | transloco) : '' }}
                                 </div>
                                 }
                                 @if (app.isHighRisk) {
                                 <div
                                     class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100">
-                                    {{ app.isHighRisk ? 'Hoog risico' : '' }}
+                                    {{ app.isHighRisk ? ('high-risk' | transloco) : '' }}
                                 </div>
                                 }
                                 <i-lucide [img]="
@@ -113,7 +103,7 @@
                         <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                                    Gebruikers
+                                    {{ 'users' | transloco }}
                                 </p>
                                 <div class="flex items-center gap-2">
                                     <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
@@ -132,11 +122,11 @@
                             </div>
                             <div>
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                                    scope count
+                                    Scope count
                                 </p>
                                 <div class="flex items-center gap-2">
                                     <span class="text-muted-foreground text-sm font-medium">
-                                        {{ app.scopeCount }} permissies
+                                        {{ app.scopeCount }} {{ 'app-access.permissions-text' | transloco }}
                                     </span>
                                 </div>
                             </div>
@@ -144,7 +134,7 @@
 
                         @if (expandedApp() === app.id.toString()) {
                         <div class="border-t border-gray-200 mt-4 pt-4"></div>
-                        <span class="font-medium text-[15px]"> Data toegang</span>
+                        <span class="font-medium text-[15px]">{{ 'app-access.data-access' | transloco }}</span>
                         @if (app.dataAccess.length > 0) {
                         <div class="flex flex-col gap-2 mt-2">
                             @for (access of app.dataAccess; track $index) {
@@ -159,7 +149,7 @@
                                         access.name }}</span>
                                     <span class="font-medium text-[11px] leading-tight"
                                         [class.text-muted-foreground]="!access.risk"
-                                        [class.text-red-700]="access.risk">{{ access.rights }}</span>
+                                        [class.text-red-700]="access.risk">{{ access.rights | transloco }}</span>
                                 </div>
                             </div>
                             }
@@ -171,13 +161,13 @@
                             class="text-red-900 bg-red-50 flex flex-col gap-3 p-3 rounded-xl mt-5 border border-red-200/50">
                             <div class="flex gap-2 items-center font-medium">
                                 <i-lucide [img]="Icons.TriangleAlert" size="15" />
-                                <span class="text-sm">Waarom is dit risicovol?</span>
+                                <span class="text-sm">{{ 'app-access.why-risk' | transloco }}</span>
                             </div>
                             <span class="text-red-800 text-[13px]">
-                                Deze app heeft volledige toegang tot een of meerdere Google services. Als
-                                deze app gecomprimitteerd wordt, kan een aanvaller alle data van
-                                {{ app.totalUsers }} gebruiker{{ app.totalUsers > 1 ? 's' : '' }} lezen,
-                                wijzigen en verwijderen.
+                                {{('app-access.warning.full' | transloco: {
+                                count: app.totalUsers,
+                                userWord: (app.totalUsers === 1 ? ('user' | transloco) : ('users' | transloco))
+                                })}}
                             </span>
                         </div>
                         }
@@ -188,14 +178,14 @@
                         $event.stopPropagation();
                         UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
                       ">
-                            <span class="text-[13px] font-normal">Beheer in Admin Console</span>
+                            <span class="text-[13px] font-normal">{{ 'app-access.manage-console' | transloco }}</span>
                             <i-lucide [img]="Icons.ExternalLink" size="12" />
                         </button>
                         } @else if (app.isHighRisk) {
                         <div
                             class="text-red-900 bg-red-50 flex gap-2 p-3 rounded-xl mt-5 border border-red-200/50 items-center">
                             <i-lucide [img]="Icons.TriangleAlert" size="15" />
-                            <span class="text-sm text-red-800">Deze app heeft kritieke toegang tot {{
+                            <span class="text-sm text-red-800">{{ 'app-access.critical_description' | transloco }} {{
                                 app.highRiskCount
                                 }} service{{
                                 app.highRiskCount > 1 ? 's' : ''
@@ -208,17 +198,17 @@
                     <div
                         class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
                         <span class="text-sm text-gray-500">
-                            Pagina <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+                            {{ 'page' | transloco }} <span class="font-medium text-slate-900">{{ currentPage() }}</span>
                         </span>
                         <div class="flex gap-2">
                             <button (click)="prevPage()" [disabled]="currentPage() === 1"
                                 class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <i-lucide [img]="Icons.ChevronLeft" size="16" />
-                                Vorige
+                                {{ 'previous' | transloco }}
                             </button>
                             <button (click)="nextPage()" [disabled]="!nextPageToken()"
                                 class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                Volgende
+                                {{ 'next' | transloco }}
                                 <i-lucide [img]="Icons.ChevronRight" size="16" />
                             </button>
                         </div>
@@ -228,7 +218,7 @@
             } @else {
             <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
                 <div class="flex items-center justify-center p-5">
-                    <span class="text-lg font-medium text-slate-600"> Geen apps gevonden! </span>
+                    <span class="text-lg font-medium text-slate-600"> {{ 'app-access.no-founds' | transloco }}! </span>
                 </div>
             </div>
             }
@@ -245,7 +235,7 @@
                         </div>
 
                         <span class="text-sm font-medium text-slate-600 animate-pulse">
-                            Apps worden geladen...
+                            {{ 'app-access.loading' | transloco }}...
                         </span>
                     </div>
                 </div>
