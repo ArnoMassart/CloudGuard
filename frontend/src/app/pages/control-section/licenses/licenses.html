@@ -1,16 +1,18 @@
 <div class="px-10 py-6">
-    <app-page-header Title="Licenties Overzicht" Description="Monitor uw Google Workspace licentiegebruik"
+    <app-page-header Title="{{'licenses-overview' | transloco }}" Description="{{'licenses.description' | transloco}}"
         AdminLink="billing/subscriptions" />
 
     <div class="w-full flex flex-col gap-5 pt-6">
         <div class="w-full flex gap-4">
-            <app-section-top-card class="flex-1" Title="Totaal toegewezen" [Value]="pageOverview()?.totalAssigned"
-                [Icon]="Icons.Users" />
-            <app-section-top-card class="flex-1" Title="Risicovolle Accounts" [Value]="pageOverview()?.riskyAccounts"
-                BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00" [Icon]="Icons.UserX" />
-            <app-section-top-card class="flex-1" Title="Ongebruikte Licenties" [Value]="pageOverview()?.unusedLicenses"
-                BackgroundColor="#fef9c2" IconColor="#d38700" TextColor="#d38700" [Icon]="Icons.Clock" />
-            <app-section-top-card class="flex-1" Title="2FA Dekking" [Icon]="Icons.Shield"
+            <app-section-top-card class="flex-1" Title="{{ 'licenses.total' | transloco }}"
+                [Value]="pageOverview()?.totalAssigned" [Icon]="Icons.Users" />
+            <app-section-top-card class="flex-1" Title="{{ 'licenses.risky-accounts' | transloco }}"
+                [Value]="pageOverview()?.riskyAccounts" BackgroundColor="#ffedd4" IconColor="#f54a00"
+                TextColor="#f54a00" [Icon]="Icons.UserX" />
+            <app-section-top-card class="flex-1" Title="{{ 'licenses.unused' | transloco }}"
+                [Value]="pageOverview()?.unusedLicenses" BackgroundColor="#fef9c2" IconColor="#d38700"
+                TextColor="#d38700" [Icon]="Icons.Clock" />
+            <app-section-top-card class="flex-1" Title="{{ 'licenses.2FA' | transloco }}" [Icon]="Icons.Shield"
                 [Value]="pageOverview()?.mfaPercentage" [IsPercentage]="true" BackgroundColor="#fef9c2"
                 IconColor="#d69518" />
         </div>
@@ -18,14 +20,12 @@
         @if (hasWarnings() && !isLoading()){
         <app-page-warnings [isExpanded]="isExpanded()" (toggle)="toggleExpanded()">
             <app-page-warnings-item body>
-                Er {{pageOverview()?.riskyAccounts! > 1 ? 'zijn' :
-                'is'}} {{pageOverview()?.riskyAccounts}} account{{pageOverview()?.riskyAccounts! > 1 ? 's' :
-                ''}} met potentiële beveiligingsrisico's die aandacht vereisen. {{pageOverview()?.riskyAccounts!
-                > 1 ? 'Deze accounts zijn' :
-                'Dit account is'}} inactief of
-                gesuspendeerd maar {{pageOverview()?.riskyAccounts!
-                > 1 ? 'hebben' :
-                'heeft'}} nog steeds licenties toegewezen.
+                {{
+                (pageOverview()?.riskyAccounts === 1 ? 'home.risky-accounts.singular' : 'home.risky-accounts.plural') |
+                transloco: {
+                count: pageOverview()?.riskyAccounts
+                }
+                }}
             </app-page-warnings-item>
         </app-page-warnings>
         }
@@ -36,7 +36,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-7xl mx-auto">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-90">
                 <h2 class="text-lg font-medium text-gray-900 mb-6 px-4">
-                    Licentiegebruik per Type
+                    {{ 'licenses.licenses-use' | transloco }}
                 </h2>
 
                 <div class="grow">
@@ -47,7 +47,7 @@
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-90">
                 <h2 class="text-xl font-medium mb-6 px-4">
-                    2FA Dekking
+                    {{ 'licenses.2FA' | transloco }}
                 </h2>
 
                 <div class="relative grow flex items-center justify-center">
@@ -62,14 +62,16 @@
 
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
             <div class="flex justify-between items-center mx-5.5">
-                <span class="font-medium text-lg">Licentietype Overzicht</span>
+                <span class="font-medium text-lg">{{ 'licenses.type-overview' | transloco }}</span>
             </div>
 
             <table class="w-full text-left border-collapse mt-6">
                 <thead>
                     <tr class="border-b border-t border-gray-200 bg-gray-50/50">
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Licentietype</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Toegewezen</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'licenses.type' | transloco
+                            }}</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'assigned' | transloco }}
+                        </th>
                     </tr>
                 </thead>
 
@@ -93,11 +95,10 @@
             <div class="mx-5.5 flex flex-col gap-1">
                 <div class="flex gap-3 items-center">
                     <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-orange-600" />
-                    <span class="font-medium text-lg">Inactieve Gebruikers met Licenties
+                    <span class="font-medium text-lg">{{ 'licenses.inactive-users' | transloco }}
                         ({{inactiveUsers().length}})</span>
                 </div>
-                <span class="text-[13px] text-slate-600">Deze gebruikers hebben al meer dan 90 dagen niet
-                    ingelogd</span>
+                <span class="text-[13px] text-slate-600">{{ 'licenses.inactive-users.description' | transloco }}</span>
             </div>
 
             @if (inactiveUsers().length > 0) {
@@ -107,8 +108,10 @@
                 <thead>
                     <tr class="border-b border-t border-gray-200 bg-gray-50/50">
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Laatste Login</th>
-                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">Licentie Type</th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'last' | transloco }} Login
+                        </th>
+                        <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'license' | transloco }}
+                            Type</th>
                         <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">2FA</th>
                     </tr>
                 </thead>
@@ -138,7 +141,7 @@
                                 [class.text-destructive]="!user.isTwoFactorEnabled">
                                 <lucide-icon [img]="user.isTwoFactorEnabled ? Icons.CircleCheck : Icons.CircleX"
                                     size="14"></lucide-icon>
-                                {{ user.isTwoFactorEnabled ? 'Ingeschakeld' : 'Uit' }}
+                                {{ (user.isTwoFactorEnabled ? 'enabled' : 'off') | transloco }}
                             </div>
                         </td>
                     </tr>
@@ -148,7 +151,7 @@
             } @else {
             <div class="flex items-center justify-center p-5">
                 <span class="text-lg font-medium text-slate-600">
-                    Geen inactieve gebruikers met licenties gevonden!
+                    {{ 'licenses.inactive-users.none' | transloco }}!
                 </span>
 
             </div>
@@ -168,7 +171,7 @@
                     </div>
 
                     <span class="text-sm font-medium text-slate-600 animate-pulse">
-                        Licenties worden geladen...
+                        {{ 'licenses.loading' | transloco }}...
                     </span>
                 </div>
             </div>
