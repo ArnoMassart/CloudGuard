@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthPagedResponse;
 import com.cloudmen.cloudguard.service.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +14,13 @@ import org.springframework.web.bind.annotation.*;
 public class GoogleOAuthController {
     private final GoogleOAuthService oAuthService;
     private final JwtService jwtService;
+    private final UserSecurityPreferenceService preferenceService;
 
-    public GoogleOAuthController(GoogleOAuthService oAuthService, JwtService jwtService) {
+    public GoogleOAuthController(GoogleOAuthService oAuthService, JwtService jwtService,
+                                UserSecurityPreferenceService preferenceService) {
         this.oAuthService = oAuthService;
         this.jwtService = jwtService;
+        this.preferenceService = preferenceService;
     }
 
     @GetMapping
@@ -44,7 +48,8 @@ public class GoogleOAuthController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(oAuthService.getOAuthPageOverview(loggedInEmail));
+        return ResponseEntity.ok(oAuthService.getOAuthPageOverview(loggedInEmail,
+                preferenceService.getDisabledPreferenceKeys(loggedInEmail)));
     }
 
     @PostMapping("/refresh")

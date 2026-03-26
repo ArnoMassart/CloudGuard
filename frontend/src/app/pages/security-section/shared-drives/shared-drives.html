@@ -18,10 +18,10 @@
         class="flex-1"
         Title="{{ 'shared-drives.without-managers' | transloco }}"
         [Value]="pageOverview()?.orphanDrives"
-        BackgroundColor="#f3e8ff"
-        IconColor="#9810fa"
-        TextColor="#9810fa"
-        [Icon]="Icons.Settings"
+        [BackgroundColor]="kpiOrphanDrivesColors().bg"
+        [IconColor]="kpiOrphanDrivesColors().icon"
+        [TextColor]="kpiOrphanDrivesColors().text"
+        [Icon]="(pageOverview()?.orphanDrives ?? 0) > 0 ? Icons.Settings : Icons.HardDrive"
       />
 
       <app-section-top-card
@@ -38,10 +38,10 @@
         class="flex-1"
         Title="{{ 'shared-drives.with-external' | transloco }}"
         [Value]="pageOverview()?.externalMembersDriveCount"
-        BackgroundColor="#ffedd4"
-        IconColor="#f54a00"
-        TextColor="#f54a00"
-        [Icon]="Icons.Users"
+        [BackgroundColor]="kpiExternalDrivesColors().bg"
+        [IconColor]="kpiExternalDrivesColors().icon"
+        [TextColor]="kpiExternalDrivesColors().text"
+        [Icon]="(pageOverview()?.externalMembersDriveCount ?? 0) > 0 ? Icons.Users : Icons.HardDrive"
       />
 
       <div
@@ -243,20 +243,19 @@
                         $event.stopPropagation()
                       "
                     >
-                      @if (!drive.onlyDomainUsersAllowed) {
+                      @if (!drive.onlyDomainUsersAllowed && !isSharedDrivePrefDisabled('outsideDomain')) {
                         <i-lucide
                           [img]="Icons.TriangleAlert"
                           class="text-[#f54a00] cursor-pointer"
                           size="13"
                         />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{
-                          'no' | transloco
-                        }}</span>
-                      } @else {
+                        <span class="text-[#f54a00] text-[13px] font-medium underline">
+                            {{'no' | transloco}}</span>
+                      } @else if (drive.onlyDomainUsersAllowed) {
                         <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">{{
-                          'yes' | transloco
-                        }}</span>
+                        <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
+                      } @else {
+                        <span class="text-[#6b7280] text-xs font-medium">Nee</span>
                       }
                     </div>
                   </div>
@@ -273,16 +272,14 @@
                         $event.stopPropagation()
                       "
                     >
-                      @if (!drive.onlyMembersCanAccess) {
+                      @if (!drive.onlyMembersCanAccess && !isSharedDrivePrefDisabled('nonMemberAccess')) {
                         <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{
-                          'no' | transloco
-                        }}</span>
-                      } @else {
+                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{'no' | transloco}}</span>
+                      } @else if (drive.onlyMembersCanAccess) {
                         <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">{{
-                          'yes' | transloco
-                        }}</span>
+                        <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
+                      } @else {
+                        <span class="text-[#6b7280] text-xs font-medium">Nee</span>
                       }
                     </div>
                   </div>

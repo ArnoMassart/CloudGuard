@@ -10,6 +10,9 @@ import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
+import { KPI_COLORS, kpiColors } from '../../../../shared/KpiColors';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -50,6 +53,7 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   readonly #groupService = inject(GroupService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly groups = signal<GroupSummary[]>([]);
   readonly loading = signal(true);
   readonly isRefreshing = signal<boolean>(false);
@@ -63,18 +67,31 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   readonly isExpanded = signal(true);
 
-  hasWarnings = signal(false);
-
-  groupPageWarnings = signal({
-    externalMember: false,
-    highRisk: false,
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly groupPageWarnings = computed(() => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      externalMember: items['externalMember'] ?? false,
+      highRisk: items['highRisk'] ?? false,
+    };
   });
 
-  hasMultipleWarnings = computed(() => {
-    const warnings = this.groupPageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
-  });
+  readonly kpiGroupsExternalColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.groupsWithExternal ?? 0,
+      this.#preferencesFacade.isDisabled('users-groups', 'groupExternal'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+    )
+  );
+
+  readonly kpiGroupsHighRiskColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.highRiskGroups ?? 0,
+      this.#preferencesFacade.isDisabled('users-groups', 'groupExternal'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertRedDark,
+    )
+  );
 
   #langSubscription?: Subscription;
 
@@ -92,11 +109,8 @@ export class GroupsSection implements OnInit, OnDestroy {
   }
 
   private loadGroupsOverview(): void {
-    this.#groupService.getGroupsOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
-        this.loadWarnings();
-      },
+    this.#preferencesFacade.loadWithPrefs$(this.#groupService.getGroupsOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
       error: (err) => console.error('Failed to load groups overview', err),
     });
   }
@@ -128,6 +142,11 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
+  }
+
+  /** When true, externe-leden alerts in group cards use neutral gray (still show real counts/Ja-Nee). */
+  isGroupExternalPrefDisabled(): boolean {
+    return this.#preferencesFacade.isDisabled('users-groups', 'groupExternal');
   }
 
   openSecurityScoreDetail() {
@@ -164,20 +183,18 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
-    this.#groupService
-      .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)
-      .subscribe({
-        next: (res) => {
-          this.groups.set(this.mapToGroupSummary(res.groups));
-          this.nextPageToken.set(res.nextPageToken ?? null);
-          this.loading.set(false);
-        },
-        error: (error) => {
-          console.error('Error fetching groups:', error);
-          this.groups.set([]);
-          this.loading.set(false);
-        },
-      });
+    this.#groupService.getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize).subscribe({
+      next: (res) => {
+        this.groups.set(this.mapToGroupSummary(res.groups));
+        this.nextPageToken.set(res.nextPageToken ?? null);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error fetching groups:', error);
+        this.groups.set([]);
+        this.loading.set(false);
+      },
+    });
   }
 
   private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {
@@ -202,15 +219,4 @@ export class GroupsSection implements OnInit, OnDestroy {
     return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
   }
 
-  private loadWarnings() {
-    if (this.pageOverview()?.groupsWithExternal! > 0) {
-      this.groupPageWarnings().externalMember = true;
-      this.hasWarnings.set(true);
-    }
-
-    if (this.pageOverview()?.highRiskGroups! > 0) {
-      this.groupPageWarnings().highRisk = true;
-      this.hasWarnings.set(true);
-    }
-  }
 }

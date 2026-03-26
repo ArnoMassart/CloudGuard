@@ -45,14 +45,15 @@ export class Navbar {
     { Icon: this.Icons.FolderOpen, Label: 'shared-drives', Route: '/shared-drives' },
     { Icon: this.Icons.SmartPhone, Label: 'devices', Route: '/devices' },
     { Icon: this.Icons.Key, Label: 'app-access', Route: '/app-access' },
-    { Icon: this.Icons.Lock, Label: 'app-passwords', Route: '/app-passwords' },
-    { Icon: this.Icons.ShieldCheck, Label: 'password-settings', Route: '/password-settings' },
+    { Icon: this.Icons.LayoutGrid, Label: 'app-passwords', Route: '/app-passwords' },
+    { Icon: this.Icons.Lock, Label: 'password-settings', Route: '/password-settings' },
     { Icon: this.Icons.Globe, Label: 'domain-dns', Route: '/domain-dns' },
   ];
 
   readonly NavItemsControl = [
     { Icon: this.Icons.CreditCard, Label: 'licenses', Route: '/licenses' },
     { Icon: this.Icons.Bell, Label: 'notifications-feedback', Route: '/reports-reactions' },
+    { Icon: this.Icons.Settings, Label: 'Beveiligingsvoorkeuren', Route: '/security-preferences' },
   ];
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {

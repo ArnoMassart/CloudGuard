@@ -206,114 +206,59 @@
           <tr class="bg-[#f9fafb] border-b border-gray-200">
             <td colspan="7" class="px-12 py-6">
               <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
-                  <div class="p-2.5 rounded-lg" [ngClass]="
-                              device.lockSecure
-                                ? 'bg-[#dbfce7] text-emerald-600'
-                                : 'bg-[#ffe2e2] text-[#e7000b]'
-                            ">
-                    <lucide-icon [img]="Icons.Lock" size="22"></lucide-icon>
+                @for (f of getDeviceFactors(device); track f.key) {
+                <div
+                  class="p-4 rounded-xl border flex items-center gap-4 shadow-sm"
+                  [ngClass]="f.state === 'muted' ? 'bg-gray-50/90 border-gray-200' : 'bg-white border-gray-200'"
+                >
+                  <div
+                    class="p-2.5 rounded-lg"
+                    [ngClass]="
+                      f.state === 'ok'
+                        ? 'bg-[#dbfce7] text-emerald-600'
+                        : f.state === 'warn'
+                          ? 'bg-[#ffe2e2] text-[#e7000b]'
+                          : 'bg-gray-100 text-gray-400'
+                    "
+                  >
+                    <lucide-icon [img]="f.icon" size="22"></lucide-icon>
                   </div>
-                  <div class="flex flex-col">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm" [ngClass]="
-                                  device.lockSecure ? 'text-emerald-700' : 'text-[#e7000b]'
-                                ">{{ 'devices.lock-screen' | transloco }}</span>
-                      @if (!device.lockSecure) {
-                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
-                                    UtilityMethods.openAdminPage(
-                                      'https://admin.google.com/ac/devices/list'
-                                    )
-                                  "></i-lucide>
+                  <div class="flex flex-col min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span
+                        class="font-medium text-sm"
+                        [ngClass]="
+                          f.state === 'ok'
+                            ? 'text-emerald-700'
+                            : f.state === 'warn'
+                              ? 'text-[#e7000b]'
+                              : 'text-gray-500'
+                        "
+                      >{{ f.label }}</span>
+                      @if (f.state === 'warn') {
+                      <i-lucide
+                        [img]="Icons.ExternalLink"
+                        size="14"
+                        class="text-[#e7000b] cursor-pointer"
+                        (click)="
+                          UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list');
+                          $event.stopPropagation()
+                        "
+                      ></i-lucide>
                       }
-                      <i-lucide [img]="device.lockSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
-                        [class]="device.lockSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></i-lucide>
+                      <i-lucide
+                        [img]="f.state === 'ok' ? Icons.CircleCheck : f.state === 'muted' ? Icons.CircleQuestionMark : Icons.TriangleAlert"
+                        size="14"
+                        [ngClass]="f.state === 'ok' ? 'text-emerald-600' : f.state === 'warn' ? 'text-[#e7000b]' : 'text-gray-400'"
+                      ></i-lucide>
                     </div>
-                    <span class="text-sm text-gray-500">{{ device.screenLockText }}</span>
+                    <span
+                      class="text-sm"
+                      [ngClass]="f.state === 'muted' ? 'text-gray-400' : 'text-gray-500'"
+                    >{{ f.text }}</span>
                   </div>
                 </div>
-
-                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
-                  <div class="p-2.5 rounded-lg" [ngClass]="
-                              device.encSecure
-                                ? 'bg-[#dbfce7] text-emerald-600'
-                                : 'bg-[#ffe2e2] text-[#e7000b]'
-                            ">
-                    <lucide-icon [img]="Icons.HardDrive" size="22"></lucide-icon>
-                  </div>
-                  <div class="flex flex-col">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm"
-                        [ngClass]="device.encSecure ? 'text-emerald-700' : 'text-[#e7000b]'">{{ 'devices.encryption' |
-                        transloco }}</span>
-                      @if (!device.encSecure) {
-                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
-                                    UtilityMethods.openAdminPage(
-                                      'https://admin.google.com/ac/devices/list'
-                                    )
-                                  "></i-lucide>
-                      }
-                      <lucide-icon [img]="device.encSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
-                        [class]="device.encSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
-                    </div>
-                    <span class="text-sm text-gray-500">{{ device.encryptionText }}</span>
-                  </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
-                  <div class="p-2.5 rounded-lg" [ngClass]="
-                              device.osSecure
-                                ? 'bg-[#dbfce7] text-emerald-600'
-                                : 'bg-[#ffe2e2] text-[#e7000b]'
-                            ">
-                    <lucide-icon [img]="Icons.Cpu" size="22"></lucide-icon>
-                  </div>
-                  <div class="flex flex-col">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm"
-                        [ngClass]="device.osSecure ? 'text-emerald-700' : 'text-[#e7000b]'">OS {{ 'devices.version' |
-                        transloco }}</span>
-                      @if (!device.osSecure) {
-                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
-                                    UtilityMethods.openAdminPage(
-                                      'https://admin.google.com/ac/devices/list'
-                                    )
-                                  "></i-lucide>
-                      }
-
-                      <lucide-icon [img]="device.osSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
-                        [class]="device.osSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
-                    </div>
-                    <span class="text-sm text-gray-500">{{ device.osText }}</span>
-                  </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-4 shadow-sm">
-                  <div class="p-2.5 rounded-lg" [ngClass]="
-                              device.intSecure
-                                ? 'bg-[#dbfce7] text-emerald-600'
-                                : 'bg-[#ffe2e2] text-[#e7000b]'
-                            ">
-                    <lucide-icon [img]="Icons.ShieldCheck" size="22"></lucide-icon>
-                  </div>
-                  <div class="flex flex-col">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm"
-                        [ngClass]="device.intSecure ? 'text-emerald-700' : 'text-[#e7000b]'">{{ 'devices.integrity' |
-                        transloco }}</span>
-                      @if (!device.intSecure) {
-                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
-                                    UtilityMethods.openAdminPage(
-                                      'https://admin.google.com/ac/devices/list'
-                                    )
-                                  "></i-lucide>
-                      }
-                      <lucide-icon [img]="device.intSecure ? Icons.CircleCheck : Icons.TriangleAlert" size="14"
-                        [class]="device.intSecure ? 'text-emerald-600' : 'text-[#e7000b]'"></lucide-icon>
-                    </div>
-                    <span class="text-sm text-gray-500">{{ device.integrityText }}</span>
-                  </div>
-                </div>
+                }
               </div>
             </td>
           </tr>

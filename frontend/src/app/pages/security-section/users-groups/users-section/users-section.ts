@@ -2,7 +2,7 @@ import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UserOrgDetail } from '../../../../models/users/UserOrgDetails';
+import { USER_SECURITY_VIOLATION, UserOrgDetail } from '../../../../models/users/UserOrgDetails';
 import { UserService } from '../../../../services/user-service';
 import { SecurityScoreDetailService } from '../../../../services/security-score-detail.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -13,6 +13,9 @@ import { AppIcons } from '../../../../shared/AppIcons';
 import { PageWarnings } from '../../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
+import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
+import { KPI_COLORS, kpiColors } from '../../../../shared/KpiColors';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -37,13 +40,14 @@ const ITEMS_PER_PAGE = 4;
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
 })
-export class UsersSection implements OnInit, OnDestroy {
+export class UsersSection implements OnInit {
   // ==========================================
   // INJECTIONS
   // ==========================================
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -60,18 +64,24 @@ export class UsersSection implements OnInit, OnDestroy {
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
-  readonly hasWarnings = signal(false);
-  readonly userPageWarnings = signal<UsersPageWarnings>({
-    twoFactorWarning: true,
-    activeWithLongNoLogin: true,
-    notActiveWithRecentLogin: true,
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly userPageWarnings = computed((): UsersPageWarnings => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      twoFactorWarning: items['twoFactorWarning'] ?? false,
+      activeWithLongNoLogin: items['activeWithLongNoLogin'] ?? false,
+      notActiveWithRecentLogin: items['notActiveWithRecentLogin'] ?? false,
+    };
   });
 
-  readonly hasMultipleWarnings = computed(() => {
-    const warnings = this.userPageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
-  });
+  readonly kpiZonder2faColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.withoutTwoFactor ?? 0,
+      this.#preferencesFacade.isDisabled('users-groups', '2fa'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+    )
+  );
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -142,6 +152,51 @@ export class UsersSection implements OnInit, OnDestroy {
     }
   }
 
+  /** 2FA off and 2FA warning muted in preferences → gray cell (Security column unchanged). */
+  twoFactorCellMuted(user: UserOrgDetail): boolean {
+    return (
+      !user.twoFactorEnabled && this.#preferencesFacade.isDisabled('users-groups', '2fa')
+    );
+  }
+
+  /** Activity warning muted and user has an activity violation → gray last-login cell. */
+  lastLoginCellMuted(user: UserOrgDetail): boolean {
+    if (!this.#preferencesFacade.isDisabled('users-groups', 'activity')) {
+      return false;
+    }
+    const codes = user.securityViolationCodes ?? [];
+    return codes.some(
+      (c) =>
+        c === USER_SECURITY_VIOLATION.ACTIVITY_STALE ||
+        c === USER_SECURITY_VIOLATION.ACTIVITY_INACTIVE_RECENT,
+    );
+  }
+
+  /**
+   * Shows Conform when the user is already conform, or when every violation is covered by a disabled (muted) preference.
+   */
+  effectiveSecurityConform(user: UserOrgDetail): boolean {
+    if (user.securityConform) {
+      return true;
+    }
+    const codes = user.securityViolationCodes;
+    if (!codes?.length) {
+      return false;
+    }
+    return codes.every((code) => {
+      if (code === USER_SECURITY_VIOLATION.NO_2FA) {
+        return this.#preferencesFacade.isDisabled('users-groups', '2fa');
+      }
+      if (
+        code === USER_SECURITY_VIOLATION.ACTIVITY_STALE ||
+        code === USER_SECURITY_VIOLATION.ACTIVITY_INACTIVE_RECENT
+      ) {
+        return this.#preferencesFacade.isDisabled('users-groups', 'activity');
+      }
+      return false;
+    });
+  }
+
   openSecurityScoreDetail() {
     const overview = this.pageOverview();
     const breakdown =
@@ -156,9 +211,7 @@ export class UsersSection implements OnInit, OnDestroy {
     this.isRefreshing.set(true);
 
     this.#userService.refreshUsersCache().subscribe({
-      next: (res) => {
-        console.log(res);
-
+      next: () => {
         this.currentPage.set(1);
         this.#tokenHistory = [null];
 
@@ -182,47 +235,23 @@ export class UsersSection implements OnInit, OnDestroy {
   #loadUsers(token: string | null = null) {
     this.isLoading.set(true);
 
-    this.#userService
-      .getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
-      .subscribe({
-        next: (res) => {
-          this.orgUsers.set(res.users);
-          this.nextPageToken.set(res.nextPageToken);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load users', err);
-          this.isLoading.set(false);
-        },
-      });
-  }
-
-  #loadPageOverview() {
-    this.#userService.getUsersPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
-        this.#loadWarnings();
+    this.#userService.getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
+      next: (page) => {
+        this.orgUsers.set(page.users);
+        this.nextPageToken.set(page.nextPageToken);
+        this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load page overview', err);
+        console.error('Failed to load users', err);
+        this.isLoading.set(false);
       },
     });
   }
 
-  #loadWarnings() {
-    if (this.pageOverview()?.withoutTwoFactor! > 0) {
-      this.hasWarnings.set(true);
-      this.userPageWarnings().twoFactorWarning = true;
-    }
-
-    if (this.pageOverview()?.activeLongNoLoginCount! > 0) {
-      this.hasWarnings.set(true);
-      this.userPageWarnings().activeWithLongNoLogin = true;
-    }
-
-    if (this.pageOverview()?.inactiveRecentLoginCount! > 0) {
-      this.hasWarnings.set(true);
-      this.userPageWarnings().notActiveWithRecentLogin = true;
-    }
+  #loadPageOverview() {
+    this.#preferencesFacade.loadWithPrefs$(this.#userService.getUsersPageOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
+      error: (err) => console.error('Failed to load page overview', err),
+    });
   }
 }

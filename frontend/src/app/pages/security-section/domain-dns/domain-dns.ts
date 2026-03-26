@@ -10,6 +10,8 @@ import { DnsRecord } from '../../../models/dns/DnsRecord';
 import type { SecurityScoreBreakdown } from '../../../models/password/PasswordSettings';
 import { DnsService } from '../../../services/dns-service';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -26,6 +28,7 @@ export class DomainDns implements OnInit, OnDestroy {
   readonly #domainService = inject(DomainService);
   readonly Icons = AppIcons;
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   private readonly dnsService = inject(DnsService);
@@ -65,6 +68,12 @@ export class DomainDns implements OnInit, OnDestroy {
     this.rows().some((r) => r.status === 'ACTION_REQUIRED' || r.status === 'ERROR')
   );
   readonly hasWarnings = computed(() => this.rows().some((r) => r.status === 'ATTENTION'));
+
+  readonly showDnsCriticalBanner = computed(() => this.hasCriticalProblems());
+
+  readonly showDnsAttentionBanner = computed(
+    () => this.hasWarnings() && !this.showDnsCriticalBanner(),
+  );
 
   ngOnInit() {
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
@@ -247,7 +256,7 @@ export class DomainDns implements OnInit, OnDestroy {
   }
 
   #loadDomains() {
-    this.#domainService.getDomains().subscribe({
+    this.#preferencesFacade.loadWithPrefs$(this.#domainService.getDomains()).subscribe({
       next: (domains) => {
         this.domains.set(domains);
         this.isLoading.set(false);

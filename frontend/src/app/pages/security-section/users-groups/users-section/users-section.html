@@ -1,17 +1,28 @@
 <div class="w-full flex flex-col gap-5">
   <div class="w-full flex gap-4">
-    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}"
-      [Value]="pageOverview()?.totalUsers" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}"
-      [Value]="pageOverview()?.withoutTwoFactor" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
-      [Icon]="Icons.TriangleAlert" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}"
-      [Value]="pageOverview()?.adminUsers" BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
-      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
-      <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
-        BackgroundColor="#fef9c2" IconColor="#d69518" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}" [Value]="pageOverview()?.totalUsers" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}" [Value]="pageOverview()?.withoutTwoFactor"
+      [BackgroundColor]="kpiZonder2faColors().bg"
+      [IconColor]="kpiZonder2faColors().icon"
+      [TextColor]="kpiZonder2faColors().text"
+      [Icon]="(pageOverview()?.withoutTwoFactor ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}" [Value]="pageOverview()?.adminUsers"
+      BackgroundColor="#f3e8ff" IconColor="#9810fa" />
+    <div
+      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+      (click)="openSecurityScoreDetail()"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
+    >
+      <app-section-top-card
+        Title="Security Score"
+        [Value]="pageOverview()?.securityScore"
+        [IsPercentage]="true"
+        BackgroundColor="#fef9c2"
+        IconColor="#d69518"
+      />
     </div>
   </div>
 
@@ -106,27 +117,35 @@
             </div>
           </td>
 
-          <td class="px-6 py-4 text-sm text-gray-500">
-            <div class="flex items-center gap-2">
+          <td class="px-6 py-4 text-sm">
+            <div
+              class="flex items-center gap-2"
+              [class.text-gray-500]="!lastLoginCellMuted(user)"
+              [class.text-[#6b7280]]="lastLoginCellMuted(user)"
+            >
               <lucide-icon [img]="Icons.Clock" size="14"></lucide-icon>
               {{ user.lastLogin }}
             </div>
           </td>
 
           <td class="px-6 py-4">
-            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFactorEnabled"
-              [class.text-destructive]="!user.twoFactorEnabled">
+            <div
+              class="flex items-center gap-1.5 text-xs font-medium"
+              [class.text-emerald-400]="user.twoFactorEnabled"
+              [class.text-destructive]="!user.twoFactorEnabled && !twoFactorCellMuted(user)"
+              [class.text-[#6b7280]]="twoFactorCellMuted(user)"
+            >
               <lucide-icon [img]="user.twoFactorEnabled ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
               {{ user.twoFactorEnabled ? ('enabled' | transloco) : ('off' | transloco) }}
             </div>
           </td>
 
           <td class="px-6 py-4">
-            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.securityConform"
-              [class.text-destructive]="!user.securityConform">
-              <lucide-icon [img]="user.securityConform ? Icons.CircleCheck : Icons.TriangleAlert"
+            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="effectiveSecurityConform(user)"
+              [class.text-destructive]="!effectiveSecurityConform(user)">
+              <lucide-icon [img]="effectiveSecurityConform(user) ? Icons.CircleCheck : Icons.TriangleAlert"
                 size="14"></lucide-icon>
-              {{ user.securityConform ? 'Conform' : ('not' | transloco) + ' conform' }}
+              {{ effectiveSecurityConform(user) ? 'Conform' : ('not' | transloco) + ' conform' }}
             </div>
           </td>
         </tr>

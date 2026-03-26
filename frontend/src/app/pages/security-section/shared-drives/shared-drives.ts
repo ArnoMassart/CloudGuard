@@ -13,6 +13,9 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -44,6 +47,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly UtilityMethods = UtilityMethods;
   readonly #driveService = inject(DriveService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -61,19 +65,33 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
-  readonly hasWarnings = signal(false);
-  readonly drivePageWarnings = signal<SharedDrivesPageWarnings>({
-    notOnlyDomainUsersAllowedWarning: false,
-    notOnlyMembersCanAccessWarning: false,
-    externalMembersWarning: false,
-    orphanDrivesWarning: false,
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly drivePageWarnings = computed((): SharedDrivesPageWarnings => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      notOnlyDomainUsersAllowedWarning: items['notOnlyDomainUsersAllowedWarning'] ?? false,
+      notOnlyMembersCanAccessWarning: items['notOnlyMembersCanAccessWarning'] ?? false,
+      externalMembersWarning: items['externalMembersWarning'] ?? false,
+      orphanDrivesWarning: items['orphanDrivesWarning'] ?? false,
+    };
   });
 
-  readonly hasMultipleWarnings = computed(() => {
-    const warnings = this.drivePageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
-  });
+  readonly kpiOrphanDrivesColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.orphanDrives ?? 0,
+      this.#preferencesFacade.isDisabled('shared-drives', 'orphan'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertPurple,
+    )
+  );
+
+  readonly kpiExternalDrivesColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.externalMembersDriveCount ?? 0,
+      this.#preferencesFacade.isDisabled('shared-drives', 'external'),
+      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+    )
+  );
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -127,6 +145,10 @@ export class SharedDrives implements OnInit, OnDestroy {
       this.currentPage.update((p) => p - 1);
       this.#loadDrives(prevToken);
     }
+  }
+
+  isSharedDrivePrefDisabled(key: 'outsideDomain' | 'nonMemberAccess'): boolean {
+    return this.#preferencesFacade.isDisabled('shared-drives', key);
   }
 
   openSecurityScoreDetail() {
@@ -183,36 +205,9 @@ export class SharedDrives implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    this.#driveService.getDrivesPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
-        this.#loadWarnings();
-      },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+    this.#preferencesFacade.loadWithPrefs$(this.#driveService.getDrivesPageOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
+      error: (err) => console.error('Failed to load page overview', err),
     });
-  }
-
-  #loadWarnings() {
-    if (this.pageOverview()?.notOnlyDomainUsersAllowedCount! > 0) {
-      this.hasWarnings.set(true);
-      this.drivePageWarnings().notOnlyDomainUsersAllowedWarning = true;
-    }
-
-    if (this.pageOverview()?.notOnlyMembersCanAccessCount! > 0) {
-      this.hasWarnings.set(true);
-      this.drivePageWarnings().notOnlyMembersCanAccessWarning = true;
-    }
-
-    if (this.pageOverview()?.externalMembersDriveCount! > 0) {
-      this.hasWarnings.set(true);
-      this.drivePageWarnings().externalMembersWarning = true;
-    }
-
-    if (this.pageOverview()?.orphanDrives! > 0) {
-      this.hasWarnings.set(true);
-      this.drivePageWarnings().orphanDrivesWarning = true;
-    }
   }
 }

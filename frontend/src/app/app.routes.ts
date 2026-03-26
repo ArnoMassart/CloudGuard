@@ -13,6 +13,7 @@ import { PasswordSettings } from './pages/security-section/password-settings/pas
 import { DomainDns } from './pages/security-section/domain-dns/domain-dns';
 import { Licenses } from './pages/control-section/licenses/licenses';
 import { ReportsReactions } from './pages/control-section/reports-reactions/reports-reactions';
+import { SecurityPreferences } from './pages/control-section/security-preferences/security-preferences';
 import { authGuard } from './auth/auth.guard';
 import { Forbidden } from './pages/forbidden/forbidden';
 import { TeamleaderAccessDenied } from './pages/teamleader-access-denied/teamleader-access-denied';
@@ -98,6 +99,11 @@ export const routes: Routes = [
   {
     path: 'reports-reactions',
     component: ReportsReactions,
+    canActivate: [authGuard, accessGuard],
+  },
+  {
+    path: 'security-preferences',
+    component: SecurityPreferences,
     canActivate: [authGuard, accessGuard],
   },
   {

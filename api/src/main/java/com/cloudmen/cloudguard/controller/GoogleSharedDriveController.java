@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,10 +14,12 @@ import org.springframework.web.bind.annotation.*;
 public class GoogleSharedDriveController {
     private final GoogleSharedDriveService driveService;
     private final JwtService jwtService;
+    private final UserSecurityPreferenceService preferenceService;
 
-    public GoogleSharedDriveController(GoogleSharedDriveService driveService, JwtService jwtService) {
+    public GoogleSharedDriveController(GoogleSharedDriveService driveService, JwtService jwtService, UserSecurityPreferenceService preferenceService) {
         this.driveService = driveService;
         this.jwtService = jwtService;
+        this.preferenceService = preferenceService;
     }
 
     @GetMapping
@@ -43,7 +46,7 @@ public class GoogleSharedDriveController {
 
         String adminEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(driveService.getDrivesPageOverview(adminEmail));
+        return ResponseEntity.ok(driveService.getDrivesPageOverview(adminEmail, preferenceService.getDisabledPreferenceKeys(adminEmail)));
     }
 
     @PostMapping("/refresh")
