@@ -151,9 +151,21 @@ public class GoogleSharedDriveService {
 
         int combinedScore = combinedDriveSecurityScore(totalDrives, riskOnlyScore, orphanScore, domainOnlyScore, membersOnlyScore, off);
 
+        boolean muteRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "external");
+        boolean muteOrphan = SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "orphan");
+        boolean muteDomain = SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "outsideDomain");
+        boolean muteMembers = SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "nonMemberAccess");
+
         Locale locale = LocaleContextHolder.getLocale();
 
         var factors = java.util.List.of(
+                new SecurityScoreFactorDto("Laag risico drives", totalLowRisk + " van " + totalDrives + " drives met laag risico", lowScore, 100, severity(lowScore), muteRisk),
+                new SecurityScoreFactorDto("Gemiddeld risico drives", totalMediumRisk + " van " + totalDrives + " drives met gemiddeld risico", mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0), muteRisk),
+                new SecurityScoreFactorDto("Hoog risico drives", totalHighRisk + " van " + totalDrives + " drives met hoog risico", highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0), muteRisk),
+                new SecurityScoreFactorDto("Drives met beheerders", orphanDrives == 0 ? "Alle drives hebben beheerders" : orphanDrives + " drive(s) zonder beheerder", orphanScore, 100, severity(orphanScore), muteOrphan),
+                new SecurityScoreFactorDto("Alleen domeingebruikers", notOnlyDomainUsersAllowedCount == 0 ? "Alle drives staan alleen domeingebruikers toe" : notOnlyDomainUsersAllowedCount + " drive(s) staan externe gebruikers toe", domainOnlyScore, 100, severity(domainOnlyScore), muteDomain),
+                new SecurityScoreFactorDto("Alleen leden toegang", notOnlyMembersCanAccessCount == 0 ? "Alle drives beperken toegang tot leden" : notOnlyMembersCanAccessCount + " drive(s) geven toegang aan niet-leden", membersOnlyScore, 100, severity(membersOnlyScore), muteMembers)
+                //with translation
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.low_risk.title", null, locale), messageSource.getMessage("drives.score.factor.low_risk.description", new Object[]{totalLowRisk, totalDrives}, locale), lowScore, 100, severity(lowScore)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.middle_risk.title", null, locale), messageSource.getMessage("drives.score.factor.middle_risk.description", new Object[]{totalMediumRisk, totalDrives}, locale), mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.high_risk.title", null, locale), messageSource.getMessage("drives.score.factor.high_risk.description", new Object[]{totalHighRisk, totalDrives}, locale), highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0, true)),

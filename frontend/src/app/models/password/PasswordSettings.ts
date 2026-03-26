@@ -23,6 +23,8 @@ export interface SecurityScoreFactor {
   score: number;
   maxScore: number;
   severity: 'success' | 'warning' | 'error';
+  /** True when this factor is excluded from the score due to a muted security preference */
+  muted?: boolean;
 }
 
 export interface OuPasswordPolicy {

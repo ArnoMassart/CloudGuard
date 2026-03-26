@@ -211,13 +211,19 @@ public class GoogleDeviceService {
         Locale locale = LocaleContextHolder.getLocale();
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.lock_screen.title", null, locale), lockScreenCount == 0 ? messageSource.getMessage("devices.score.factor.lock_screen.description.all", null, locale) : messageSource.getMessage("devices.score.factor.lock_screen.description", new Object[]{lockScreenCount}, locale), lockScore, 100, severity(lockScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.enc.title", null, locale), encryptionCount == 0 ? messageSource.getMessage("devices.score.factor.enc.description.all", null, locale) : messageSource.getMessage("devices.score.factor.enc.description", new Object[]{encryptionCount}, locale), encScore, 100, severity(encScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.os_version.title", null, locale), osVersionCount == 0 ? messageSource.getMessage("devices.score.factor.os_version.description.all", null, locale) : messageSource.getMessage("devices.score.factor.os_version.description", new Object[]{osVersionCount}, locale), osScore, 100, severity(osScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.int.title", null, locale), integrityCount == 0 ? messageSource.getMessage("devices.score.factor.int.description.none", null, locale) : messageSource.getMessage("devices.score.factor.int.description", new Object[]{integrityCount}, locale), intScore, 100, severity(intScore))
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.lock_screen.title", null, locale), lockScreenCount == 0 ? messageSource.getMessage("devices.score.factor.lock_screen.description.all", null, locale) : messageSource.getMessage("devices.score.factor.lock_screen.description", new Object[]{lockScreenCount}, locale), lockScore, 100, severity(lockScore), ignLock),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.enc.title", null, locale), encryptionCount == 0 ? messageSource.getMessage("devices.score.factor.enc.description.all", null, locale) : messageSource.getMessage("devices.score.factor.enc.description", new Object[]{encryptionCount}, locale), encScore, 100, severity(encScore), ignEnc),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.os_version.title", null, locale), osVersionCount == 0 ? messageSource.getMessage("devices.score.factor.os_version.description.all", null, locale) : messageSource.getMessage("devices.score.factor.os_version.description", new Object[]{osVersionCount}, locale), osScore, 100, severity(osScore), ignOs),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.int.title", null, locale), integrityCount == 0 ? messageSource.getMessage("devices.score.factor.int.description.none", null, locale) : messageSource.getMessage("devices.score.factor.int.description", new Object[]{integrityCount}, locale), intScore, 100, severity(intScore), ignInt)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     // =========================================================================================

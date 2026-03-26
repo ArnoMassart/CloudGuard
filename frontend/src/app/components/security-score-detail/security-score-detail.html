@@ -36,6 +36,29 @@
     <h3 class="text-m font-medium text-gray-800 mb-3">{{ 'security-score.calculation-factor' | transloco }}</h3>
     <div class="flex flex-col gap-3">
       @for (factor of breakdown.factors; track factor.title) {
+        <div class="rounded-lg p-4 border-2 transition-all duration-200" [style.border-color]="getFactorStyles(factor).borderColor" [style.background-color]="getFactorStyles(factor).bg">
+          <div class="flex items-start gap-3">
+            <div class="shrink-0 mt-0.5" [style.color]="getProgressColor(factor)">
+              <i-lucide [img]="getFactorIcon(factor)" size="20"></i-lucide>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="m-0 text-sm font-medium" [class]="factorTitleClass(factor)">{{ factor.title }}</h3>
+              <p class="m-0 text-sm mt-1" [class]="factorDescClass(factor)">{{ factor.description }}</p>
+              @if (factor.muted) {
+              <p class="m-0 text-xs mt-1.5 text-gray-400 italic">Niet meegenomen in score (voorkeur uitgeschakeld)</p>
+              }
+              <div class="flex items-center gap-4 mt-3 text-xs" [class.text-gray-400]="factor.muted" [class.text-gray-500]="!factor.muted" [style.opacity]="0.9">
+                <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>
+                <span>Percentage: {{ factor.maxScore > 0 ? Math.round((factor.score / factor.maxScore) * 100) : 0 }}%</span>
+              </div>
+              <div class="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+                <div class="h-full rounded-full transition-all" [style.width.%]="factor.maxScore > 0 ? (factor.score / factor.maxScore) * 100 : 0" [style.background-color]="getProgressColor(factor)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        //with  translation
       <div class="rounded-lg p-4 border-2 transition-all duration-200"
         [style.border-color]="getFactorStyles(factor).borderColor"
         [style.background-color]="getFactorStyles(factor).bg">

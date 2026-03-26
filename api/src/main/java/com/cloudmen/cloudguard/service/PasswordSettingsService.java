@@ -449,13 +449,26 @@ public class PasswordSettingsService {
                 : (int) strengthScore == 100 ? messageSource.getMessage("password-settings.score.factor.strength.description.full", null, locale)
                 : messageSource.getMessage("password-settings.score.factor.strength.description.not_full", null, locale);
 
-        int dispAdmin = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "adminsSecurityKeys") ? 100 : (int) Math.round(adminKeysScore);
-        int disp2fa = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "2sv") ? 100 : (int) Math.round(twoFaScore);
-        int dispLen = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "length") ? 100 : (int) Math.round(lengthScore);
-        int dispExp = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "expiration") ? 100 : (int) Math.round(expirationScore);
-        int dispStr = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "strongPassword") ? 100 : (int) Math.round(strengthScore);
+        boolean muteAdmin = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "adminsSecurityKeys");
+        boolean mute2sv = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "2sv");
+        boolean muteLen = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "length");
+        boolean muteExp = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "expiration");
+        boolean muteStr = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "strongPassword");
+
+        int dispAdmin = muteAdmin ? 100 : (int) Math.round(adminKeysScore);
+        int disp2fa = mute2sv ? 100 : (int) Math.round(twoFaScore);
+        int dispLen = muteLen ? 100 : (int) Math.round(lengthScore);
+        int dispExp = muteExp ? 100 : (int) Math.round(expirationScore);
+        int dispStr = muteStr ? 100 : (int) Math.round(strengthScore);
 
         List<SecurityScoreFactorDto> factors = List.of(
+                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin), muteAdmin),
+                new SecurityScoreFactorDto("Verplichte wachtwoordwijziging", usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore), false),
+                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa), mute2sv),
+                new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, dispLen, 100, severity(dispLen), muteLen),
+                new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, dispExp, 100, severity(dispExp), muteExp),
+                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, dispStr, 100, severity(dispStr), muteStr)
+                //with translation
                 new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin)),
                 new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
                 new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa)),
