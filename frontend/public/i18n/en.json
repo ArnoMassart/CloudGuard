@@ -99,7 +99,7 @@
   "no": "No",
   "yes": "Yes",
   "dashboard": "Dashboard",
-  "domain-dns": "Domain",
+  "domain-dns": "Domain & DNS",
   "licenses": "Licenses",
   "notifications-feedback": "Notifications & Feedback",
   "organisational-units": "Organizational units",
@@ -479,5 +479,5 @@
   "preferences.password-settings.expiration": "No enforced password expiry",
   "preferences.password-settings.securityKeys": "Administrator accounts without a hardware security key",
   "preferences.password-settings.strongPasswords": "Strong password requirements not enforced",
-"preferences.domain-dns": "Domain & DNS"
+  "preferences.domain-dns": "Domain & DNS"
 }
