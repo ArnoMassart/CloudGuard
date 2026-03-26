@@ -86,8 +86,8 @@
             <app-security-component Label="{{ 'app-access' | transloco }}"
               [Value]="pageResponse()?.scores?.appAccessScore" [Icon]="Icons.Key" Route="app-access" />
             <app-security-component Label="{{ 'app-passwords' | transloco }}"
-              [Value]="pageResponse()?.scores?.appPasswordsScore" [Icon]="Icons.Lock" Route="app-passwords" />
-            <app-security-component Label="{{ 'password-settings' | transloco }}" [Icon]="Icons.ShieldCheck"
+              [Value]="pageResponse()?.scores?.appPasswordsScore" [Icon]="Icons.LayoutGrid" Route="app-passwords" />
+            <app-security-component Label="{{ 'password-settings' | transloco }}" [Icon]="Icons.Lock"
               [Value]="pageResponse()?.scores?.passwordSettingsScore" Route="password-settings" />
             <app-security-component Label="DNS" [Value]="pageResponse()?.scores?.dnsScore" [Icon]="Icons.Globe"
               Route="domain-dns" />

@@ -46,6 +46,7 @@ public class ChromePolicyApiService {
         if (orgUnitId == null || orgUnitId.isBlank()) {
             return Collections.emptyMap();
         }
+        String normalizedId = orgUnitId.startsWith("id:") ? orgUnitId.substring(3) : orgUnitId;
 
         var creds = googleApiFactory.getCredentials(Set.of(CHROME_POLICY_SCOPE), adminEmail);
         creds.refreshIfExpired();
@@ -59,7 +60,7 @@ public class ChromePolicyApiService {
                 ObjectNode body = mapper.createObjectNode();
                 body.put("policySchemaFilter", schemaFilter);
                 ObjectNode targetKey = mapper.createObjectNode();
-                targetKey.put("targetResource", "orgunits/" + orgUnitId);
+                targetKey.put("targetResource", "orgunits/" + normalizedId);
                 body.set("policyTargetKey", targetKey);
                 body.put("pageSize", 100);
 
@@ -87,9 +88,13 @@ public class ChromePolicyApiService {
                     }
                 }
             } catch (HttpStatusCodeException e) {
-                log.warn("Chrome Policy API request failed for {}: {} - {}",
-                        schemaFilter, e.getStatusCode(), e.getResponseBodyAsString());
-                // Continue with other filters
+                if (e.getStatusCode().value() == 404) {
+                    log.debug("Chrome Policy API: no policies for {} (404 expected when none configured)", schemaFilter);
+                } else {
+                    log.warn("Chrome Policy API request failed for {}: {} - {}",
+                            schemaFilter, e.getStatusCode(), e.getResponseBodyAsString());
+                }
+                
             }
         }
 

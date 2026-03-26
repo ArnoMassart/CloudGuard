@@ -39,8 +39,8 @@ export class SplashScreen implements OnInit, OnDestroy {
   startLoadingSimulation() {
     this.#intervalId = setInterval(() => {
       this.progress.update((current) => {
-        if (current >= 90) {
-          return 90; // Blijf hangen op 90% tot backend klaar is
+        if (current >= 99) {
+          return 99; // Blijf hangen op 99% tot backend klaar is
         }
         return current + Math.random() * 3;
       });

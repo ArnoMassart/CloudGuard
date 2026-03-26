@@ -57,4 +57,10 @@ public class NotificationFeedbackService {
                 .map(f -> f.getSource() + ":" + f.getNotificationType())
                 .collect(Collectors.toSet());
     }
+
+    public Set<String> getAllFeedbackKeys() {
+        return repository.findAllWithFeedback().stream()
+                .map(f -> f.getSource() + ":" + f.getNotificationType())
+                .collect(Collectors.toSet());
+    }
 }

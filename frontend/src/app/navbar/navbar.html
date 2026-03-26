@@ -12,11 +12,7 @@
     <span class="text-muted-foreground font-medium text-sm px-4 pb-2 tracking-wider">SECURITY</span>
     <ul class="flex flex-col gap-2">
       @for (item of NavItemsSecurity; track item.Label) {
-        <app-nav-item
-          [Route]="item.Route"
-          [Icon]="item.Icon"
-          [Label]="item.Label | transloco"
-        ></app-nav-item>
+      <app-nav-item [Route]="item.Route" [Icon]="item.Icon" [Label]="item.Label | transloco"></app-nav-item>
       }
     </ul>
 
@@ -25,11 +21,7 @@
     <span class="text-muted-foreground font-medium text-sm px-4 pb-2 tracking-wider">BEHEER</span>
     <ul class="flex flex-col gap-2">
       @for (item of NavItemsControl; track item.Label) {
-        <app-nav-item
-          [Route]="item.Route"
-          [Icon]="item.Icon"
-          [Label]="item.Label | transloco"
-        ></app-nav-item>
+      <app-nav-item [Route]="item.Route" [Icon]="item.Icon" [Label]="item.Label | transloco"></app-nav-item>
       }
     </ul>
 
@@ -38,39 +30,30 @@
 
   <!-- User section -->
   @if (currentUser(); as user) {
+  <div (click)="openProfilePopup($event)"
+    class="shrink-0 min-h-[72px] group relative flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer overflow-hidden mt-auto">
     <div
-      (click)="openProfilePopup($event)"
-      class="shrink-0 min-h-[72px] group relative flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer overflow-hidden mt-auto"
-    >
-      <div
-        class="absolute inset-0 bg-gray-50/15 opacity-0 group-hover:opacity-100 group-has-[.logout-zone:hover]:opacity-0 transition-opacity pointer-events-none"
-      ></div>
+      class="absolute inset-0 bg-gray-50/15 opacity-0 group-hover:opacity-100 group-has-[.logout-zone:hover]:opacity-0 transition-opacity pointer-events-none">
+    </div>
 
-      <div class="relative z-10 flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center">
-          <span class="text-white text-lg">{{ getInitials(user) }}</span>
-        </div>
-
-        <div class="flex flex-col min-w-0">
-          <span class="text-white truncate font-medium leading-tight"
-            >{{ user.firstName }} {{ user.lastName }}</span
-          >
-          <span class="text-muted-foreground truncate text-sm leading-tight">{{
-            userService.getRole(user)
-          }}</span>
-        </div>
+    <div class="relative z-10 flex items-center gap-3 min-w-0 ">
+      <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+        @if (user.pictureUrl && !profileImageError()) {
+        <img [src]="user.pictureUrl" alt="" class="w-full h-full object-cover" (error)="profileImageError.set(true)" />
+        }
+        @if (!user.pictureUrl || profileImageError()) {
+        <span class="text-white text-lg">{{ getInitials(user) }}</span>
+        }
       </div>
 
       <div class="relative z-10 shrink-0 ml-4">
-        <div
-          (click)="openLogoutDialog($event)"
-          class="logout-zone p-2 rounded-md logout transition-colors cursor-pointer"
-        >
+        <div (click)="openLogoutDialog($event)"
+          class="logout-zone p-2 rounded-md logout transition-colors cursor-pointer">
           <i-lucide [img]="Icons.LogOut" size="20" class="text-muted-foreground" />
         </div>
       </div>
     </div>
-  } @else {
+    } @else {
     <div class="min-h-[72px] flex items-center justify-between px-3 pt-2 mt-auto">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full bg-muted animate-pulse"></div>
@@ -85,13 +68,13 @@
         </div>
       </div>
     </div>
-  }
+    }
 </nav>
 
 @if (profilePopupOpen()) {
-  <div class="profile-overlay" (click)="closeProfilePopup()">
-    <div class="profile-popup-container" (click)="$event.stopPropagation()">
-      <app-profile (closed$)="closeProfilePopup()"></app-profile>
-    </div>
+<div class="profile-overlay" (click)="closeProfilePopup()">
+  <div class="profile-popup-container" (click)="$event.stopPropagation()">
+    <app-profile (closed$)="closeProfilePopup()"></app-profile>
   </div>
+</div>
 }

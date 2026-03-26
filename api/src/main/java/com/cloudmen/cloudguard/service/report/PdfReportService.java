@@ -1,6 +1,5 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.service.report;
 
-import com.cloudmen.cloudguard.context.UserContext;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
@@ -15,6 +14,7 @@ import com.cloudmen.cloudguard.dto.password.OrgUnit2SvDto;
 import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.report.FullSecurityReport;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
+import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
@@ -47,7 +47,6 @@ public class PdfReportService {
     private final DashboardService dashboardService;
     private final NotificationAggregationService notificationAggregationService;
     private final GoogleUsersService googleUsersService;
-    private final UserContext userContext;
     private final GoogleGroupsService googleGroupsService;
     private final GoogleSharedDriveService googleSharedDriveService;
     private final GoogleDeviceService googleDeviceService;
@@ -59,12 +58,11 @@ public class PdfReportService {
     private final TeamleaderCompanyService teamleaderCompanyService;
     private final TeamleaderService teamleaderService;
 
-    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, UserContext userContext, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService) {
+    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService) {
         this.templateEngine = templateEngine;
         this.dashboardService = dashboardService;
         this.notificationAggregationService = notificationAggregationService;
         this.googleUsersService = googleUsersService;
-        this.userContext = userContext;
         this.googleGroupsService = googleGroupsService;
         this.googleSharedDriveService = googleSharedDriveService;
         this.googleDeviceService = googleDeviceService;
@@ -77,7 +75,11 @@ public class PdfReportService {
         this.teamleaderService = teamleaderService;
     }
 
-    public byte[] generateSecurityRapport() {
+    public record ReportResponse(
+            byte[] data,
+            String companyName) { }
+
+    public ReportResponse generateSecurityRapport(String adminEmail) {
         log.info("Starting pdf generation");
         try {
             byte[] imageBytes = new ClassPathResource("static/logo.png").getInputStream().readAllBytes();
@@ -88,9 +90,9 @@ public class PdfReportService {
 
             HttpHeaders headers = teamleaderService.createHeaders();
 
-            String companyName = teamleaderCompanyService.getCompanyNameByEmail(userContext.getEmail(), headers);
+            String companyName = teamleaderCompanyService.getCompanyNameByEmail(adminEmail, headers);
 
-            FullSecurityReport reportData = getFullSecurityReport();
+            FullSecurityReport reportData = getFullSecurityReport(adminEmail);
 
             Context context = new Context();
             context.setVariable("logoBase64", base64Logo);
@@ -117,38 +119,38 @@ public class PdfReportService {
                 builder.toStream(baos);
                 builder.run();
 
-                return baos.toByteArray();
+                return new ReportResponse(baos.toByteArray(), companyName);
             }
         } catch (Exception e) {
             throw new RuntimeException("Error with pdf generation", e);
         }
     }
 
-    private FullSecurityReport getFullSecurityReport() {
-        int overallScore = dashboardService.getDashboardSecurityScores(userContext.getEmail()).overallScore();
+    private FullSecurityReport getFullSecurityReport(String adminEmail) {
+        int overallScore = dashboardService.getDashboardSecurityScores(adminEmail).overallScore();
 
         return new FullSecurityReport(
                 overallScore,
-                getSecurityReportRiskItems(),
-                getSecurityReportUsersMetrics(),
-                getSecurityReportGroupsMetrics(),
-                getSecurityReportDriveMetrics(),
-                getSecurityReportDeviceMetrics(),
-                getSecurityReportAppAccessMetrics(),
-                getSecurityReportAppPasswordMetrics(),
-                getSecurityReportPasswordMetrics(),
-                getSecurityReportDomainData()
+                getSecurityReportRiskItems(adminEmail),
+                getSecurityReportUsersMetrics(adminEmail),
+                getSecurityReportGroupsMetrics(adminEmail),
+                getSecurityReportDriveMetrics(adminEmail),
+                getSecurityReportDeviceMetrics(adminEmail),
+                getSecurityReportAppAccessMetrics(adminEmail),
+                getSecurityReportAppPasswordMetrics(adminEmail),
+                getSecurityReportPasswordMetrics(adminEmail),
+                getSecurityReportDomainData(adminEmail)
         );
     }
 
-    private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems() {
-        List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(userContext.getEmail());
+    private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems(String adminEmail) {
+        List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(adminEmail);
 
         return criticalNotifications.stream().map(n -> new FullSecurityReport.RiskItem(n.title(), n.description())).toList();
     }
 
-    private FullSecurityReport.UsersMetrics getSecurityReportUsersMetrics() {
-        UserOverviewResponse response = googleUsersService.getUsersPageOverview(userContext.getEmail());
+    private FullSecurityReport.UsersMetrics getSecurityReportUsersMetrics(String adminEmail) {
+        UserOverviewResponse response = googleUsersService.getUsersPageOverview(adminEmail);
 
         int total = response.totalUsers();
 
@@ -163,8 +165,8 @@ public class PdfReportService {
         );
     }
 
-    private FullSecurityReport.GroupsMetrics getSecurityReportGroupsMetrics() {
-        GroupOverviewResponse response = googleGroupsService.getGroupsOverview(userContext.getEmail());
+    private FullSecurityReport.GroupsMetrics getSecurityReportGroupsMetrics(String adminEmail) {
+        GroupOverviewResponse response = googleGroupsService.getGroupsOverview(adminEmail);
 
         return new FullSecurityReport.GroupsMetrics(
                 (int) response.totalGroups(),
@@ -174,8 +176,8 @@ public class PdfReportService {
         );
     }
 
-    private FullSecurityReport.DriveMetrics getSecurityReportDriveMetrics() {
-        SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(userContext.getEmail());
+    private FullSecurityReport.DriveMetrics getSecurityReportDriveMetrics(String adminEmail) {
+        SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(adminEmail);
 
         return new FullSecurityReport.DriveMetrics(
                 response.totalDrives(),
@@ -185,8 +187,8 @@ public class PdfReportService {
         );
     }
 
-    private FullSecurityReport.DeviceMetrics getSecurityReportDeviceMetrics() {
-        DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(userContext.getEmail());
+    private FullSecurityReport.DeviceMetrics getSecurityReportDeviceMetrics(String adminEmail) {
+        DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(adminEmail);
 
         int total = response.totalDevices();
 
@@ -206,8 +208,8 @@ public class PdfReportService {
         );
     }
 
-    private FullSecurityReport.AppAccessMetrics getSecurityReportAppAccessMetrics() {
-        OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(userContext.getEmail());
+    private FullSecurityReport.AppAccessMetrics getSecurityReportAppAccessMetrics(String adminEmail) {
+        OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(adminEmail);
 
         int totalConnected = (int) response.totalThirdPartyApps();
         int highRisk = (int) response.totalHighRiskApps();
@@ -222,8 +224,8 @@ public class PdfReportService {
         );
     }
 
-    private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics() {
-        AppPasswordOverviewResponse response = appPasswordsService.getOverview(userContext.getEmail(), true);
+    private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics(String adminEmail) {
+        AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, true);
 
         return new FullSecurityReport.AppPasswordMetrics(
                 response.totalAppPasswords(),
@@ -232,8 +234,8 @@ public class PdfReportService {
         );
     }
 
-    private FullSecurityReport.PasswordMetrics getSecurityReportPasswordMetrics() {
-        PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(userContext.getEmail());
+    private FullSecurityReport.PasswordMetrics getSecurityReportPasswordMetrics(String adminEmail) {
+        PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(adminEmail);
 
         int enforcedOus = (int) response.twoStepVerification().byOrgUnit().stream().filter(OrgUnit2SvDto::enforced).count();
 
@@ -248,9 +250,9 @@ public class PdfReportService {
         );
     }
 
-    private List<FullSecurityReport.DomainData> getSecurityReportDomainData() {
+    private List<FullSecurityReport.DomainData> getSecurityReportDomainData(String adminEmail) {
         List<FullSecurityReport.DomainData> domainData = new ArrayList<>();
-        List<DomainDto> domains = googleDomainService.getAllDomains(userContext.getEmail());
+        List<DomainDto> domains = googleDomainService.getAllDomains(adminEmail);
 
         for (DomainDto d : domains) {
             String domain = d.domainName();

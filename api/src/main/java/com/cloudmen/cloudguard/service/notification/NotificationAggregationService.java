@@ -1,6 +1,6 @@
 package com.cloudmen.cloudguard.service.notification;
 
-import com.cloudmen.cloudguard.domain.model.feedback.ResolvedNotification;
+import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
@@ -13,6 +13,7 @@ import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.notifications.NotificationsResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
@@ -42,7 +43,9 @@ public class NotificationAggregationService {
 
     private static final Set<String> NOTIFICATION_TYPES_WITH_DETAILS = Set.of(
             "user-control", "group-external", "oauth-high-risk", "drive-orphan", "drive-external",
-            "device-lockscreen", "device-encryption", "device-os", "device-integrity"
+            "device-lockscreen", "device-encryption", "device-os", "device-integrity",
+            "password-2sv-not-enforced", "password-weak-length", "password-strong-not-required",
+            "password-never-expires", "password-admins-no-security-keys"
     );
 
     private final GoogleDomainService domainService;
@@ -53,7 +56,8 @@ public class NotificationAggregationService {
     private final AppPasswordsService appPasswordsService;
     private final GoogleGroupsService groupsService;
     private final GoogleOAuthService oAuthService;
-    private final ResolvedNotificationService resolvedService;
+    private final PasswordSettingsService passwordSettingsService;
+    private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
     private final MessageSource messageSource;
 
@@ -67,7 +71,10 @@ public class NotificationAggregationService {
             GoogleGroupsService groupsService,
             GoogleOAuthService oAuthService,
             ResolvedNotificationService resolvedService,
-            NotificationFeedbackService feedbackService, MessageSource messageSource) {
+            MessageSource messageSource,
+            PasswordSettingsService passwordSettingsService,
+            DismissedNotificationService dismissedService,
+            NotificationFeedbackService feedbackService) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -76,29 +83,30 @@ public class NotificationAggregationService {
         this.appPasswordsService = appPasswordsService;
         this.groupsService = groupsService;
         this.oAuthService = oAuthService;
-        this.resolvedService = resolvedService;
+        this.passwordSettingsService = passwordSettingsService;
+        this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
         this.messageSource = messageSource;
     }
 
     public NotificationsResponse getNotifications(String userId) {
         List<NotificationDto> active = aggregateActive(userId);
-        List<ResolvedNotification> resolved = resolvedService.getResolvedForUser(userId);
-        Set<String> resolvedKeys = resolved.stream()
-                .map(r -> r.getSource() + ":" + r.getNotificationType())
+        List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
+        Set<String> dismissedKeys = dismissed.stream()
+                .map(d -> d.getSource() + ":" + d.getNotificationType())
                 .collect(Collectors.toSet());
-        Set<String> feedbackKeys = feedbackService.getFeedbackKeysForUser(userId);
+        Set<String> feedbackKeys = feedbackService.getAllFeedbackKeys();
 
         List<NotificationDto> filtered = active.stream()
-                .filter(n -> !resolvedKeys.contains(n.source() + ":" + n.notificationType()))
+                .filter(n -> !dismissedKeys.contains(n.source() + ":" + n.notificationType()))
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
-        List<NotificationDto> resolvedDtos = resolved.stream()
-                .map(this::toResolvedDto)
+        List<NotificationDto> dismissedDtos = dismissed.stream()
+                .map(this::toDismissedDto)
                 .toList();
 
-        return new NotificationsResponse(filtered, resolvedDtos);
+        return new NotificationsResponse(filtered, dismissedDtos);
     }
 
     public long getNotificationsCount(String userId) {
@@ -119,24 +127,25 @@ public class NotificationAggregationService {
     }
 
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
-        String status = feedbackKeys.contains(n.source() + ":" + n.notificationType()) ? "in_behandeling" : "new";
+        boolean hasReported = feedbackKeys.contains(n.source() + ":" + n.notificationType());
         return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),
-                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), status, n.supportsDetails());
+                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, false, n.supportsDetails());
     }
 
-    private NotificationDto toResolvedDto(ResolvedNotification r) {
-        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(r.getNotificationType());
+    private NotificationDto toDismissedDto(DismissedNotification d) {
+        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(d.getNotificationType());
         return new NotificationDto(
-                r.getId().toString(),
-                r.getSeverity(),
-                r.getTitle(),
-                r.getDescription(),
-                r.getRecommendedActions() != null ? r.getRecommendedActions() : List.of(),
-                r.getNotificationType(),
-                r.getSource(),
-                r.getSourceLabel(),
-                r.getSourceRoute(),
-                "resolved",
+                d.getId().toString(),
+                d.getSeverity(),
+                d.getTitle(),
+                d.getDescription(),
+                d.getRecommendedActions() != null ? d.getRecommendedActions() : List.of(),
+                d.getNotificationType(),
+                d.getSource(),
+                d.getSourceLabel(),
+                d.getSourceRoute(),
+                false,
+                true,
                 supportsDetails
         );
     }
@@ -285,6 +294,64 @@ public class NotificationAggregationService {
                     "app-password", "app-passwords", messageSource.getMessage("notifications.app_passwords.label", null, locale), "/app-passwords"));
         }
 
+        // Password settings
+        PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(adminEmail));
+        if (passwordSettings != null) {
+            var twoStep = passwordSettings.twoStepVerification();
+            var policies = passwordSettings.passwordPoliciesByOu();
+            var adminsWithoutKeys = passwordSettings.adminsWithoutSecurityKeys();
+
+            // Critical: 2SV not enforced in some OUs
+            long ousWithout2Sv = twoStep.byOrgUnit().stream().filter(ou -> !ou.enforced()).count();
+            if (ousWithout2Sv > 0) {
+                notifications.add(create(++id, "critical", "2-Step Verification niet verplicht",
+                        ousWithout2Sv + " organisatie-eenheid(en) vereisen geen 2-Step Verification.",
+                        List.of("Stel 2-Step Verification verplicht in voor alle organisatie-eenheden"),
+                        "password-2sv-not-enforced", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: weak password length (< 12)
+            long ousWeakLength = policies.stream()
+                    .filter(p -> p.minLength() != null && p.minLength() < 12)
+                    .count();
+            if (ousWeakLength > 0) {
+                notifications.add(create(++id, "warning", "Zwakke wachtwoordlengte",
+                        ousWeakLength + " organisatie-eenheid(en) hanteren een minimale wachtwoordlengte onder 12 tekens.",
+                        List.of("Verhoog de minimale wachtwoordlengte naar minimaal 12 tekens"),
+                        "password-weak-length", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: strong password not required
+            long ousNoStrong = policies.stream()
+                    .filter(p -> Boolean.FALSE.equals(p.strongPasswordRequired()))
+                    .count();
+            if (ousNoStrong > 0) {
+                notifications.add(create(++id, "warning", "Sterke wachtwoorden niet verplicht",
+                        ousNoStrong + " organisatie-eenheid(en) vereisen geen sterke wachtwoorden.",
+                        List.of("Schakel sterke wachtwoorden in voor alle organisatie-eenheden"),
+                        "password-strong-not-required", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: password never expires
+            long ousNoExpiry = policies.stream()
+                    .filter(p -> p.expirationDays() == null || p.expirationDays() == 0)
+                    .count();
+            if (ousNoExpiry > 0) {
+                notifications.add(create(++id, "warning", "Wachtwoorden verlopen nooit",
+                        ousNoExpiry + " organisatie-eenheid(en) hebben geen wachtwoordverloop.",
+                        List.of("Stel een wachtwoordverloop in voor betere beveiliging"),
+                        "password-never-expires", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+
+            // Warning: admins without security keys
+            if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
+                notifications.add(create(++id, "warning", "Admins zonder security key",
+                        adminsWithoutKeys.size() + " admin(s) hebben geen hardware security key (2FA omzeiling risico).",
+                        List.of("Vereis security keys voor alle beheerdersaccounts"),
+                        "password-admins-no-security-keys", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+            }
+        }
+
         // Deduplicate by source-notificationType
         Set<String> seen = new HashSet<>();
         return notifications.stream()
@@ -329,7 +396,7 @@ public class NotificationAggregationService {
                                   String source, String sourceLabel, String sourceRoute) {
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(notificationType);
         return new NotificationDto("n-" + id, severity, title, description, recommendedActions,
-                notificationType, source, sourceLabel, sourceRoute, null, supportsDetails);
+                notificationType, source, sourceLabel, sourceRoute, false, false, supportsDetails);
     }
 
 }
