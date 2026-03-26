@@ -118,7 +118,7 @@ public class AppPasswordsService {
                         totalAppPasswords == 0
                                 ? messageSource.getMessage("app-passwords.score.factor.total.description.none", null, locale)
                                 : messageSource.getMessage("app-passwords.score.factor.total.description", new Object[]{totalAppPasswords}, locale),
-                        totalCountScore, 100, severity(totalCountScore, true), ignorePref)
+                        totalCountScore, 100, severity(totalCountScore), ignorePref)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

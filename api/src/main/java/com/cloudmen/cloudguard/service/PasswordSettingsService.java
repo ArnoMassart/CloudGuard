@@ -45,10 +45,8 @@ public class PasswordSettingsService {
                                   GoogleUsersCacheService usersCache,
                                   GoogleOrgUnitCacheService orgUnitCache,
                                   AdminSecurityKeysService adminSecurityKeysService,
-                                  UserSecurityPreferenceService userSecurityPreferenceService) {
-                                   GoogleUsersCacheService usersCache,
-                                   GoogleOrgUnitCacheService orgUnitCache,
-                                   AdminSecurityKeysService adminSecurityKeysService, MessageSource messageSource) {
+                                  UserSecurityPreferenceService userSecurityPreferenceService,
+                                  MessageSource messageSource) {
         this.policyCache = policyCache;
         this.usersCache = usersCache;
         this.orgUnitCache = orgUnitCache;
@@ -463,18 +461,11 @@ public class PasswordSettingsService {
 
         List<SecurityScoreFactorDto> factors = List.of(
                 new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin), muteAdmin),
-                new SecurityScoreFactorDto("Verplichte wachtwoordwijziging", usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore), false),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore), false),
                 new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa), mute2sv),
-                new SecurityScoreFactorDto("Wachtwoordbeleid Sterkte", lengthDesc, dispLen, 100, severity(dispLen), muteLen),
-                new SecurityScoreFactorDto("Wachtwoordverloop", expirationDesc, dispExp, 100, severity(dispExp), muteExp),
-                new SecurityScoreFactorDto("Sterke wachtwoorden vereist", strengthDesc, dispStr, 100, severity(dispStr), muteStr)
-                //with translation
-                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
-                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.length.title", null, locale), lengthDesc, dispLen, 100, severity(dispLen)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale), expirationDesc, dispExp, 100, severity(dispExp)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.strength.title", null, locale), strengthDesc, dispStr, 100, severity(dispStr))
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.length.title", null, locale), lengthDesc, dispLen, 100, severity(dispLen), muteLen),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale), expirationDesc, dispExp, 100, severity(dispExp), muteExp),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.strength.title", null, locale), strengthDesc, dispStr, 100, severity(dispStr), muteStr)
         );
 
         String status = totalScore == 100 ? "perfect" : totalScore >= 75 ? "good" : totalScore > 50 ? "average" : "bad";

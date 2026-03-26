@@ -93,7 +93,10 @@ export class AppPasswords implements OnInit, OnDestroy {
     });
     this.#loadAppPasswords(null);
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
-      this.#loadOverview();
+      this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
+        next: (overview) => this.pageOverview.set(overview),
+        error: () => {},
+      });
       this.#loadAppPasswords(null);
     });
   }

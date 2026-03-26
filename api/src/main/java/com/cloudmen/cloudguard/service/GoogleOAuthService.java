@@ -211,16 +211,12 @@ public class GoogleOAuthService {
         Locale locale = LocaleContextHolder.getLocale();
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("Apps zonder hoog risico", totalHighRiskApps == 0 ? "Geen apps met hoog risico gedetecteerd" : totalHighRiskApps + " van " + totalThirdPartyApps + " apps hebben hoog risico (kritieke toegang)", highRiskScore, 100, severity(highRiskScore), ignoreHighRiskPref),
-                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? "Geen 3rd-party apps gekoppeld" : totalThirdPartyApps + " 3rd-party app(s) met " + totalPermissionsGranted + " verleende permissies", noAppsScore, 100, severity(noAppsScore), false)
-
-                //with translation
                 new SecurityScoreFactorDto(messageSource.getMessage("apps.score.factor.without_high_risk.title", null, locale),
                         totalHighRiskApps == 0
                                 ? messageSource.getMessage("apps.score.factor.without_high_risk.description.none", null, locale)
                                 : messageSource.getMessage("apps.score.factor.without_high_risk.description", new Object[]{totalHighRiskApps, totalThirdPartyApps}, locale),
-                        highRiskScore, 100, severity(highRiskScore)),
-                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore))
+                        highRiskScore, 100, severity(highRiskScore), ignoreHighRiskPref),
+                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore), false)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

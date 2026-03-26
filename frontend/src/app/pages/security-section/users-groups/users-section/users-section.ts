@@ -14,7 +14,7 @@ import { PageWarnings } from '../../../../components/page-warnings/page-warnings
 import { PageWarningsItem } from '../../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
-import { KPI_COLORS, kpiColors, evaluateWarnings } from '../../../../shared/KpiColors';
+import { KPI_COLORS, kpiColors } from '../../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';

@@ -16,7 +16,6 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { evaluateWarnings } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
