@@ -12,6 +12,7 @@ import { PasswordSettingsService } from './password-settings-service';
 import { Notification } from '../models/notification/Notification';
 import { NotificationsResponse } from '../models/notification/NotificationsResponse';
 import { Device } from '../models/devices/Device';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Injectable({
   providedIn: 'root',
@@ -25,8 +26,12 @@ export class NotificationService {
   readonly #groupService = inject(GroupService);
   readonly #oAuthService = inject(OAuthService);
   readonly #passwordSettingsService = inject(PasswordSettingsService);
+  readonly #translocoService = inject(TranslocoService);
 
-  getNotificationsAndDismissed(): Observable<{ active: Notification[]; dismissed: Notification[] }> {
+  getNotificationsAndDismissed(): Observable<{
+    active: Notification[];
+    dismissed: Notification[];
+  }> {
     return this.#http
       .get<NotificationsResponse>(this.#API_URL, { withCredentials: true })
       .pipe(catchError(() => of({ active: [], dismissed: [] })));
@@ -37,21 +42,37 @@ export class NotificationService {
       case 'user-control':
         return this.#userService.getUsersWithoutTwoFactor().pipe(
           map((r) => r.users.map((u) => `${u.fullName} (${u.email})`)),
-          catchError(() => of([])),
+          catchError(() => of([]))
         );
       case 'group-external':
         return this.#groupService.getOrgGroups(undefined, undefined, 200).pipe(
           map((r) =>
             r.groups
               .filter((g) => g.externalMembers > 0)
-              .map((g) => `${g.name} (${g.externalMembers} externe leden)`),
+              .map(
+                (g) =>
+                  `${g.name} (${g.externalMembers} ${
+                    g.externalMembers > 1
+                      ? this.#translocoService.translate('external-members')
+                      : this.#translocoService.translate('external-member')
+                  })`
+              )
           ),
-          catchError(() => of([])),
+          catchError(() => of([]))
         );
       case 'oauth-high-risk':
         return this.#oAuthService.getApps(50, 'high').pipe(
-          map((r) => r.apps.map((a) => `${a.name} (${a.totalUsers} gebruikers)`)),
-          catchError(() => of([])),
+          map((r) =>
+            r.apps.map(
+              (a) =>
+                `${a.name} (${a.totalUsers} ${
+                  a.totalUsers > 1
+                    ? this.#translocoService.translate('users-no-cap')
+                    : this.#translocoService.translate('user')
+                })`
+            )
+          ),
+          catchError(() => of([]))
         );
       case 'drive-orphan':
       case 'drive-external':
@@ -62,9 +83,16 @@ export class NotificationService {
             }
             return r.drives
               .filter((d) => d.externalMembers > 0)
-              .map((d) => `${d.name} (${d.externalMembers} externe leden)`);
+              .map(
+                (d) =>
+                  `${d.name} (${d.externalMembers} ${
+                    d.externalMembers > 1
+                      ? this.#translocoService.translate('external-members')
+                      : this.#translocoService.translate('external-member')
+                  })`
+              );
           }),
-          catchError(() => of([])),
+          catchError(() => of([]))
         );
       case 'device-lockscreen':
         return this.#getDevicesByFilter((d) => !d.lockSecure);
@@ -98,7 +126,7 @@ export class NotificationService {
           })
           .map((d) => `${d.deviceName} – ${d.userName} (${d.userEmail})`);
       }),
-      catchError(() => of([])),
+      catchError(() => of([]))
     );
   }
 
@@ -109,11 +137,25 @@ export class NotificationService {
           case 'password-2sv-not-enforced':
             return data.twoStepVerification.byOrgUnit
               .filter((ou) => !ou.enforced)
-              .map((ou) => `${ou.orgUnitName} (${ou.orgUnitPath}) – ${ou.totalCount} gebruikers`);
+              .map(
+                (ou) =>
+                  `${ou.orgUnitName} (${ou.orgUnitPath}) – ${ou.totalCount} ${
+                    ou.totalCount > 1
+                      ? this.#translocoService.translate('users-no-cap')
+                      : this.#translocoService.translate('user')
+                  }`
+              );
           case 'password-weak-length':
             return data.passwordPoliciesByOu
               .filter((p) => p.minLength != null && p.minLength < 12)
-              .map((p) => `${p.orgUnitName} (${p.orgUnitPath}) – min. ${p.minLength} tekens`);
+              .map(
+                (p) =>
+                  `${p.orgUnitName} (${p.orgUnitPath}) – min. ${p.minLength} ${
+                    p.minLength! > 1
+                      ? this.#translocoService.translate('characters')
+                      : this.#translocoService.translate('character')
+                  }`
+              );
           case 'password-strong-not-required':
             return data.passwordPoliciesByOu
               .filter((p) => p.strongPasswordRequired === false)
@@ -123,14 +165,12 @@ export class NotificationService {
               .filter((p) => p.expirationDays == null || p.expirationDays === 0)
               .map((p) => `${p.orgUnitName} (${p.orgUnitPath})`);
           case 'password-admins-no-security-keys':
-            return (data.adminsWithoutSecurityKeys ?? []).map(
-              (a) => `${a.name} (${a.email})`
-            );
+            return (data.adminsWithoutSecurityKeys ?? []).map((a) => `${a.name} (${a.email})`);
           default:
             return [];
         }
       }),
-      catchError(() => of([])),
+      catchError(() => of([]))
     );
   }
 }

@@ -33,7 +33,7 @@
   <div (click)="openProfilePopup($event)"
     class="shrink-0 min-h-[72px] group relative flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer overflow-hidden mt-auto">
     <div
-      class="absolute inset-0 bg-gray-50/15 opacity-0 group-hover:opacity-100 group-has-[.logout-zone:hover]:opacity-0 transition-opacity pointer-events-none">
+      class="absolute inset-0 bg-gray-50/15 opacity-0  group-hover:opacity-100 group-has-[.logout-zone:hover]:opacity-0 transition-opacity pointer-events-none">
     </div>
 
     <div class="relative z-10 flex items-center gap-3 min-w-0 ">
@@ -46,29 +46,35 @@
         }
       </div>
 
-      <div class="relative z-10 shrink-0 ml-4">
-        <div (click)="openLogoutDialog($event)"
-          class="logout-zone p-2 rounded-md logout transition-colors cursor-pointer">
-          <i-lucide [img]="Icons.LogOut" size="20" class="text-muted-foreground" />
-        </div>
+      <div class="flex flex-col min-w-0">
+        <span class="text-white truncate font-medium leading-tight">{{ user.firstName }} {{ user.lastName }}</span>
+        <span class="text-muted-foreground truncate text-sm leading-tight">{{ userService.getRole(user) }}</span>
       </div>
     </div>
-    } @else {
-    <div class="min-h-[72px] flex items-center justify-between px-3 pt-2 mt-auto">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-muted animate-pulse"></div>
-        <div class="flex flex-col gap-1">
-          <div class="h-4 w-24 bg-muted rounded animate-pulse"></div>
-          <div class="h-3 w-16 bg-muted rounded animate-pulse"></div>
-        </div>
-      </div>
-      <div class="shrink-0 ml-4">
-        <div (click)="openLogoutDialog($event)" class="logout rounded-md">
-          <i-lucide [img]="Icons.LogOut" size="20" class="text-muted-foreground cursor-pointer" />
-        </div>
+
+    <div class="relative z-10 shrink-0 ml-4">
+      <div (click)="openLogoutDialog($event)"
+        class="logout-zone p-2 rounded-md logout transition-colors cursor-pointer">
+        <i-lucide [img]="Icons.LogOut" size="20" class="text-muted-foreground" />
       </div>
     </div>
-    }
+  </div>
+  } @else {
+  <div class="min-h-[72px] flex items-center justify-between px-3 pt-2 mt-auto">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-muted animate-pulse"></div>
+      <div class="flex flex-col gap-1">
+        <div class="h-4 w-24 bg-muted rounded animate-pulse"></div>
+        <div class="h-3 w-16 bg-muted rounded animate-pulse"></div>
+      </div>
+    </div>
+    <div class="shrink-0 ml-4">
+      <div (click)="openLogoutDialog($event)" class="logout rounded-md">
+        <i-lucide [img]="Icons.LogOut" size="20" class="text-muted-foreground cursor-pointer" />
+      </div>
+    </div>
+  </div>
+  }
 </nav>
 
 @if (profilePopupOpen()) {

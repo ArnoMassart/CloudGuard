@@ -45,15 +45,13 @@
             <h3 class="text-lg font-medium text-gray-900">{{ 'feedback.none' | transloco }}</h3>
             <p class="text-sm text-gray-500 mt-1 text-center max-w-md">
                 @if (filterSeverity() === 'all') {
-                <<<<<<< HEAD {{ 'feedback.severity.all' | transloco }} } @else if (filterSeverity()==='resolved' ) {
-                    {{ 'feedback.severity.resolved' | transloco }}=======Er zijn geen kritieke meldingen of
-                    waarschuwingen voor dit Workspace. } @else if (filterSeverity()==='dismissed' ) { Geen genegeerde
-                    meldingen.>>>>>>> 3113f7092eaf62bba6735c2d5ae931aba3ad860b
-                    } @else if (filterSeverity() === 'in-behandeling') {
-                    {{ 'feedback.severity.processing' | transloco }}
-                    } @else {
-                    {{ 'feedback.severity.none' | transloco }}
-                    }
+                {{ 'feedback.severity.all' | transloco }} }
+                @else if (filterSeverity()==='dismissed' ) {
+                {{ 'feedback.severity.dismissed' | transloco }} } @else if (filterSeverity() === 'in-behandeling') {
+                {{ 'feedback.severity.processing' | transloco }}
+                } @else {
+                {{ 'feedback.severity.none' | transloco }}
+                }
             </p>
         </div>
         } @else {
@@ -104,10 +102,9 @@
                         <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            <<<<<<< HEAD {{ (filterSeverity()==='resolved' ? 'resolved' : n.status==='in_behandeling'
-                                ? 'feedback.processing' : 'today' ) | transloco }}======={{
-                                filterSeverity()==='dismissed' ? 'Genegeerd' : n.hasReported ? 'In behandeling'
-                                : 'Vandaag' }}>>>>>>> 3113f7092eaf62bba6735c2d5ae931aba3ad860b
+                            {{
+                            (filterSeverity()==='dismissed' ? 'dismissed' : n.hasReported ? 'feedback.processing'
+                            : 'today') | transloco }}
                         </p>
                         @if (n.supportsDetails) {
                         <button (click)="toggleExpand(n); $event.stopPropagation()"
@@ -189,50 +186,38 @@
                                     <i-lucide [img]="Icons.MessageCircle" size="16" />
                                     {{ 'feedback.send' | transloco }}
                                 </button>
-                                <<<<<<< HEAD <button type="button" (click)="markAsResolved(n)"
-                                    [disabled]="isResolving(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                    {{ isResolving(n) ? ('busy' | transloco)+'...' : ('mark-as-solved' | transloco) }}
-                                    =======
-                                    <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
-                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                        <i-lucide [img]="Icons.EyeOff" size="16" />
-                                        {{ isDismissing(n) ? 'Bezig...' : 'Negeer (30 dagen)' }}
-                                        >>>>>>> 3113f7092eaf62bba6735c2d5ae931aba3ad860b
-                                    </button>
+                                <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                    <i-lucide [img]="Icons.EyeOff" size="16" />
+                                    {{ isDismissing(n) ? ('busy' | transloco)+'...' : ('ignore-30-days' | transloco) }}
+
+                                </button>
                             </div>
                             }
                         </div>
                         } @else {
                         <div class="mt-4">
-                            <<<<<<< HEAD <span
+                            <span
                                 class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
                                 <i-lucide [img]="Icons.CircleCheck" size="16" />
                                 {{ 'resolved' | transloco }}
-                                </span>
-                                =======
-                                <button type="button" (click)="unDismiss(n)" [disabled]="isUnDismissing(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    <i-lucide [img]="Icons.RefreshCw" size="16" />
-                                    {{ isUnDismissing(n) ? 'Bezig...' : 'Herstellen' }}
-                                </button>
-                                >>>>>>> 3113f7092eaf62bba6735c2d5ae931aba3ad860b
+                            </span>
+
+                            <button type="button" (click)="unDismiss(n)" [disabled]="isUnDismissing(n)"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                <i-lucide [img]="Icons.RefreshCw" size="16" />
+                                {{ isUnDismissing(n) ? ('busy' | transloco)+'...' : ('repairing' | transloco) }}
+                            </button>
+
                         </div>
                         }
                         @if (filterSeverity() !== 'dismissed' && n.hasReported) {
                         <div class="flex flex-wrap gap-2 mt-6">
-                            <<<<<<< HEAD <button type="button" (click)="markAsResolved(n)" [disabled]="isResolving(n)"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                <i-lucide [img]="Icons.CircleCheck" size="16" />
-                                {{ isResolving(n) ? ('busy' | transloco)+'...' : ('mark-as-solved' | transloco) }}
-                                =======
-                                <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    <i-lucide [img]="Icons.EyeOff" size="16" />
-                                    {{ isDismissing(n) ? 'Bezig...' : 'Negeer (30 dagen)' }}
-                                    >>>>>>> 3113f7092eaf62bba6735c2d5ae931aba3ad860b
-                                </button>
+                            <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                <i-lucide [img]="Icons.EyeOff" size="16" />
+                                {{ isDismissing(n) ? ('busy' | transloco)+'...' : ('ignore-30-days' | transloco) }}
+                            </button>
                         </div>
                         }
 

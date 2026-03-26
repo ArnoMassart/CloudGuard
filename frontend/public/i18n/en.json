@@ -383,7 +383,7 @@
   "licenses.type-overview": "License Type Overview",
   "licenses.unused": "Unused Licenses",
   "inactive-caps": "Inactive",
-  "feedback.critical": "Criticism",
+  "feedback.critical": "Critical",
   "feedback.description": "Real-time notifications about security issues and the possibility of feedback",
   "feedback.loading": "Notifications are loading",
   "feedback.new": "New notifications",
@@ -434,5 +434,11 @@
   "server-error.description": "We are currently unable to connect to the CloudGuard servers. \nThe system may be under maintenance or temporarily offline.",
   "server-error.state.description": "Our technicians are aware. \nPlease try again in a few minutes.",
   "server-error.title": "System unreachable",
-  "server-error.try-again": "Please try again"
+  "server-error.try-again": "Please try again",
+  "feedback.severity.dismissed": "No ignored notifications.",
+  "ignore-30-days": "Ignore (30 days)",
+  "repairing": "Restore",
+  "external-members": "external members",
+  "external-member": "external member",
+  "character": "sign"
 }

@@ -271,6 +271,7 @@
   "problems": "problemen",
   "minimal-length": "Minimale lengte",
   "characters": "tekens",
+  "character": "teken",
   "password-cycle": "Wachtwoordverloop",
   "days": "dagen",
   "unknown": "Onbekend",
@@ -434,5 +435,10 @@
   "server-error.description": "We kunnen momenteel geen verbinding maken met de CloudGuard servers. Het systeem is mogelijk in onderhoud of tijdelijk offline.",
   "server-error.state.description": "Onze technici zijn op de hoogte. Probeer het over enkele minuten opnieuw.",
   "server-error.try-again": "Probeer opnieuw",
-    "dismissed": "Genegeerd"
+  "dismissed": "Genegeerd",
+  "feedback.severity.dismissed": "Geen genegeerde meldingen.",
+  "ignore-30-days": "Negeer (30 dagen)",
+  "repairing": "Herstellen",
+  "external-members": "externe leden",
+  "external-member": "extern lid"
 }
