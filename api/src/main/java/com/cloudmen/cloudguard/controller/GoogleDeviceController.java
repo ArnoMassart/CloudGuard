@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/google/devices")
@@ -38,7 +39,8 @@ public class GoogleDeviceController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType));
+        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(loggedInEmail);
+        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType, disabled));
     }
 
     @GetMapping("/types")

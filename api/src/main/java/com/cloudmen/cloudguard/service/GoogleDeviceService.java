@@ -65,7 +65,9 @@ public class GoogleDeviceService {
 
     public DevicePageResponse getDevicesPaged(
             String loggedInEmail, String pageToken, int size,
-            String filterStatusStr, String filterType) {
+            String filterStatusStr, String filterType, Set<String> disabledKeys) {
+
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
 
         List<DeviceDetail> filteredList = getAllMappedDevices(loggedInEmail);
         DeviceStatus filterStatus = DeviceStatus.fromString(filterStatusStr);
@@ -91,8 +93,12 @@ public class GoogleDeviceService {
                 ? Collections.emptyList()
                 : filteredList.subList(startIndex, endIndex);
 
+        List<DeviceDetail> adjustedPage = pagedDevices.stream()
+                .map(d -> applyPreferenceAdjustedCompliance(d, off))
+                .toList();
+
         String nextTokenToReturn = (endIndex < totalDevices) ? String.valueOf(page + 1) : null;
-        return new DevicePageResponse(pagedDevices, nextTokenToReturn);
+        return new DevicePageResponse(adjustedPage, nextTokenToReturn);
     }
 
     public List<String> getUniqueDeviceTypes(String loggedInEmail) {
@@ -173,6 +179,23 @@ public class GoogleDeviceService {
                 totalDevices, nonCompliantDevices, approvedDevices, securityScore,
                 totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,
                 breakdown, warnings
+        );
+    }
+
+    /**
+     * Same per-device scoring as the overview aggregate, so muted preferences do not lower the Compliance column.
+     */
+    private static DeviceDetail applyPreferenceAdjustedCompliance(DeviceDetail d, Set<String> off) {
+        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "lockscreen");
+        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "encryption");
+        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "osVersion");
+        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "integrity");
+        int adj = adjustedDeviceComplianceScore(d, ignLock, ignEnc, ignOs, ignInt);
+        return new DeviceDetail(
+                d.resourceId(), d.deviceType(), d.userName(), d.userEmail(), d.deviceName(),
+                d.model(), d.os(), d.lastSync(), d.status(), adj,
+                d.lockSecure(), d.screenLockText(), d.encSecure(), d.encryptionText(),
+                d.osSecure(), d.osText(), d.intSecure(), d.integrityText()
         );
     }
 
