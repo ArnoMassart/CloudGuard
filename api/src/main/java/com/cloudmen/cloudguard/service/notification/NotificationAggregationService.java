@@ -70,7 +70,6 @@ public class NotificationAggregationService {
             AppPasswordsService appPasswordsService,
             GoogleGroupsService groupsService,
             GoogleOAuthService oAuthService,
-            ResolvedNotificationService resolvedService,
             MessageSource messageSource,
             PasswordSettingsService passwordSettingsService,
             DismissedNotificationService dismissedService,
@@ -304,10 +303,11 @@ public class NotificationAggregationService {
             // Critical: 2SV not enforced in some OUs
             long ousWithout2Sv = twoStep.byOrgUnit().stream().filter(ou -> !ou.enforced()).count();
             if (ousWithout2Sv > 0) {
-                notifications.add(create(++id, "critical", "2-Step Verification niet verplicht",
-                        ousWithout2Sv + " organisatie-eenheid(en) vereisen geen 2-Step Verification.",
-                        List.of("Stel 2-Step Verification verplicht in voor alle organisatie-eenheden"),
-                        "password-2sv-not-enforced", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "critical",
+                        messageSource.getMessage("notifications.password_settings.without_2SV.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.without_2SV.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.without_2SV.actions", null, locale)),
+                        "password-2sv-not-enforced", "password-settings",  messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: weak password length (< 12)
@@ -315,10 +315,10 @@ public class NotificationAggregationService {
                     .filter(p -> p.minLength() != null && p.minLength() < 12)
                     .count();
             if (ousWeakLength > 0) {
-                notifications.add(create(++id, "warning", "Zwakke wachtwoordlengte",
-                        ousWeakLength + " organisatie-eenheid(en) hanteren een minimale wachtwoordlengte onder 12 tekens.",
-                        List.of("Verhoog de minimale wachtwoordlengte naar minimaal 12 tekens"),
-                        "password-weak-length", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.weak_length.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.weak_length.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.weak_length.actions", null, locale)),
+                        "password-weak-length", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: strong password not required
@@ -326,10 +326,10 @@ public class NotificationAggregationService {
                     .filter(p -> Boolean.FALSE.equals(p.strongPasswordRequired()))
                     .count();
             if (ousNoStrong > 0) {
-                notifications.add(create(++id, "warning", "Sterke wachtwoorden niet verplicht",
-                        ousNoStrong + " organisatie-eenheid(en) vereisen geen sterke wachtwoorden.",
-                        List.of("Schakel sterke wachtwoorden in voor alle organisatie-eenheden"),
-                        "password-strong-not-required", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_strong.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.no_strong.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.no_strong.actions", null, locale)),
+                        "password-strong-not-required", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: password never expires
@@ -337,18 +337,18 @@ public class NotificationAggregationService {
                     .filter(p -> p.expirationDays() == null || p.expirationDays() == 0)
                     .count();
             if (ousNoExpiry > 0) {
-                notifications.add(create(++id, "warning", "Wachtwoorden verlopen nooit",
-                        ousNoExpiry + " organisatie-eenheid(en) hebben geen wachtwoordverloop.",
-                        List.of("Stel een wachtwoordverloop in voor betere beveiliging"),
-                        "password-never-expires", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_expiry.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.no_expiry.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.no_expiry.actions", null, locale)),
+                        "password-never-expires", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: admins without security keys
             if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
-                notifications.add(create(++id, "warning", "Admins zonder security key",
-                        adminsWithoutKeys.size() + " admin(s) hebben geen hardware security key (2FA omzeiling risico).",
-                        List.of("Vereis security keys voor alle beheerdersaccounts"),
-                        "password-admins-no-security-keys", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.without_keys.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.without_keys.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.without_keys.actions", null, locale)),
+                        "password-admins-no-security-keys", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
         }
 

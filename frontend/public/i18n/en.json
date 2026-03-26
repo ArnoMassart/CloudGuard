@@ -395,6 +395,7 @@
   "feedback.severity.resolved": "No resolved messages.",
   "feedback.warning": "These issues require immediate attention to prevent security risks.",
   "resolved": "Resolved",
+  "dismissed": "Dismissed",
   "today": "Today",
   "total": "Total",
   "busy": "Busy",
