@@ -26,6 +26,9 @@ import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -57,8 +60,9 @@ public class PdfReportService {
     private final PasswordSettingsService passwordSettingsService;
     private final TeamleaderCompanyService teamleaderCompanyService;
     private final TeamleaderService teamleaderService;
+    private final MessageSource messageSource;
 
-    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService) {
+    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService, @Qualifier("messageSource") MessageSource messageSource) {
         this.templateEngine = templateEngine;
         this.dashboardService = dashboardService;
         this.notificationAggregationService = notificationAggregationService;
@@ -73,6 +77,7 @@ public class PdfReportService {
         this.passwordSettingsService = passwordSettingsService;
         this.teamleaderCompanyService = teamleaderCompanyService;
         this.teamleaderService = teamleaderService;
+        this.messageSource = messageSource;
     }
 
     public record ReportResponse(
@@ -94,7 +99,10 @@ public class PdfReportService {
 
             FullSecurityReport reportData = getFullSecurityReport(adminEmail);
 
-            Context context = new Context();
+            Locale locale = LocaleContextHolder.getLocale();
+
+            Context context = new Context(locale);
+
             context.setVariable("logoBase64", base64Logo);
             context.setVariable("bgImage", base64Cover);
             context.setVariable("clientName", companyName);
@@ -261,6 +269,8 @@ public class PdfReportService {
             List<DnsRecordDto> rows = dnsResponse.rows();
             int score = dnsResponse.securityScore();
 
+            Locale locale = LocaleContextHolder.getLocale();
+
             List<FullSecurityReport.SecurityCheck> checks = rows.stream().map(r -> {
                 String type = r.type();
 
@@ -275,29 +285,29 @@ public class PdfReportService {
 
                 switch (status) {
                     case OK -> {
-                        description = "Optioneel – niet geconfigureerd";
-                        badgeText = "Optioneel";
+                        description = messageSource.getMessage("report.domain.status.ok.description_1", null, locale) +" - " + messageSource.getMessage("report.domain.status.ok.description_2", null, locale);
+                        badgeText = messageSource.getMessage("report.domain.status.ok.badgeText", null, locale);
                         statusText = "GRAY";
                     }
                     case ERROR -> {
-                        description = "Fout bij ophalen DNS gegevens";
-                        badgeText = "Error";
+                        description = messageSource.getMessage("report.domain.status.error.description", null, locale);
+                        badgeText = messageSource.getMessage("report.domain.status.error.badgeText", null, locale);
                         statusText = "RED";
                     }
                     case VALID -> {
-                        description = info.validDesc;
-                        badgeText = "Geldig";
+                        description = messageSource.getMessage(info.validDesc, null, locale);
+                        badgeText = messageSource.getMessage("report.domain.status.valid.badgeText", null, locale);
                     }
                     case ATTENTION -> {
-                        description = info.attentionDesc;
-                        tip = info.tip;
-                        badgeText = "Aandacht";
+                        description = messageSource.getMessage(info.attentionDesc, null, locale);
+                        tip = messageSource.getMessage(info.tip, null, locale);
+                        badgeText = messageSource.getMessage("report.domain.status.attention.badgeText", null, locale);
                         statusText = "ORANGE";
                     }
                     case ACTION_REQUIRED -> {
-                        description = info.actionDesc;
-                        tip = info.tip;
-                        badgeText = "Actie vereist";
+                        description = messageSource.getMessage(info.actionDesc, null, locale);
+                        tip = messageSource.getMessage(info.tip, null, locale);
+                        badgeText = messageSource.getMessage("report.domain.status.action_required.badgeText", null, locale);
                         statusText = "RED";
                     }
                 }
@@ -342,62 +352,14 @@ public class PdfReportService {
     ) {}
 
     public static final Map<String, DomainTip> TIPS = Map.ofEntries(
-            entry("SPF", new DomainTip(
-                    "SPF Record",
-                    "SPF record is correct geconfigureerd",
-                    "SPF record ontbreekt of niet correct geconfigureerd",
-                    "SPF record bevat geen include:_spf.google.com",
-                    "Als geen andere servers mail voor dit domein verzenden, stel dan in: v=spf1 include:_spf.google.com ~all"
-            )),
-            entry("DKIM", new DomainTip(
-                    "DKIM Signing",
-                    "DKIM is actief voor uitgaande mail",
-                    "DKIM is niet ingesteld",
-                    "DKIM record is niet correct geconfigureerd",
-                    "Configureer DKIM in Google Admin voor uw domein"
-            )),
-            entry("DMARC", new DomainTip(
-                    "DMARC Policy",
-                    "DMARC policy is correct ingesteld",
-                    "DMARC is niet ingesteld",
-                    "DMARC policy kan worden aangescherpt naar reject",
-                    "Overweeg policy te verhogen naar 'reject' voor maximale beveiliging"
-            )),
-            entry("MX", new DomainTip(
-                    "MX Records",
-                    "MX records verwijzen correct naar Google",
-                    "Domein heeft geen mailserver of MX records ontbreken",
-                    "Geen Google mail exchangers gevonden – controleer relayhost configuratie",
-                    "Wijzig MX records naar Google mail servers (bijv. ASPMX.L.GOOGLE.COM)"
-            )),
-            entry("DNSSEC", new DomainTip(
-                    "DNSSEC",
-                    "DNSSEC is ingeschakeld",
-                    "DNSSEC is niet ingeschakeld",
-                    "DNSSEC configuratie vereist aandacht",
-                    "Schakel DNSSEC in bij je domeinregistrar voor extra beveiliging"
-            )),
-            entry("CAA", new DomainTip(
-                    "CAA Records",
-                    "CAA records zijn ingesteld",
-                    "CAA records niet ingesteld",
-                    "CAA records niet ingesteld",
-                    "Voeg CAA records toe om te bepalen welke certificaatautoriteiten certificaten voor uw domein mogen uitgeven"
-            )),
-            entry("TXT", new DomainTip(
-                    "Site verificatie",
-                    "Google site verificatie is aanwezig",
-                    "Site verificatie ontbreekt",
-                    "Site verificatie vereist aandacht",
-                    "Voeg google-site-verification TXT record toe voor verificatie"
-            )),
-            entry("CNAME", new DomainTip(
-                    "Mail subdomein",
-                    "CNAME record is geconfigureerd",
-                    "CNAME record ontbreekt",
-                    "CNAME configuratie vereist aandacht",
-                    "Configureer CNAME voor mail subdomein indien gewenst"
-            ))
+            entry("SPF", new DomainTip("report.domain.tip.spf.title", "report.domain.tip.spf.valid", "report.domain.tip.spf.action", "report.domain.tip.spf.attention", "report.domain.tip.spf.tip")),
+            entry("DKIM", new DomainTip("report.domain.tip.dkim.title", "report.domain.tip.dkim.valid", "report.domain.tip.dkim.action", "report.domain.tip.dkim.attention", "report.domain.tip.dkim.tip")),
+            entry("DMARC", new DomainTip("report.domain.tip.dmarc.title", "report.domain.tip.dmarc.valid", "report.domain.tip.dmarc.action", "report.domain.tip.dmarc.attention", "report.domain.tip.dmarc.tip")),
+            entry("MX", new DomainTip("report.domain.tip.mx.title", "report.domain.tip.mx.valid", "report.domain.tip.mx.action", "report.domain.tip.mx.attention", "report.domain.tip.mx.tip")),
+            entry("DNSSEC", new DomainTip("report.domain.tip.dnssec.title", "report.domain.tip.dnssec.valid", "report.domain.tip.dnssec.action", "report.domain.tip.dnssec.attention", "report.domain.tip.dnssec.tip")),
+            entry("CAA", new DomainTip("report.domain.tip.caa.title", "report.domain.tip.caa.valid", "report.domain.tip.caa.action", "report.domain.tip.caa.attention", "report.domain.tip.caa.tip")),
+            entry("TXT", new DomainTip("report.domain.tip.txt.title", "report.domain.tip.txt.valid", "report.domain.tip.txt.action", "report.domain.tip.txt.attention", "report.domain.tip.txt.tip")),
+            entry("CNAME", new DomainTip("report.domain.tip.cname.title", "report.domain.tip.cname.valid", "report.domain.tip.cname.action", "report.domain.tip.cname.attention", "report.domain.tip.cname.tip"))
     );
 
     // Helpt PDF-engines om extreem lange strings zonder spaties af te breken

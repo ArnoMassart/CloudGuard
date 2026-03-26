@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style th:inline="css">
+        /* 1. Dwing alle elementen om binnen hun breedte te blijven */
+        * { box-sizing: border-box; }
+
+        /* 2. De standaard instellingen voor AL je rapport-pagina's */
+        @page {
+            size: A4;
+            margin: 20mm; /* De marge zit nu op het papier, NIET in de HTML */
+            @bottom-right {
+                content: "Pagina " counter(page) " van " counter(pages);
+                font-family: 'Helvetica', sans-serif;
+                font-size: 9pt;
+                color: #7f8c8d;
+            }
+            @top-right {
+                content: "CloudGuard Security Rapport";
+                font-family: 'Helvetica', sans-serif;
+                font-size: 8pt;
+                color: #bdc3c7;
+            }
+            @top-left {
+                content: "[[${reportDate}]]";
+                font-family: 'Helvetica', sans-serif;
+                font-size: 8pt;
+                color: #94a3b8;
+            }
+        }
+
+        /* 3. DE FIX: Een speciale 'Named Page' uitsluitend voor de cover */
+        @page cover-page {
+            margin: 0;
+            @bottom-right { content: none; }
+            @top-right { content: none; }
+            @top-left {
+                content: none;
+            }
+        }
+
+        /* --- COVER PAGE --- */
+        .cover {
+            page: cover-page; /* Koppel deze div aan de Named Page */
+            background-color: #04233d;
+            height: 297mm; /* Exact A4 hoogte */
+            width: 210mm; /* Exact A4 breedte */
+
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+
+            color: white;
+            text-align: left;
+            page-break-after: always;
+        }
+        .cover-content { padding-top: 50px; padding-left: 76px; }
+        .logo { width: 100px; padding-bottom: 125px;}
+        .title { font-size: 30pt; font-weight: bold; margin-bottom: 10px; color: #cbd5e1; }
+        .subtitle { font-size: 24pt; color: #cbd5e1; letter-spacing: 2px; }
+        .date { margin-top: 40px; font-size: 16pt; color: #94a3b8; }
+
+
+        /* --- LAYOUT & TYPOGRAPHY --- */
+        body { font-family: 'Helvetica', sans-serif; margin: 0; padding: 0; color: #2c3e50; }
+        .page-content { width: 100%; } /* Geen padding meer, @page marge doet het werk! */
+        .clearfix::after { content: ""; clear: both; display: table; }
+        .section-break { page-break-before: always; padding-top: 10px; }
+
+        /* --- INTRODUCTIE PAGINA --- */
+        .intro-page {
+            page-break-after: always;
+            min-height: 250mm;
+        }
+        .intro-header {
+            margin-bottom: 220px;
+        }
+        .intro-logo {
+            float: right;
+            width: 60px;
+        }
+        .intro-title-text {
+            font-size: 24pt;
+            color: #0f172a;
+            margin: 0;
+            padding-top: 5px;
+        }
+        .intro-client-text {
+            font-size: 18pt;
+            color: #0f172a;
+            margin: 0;
+            padding-top: 5px;
+        }
+
+        .intro-heading {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+        .intro-paragraph {
+            line-height: 1.7;
+            font-size: 10.5pt;
+            color: #334155;
+            margin-bottom: 15px;
+        }
+
+        h1 { color: #0f172a; font-size: 22pt; margin-bottom: 20px; }
+        h2 { color: #334155; font-size: 14pt; margin-top: 20px; margin-bottom: 10px; }
+        p { line-height: 1.6; font-size: 10.5pt; color: #475569; }
+
+        /* --- SCORE GAUGE --- */
+        .score-box { text-align: center; background-color: #f8fafc; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px; }
+        .score-label { font-size: 12pt; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .score-circle { display: inline-block; font-size: 24pt; font-weight: bold; }
+
+        /* --- ROBUUSTE FULL WIDTH CARDS --- */
+        .full-card-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            table-layout: fixed;
+        }
+
+        .card-stat-cell {
+            width: 25%;
+            vertical-align: middle;
+            text-align: center;
+            padding: 20px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .card-text-cell {
+            width: 75%;
+            vertical-align: top;
+            padding: 20px;
+            text-align: left;
+        }
+
+        .fw-title { font-weight: bold; font-size: 11pt; color: #0f172a; margin-bottom: 5px; }
+        .fw-desc { font-size: 9.5pt; color: #475569; line-height: 1.5; }
+
+        .fw-alert {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fef2f2;
+            border-left: 3px solid #dc2626;
+            color: #991b1b;
+            font-size: 9pt;
+            line-height: 1.4;
+        }
+
+        .metric-val { font-size: 24pt; font-weight: bold; margin-bottom: 5px; color: #0f172a; }
+        .metric-lbl { font-size: 9pt; color: #64748b; text-transform: uppercase; }
+
+        /* --- COLORS --- */
+        .text-green { color: #16a34a; }
+        .text-red { color: #dc2626; }
+        .text-orange { color: #ea580c; }
+        .text-blue { color: #0284c7; }
+
+        /* --- PROGRESS BARS --- */
+        .progress-bg { clear: both; width: 100%; height: 10px; background-color: #e2e8f0; border-radius: 5px; margin-top: 4px; margin-bottom: 12px; overflow: hidden;}
+        .progress-fill { height: 100%; background-color: #38bdf8; }
+        .fill-green { background-color: #22c55e; }
+        .fill-red { background-color: #ef4444; }
+
+        /* --- RISKS & LISTS --- */
+        .risk-item { background-color: #fef2f2; border-left: 4px solid #c10007; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+        .risk-title { font-weight: bold; color: #c10007; font-size: 11pt; margin-bottom: 5px; }
+        .risk-desc { font-size: 10pt; color: #475569; }
+
+        .status-table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
+        .status-table th, .status-table td { padding: 10px; text-align: left; word-wrap: break-word; }
+        .status-table th { background-color: #f1f5f9; font-size: 10pt; color: #475569; border-bottom: 2px solid #cbd5e1; }
+        .status-table td { border-bottom: 1px solid #e2e8f0; font-size: 10pt; color: #334155; }
+
+        /* DNS Ruwe Records Tabel */
+        .dns-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 30px; }
+        .dns-table th, .dns-table td { padding: 10px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 9.5pt; }
+        .dns-table th { background-color: #f8fafc; color: #64748b; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; }
+        .dns-table td.break-text {
+            word-wrap: break-word;
+        }
+
+        .domain-card {
+            border-radius: 6px;
+            margin-bottom: 30px;
+            page-break-inside: avoid; /* Dwingt PDF om de hele kaart op 1 pagina te houden! */
+            overflow: hidden; /* Zorgt dat de ronde hoeken netjes blijven */
+        }
+
+        .domain-header {
+            background-color: #04233d;
+            color: white;
+            padding: 12px 20px;
+            font-size: 14pt;
+            font-weight: bold;
+        }
+
+        .domain-critical-alert {
+            background-color: #fef2f2;
+            border-bottom: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        /* --- CONTROLE TABEL BINNEN DE KAART --- */
+        .check-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .check-table td { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .check-table tr:last-child td { border-bottom: none; }
+
+        .check-title { font-weight: bold; font-size: 10.5pt; color: #0f172a; margin-bottom: 4px; }
+        .check-desc { font-size: 9.5pt; color: #475569; }
+        .check-tip { margin-top: 6px; font-size: 9pt; display: block; }
+
+        /* --- BULLETPROOF BADGES --- */
+        .status-badge {
+            display: block; /* PDF Engine werkt veel beter met block elementen! */
+            width: 130px;
+            text-align: center;
+            padding: 8px 10px;
+            border-radius: 20px;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: auto; /* Drukt de badge strak naar de rechterkant */
+        }
+        .badge-red { background-color: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+        .badge-orange { background-color: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+        .badge-green { background-color: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+        .badge-gray { background-color: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+
+<div class="cover" th:style="'background-image: url(' + ${bgImage} + ');'">
+    <div class="cover-content">
+        <img th:if="${logoBase64 != null}" th:src="${logoBase64}" class="logo" alt="Logo"/>
+        <div class="title">Security Assessment Report</div>
+        <div class="subtitle" th:text="${clientName}">Client name</div>
+        <div class="date" th:text="${reportDate}">Date</div>
+    </div>
+</div>
+
+<div class="page-content">
+
+    <div class="intro-page">
+        <div class="intro-header clearfix">
+            <img th:if="${logoBase64 != null}" th:src="${logoBase64}" class="intro-logo" alt="Logo"/>
+            <div class="intro-title-text">Security Assessment Report</div>
+            <div class="intro-client-text" th:text="${clientName}">Client name</div>
+        </div>
+
+        <div class="intro-heading">Introduction</div>
+
+        <p class="intro-paragraph">This report provides a high-level overview of the current security posture of <strong th:text="${clientName}">the organization</strong>'s IT infrastructure. It summarizes key risks and overall health to support informed cybersecurity decision-making.
+        </p>
+        <p class="intro-paragraph">The insights in this document are derived from continuous monitoring via the CloudGuard platform and reflect configuration and activity over the most recent reporting period. Key areas covered include Identity and Access Management (IAM), Common Vulnerabilities and Exposures (CVEs), endpoint security, and corporate data protection.
+        </p>
+        <p class="intro-paragraph">By consolidating technical data into a clear and shareable format, this report provides stakeholders with the clarity required to accurately assess risk exposure, evaluate the effectiveness of current security controls, and immediately identify key priorities for improvement.
+        </p>
+    </div>
+
+    <div class="section-break">
+        <h1>Dashboard</h1>
+        <p>This dashboard provides a clear, centralized overview of your organization's digital resilience. While subsequent chapters delve into specific technical configurations, this overview offers a strategic summary of your IT environment's overall security posture.
+        </p>
+        <p>The overall <strong>Security Score</strong> serves as a cumulative indicator of security health. This score is based on a weighted evaluation of multiple security pillars, including Identity and Access Management (IAM), endpoint security, and data protection within cloud storage. A score of 75 or higher indicates a mature and well-implemented security level, while a lower score may highlight vulnerabilities or areas for improvement within current security policies.
+        </p>
+        <p style="margin-bottom: 25px;">Additionally, this dashboard highlights the most critical action items. These are high-priority risks that require immediate attention. By surfacing these points, organizations can take targeted action to prevent potential data breaches, unauthorized access, and other security incidents.
+        </p>
+
+        <div class="score-box">
+            <div class="score-label">Overall Security Score</div>
+            <div class="score-circle"
+                 th:classappend="${report.overallScore < 50 ? 'text-red' : (report.overallScore < 75 ? 'text-orange' : 'text-green')}"
+                 th:text="${report.overallScore} + '/100'">0/100</div>
+        </div>
+
+        <h2 style="margin-bottom: 15px;">Critical Findings</h2>
+        <div th:each="risk : ${report.criticalRisks}" class="risk-item">
+            <div class="risk-title" th:text="${risk.title}">Risk</div>
+            <div class="risk-desc" th:text="${risk.description}">Description</div>
+        </div>
+        <div th:if="${#lists.isEmpty(report.criticalRisks)}" class="risk-item" style="border-left-color: #22c55e; background-color: #f0fdf4;">
+            <div class="risk-title" style="color: #15803d;">No critical risks detected</div>
+            <div class="risk-desc">Baseline security is currently meeting requirements. Please review the following pages for detailed insights.</div>
+        </div>
+    </div>
+
+    <div class="section-break">
+        <h1>Users</h1>
+        <p>Visibility into employee account security. Enforcing string authentication and limiting administrative privileges is essential to preventing identity fraud.</p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.users.securityScore < 50 ? 'text-red' : (report.users.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.users.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects the security integrity of your user accounts. A high score indicates that nearly all accounts are protected by Multi-Factor Authentication (MFA), administrative overhead is minimized, and inactive accounts are regularly deprovisioned. This is your primary line of defense against unauthorized access.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.users.total}">0</div>
+                    <div class="metric-lbl">TOTAL USERS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Active User Accounts</div>
+                    <div class="fw-desc">The total number of active employee accounts (including service accounts) within the Google Workspace environment. Accurate account lifecycle management is essential for license optimization and defines the scale of the attack surface to be secured.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.users.mfaPct < 100 ? 'text-orange' : 'text-green'}" th:text="${report.users.mfaPct} + '%'">0%</div>
+                    <div class="metric-lbl">MFA ACTIVE</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Multi-Factor Authentication (MFA/2FA)</div>
+                    <div class="fw-desc">MFA requires users to provide a second factor in addition to their password. It is the most effective measure against phishing and credential theft.
+                    </div>
+                    <div th:if="${report.users.mfaPct < 100}" class="fw-alert"><strong>Action Required:</strong> Accounts have been detected without active MFA. Without 2FA, a compromised password grants full access. We strongly recommend enforcing MFA for all users.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-orange" th:text="${report.users.admins}">0</div>
+                    <div class="metric-lbl">ADMINISTRATORS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Super Admins & Administrators</div>
+                    <div class="fw-desc">Total number of users with elevated privileges. The "Principle of Least Privilege" dictates that this number should be kept as low as possible to minimize the potential impact of a security breach.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-red" th:text="${report.users.inactive}">0</div>
+                    <div class="metric-lbl">INACTIVE (>90D)</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Inactive Accounts (Stale Accounts)</div>
+                    <div class="fw-desc">Accounts that have not recorded a login for over 90 days. These pose a risk as they are often unmonitored but still retain access to sensitive corporate data.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>Groups</h1>
+        <p>Analysis of Google Groups configurations. Poorly managed groups can lead to data leaks (e.g., external parties unknowingly remaining on internal mailing lists) or spam-related vulnerabilities.
+        </p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.groups.securityScore < 50 ? 'text-red' : (report.groups.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.groups.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects the general security of your distribution lists. A high score means groups actively monitored, external access is strictly restricted, and configurations do not expose the organization to unwanted external communication or data exposure.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.groups.total}">6</div>
+                    <div class="metric-lbl">TOTAL GROUPS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Active Email Groups</div>
+                    <div class="fw-desc">The total number of created distribution lists and collaborative groups (e.g., <em>info@</em>, <em>sales@</em>). Maintaining a concise number of groups prevents administrative confusion and simplifies access control management.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.groups.withExternalMembers > 0 ? 'text-orange' : 'text-green'}" th:text="${report.groups.withExternalMembers}">2</div>
+                    <div class="metric-lbl">WITH EXTERNAL MEMBERS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Groups with External Participants</div>
+                    <div class="fw-desc">The number of groups where email addresses from outside your organization have been added as members. Emails sent to these internal groups are automatically forwarded to these external mailboxes.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.groups.highRisk > 0 ? 'text-red' : 'text-green'}" th:text="${report.groups.highRisk}">2</div>
+                    <div class="metric-lbl">HIGH RISK</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Groups with High-Risk Settings</div>
+                    <div class="fw-desc">Groups with vulnerable configurations, such as lists where anyone on the internet can post messages or where member lists are publicly visible. These settings are common vectors for phishing and unsolicited spam.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>Shared Drives</h1>
+        <p>Overview of cloud storage security. It is critical to ensure that files are not unintentionally accessible to individuals outside the organization.
+        </p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.drives.securityScore < 50 ? 'text-red' : (report.drives.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.drives.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects the protection level of corporate data in the cloud. A high score indicates that Shared Drives are strictly governed, external sharing is minimized, and every drive has an active manager. This is crucial for preventing accidental data leaks and unauthorized access to intellectual property.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.drives.total}">0</div>
+                    <div class="metric-lbl">ACTIVE DRIVES</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Total Shared Drives</div>
+                    <div class="fw-desc">The total number of Shared Drives within the organization, providing central locations for teams to securely store and collaborate on files.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.drives.externallyShared > 0 ? 'text-red' : 'text-green'}" th:text="${report.drives.externallyShared}">0</div>
+                    <div class="metric-lbl">EXTERNAL SHARING ENABLED</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Drives with External Access</div>
+                    <div class="fw-desc">Shared Drives that permit file sharing with users outside the organization. While occasionally necessary for collaboration, this significantly increases the risk of data exfiltration.
+                    </div>
+                    <div th:if="${report.drives.externallyShared > 0}" class="fw-alert"><strong>Action Required:</strong> Drives permitting external sharing have been identified. Periodically verify (e.g., quarterly) if this access remains a business necessity or if it can be disabled.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.drives.noManagers > 0 ? 'text-orange' : 'text-green'}" th:text="${report.drives.noManagers}">0</div>
+                    <div class="metric-lbl">WITHOUT MANAGERS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Drives without an Active Manager</div>
+                    <div class="fw-desc">Every Shared Drive requires at least one Manager to regulate access rights. Drive without a manager (e.g., due to employee offboarding) result in "orphaned data" and uncontrolled access.
+                    </div>
+                    <div th:if="${report.drives.noManagers > 0}" class="fw-alert"><strong>Action Required:</strong> Assign a new Manager to these drives immediately to maintain data governance and prevent data loss.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>Devices (Endpoints)</h1>
+        <p>Analysis of mobile devices, tablets, and laptops accessing corporate data. Missing updates or lack of encryption pose a direct data breach risk in the event of loss or theft.
+        </p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.devices.securityScore < 50 ? 'text-red' : (report.devices.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.devices.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects the physical and software security of your workstations and mobile devices. A high score indicates that endpoints are up-to-date, disk encryption is active, and no vulnerable systems are accessing corporate data. This ensures data remains secure even if hardware is lost or stolen.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-green" th:text="${report.devices.safe}">0</div>
+                    <div class="metric-lbl" style="margin-bottom: 8px;">COMPLIANT</div>
+                    <div class="progress-bg" style="margin: 0 auto; width: 80%; height: 6px;"><div class="progress-fill fill-green" th:style="'width: ' + ${report.devices.safePct} + '%;'"></div></div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Compliant Devices</div>
+                    <div class="fw-desc">Devices that fully adhere to established security policies (including patch levels, screen locks, and encryption). These devices pose minimal risk to corporate data.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.devices.unsafe > 0 ? 'text-red' : 'text-green'}" th:text="${report.devices.unsafe}">0</div>
+                    <div class="metric-lbl" style="margin-bottom: 8px;">NON-COMPLIANT / AT RISK</div>
+                    <div class="progress-bg" style="margin: 0 auto; width: 80%; height: 6px;"><div class="progress-fill fill-red" th:style="'width: ' + ${report.devices.unsafePct} + '%;'"></div></div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Devices with Security Risks</div>
+                    <div class="fw-desc">Devices that do not meet all safety requirements. Risks range from missing passcodes to compromised operating systems (e.g., jailbroken devices or malware infections).
+                    </div>
+                    <div th:if="${report.devices.unsafe > 0}" class="fw-alert"><strong>Action Required:</strong> Non-compliant devices detected. Consider using Mobile Device Management (MDM) or Context-Aware Access to block these devices from accessing corporate data until remediation is complete.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.devices.encrypted}">0</div>
+                    <div class="metric-lbl" style="margin-bottom: 8px;">ENCRYPTION ACTIVE</div>
+                    <div class="progress-bg" style="margin: 0 auto; width: 80%; height: 6px;"><div class="progress-fill" th:style="'width: ' + ${report.devices.encryptedPct} + '%;'"></div></div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Disk Encryption (BitLocker / FileVault)</div>
+                    <div class="fw-desc">Disk encryption ensures that data on a device remains unreadable if stolen. Without encryption, a thief can simply extract the hard drive and bypass OS passwords to access files.
+                    </div>
+                    <div th:if="${report.devices.encryptedPct < 100}" class="fw-alert"><strong>Action Required:</strong> Unencrypted active devices detected. The loss of an unencrypted device containing corporate data typically constitutes a reportable data breach under GDPR regulations.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.devices.updated}">0</div>
+                    <div class="metric-lbl" style="margin-bottom: 8px;">OS UP-TO-DATE</div>
+                    <div class="progress-bg" style="margin: 0 auto; width: 80%; height: 6px;"><div class="progress-fill" th:style="'width: ' + ${report.devices.updatedPct} + '%;'"></div></div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Operating System (OS) Compliance</div>
+                    <div class="fw-desc">Devices running current, actively supported versions of Windows, macOS, iOS, or Android. Outdated systems no longer receive security patches and are highly vulnerable to ransomware and targeted exploits.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>App Access (OAuth)</h1>
+        <p>Third-party applications granted access to Google Workspace data via OAuth (e.g., reading emails or accessing files). Malicious or poorly secured apps can facilitate silent data exfiltration.
+        </p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.appAccess.securityScore < 50 ? 'text-red' : (report.appAccess.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.appAccess.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects governance over third-party applications. A high score indicates that employees exclusively use trusted apps and that no applications possess excessive or high-risk permissions. This prevents data leakage via insecure third-party software.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.appAccess.totalConnected}">0</div>
+                    <div class="metric-lbl">CONNECTED APPS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Total Connected Applications</div>
+                    <div class="fw-desc">Total number of external applications (such as CRMs, mail plugins, or scheduling tools) authorized by users to read or modify data within your Google environment.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-green" th:text="${report.appAccess.trusted}">0</div>
+                    <div class="metric-lbl">MARKED AS TRUSTED</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Verified / Trusted Apps</div>
+                    <div class="fw-desc">Applications explicitly reviewed and approved by IT administration. Maintaining a 'whitelist' of approved applications significantly reduces the risk of Shadow IT and rogue software.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.appAccess.highRisk > 0 ? 'text-red' : 'text-green'}" th:text="${report.appAccess.highRisk}">0</div>
+                    <div class="metric-lbl">HIGH RISK PERMISSIONS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Applications with High-Risk Permissions</div>
+                    <div class="fw-desc">Apps that have requested extensive permissions, such as full read/delete/send access for Gmail or unrestricted access to all Google Drive files.
+                    </div>
+                    <div th:if="${report.appAccess.highRisk > 0}" class="fw-alert"><strong>Action Required:</strong> Apps with excessive (high-risk) permissions detected. Evaluate if these permissions are operationally necessary and revoke access for any unknown or redundant applications.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>App Passwords</h1>
+        <p>App passwords are a legacy authentication method that bypasses MFA. Often used by older mail clients, they pose a significant security risk and should be phased out in favor of modern standards.
+        </p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.appPasswords.securityScore < 50 ? 'text-red' : (report.appPasswords.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.appPasswords.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects the decommissioning of legacy and insecure login methods. A high score indicates no active app passwords are in use, with all systems utilizing modern authentication. This closes a critical gap where attackers could otherwise bypass MFA protections.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.appPasswords.activePasswords > 0 ? 'text-red' : 'text-green'}" th:text="${report.appPasswords.activePasswords}">0</div>
+                    <div class="metric-lbl">ACTIVE PASSWORDS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Active App Passwords</div>
+                    <div class="fw-desc">The count of active, one-time passwords providing direct account access without a 2FA prompt. Since they circumvent MFA, a compromised app password results in an immediate, undetectable breach.
+                    </div>
+                    <div th:if="${report.appPasswords.activePasswords > 0}" class="fw-alert"><strong>Action Required:</strong> Disable the "Allow less secure apps" setting in Google Workspace immediately. Instruct users to switch to modern authentication (OAuth) and revoke all existing app passwords.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.appPasswords.usersUsingThem > 0 ? 'text-orange' : 'text-green'}" th:text="${report.appPasswords.usersUsingThem}">0</div>
+                    <div class="metric-lbl">AFFECTED USERS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">User Impact</div>
+                    <div class="fw-desc">The number of unique employees currently relying on app passwords. This identifies users requiring guidance for transitioning to secure authentication methods.
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <p th:if="${report.appPasswords.activePasswords > 0}" style="color: #dc2626; font-weight: bold;">Recommendation: Disable "Less Secure Apps" and enforce modern authentication (OAuth).
+        </p>
+    </div>
+
+    <div class="section-break">
+        <h1>Password Policy & 2-Step Verification</h1>
+        <p>Review of organizational requirements for passwords and Multi-Factor Authentication (MFA). A robust password policy combined with hardware security keys for administrators provides the strongest defense against account takeovers.
+        </p>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.passwordSettings.securityScore < 50 ? 'text-red' : (report.passwordSettings.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.passwordSettings.securityScore} + '%'">0%</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Security Score</div>
+                    <div class="fw-desc">This score reflects the robustness of your access security. A high score means MFA is enforced organization-wide, passwords meet complexity requirements (e.g., minimum length), and administrators use phishing-resistant hardware security keys.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val text-blue" th:text="${report.passwordSettings.totalOus}">12</div>
+                    <div class="metric-lbl">ORGANIZATIONAL UNITS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Total Organizational Units (OUs)</div>
+                    <div class="fw-desc">The number of defined units in your Google Workspace environment where specific password or 2FA policies can be applied.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val"
+                         th:classappend="${report.passwordSettings.unenforcedOusWithUsers > 0 ? 'text-orange' : 'text-green'}"
+                         th:text="${report.passwordSettings.enforced2FaOus}">2</div>
+                    <div class="metric-lbl">MFA ENFORCED (OUs)</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Units with 2-Step Verification Enforced</div>
+                    <div class="fw-desc">The number of units where 2FA is mandatory for all users. If 2FA is not enforced, activation relies solely on individual employee compliance.
+                    </div>
+                    <div th:if="${report.passwordSettings.unenforcedOusWithUsers > 0}" class="fw-alert"><strong>Action Required:</strong> 2FA enforcement is missing in certain units. For optimal security, we recommend setting 2FA to "Enforced" at the Root level for the entire organization.
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="full-card-table">
+            <tr>
+                <td class="card-stat-cell">
+                    <div class="metric-val" th:classappend="${report.passwordSettings.adminsWithoutKeys > 0 ? 'text-red' : 'text-green'}" th:text="${report.passwordSettings.adminsWithoutKeys}">3</div>
+                    <div class="metric-lbl">ADMINS WITHOUT KEYS</div>
+                </td>
+                <td class="card-text-cell">
+                    <div class="fw-title">Administrators without Hardware Security Keys</div>
+                    <div class="fw-desc">Administrative accounts hold the keys to the entire IT environment. Standard 2FA (SMS or app-based) is vulnerable to advanced phishing (AiTM). Hardware Security Keys (e.g., YubiKey, Google Titan) are immune to these attack vectors.
+                    </div>
+                    <div th:if="${report.passwordSettings.adminsWithoutKeys > 0}" class="fw-alert"><strong>Critical Action Finding:</strong> Issue FIDO2 Security Keys to all Super Admins immediately and enforce their use in the Google Admin Console to prevent catastrophic account takeovers.
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-break">
+        <h1>Domain & DNS Security</h1>
+        <p>DNS records protect your domains from spoofing, phishing and abuse. Without proper configuration (SPF, DKIM, DMARC), unauthorized parties can send emails impersonating your organization.
+        </p>
+
+        <div th:each="domain : ${report.domains}">
+
+            <div class="domain-card">
+                <div class="domain-header" th:text="${domain.name}">labo.cloudmen.com</div>
+
+                <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">Critical issues found for this domain. Mail delivery may be impacted.
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">
+                    <tr>
+                        <td style="padding: 15px 20px; width: 75%; vertical-align: middle; border-bottom: 1px solid #e2e8f0;">
+                            <div style="font-weight: bold; font-size: 11pt; color: #0f172a; margin-bottom: 4px;">Security Score</div>
+                            <div style="font-size: 9.5pt; color: #475569;">Calculated based on active mail authentication (SPF, DKIM, DMARC) and auxiliary DNS security measures.
+                            </div>
+                        </td>
+                        <td style="padding: 15px 20px; width: 25%; text-align: right; vertical-align: middle; border-bottom: 1px solid #e2e8f0;">
+                            <div style="font-size: 16pt; font-weight: bold; line-height: 1;"
+                                 th:classappend="${domain.score < 50 ? 'text-red' : (domain.score < 75 ? 'text-orange' : 'text-green')}"
+                                 th:text="${domain.score} + '/100'">0/100</div>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="check-table">
+                    <tr th:each="check : ${domain.checks}" style="background-color: #f8fafc;">
+                        <td style="width: 75%;">
+                            <div class="check-title" th:text="${check.title}">SPF Record</div>
+                            <div class="check-desc" th:text="${check.description}">Description...</div>
+
+                            <div th:if="${check.tip != null and !check.tip.isBlank()}" class="check-tip"
+                                 th:classappend="${check.status == 'RED' ? 'tip-red' : (check.status == 'ORANGE' ? 'tip-orange' : 'tip-gray')}"
+                                 th:text="'Tip: ' + ${check.tip}">
+                                Tip: text
+                            </div>
+                        </td>
+                        <td style="width: 25%;">
+                            <div class="status-badge"
+                                 th:classappend="${check.status == 'RED' ? 'badge-red' : (check.status == 'ORANGE' ? 'badge-orange' : (check.status == 'GREEN' ? 'badge-green' : 'badge-gray'))}"
+                                 th:text="${check.badgeText}">ACTION REQUIRED</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="page-break-inside: avoid; margin-bottom: 40px;">
+                <h2 style="font-size: 12pt; margin-bottom: 10px;">Active DNS Records (<span th:text="${domain.name}"></span>)</h2>
+                <table class="dns-table" style="border: 1px solid #e2e8f0; margin-bottom: 0;">
+                    <thead>
+                    <tr>
+                        <th style="width: 15%;">TYPE</th>
+                        <th style="width: 35%;">NAME</th>
+                        <th style="width: 50%;">VALUE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="record : ${domain.records}">
+                        <td style="font-weight: bold;" th:text="${record.type}">SPF</td>
+                        <td th:text="${record.name}">labo.cloudmen.com</td>
+                        <td class="break-text" th:text="${record.value}">value</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
