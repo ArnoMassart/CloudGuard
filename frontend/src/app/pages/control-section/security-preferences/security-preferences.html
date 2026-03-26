@@ -58,7 +58,7 @@
             type="button"
             role="switch"
             [attr.aria-checked]="isEnabled(section.section, pref.key)"
-            [attr.aria-label]="pref.label + (isEnabled(section.section, pref.key) ? ': ' + ('preferences.toggle-off' | transloco) : ': ' + ('preferences.toggle-on' | transloco))"
+            [attr.aria-label]="(pref.label | transloco) + (isEnabled(section.section, pref.key) ? ': ' + ('preferences.toggle-off' | transloco) : ': ' + ('preferences.toggle-on' | transloco))"
             [id]="section.section + '-' + pref.key"
             [disabled]="saving() !== null"
             (click)="toggle(section.section, pref.key)"
