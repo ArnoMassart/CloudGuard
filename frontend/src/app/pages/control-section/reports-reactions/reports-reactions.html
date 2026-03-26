@@ -1,54 +1,56 @@
 <div class="px-10 py-6">
-    <app-page-header Title="Meldingen & Feedback"
-        Description="Real-time notificaties over beveiligingsissues en mogelijkheid tot feedback"
+    <app-page-header Title="notifications-feedback" Description="{{ 'feedback.description' | transloco }}"
         [NeedAdminLink]="false" />
 
     <div class="w-full flex flex-col gap-5 pt-6">
         <!-- Summary cards -->
         <div class="w-full flex gap-4">
-            <app-section-top-card class="flex-1" Title="Totaal" [Value]="totalCount()" [Icon]="Icons.Bell"
-                BackgroundColor="#dbeafe" IconColor="#155dfc" />
-            <app-section-top-card class="flex-1" Title="Kritiek" [Value]="criticalCount()" [Icon]="Icons.TriangleAlert"
-                BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
-            <app-section-top-card class="flex-1" Title="In behandeling" [Value]="inBehandelingCount()"
-                [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad" TextColor="#3abfad" />
+            <app-section-top-card class="flex-1" Title="{{ 'total' | transloco }}" [Value]="totalCount()"
+                [Icon]="Icons.Bell" BackgroundColor="#dbeafe" IconColor="#155dfc" />
+            <app-section-top-card class="flex-1" Title="{{ 'feedback.new' | transloco }}" [Value]="0"
+                [Icon]="Icons.CircleQuestionMark" BackgroundColor="#dbeafe" IconColor="#155dfc" />
+            <app-section-top-card class="flex-1" Title="{{ 'feedback.critical' | transloco }}" [Value]="criticalCount()"
+                [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
+            <app-section-top-card class="flex-1" Title="{{ 'feedback.processing' | transloco }}"
+                [Value]="inBehandelingCount()" [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad"
+                TextColor="#3abfad" />
         </div>
 
         <!-- Critical warning banner -->
         @if (criticalCount() > 0) {
         <app-page-warnings [isCritical]="true" [isExpanded]="isWarningExpanded()" (toggle)="toggleExpanded()"
-            [title]="`${criticalCount()} kritieke beveiligingswaarschuwing${criticalCount() > 1 ? 'en' : '' }`">
+            title="{{ criticalCount() }} {{ ( criticalCount() ? 'critical-warning' : 'critical-warnings') | transloco }}">
+            >
             <app-page-warnings-item [isCritical]="true" body>
-                Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.
+                {{ 'feedback.warning' | transloco }}
             </app-page-warnings-item>
         </app-page-warnings>
         }
 
         <!-- Filter section -->
-        <app-filter-chips [options]="filterOptions()" [selectedValue]="filterSeverity()"
-            variant="pilled" [showRefresh]="true" [isRefreshing]="isLoading()"
-            (filterChange)="setFilter($event)" (refresh)="refresh()" />
+        <app-filter-chips [options]="filterOptions()" [selectedValue]="filterSeverity()" variant="pilled"
+            [showRefresh]="true" [isRefreshing]="isLoading()" (filterChange)="setFilter($event)"
+            (refresh)="refresh()" />
 
         @if (isLoading()) {
         <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
             <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <span class="text-sm text-gray-500 mt-3">Meldingen worden geladen...</span>
+            <span class="text-sm text-gray-500 mt-3">{{ 'feedback.loading' | transloco }}...</span>
         </div>
         } @else if (filteredNotifications().length === 0) {
         <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
             <div class="w-16 h-16 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-4">
                 <i-lucide [img]="Icons.CircleCheck" size="32" />
             </div>
-            <h3 class="text-lg font-medium text-gray-900">Geen meldingen</h3>
+            <h3 class="text-lg font-medium text-gray-900">{{ 'feedback.none' | transloco }}</h3>
             <p class="text-sm text-gray-500 mt-1 text-center max-w-md">
                 @if (filterSeverity() === 'all') {
-                Er zijn geen kritieke meldingen of waarschuwingen voor dit Workspace.
-                } @else if (filterSeverity() === 'dismissed') {
-                Geen genegeerde meldingen.
-                } @else if (filterSeverity() === 'in-behandeling') {
-                Geen meldingen in behandeling.
+                {{ 'feedback.severity.all' | transloco }} }
+                @else if (filterSeverity()==='dismissed' ) {
+                {{ 'feedback.severity.dismissed' | transloco }} } @else if (filterSeverity() === 'in-behandeling') {
+                {{ 'feedback.severity.processing' | transloco }}
                 } @else {
-                Geen meldingen met dit filter. Probeer een ander filter.
+                {{ 'feedback.severity.none' | transloco }}
                 }
             </p>
         </div>
@@ -82,7 +84,7 @@
                                 [class.text-amber-700]="n.severity === 'warning'"
                                 [class.bg-blue-100]="n.severity === 'info'"
                                 [class.text-blue-700]="n.severity === 'info'">
-                                {{ getSeverityLabel(n.severity) }}
+                                {{ getSeverityLabel(n.severity) | transloco }}
                             </span>
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
@@ -92,7 +94,7 @@
                             <span
                                 class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                                 <i-lucide [img]="Icons.Clock" size="12" />
-                                In behandeling
+                                {{'feedback.processing' | transloco}}
                             </span>
                             }
                         </div>
@@ -100,17 +102,19 @@
                         <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            {{ filterSeverity() === 'dismissed' ? 'Genegeerd' : n.hasReported ? 'In behandeling' : 'Vandaag' }}
+                            {{
+                            (filterSeverity()==='dismissed' ? 'dismissed' : n.hasReported ? 'feedback.processing'
+                            : 'today') | transloco }}
                         </p>
                         @if (n.supportsDetails) {
                         <button (click)="toggleExpand(n); $event.stopPropagation()"
                             class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
                             @if (isExpanded(n.id)) {
                             <i-lucide [img]="Icons.ChevronUp" size="16" />
-                            Verberg details
+                            {{ 'hide-details' | transloco }}
                             } @else {
                             <i-lucide [img]="Icons.ChevronDown" size="16" />
-                            Bekijk details
+                            {{ 'view-details' | transloco }}
                             }
                         </button>
                         @if (isExpanded(n.id)) {
@@ -119,17 +123,17 @@
                             <div class="flex items-center gap-2 text-sm text-gray-500">
                                 <span
                                     class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
-                                Details laden...
+                                {{ 'loading-details' | transloco }}...
                             </div>
                             } @else {
-                            <p class="font-medium text-gray-700 text-sm mb-2">Betreffende items:</p>
+                            <p class="font-medium text-gray-700 text-sm mb-2">{{ 'feedback.items' | transloco }}:</p>
                             <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 max-h-48 overflow-y-auto">
                                 @for (item of getDetails(n.id); track item) {
                                 <li>{{ item }}</li>
                                 }
                             </ul>
                             @if (getDetails(n.id).length === 0) {
-                            <p class="text-sm text-gray-500">Geen items gevonden.</p>
+                            <p class="text-sm text-gray-500">{{ 'feedback.items.none' | transloco }}.</p>
                             }
                             }
                         </div>
@@ -137,7 +141,8 @@
                         }
                         @if (n.recommendedActions && n.recommendedActions.length > 0) {
                         <div class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                            <p class="font-medium text-blue-900 text-sm mb-2">Aanbevolen acties:</p>
+                            <p class="font-medium text-blue-900 text-sm mb-2">{{ 'feedback.items.recommended' |
+                                transloco }}:</p>
                             <ul class="list-disc list-inside text-sm text-blue-900 space-y-1">
                                 @for (action of n.recommendedActions; track action) {
                                 <li>{{ action }}</li>
@@ -150,52 +155,60 @@
                             @if (n.hasReported) {
                             <p class="text-sm text-teal-600 flex items-center gap-2">
                                 <i-lucide [img]="Icons.Clock" size="16" />
-                                In behandeling
+                                {{ 'feedback.processing' | transloco }}
                             </p>
                             } @else if (isFeedbackFormOpen(n.id)) {
-                            <p class="font-medium text-gray-900 text-sm mb-2">Uw feedback of wensen</p>
+                            <p class="font-medium text-gray-900 text-sm mb-2">{{ 'feedback.your-feedback' | transloco }}
+                            </p>
                             <textarea [value]="getFeedbackText(n.id)"
                                 (input)="setFeedbackText(n.id, $any($event.target).value)" rows="4"
                                 class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="Beschrijf uw feedback, wensen of vragen over dit beveiligingsprobleem..."></textarea>
+                                placeholder="{{ 'feedback.describe-feedback' | transloco }}"></textarea>
                             <div class="flex gap-2 mt-3">
                                 <button type="button" (click)="submitFeedback(n)"
                                     [disabled]="isSubmittingFeedback(n.id) || !getFeedbackText(n.id).trim()"
                                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                     <i-lucide [img]="Icons.Send" size="16" class="text-white" />
-                                    {{ isSubmittingFeedback(n.id) ? 'Versturen...' : 'Verstuur' }}
+                                    {{ isSubmittingFeedback(n.id) ? ('send' | transloco)+'...' : ('sent' | transloco) }}
                                 </button>
                                 <button type="button" (click)="closeFeedbackForm(n)"
                                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                                    Annuleren
+                                    {{ 'cancel' | transloco }}
                                 </button>
                             </div>
                             <p class="mt-3 text-sm text-gray-500">
-                                Deze feedback wordt automatisch verwerkt in ons ticketing systeem. U ontvangt een
-                                bevestiging per email.
+                                {{ 'feedback.automatic' | transloco }}
                             </p>
                             } @else {
                             <div class="flex flex-wrap gap-2">
                                 <button type="button" (click)="openFeedbackForm(n)"
                                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors">
                                     <i-lucide [img]="Icons.MessageCircle" size="16" />
-                                    Stuur feedback
+                                    {{ 'feedback.send' | transloco }}
                                 </button>
                                 <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
                                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                     <i-lucide [img]="Icons.EyeOff" size="16" />
-                                    {{ isDismissing(n) ? 'Bezig...' : 'Negeer (30 dagen)' }}
+                                    {{ isDismissing(n) ? ('busy' | transloco)+'...' : ('ignore-30-days' | transloco) }}
+
                                 </button>
                             </div>
                             }
                         </div>
                         } @else {
                         <div class="mt-4">
+                            <span
+                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                                <i-lucide [img]="Icons.CircleCheck" size="16" />
+                                {{ 'resolved' | transloco }}
+                            </span>
+
                             <button type="button" (click)="unDismiss(n)" [disabled]="isUnDismissing(n)"
                                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 <i-lucide [img]="Icons.RefreshCw" size="16" />
-                                {{ isUnDismissing(n) ? 'Bezig...' : 'Herstellen' }}
+                                {{ isUnDismissing(n) ? ('busy' | transloco)+'...' : ('repairing' | transloco) }}
                             </button>
+
                         </div>
                         }
                         @if (filterSeverity() !== 'dismissed' && n.hasReported) {
@@ -203,7 +216,7 @@
                             <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
                                 class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 <i-lucide [img]="Icons.EyeOff" size="16" />
-                                {{ isDismissing(n) ? 'Bezig...' : 'Negeer (30 dagen)' }}
+                                {{ isDismissing(n) ? ('busy' | transloco)+'...' : ('ignore-30-days' | transloco) }}
                             </button>
                         </div>
                         }

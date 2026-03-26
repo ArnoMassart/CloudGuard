@@ -13,33 +13,27 @@
             <div class="flex items-center justify-center bg-[#fee2e2] p-3 mt-1 rounded-4xl">
                 <lucide-icon [img]="Icons.CircleX" size="28" class="text-destructive"></lucide-icon>
             </div>
-            <h2 class="flex justify-center text-xl">Toegang geweigerd</h2>
-            <span class="flex items-center justify-center text-center text-black/50 mb-3">U heeft geen admin
-                rechten om
-                toegang
-                te
-                krijgen
-                tot dit
-                dashboard. Neem contact op met uw beheerder
-                voor toegang.</span>
+            <h2 class="flex justify-center text-xl">{{ 'forbidden.access-denied' | transloco }}</h2>
+            <span class="flex items-center justify-center text-center text-black/50 mb-3">{{ 'forbidden.no-access' |
+                transloco }}</span>
             <div
                 class="bg-[#f9fafb] py-3 px-2 mb-3 text-black/50 text-center text-[13px] rounded-lg border-muted border">
-                <span class="font-semibold">Let op: </span>
+                <span class="font-semibold">{{ 'forbidden.note' | transloco }}: </span>
                 <span>
-                    Alleen geauthoriseerde admin accounts hebben toegang
-                    tot
-                    CloudGuard</span>
+                    {{ 'forbidden.note.description' | transloco }}</span>
             </div>
 
             <button (click)="tryAgain()"
-                class="bg-primary text-white w-full p-2 rounded-lg hover:bg-primary/80 cursor-pointer">Terug naar
-                login</button>
+                class="bg-primary text-white w-full p-2 rounded-lg hover:bg-primary/80 cursor-pointer">{{
+                'back-to-login' | transloco }}</button>
         </div>
 
 
     </div>
 
-    <div class="mt-auto mb-8 text-center text-sm text-white/60">
-        <p class="mb-1">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
+    <div class="mb-8 text-center text-sm text-white/60 mt-8">
+        <app-language-bar />
+
+        <p class="mb-1 pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
     </div>
 </div>

@@ -1,11 +1,13 @@
-import { Component, OnInit, effect, signal, inject } from '@angular/core';
+import { Component, OnInit, effect, signal, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
-import {OrgUnitService} from '../../../services/org-unit-service';
+import { OrgUnitService } from '../../../services/org-unit-service';
 import { OrgUnitNodeDto } from '../../../models/org-unit/OrgUnitNodeDto';
 import { OrgUnitPolicyDto } from '../../../models/org-unit/OrgUnitPolicyDto';
 import { AppIcons } from '../../../shared/AppIcons';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 export interface OrgUnitNode {
   id: string;
@@ -19,12 +21,14 @@ export interface OrgUnitNode {
 @Component({
   selector: 'app-organizational-units',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, PageHeader],
+  imports: [CommonModule, LucideAngularModule, PageHeader, TranslocoPipe],
   templateUrl: './organizational-units.html',
   styleUrl: './organizational-units.css',
 })
-export class OrganizationalUnits implements OnInit {
+export class OrganizationalUnits implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
+
+  readonly #translocoService = inject(TranslocoService);
 
   readonly expandedOuIds = signal<Set<string>>(new Set());
   readonly expandedPolicies = signal<Set<string>>(new Set());
@@ -39,6 +43,8 @@ export class OrganizationalUnits implements OnInit {
   readonly policies = signal<OrgUnitPolicyDto[]>([]);
   readonly policiesLoading = signal(false);
   readonly policiesError = signal<string | null>(null);
+
+  #langSubscription?: Subscription;
 
   constructor() {
     effect(() => {
@@ -65,7 +71,15 @@ export class OrganizationalUnits implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadUnitTree();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.loadUnitTree();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   loadUnitTree(): void {
@@ -78,7 +92,7 @@ export class OrganizationalUnits implements OnInit {
       },
       error: (err) => {
         this.error.set(
-          err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.'
+          err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.',
         );
         this.loading.set(false);
       },

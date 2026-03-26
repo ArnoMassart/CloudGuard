@@ -4,6 +4,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { AppIcons } from '../../shared/AppIcons';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 import { SecurityScoreBreakdown, SecurityScoreFactor } from '../../models/password/PasswordSettings';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 export interface SecurityScoreDetailData {
   breakdown: SecurityScoreBreakdown;
@@ -12,7 +13,7 @@ export interface SecurityScoreDetailData {
 
 @Component({
   selector: 'app-security-score-detail',
-  imports: [MatButtonModule, MatDialogModule, LucideAngularModule],
+  imports: [MatButtonModule, MatDialogModule, LucideAngularModule, TranslocoPipe],
   templateUrl: './security-score-detail.html',
   styleUrl: './security-score-detail.css',
 })
@@ -28,15 +29,15 @@ export class SecurityScoreDetailComponent {
 
   getStatusColor(): string {
     const s = this.breakdown.status;
-    if (s === 'Perfect' || s === 'Goed') return '#3abfad';
-    if (s === 'Matig') return '#d69518';
+    if (s === 'perfect' || s === 'good') return '#3abfad';
+    if (s === 'average') return '#d69518';
     return '#e7000b';
   }
 
   getStatusBgColor(): string {
     const s = this.breakdown.status;
-    if (s === 'Perfect' || s === 'Goed') return 'rgba(58, 191, 173, 0.08)';
-    if (s === 'Matig') return 'rgba(214, 149, 24, 0.08)';
+    if (s === 'perfect' || s === 'good') return 'rgba(58, 191, 173, 0.08)';
+    if (s === 'average') return 'rgba(214, 149, 24, 0.08)';
     return 'rgba(231, 0, 11, 0.08)';
   }
 

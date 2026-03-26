@@ -129,8 +129,8 @@ public class GoogleGroupsCacheService {
                                 com.google.api.services.cloudidentity.v1.model.Group ciGroup = cloudIdentity.groups().get(lookup.getName()).execute();
                                 if (ciGroup != null && ciGroup.getLabels() != null) {
                                     var labels = ciGroup.getLabels();
-                                    if (labels.containsKey("cloudidentity.googleapis.com/groups.discussion_forum")) tags.add("Mailing");
-                                    if (labels.containsKey("cloudidentity.googleapis.com/groups.security")) tags.add("Security");
+                                    if (labels.containsKey("cloudidentity.googleapis.com/groups.discussion_forum")) tags.add("mailing");
+                                    if (labels.containsKey("cloudidentity.googleapis.com/groups.security")) tags.add("security");
                                 }
                             }
                         } catch (Throwable t) {
@@ -185,9 +185,9 @@ public class GoogleGroupsCacheService {
     private List<String> deriveRiskTags(String risk) {
         List<String> tags = new ArrayList<>();
         tags.add(switch (risk) {
-            case "HIGH" -> "Hoog risico";
-            case "MEDIUM" -> "Middel risico";
-            default -> "Laag risico";
+            case "HIGH" -> "high-risk";
+            case "MEDIUM" -> "middle-risk";
+            default -> "low-risk";
         });
         return tags;
     }
@@ -231,10 +231,10 @@ public class GoogleGroupsCacheService {
     private String mapWhoCanJoin(String who) {
         if (who == null || who.isBlank()) return "—";
         return switch (who) {
-            case "ANYONE_CAN_JOIN" -> "Iedereen kan lid worden";
-            case "INVITED_CAN_JOIN" -> "Alleen uitgenodigde gebruikers";
-            case "CAN_REQUEST_TO_JOIN" -> "Kan verzoek doen om lid te worden";
-            case "ALL_IN_DOMAIN_CAN_JOIN" -> "Iedereen in het domein";
+            case "ANYONE_CAN_JOIN" -> "groups.whoCanJoin.anyone";
+            case "INVITED_CAN_JOIN" -> "groups.whoCanJoin.invited";
+            case "CAN_REQUEST_TO_JOIN" -> "groups.whoCanJoin.canRequest";
+            case "ALL_IN_DOMAIN_CAN_JOIN" -> "groups.whoCanJoin.allInDomain";
             default -> who;
         };
     }
@@ -242,9 +242,9 @@ public class GoogleGroupsCacheService {
     private String mapWhoCanViewMembership(String who) {
         if (who == null || who.isBlank()) return "—";
         return switch (who) {
-            case "ALL_IN_DOMAIN_CAN_VIEW" -> "Iedereen in het domein";
-            case "ALL_MANAGERS_CAN_VIEW" -> "Alle beheerders";
-            case "ALL_MEMBERS_CAN_VIEW" -> "Alle leden";
+            case "ALL_IN_DOMAIN_CAN_VIEW" -> "groups.whoCanView.allInDomain";
+            case "ALL_MANAGERS_CAN_VIEW" -> "groups.whoCanView.allManagers";
+            case "ALL_MEMBERS_CAN_VIEW" -> "groups.whoCanView.allMembers";
             default -> who;
         };
     }

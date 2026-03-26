@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { CustomAuthService } from './custom-auth-service';
 import { map, take } from 'rxjs';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(CustomAuthService);
   const router = inject(Router);
 
@@ -13,8 +13,10 @@ export const authGuard: CanActivateFn = () => {
       if (isLoggedIn) {
         return true;
       } else {
-        return router.parseUrl('/login');
+        return router.createUrlTree(['/login'], {
+          queryParams: { returnUrl: state.url },
+        });
       }
-    })
+    }),
   );
 };

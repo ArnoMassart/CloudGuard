@@ -4,10 +4,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { UserService } from '../../services/user-service';
 import { AppIcons } from '../../shared/AppIcons';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, TranslocoPipe],
   templateUrl: './profile.html',
 })
 export class Profile {

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { PageHeader } from '../../components/page-header/page-header';
 import { SectionTopCard } from '../../components/section-top-card/section-top-card';
 import { AppIcons } from '../../shared/AppIcons';
@@ -13,6 +13,8 @@ import { DashboardOverviewResponse } from '../../models/dashboard/DashboardOverv
 import { PageWarnings } from '../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { ReportService } from '../../services/report-service';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -24,11 +26,12 @@ import { ReportService } from '../../services/report-service';
     SecurityComponent,
     PageWarnings,
     PageWarningsItem,
+    TranslocoPipe,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class Home implements OnInit {
+export class Home implements OnInit, OnDestroy {
   // ==========================================
   // INJECTIONS
   // ==========================================
@@ -37,6 +40,10 @@ export class Home implements OnInit {
   readonly #dashboardService = inject(DashboardService);
   readonly #reportService = inject(ReportService);
   readonly #router = inject(Router);
+
+  readonly #translocoService = inject(TranslocoService);
+
+  #langSubscription?: Subscription;
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -59,8 +66,17 @@ export class Home implements OnInit {
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadDashboardData();
+    });
+
     this.#loadPageOverview();
-    this.#loadDashboardData();
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   // ==========================================

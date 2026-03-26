@@ -14,6 +14,6 @@ export const accessGuard: CanActivateFn = (route, state): Observable<boolean | U
       }
 
       return true;
-    })
+    }),
   );
 };

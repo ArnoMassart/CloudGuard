@@ -8,6 +8,9 @@ import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.admin.directory.model.User;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -15,13 +18,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
 public class GoogleUsersService {
     private final GoogleUsersCacheService usersCacheService;
+    private final MessageSource messageSource;
 
-    public GoogleUsersService(GoogleUsersCacheService usersCacheService) {
+    public GoogleUsersService(GoogleUsersCacheService usersCacheService, @Qualifier("messageSource") MessageSource messageSource) {
         this.usersCacheService = usersCacheService;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -156,25 +164,21 @@ public class GoogleUsersService {
         int score2 = totalUsers == 0 ? 100 : (int) Math.round(100.0 * (totalUsers - longNoLoginCount) / totalUsers);
         int score3 = totalUsers == 0 ? 100 : (int) Math.round(100.0 * (totalUsers - inactiveRecentCount) / totalUsers);
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("2-Step Verification",
-                        no2FACount == 0 ? "Alle actieve gebruikers hebben 2FA" : no2FACount + " actieve gebruiker(s) zonder 2FA (niet compliant)",
+                new SecurityScoreFactorDto("users.overview.2step-title",
+                        no2FACount == 0 ? messageSource.getMessage("users.overview.2step.compliant", null, locale) : messageSource.getMessage("users.overview.2step.non_compliant", new Object[]{no2FACount}, locale),
                         score1, 100, severity(score1)),
-                new SecurityScoreFactorDto("Actieve gebruikers zonder lange inactiviteit",
-                        longNoLoginCount == 0 ? "Geen actieve gebruikers met >1 jaar geen login" : longNoLoginCount + " actieve gebruiker(s) met >1 jaar geen login (niet compliant)",
+                new SecurityScoreFactorDto("users.overview.activeLongNoLogin-title",
+                        longNoLoginCount == 0 ? messageSource.getMessage("users.overview.no_login.compliant", null, locale) : messageSource.getMessage("users.overview.no_login.non_compliant", new Object[]{longNoLoginCount}, locale),
                         score2, 100, severity(score2)),
-                new SecurityScoreFactorDto("Gedeactiveerde gebruikers met recente login",
-                        inactiveRecentCount == 0 ? "Geen gedeactiveerde gebruikers met recente login" : inactiveRecentCount + " gedeactiveerde gebruiker(s) met recente login (mogelijk risico, niet compliant)",
+                new SecurityScoreFactorDto("users.overview.deactivatedRecentLogin-title",
+                        inactiveRecentCount == 0 ? messageSource.getMessage("users.overview.recent_login.compliant", null, locale) : messageSource.getMessage("users.overview.recent_login.non_compliant", new Object[]{inactiveRecentCount}, locale),
                         score3, 100, severity(score3))
         );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 
     private int calculateSecurityScore(List<User> googleUsers) {

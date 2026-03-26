@@ -10,13 +10,12 @@ import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,17 +30,18 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
 
     private static final Logger log = LoggerFactory.getLogger(MobileManagementPolicyProvider.class);
     private static final String DIRECTORY_USER_READONLY = "https://www.googleapis.com/auth/admin.directory.user.readonly";
-    private static final String SETTINGS_LINK_TEXT = "Klik hier om deze instellingen aan te passen";
 
     private final GoogleDeviceCacheService deviceCache;
     private final GoogleApiFactory directoryFactory;
 
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private static final long CACHE_TTL_MS = 3600000L;
+    private final MessageSource messageSource;
 
-    public MobileManagementPolicyProvider(GoogleDeviceCacheService deviceCache, GoogleApiFactory directoryFactory) {
+    public MobileManagementPolicyProvider(GoogleDeviceCacheService deviceCache, GoogleApiFactory directoryFactory, MessageSource messageSource) {
         this.deviceCache = deviceCache;
         this.directoryFactory = directoryFactory;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -60,41 +60,42 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         int basic = stats.basic();
         int total = stats.total();
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         String status;
         String css;
         String description;
-        String baseExplanation = "Deze beleidsregel toont de verdeling van mobiele beheerniveaus (Basic vs Advanced) in deze organisatie-eenheid. Advanced-beheer vereist de Device Policy-app en biedt meer controle.";
+        String baseExplanation = messageSource.getMessage("mobile.management.dto.base_explanation", null, locale);
 
         if (total == 0) {
-            status = "Geen apparaten";
+            status = messageSource.getMessage("mobile.management.dto.no_devices.status", null, locale);
             css = "bg-slate-100 text-slate-700";
-            description = "Er zijn geen mobiele apparaten in deze OU";
+            description = messageSource.getMessage("mobile.management.dto.no_devices.description", null, locale);
         } else if (basic == 0) {
             status = "OK (" + advanced + "/" + total + " Advanced)";
             css = "bg-green-100 text-green-800";
-            description = "Alle apparaten zijn onder Advanced-beheer";
+            description = messageSource.getMessage("mobile.management.dto.basic_zero.description", null, locale);
         } else if (advanced == 0) {
             status = "Basic (" + basic + "/" + total + ")";
             css = "bg-amber-100 text-amber-800";
-            description = "Alle apparaten zijn onder Basic (agentless) beheer";
+            description = messageSource.getMessage("mobile.management.dto.advanced_zero.description", null, locale);
         } else {
-            status = "Gemengd (" + advanced + " Advanced, " + basic + " Basic)";
+            status = messageSource.getMessage("mobile.management.dto.mixed.status", null, locale) + " (" + advanced + " Advanced, " + basic + " Basic)";
             css = "bg-amber-100 text-amber-800";
-            description = advanced + " apparaat(en) Advanced, " + basic + " Basic";
+            description = advanced + " " + messageSource.getMessage("mobile.management.dto.mixed.description", null, locale) + " Advanced, " + basic + " Basic";
         }
 
-        String details = total > 0 ? "Advanced: " + advanced + " • Basic: " + basic + " • Totaal: " + total : null;
+        String details = total > 0 ? "Advanced: " + advanced + " • Basic: " + basic + " • "+messageSource.getMessage("mobile.management.dto.mixed.details", null, locale)+": " + total : null;
 
         return new OrgUnitPolicyDto(
                 key(),
-                "Mobiel beheerniveau",
+                messageSource.getMessage("mobile.management.dto.title", null, locale),
                 description,
                 status,
                 css,
                 baseExplanation,
                 null,
                 false,
-                SETTINGS_LINK_TEXT,
                 "https://admin.google.com/u/1/ac/devices/settings/general",
                 details
         );

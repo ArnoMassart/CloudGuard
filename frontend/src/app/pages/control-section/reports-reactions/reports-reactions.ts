@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { FilterChips } from '../../../components/filter-chips/filter-chips';
@@ -11,6 +11,8 @@ import { NotificationFeedbackService } from '../../../services/notification-feed
 import { DismissedNotificationService } from '../../../services/dismissed-notification-service';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -21,21 +23,23 @@ import { PageWarningsItem } from '../../../components/page-warnings/page-warning
     PageWarnings,
     PageWarningsItem,
     FilterChips,
+    TranslocoPipe,
   ],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
 })
-export class ReportsReactions implements OnInit {
+export class ReportsReactions implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
   readonly #notificationService = inject(NotificationService);
   readonly #notificationFeedbackService = inject(NotificationFeedbackService);
+  readonly #translocoService = inject(TranslocoService);
   readonly #dismissedService = inject(DismissedNotificationService);
 
   readonly notifications = signal<Notification[]>([]);
   readonly dismissedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'>(
-    'all',
+    'all'
   );
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
@@ -59,16 +63,16 @@ export class ReportsReactions implements OnInit {
   readonly totalCount = computed(() => this.notifications().length);
   readonly dismissedCount = computed(() => this.dismissedNotifications().length);
   readonly criticalCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'critical').length,
+    () => this.notifications().filter((n) => n.severity === 'critical').length
   );
   readonly warningCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'warning').length,
+    () => this.notifications().filter((n) => n.severity === 'warning').length
   );
   readonly infoCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'info').length,
+    () => this.notifications().filter((n) => n.severity === 'info').length
   );
   readonly inBehandelingCount = computed(
-    () => this.notifications().filter((n) => n.hasReported).length,
+    () => this.notifications().filter((n) => n.hasReported).length
   );
 
   readonly isWarningExpanded = signal(true);
@@ -79,50 +83,60 @@ export class ReportsReactions implements OnInit {
   readonly filterOptions = computed<FilterOption[]>(() => [
     {
       value: 'all',
-      label: 'Alle',
+      label: 'all',
       count: this.totalCount(),
       activeClass: 'bg-primary text-white',
       inactiveClass: '',
     },
     {
       value: 'critical',
-      label: 'Kritiek',
+      label: 'critical-2',
       count: this.criticalCount(),
       activeClass: 'bg-red-100 text-red-800',
       inactiveClass: '',
     },
     {
       value: 'warning',
-      label: 'Waarschuwing',
+      label: 'warning-2',
       count: this.warningCount(),
       activeClass: 'bg-amber-100 text-amber-800',
       inactiveClass: '',
     },
     {
       value: 'info',
-      label: 'Info',
+      label: 'info',
       count: this.infoCount(),
       activeClass: 'bg-blue-100 text-blue-800',
       inactiveClass: '',
     },
     {
       value: 'in-behandeling',
-      label: 'In behandeling',
+      label: 'feedback.processing',
       count: this.inBehandelingCount(),
       activeClass: 'bg-teal-100 text-teal-800',
       inactiveClass: '',
     },
     {
       value: 'dismissed',
-      label: 'Genegeerd',
+      label: 'dismissed',
       count: this.dismissedCount(),
       activeClass: 'bg-gray-400 text-white',
       inactiveClass: '',
     },
   ]);
 
+  #langSubscription?: Subscription;
+
   ngOnInit() {
-    this.#loadNotifications();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadNotifications();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   getFeedbackText(id: string): string {
@@ -155,7 +169,9 @@ export class ReportsReactions implements OnInit {
   }
 
   setFilter(filter: string) {
-    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling');
+    this.filterSeverity.set(
+      filter as NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'
+    );
   }
 
   #loadNotifications() {
@@ -255,8 +271,8 @@ export class ReportsReactions implements OnInit {
   }
 
   getSeverityLabel(severity: NotificationSeverity): string {
-    if (severity === 'critical') return 'Kritiek';
-    if (severity === 'warning') return 'Waarschuwing';
+    if (severity === 'critical') return 'critical-2';
+    if (severity === 'warning') return 'warning-2';
     return 'Info';
   }
 
@@ -314,9 +330,7 @@ export class ReportsReactions implements OnInit {
     this.#notificationFeedbackService.submitFeedback(n.source, n.notificationType, text).subscribe({
       next: () => {
         this.notifications.update((list) =>
-          list.map((item) =>
-            item.id === n.id ? { ...item, hasReported: true } : item,
-          ),
+          list.map((item) => (item.id === n.id ? { ...item, hasReported: true } : item))
         );
         this.feedbackFormOpenIds.update((s) => {
           const next = new Set(s);

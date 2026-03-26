@@ -19,6 +19,8 @@ import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -57,6 +59,7 @@ public class NotificationAggregationService {
     private final PasswordSettingsService passwordSettingsService;
     private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
+    private final MessageSource messageSource;
 
     public NotificationAggregationService(
             GoogleDomainService domainService,
@@ -67,6 +70,7 @@ public class NotificationAggregationService {
             AppPasswordsService appPasswordsService,
             GoogleGroupsService groupsService,
             GoogleOAuthService oAuthService,
+            MessageSource messageSource,
             PasswordSettingsService passwordSettingsService,
             DismissedNotificationService dismissedService,
             NotificationFeedbackService feedbackService) {
@@ -81,6 +85,7 @@ public class NotificationAggregationService {
         this.passwordSettingsService = passwordSettingsService;
         this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
+        this.messageSource = messageSource;
     }
 
     public NotificationsResponse getNotifications(String userId) {
@@ -157,6 +162,8 @@ public class NotificationAggregationService {
 
         DnsRecordResponseDto dns = getDnsData(adminEmail);
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         // DNS
         Set<String> criticalDnsTypes = new HashSet<>();
         Set<String> attentionDnsTypes = new HashSet<>();
@@ -170,107 +177,120 @@ public class NotificationAggregationService {
         }
         if (!criticalDnsTypes.isEmpty()) {
             String typesList = String.join(", ", criticalDnsTypes);
-            notifications.add(create(++id, "critical", "DNS records ontbreken of niet correct",
-                    typesList + (criticalDnsTypes.size() == 1 ? " ontbreekt" : " ontbreken") + " of " + (criticalDnsTypes.size() == 1 ? "is niet" : "zijn niet") + " correct geconfigureerd.",
-                    List.of("Controleer en configureer alle DNS records via je DNS provider"),
-                    "dns-critical", "domain-dns", "Domein & DNS", "/domain-dns"));
+            String messageKey = (criticalDnsTypes.size() == 1) ? "notifications.dns.critical.description.singular" : "notifications.dns.critical.description.plural";
+            String description = messageSource.getMessage(messageKey, new Object[]{typesList}, locale);
+            notifications.add(
+                    create(++id,
+                            "critical",
+                            messageSource.getMessage("notifications.dns.critical.title", null, locale),
+                    description,
+                    List.of(messageSource.getMessage("notifications.dns.critical.actions", null, locale)),
+                    "dns-critical", "domain-dns", messageSource.getMessage("notifications.dns.label", null, locale), "/domain-dns"));
         }
         if (!attentionDnsTypes.isEmpty()) {
             String typesList = String.join(", ", attentionDnsTypes);
-            notifications.add(create(++id, "warning", "DNS records vereisen aandacht",
-                    typesList + (attentionDnsTypes.size() == 1 ? " kan" : " kunnen") + " worden verbeterd.",
-                    List.of("Controleer de DNS configuratie via je DNS provider"),
-                    "dns-attention", "domain-dns", "Domein & DNS", "/domain-dns"));
+            String messageKey = (attentionDnsTypes.size() == 1) ? "notifications.dns.attention.description.singular" : "notifications.dns.attention.description.plural";
+            String description = messageSource.getMessage(messageKey, new Object[]{typesList}, locale);
+            notifications.add(create(++id, "warning", messageSource.getMessage("notifications.dns.attention.title", null, locale),
+                    description,
+                    List.of(messageSource.getMessage("notifications.dns.attention.actions", null, locale)),
+                    "dns-attention", "domain-dns", messageSource.getMessage("notifications.dns.label", null, locale), "/domain-dns"));
         }
 
         // Users
         if (users != null) {
             if (users.withoutTwoFactor() > 0) {
-                notifications.add(create(++id, "critical", "Gebruikers zonder tweestapsverificatie",
-                        users.withoutTwoFactor() + " gebruiker(s) hebben geen 2FA ingeschakeld.",
-                        List.of("Schakel 2FA in voor deze gebruikers", "Verwijder admin rechten totdat 2FA is ingeschakeld"),
-                        "user-control", "users-groups", "Gebruikers & Groepen", "/users-groups"));
+                notifications.add(create(++id, "critical", messageSource.getMessage("notifications.users.without_2fa.title", null, locale),
+                        messageSource.getMessage("notifications.users.without_2fa.description", new Object[]{users.withoutTwoFactor()}, locale),
+                        List.of(
+                                messageSource.getMessage("notifications.users.without_2fa.actions.1", null, locale),
+                                messageSource.getMessage("notifications.users.without_2fa.actions.2", null, locale)
+                        ),
+                        "user-control", "users-groups", messageSource.getMessage("notifications.users_groups.label", null, locale), "/users-groups"));
             }
             if (users.activeLongNoLoginCount() > 0) {
-                notifications.add(create(++id, "warning", "Actieve gebruikers met lange inactiviteit",
-                        users.activeLongNoLoginCount() + " actieve gebruiker(s) hebben lang niet ingelogd.",
-                        List.of("Controleer of deze accounts nog actief moeten zijn"),
-                        "user-activity", "users-groups", "Gebruikers & Groepen", "/users-groups"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.users.active_no_login.title", null, locale),
+                        messageSource.getMessage("notifications.users.active_no_login.description", new Object[]{users.activeLongNoLoginCount()}, locale),
+                        List.of(messageSource.getMessage("notifications.users.active_no_login.actions", null, locale)),
+                        "user-activity", "users-groups", messageSource.getMessage("notifications.users_groups.label", null, locale), "/users-groups"));
             }
             if (users.inactiveRecentLoginCount() > 0) {
-                notifications.add(create(++id, "warning", "Inactieve gebruikers met recente login",
-                        users.inactiveRecentLoginCount() + " inactieve gebruiker(s) hebben recent ingelogd.",
-                        List.of("Controleer of deze accounts opnieuw geactiveerd moeten worden"),
-                        "user-activity", "users-groups", "Gebruikers & Groepen", "/users-groups"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.users.inactive_recent.title", null, locale),
+                        messageSource.getMessage("notifications.users.inactive_recent.description", new Object[]{users.inactiveRecentLoginCount()}, locale),
+                        List.of(messageSource.getMessage("notifications.users.inactive_recent.actions", null, locale)),
+                        "user-activity", "users-groups", messageSource.getMessage("notifications.users_groups.label", null, locale), "/users-groups"));
             }
         }
 
         // Groups
         if (groups != null && groups.groupsWithExternal() > 0) {
-            notifications.add(create(++id, "info", "Groepen met externe leden",
-                    groups.groupsWithExternal() + " groep(en) hebben externe leden.",
-                    List.of("Controleer toegangsrechten van externe leden"),
-                    "group-external", "users-groups", "Gebruikers & Groepen", "/users-groups"));
+            notifications.add(create(++id, "info", messageSource.getMessage("notifications.groups.title", null, locale),
+                    messageSource.getMessage("notifications.groups.description", new Object[]{groups.groupsWithExternal()}, locale),
+                    List.of(messageSource.getMessage("notifications.groups.actions", null, locale)),
+                    "group-external", "users-groups", messageSource.getMessage("notifications.users_groups.label", null, locale), "/users-groups"));
         }
 
         // Drives
         if (drives != null) {
             if (drives.orphanDrives() > 0) {
-                notifications.add(create(++id, "warning", "Gedeelde drives zonder eigenaar",
-                        drives.orphanDrives() + " drive(s) hebben geen actieve eigenaar.",
-                        List.of("Wijs een nieuwe eigenaar toe aan deze drives"),
-                        "drive-orphan", "shared-drives", "Gedeelde Drives", "/shared-drives"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.drives.orphan.title", null, locale),
+                        messageSource.getMessage("notifications.drives.orphan.description", new Object[]{drives.orphanDrives()}, locale),
+                        List.of(messageSource.getMessage("notifications.drives.orphan.actions", null, locale)),
+                        "drive-orphan", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
             }
             if (drives.externalMembersDriveCount() > 0) {
-                notifications.add(create(++id, "info", "Drives met externe leden",
-                        drives.externalMembersDriveCount() + " drive(s) hebben externe leden.",
-                        List.of("Controleer externe toegang tot gedeelde drives"),
-                        "drive-external", "shared-drives", "Gedeelde Drives", "/shared-drives"));
+                notifications.add(create(++id, "info", messageSource.getMessage("notifications.drives.external.title", null, locale),
+                        messageSource.getMessage("notifications.drives.external.description", new Object[]{drives.externalMembersDriveCount()}, locale),
+                        List.of(messageSource.getMessage("notifications.drives.external.actions", null, locale)),
+                        "drive-external", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
             }
         }
 
         // Devices
         if (devices != null) {
             if (devices.lockScreenCount() > 0) {
-                notifications.add(create(++id, "warning", "Apparaten zonder vergrendelscherm beveiliging",
-                        devices.lockScreenCount() + " apparaat(en) hebben geen vergrendelscherm beveiliging.",
-                        List.of("Vereis lockscreen voor alle apparaten"),
-                        "device-lockscreen", "mobile-devices", "Mobiele Apparaten", "/mobile-devices"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.devices.lock.title", null, locale),
+                        messageSource.getMessage("notifications.devices.lock.description", new Object[]{devices.lockScreenCount()}, locale),
+                        List.of( messageSource.getMessage("notifications.devices.lock.actions", null, locale)),
+                        "device-lockscreen", "devices", messageSource.getMessage("notifications.devices.label", null, locale), "/devices"));
             }
             if (devices.encryptionCount() > 0) {
-                notifications.add(create(++id, "warning", "Apparaten zonder encryptie",
-                        devices.encryptionCount() + " apparaat(en) zijn niet versleuteld.",
-                        List.of("Schakel apparaatencryptie in"),
-                        "device-encryption", "mobile-devices", "Mobiele Apparaten", "/mobile-devices"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.devices.enc.title", null, locale),
+                        messageSource.getMessage("notifications.devices.enc.description", new Object[]{devices.encryptionCount()}, locale),
+                        List.of( messageSource.getMessage("notifications.devices.enc.actions", null, locale)),
+                        "device-encryption", "devices", messageSource.getMessage("notifications.devices.label", null, locale), "/devices"));
             }
             if (devices.osVersionCount() > 0) {
-                notifications.add(create(++id, "warning", "Apparaten met verouderde OS versie",
-                        devices.osVersionCount() + " apparaat(en) hebben een verouderde besturingssysteemversie.",
-                        List.of("Vereis minimale OS-versie voor alle apparaten"),
-                        "device-os", "mobile-devices", "Mobiele Apparaten", "/mobile-devices"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.devices.os.title", null, locale),
+                        messageSource.getMessage("notifications.devices.os.description", new Object[]{devices.osVersionCount()}, locale),
+                        List.of( messageSource.getMessage("notifications.devices.os.actions", null, locale)),
+                        "device-os", "devices", messageSource.getMessage("notifications.devices.label", null, locale), "/devices"));
             }
             if (devices.integrityCount() > 0) {
-                notifications.add(create(++id, "warning", "Apparaten met integriteitsproblemen",
-                        devices.integrityCount() + " apparaat(en) hebben integriteitsproblemen (root/jailbreak).",
-                        List.of("Blokkeer geroote of gejailbroken apparaten"),
-                        "device-integrity", "mobile-devices", "Mobiele Apparaten", "/mobile-devices"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.devices.int.title", null, locale),
+                        messageSource.getMessage("notifications.devices.int.description", new Object[]{devices.integrityCount()}, locale),
+                        List.of( messageSource.getMessage("notifications.devices.int.actions", null, locale)),
+                        "device-integrity", "devices", messageSource.getMessage("notifications.devices.label", null, locale), "/devices"));
             }
         }
 
         // OAuth
         if (oAuth != null && oAuth.totalHighRiskApps() > 0) {
-            notifications.add(create(++id, "critical", "Third-party applicaties met te veel toegang",
-                    oAuth.totalHighRiskApps() + " applicatie(s) hebben toegang tot gevoelige gegevens of admin-functies.",
-                    List.of("Controleer de toegangsrechten voor deze applicaties", "Herroep toegang voor apps die niet meer nodig zijn"),
-                    "oauth-high-risk", "app-access", "App Toegang", "/app-access"));
+            notifications.add(create(++id, "critical", messageSource.getMessage("notifications.app_access.title", null, locale),
+                    messageSource.getMessage("notifications.app_access.description", new Object[]{oAuth.totalHighRiskApps()}, locale),
+                    List.of(
+                            messageSource.getMessage("notifications.app_access.actions.1", null, locale),
+                            messageSource.getMessage("notifications.app_access.actions.2", null, locale)
+                    ),
+                    "oauth-high-risk", "app-access", messageSource.getMessage("notifications.app_access.label", null, locale), "/app-access"));
         }
 
         // App passwords
         if (appPasswords != null && appPasswords.totalAppPasswords() > 0) {
-            notifications.add(create(++id, "info", "App-wachtwoorden actief",
-                    appPasswords.totalAppPasswords() + " app-wachtwoord(en) actief. App-wachtwoorden omzeilen 2FA.",
-                    List.of("Overweeg OAuth-gebaseerde authenticatie waar mogelijk"),
-                    "app-password", "app-passwords", "App-wachtwoorden", "/app-passwords"));
+            notifications.add(create(++id, "info", messageSource.getMessage("notifications.app_passwords.title", null, locale),
+                    messageSource.getMessage("notifications.app_passwords.description", new Object[]{appPasswords.totalAppPasswords()}, locale),
+                    List.of(messageSource.getMessage("notifications.app_passwords.actions", null, locale)),
+                    "app-password", "app-passwords", messageSource.getMessage("notifications.app_passwords.label", null, locale), "/app-passwords"));
         }
 
         // Password settings
@@ -283,10 +303,11 @@ public class NotificationAggregationService {
             // Critical: 2SV not enforced in some OUs
             long ousWithout2Sv = twoStep.byOrgUnit().stream().filter(ou -> !ou.enforced()).count();
             if (ousWithout2Sv > 0) {
-                notifications.add(create(++id, "critical", "2-Step Verification niet verplicht",
-                        ousWithout2Sv + " organisatie-eenheid(en) vereisen geen 2-Step Verification.",
-                        List.of("Stel 2-Step Verification verplicht in voor alle organisatie-eenheden"),
-                        "password-2sv-not-enforced", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "critical",
+                        messageSource.getMessage("notifications.password_settings.without_2SV.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.without_2SV.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.without_2SV.actions", null, locale)),
+                        "password-2sv-not-enforced", "password-settings",  messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: weak password length (< 12)
@@ -294,10 +315,10 @@ public class NotificationAggregationService {
                     .filter(p -> p.minLength() != null && p.minLength() < 12)
                     .count();
             if (ousWeakLength > 0) {
-                notifications.add(create(++id, "warning", "Zwakke wachtwoordlengte",
-                        ousWeakLength + " organisatie-eenheid(en) hanteren een minimale wachtwoordlengte onder 12 tekens.",
-                        List.of("Verhoog de minimale wachtwoordlengte naar minimaal 12 tekens"),
-                        "password-weak-length", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.weak_length.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.weak_length.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.weak_length.actions", null, locale)),
+                        "password-weak-length", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: strong password not required
@@ -305,10 +326,10 @@ public class NotificationAggregationService {
                     .filter(p -> Boolean.FALSE.equals(p.strongPasswordRequired()))
                     .count();
             if (ousNoStrong > 0) {
-                notifications.add(create(++id, "warning", "Sterke wachtwoorden niet verplicht",
-                        ousNoStrong + " organisatie-eenheid(en) vereisen geen sterke wachtwoorden.",
-                        List.of("Schakel sterke wachtwoorden in voor alle organisatie-eenheden"),
-                        "password-strong-not-required", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_strong.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.no_strong.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.no_strong.actions", null, locale)),
+                        "password-strong-not-required", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: password never expires
@@ -316,18 +337,18 @@ public class NotificationAggregationService {
                     .filter(p -> p.expirationDays() == null || p.expirationDays() == 0)
                     .count();
             if (ousNoExpiry > 0) {
-                notifications.add(create(++id, "warning", "Wachtwoorden verlopen nooit",
-                        ousNoExpiry + " organisatie-eenheid(en) hebben geen wachtwoordverloop.",
-                        List.of("Stel een wachtwoordverloop in voor betere beveiliging"),
-                        "password-never-expires", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_expiry.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.no_expiry.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.no_expiry.actions", null, locale)),
+                        "password-never-expires", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
 
             // Warning: admins without security keys
             if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
-                notifications.add(create(++id, "warning", "Admins zonder security key",
-                        adminsWithoutKeys.size() + " admin(s) hebben geen hardware security key (2FA omzeiling risico).",
-                        List.of("Vereis security keys voor alle beheerdersaccounts"),
-                        "password-admins-no-security-keys", "password-settings", "Wachtwoordinstellingen", "/password-settings"));
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.without_keys.title", null, locale),
+                        messageSource.getMessage("notifications.password_settings.without_keys.description", new Object[]{ousWithout2Sv}, locale),
+                        List.of(messageSource.getMessage("notifications.password_settings.without_keys.actions", null, locale)),
+                        "password-admins-no-security-keys", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
         }
 

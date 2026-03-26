@@ -3,16 +3,16 @@
 >
   <header class="flex justify-between items-start p-6 pt-4 gap-4">
     <div class="flex-1">
-      <h3 class="m-0 text-2xl font-medium text-gray-800">Profiel</h3>
+      <h3 class="m-0 text-2xl font-medium text-gray-800">{{ 'profile' | transloco }}</h3>
       <p class="mt-1 text-sm text-gray-500 leading-snug">
-        Bekijk uw profielinformatie en account instellingen.
+        {{ 'profile.header' | transloco }}
       </p>
     </div>
     <button
       type="button"
       class="bg-transparent border-none text-2xl leading-none text-gray-600 cursor-pointer p-1 shrink-0 hover:text-gray-900"
       (click)="close()"
-      aria-label="Sluiten"
+      aria-label="{{ 'closing' | transloco }}"
     >
       <i-lucide [img]="Icons.X" size="18" />
     </button>
@@ -41,9 +41,9 @@
       <p class="m-0 text-sm text-gray-500 text-center">{{ userService.getRole(user) }}</p>
 
       <div class="w-full mt-6 py-4 border-t border-b border-gray-200 flex flex-col gap-1">
-        <span class="text-[11px] font-medium tracking-wider text-gray-400 uppercase"
-          >E-MAILADRES</span
-        >
+        <span class="text-[11px] font-medium tracking-wider text-gray-400 uppercase">{{
+          'email' | transloco
+        }}</span>
         <span class="text-[15px] text-gray-800">{{ user.email }}</span>
       </div>
 
@@ -55,7 +55,7 @@
           class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[#3abfad] text-white hover:opacity-90 transition-opacity"
         >
           <i-lucide [img]="Icons.ExternalLink" size="18" />
-          Mijn Google Account beheren
+          {{ 'profile.manage-account' | transloco }}
         </a>
         <button
           type="button"
@@ -63,13 +63,13 @@
           (click)="logout()"
         >
           <i-lucide [img]="Icons.LogOut" size="18" />
-          Uitloggen
+          {{ 'logout' | transloco }}
         </button>
       </div>
     </div>
   } @else {
     <div class="px-6 pb-6 flex flex-col items-center">
-      <p class="my-8 text-sm text-gray-500">Bezig met laden...</p>
+      <p class="my-8 text-sm text-gray-500">{{ 'loading' | transloco }}...</p>
     </div>
   }
 </div>

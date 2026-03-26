@@ -5,9 +5,10 @@ export type SharedDrive = {
   externalMembers: number;
   totalOrganizers: number;
   createdTime: string;
+  parsedTime: string;
   onlyDomainUsersAllowed: boolean;
   onlyMembersCanAccess: boolean;
   risk: Risk;
 };
 
-type Risk = 'Laag' | 'Middel' | 'Hoog';
+type Risk = 'low' | 'middle' | 'high';

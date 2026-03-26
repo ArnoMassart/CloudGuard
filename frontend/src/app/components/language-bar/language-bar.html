@@ -1,0 +1,16 @@
+<div class="relative inline-flex items-center w-full">
+
+    <img [src]="getSelectedFlag()" class="w-5 h-5 absolute left-3 pointer-events-none" alt="Huidige taal" />
+
+    <select [(ngModel)]="activeLang" (ngModelChange)="changeLanguage($event)"
+        class="pl-10 pr-8 py-2 w-full border-2 border-muted/50 rounded-md bg-navbar-background text-white appearance-none cursor-pointer">
+        <option *ngFor="let language of languages" [value]="language.value">
+            {{ language.label }}
+        </option>
+    </select>
+
+    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-white">
+        ▼
+    </div>
+
+</div>

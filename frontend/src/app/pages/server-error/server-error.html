@@ -14,27 +14,28 @@
                 <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-orange-500"></lucide-icon>
             </div>
 
-            <h2 class="flex justify-center text-xl font-semibold">Systeem onbereikbaar</h2>
+            <h2 class="flex justify-center text-xl">{{ 'server-error.title' | transloco }}</h2>
 
-            <span class="flex items-center justify-center text-center text-black/60 mb-3 text-sm px-2">
-                We kunnen momenteel geen verbinding maken met de CloudGuard servers. Het systeem is mogelijk in
-                onderhoud of tijdelijk offline.
+            <span class="flex items-center justify-center text-center text-black/50 mb-3 px-2">
+                {{ 'server-error.description' | transloco }}
             </span>
 
             <div
-                class="bg-[#f9fafb] py-3 px-3 mb-3 text-black/60 text-center text-[13px] rounded-lg border-muted border">
-                <span class="font-semibold text-black">Status: </span>
-                <span>Onze technici zijn op de hoogte. Probeer het over enkele minuten opnieuw.</span>
+                class="bg-[#f9fafb] py-3 px-3 mb-3 text-black/50 text-center text-[13px] rounded-lg border-muted border">
+                <span class="font-semibold">{{ 'state' | transloco }}: </span>
+                <span>{{ 'server-error.state.description' | transloco }}</span>
             </div>
 
             <button (click)="tryAgain()"
-                class="bg-primary text-white w-full p-2.5 rounded-lg hover:bg-primary/90 transition-colors cursor-pointer font-medium">
-                Probeer opnieuw
+                class="bg-primary text-white w-full p-2.5 rounded-lg hover:bg-primary/80 transition-colors cursor-pointer font-medium">
+                {{ 'server-error.try-again' | transloco }}
             </button>
         </div>
     </div>
 
-    <div class="mt-auto mb-8 text-center text-sm text-white/60">
-        <p class="mb-1">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
+    <div class="mb-8 text-center text-sm text-white/60 mt-8">
+        <app-language-bar />
+
+        <p class="mb-1 pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
     </div>
 </div>

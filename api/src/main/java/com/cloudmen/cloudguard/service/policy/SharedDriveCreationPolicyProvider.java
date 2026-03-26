@@ -3,9 +3,12 @@ package com.cloudmen.cloudguard.service.policy;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -20,9 +23,11 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
     private static final String SETTING_TYPE = "settings/drive_and_docs.shared_drive_creation";
 
     private final PolicyApiCacheService policyCache;
+    private final MessageSource messageSource;
 
-    public SharedDriveCreationPolicyProvider(PolicyApiCacheService policyCache) {
+    public SharedDriveCreationPolicyProvider(PolicyApiCacheService policyCache, MessageSource messageSource) {
         this.policyCache = policyCache;
+        this.messageSource = messageSource;
     }
 
     @Override
@@ -68,21 +73,22 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
             }
         }
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         if (best == null) {
-            String baseExplanation = "Deze beleidsregel bepaalt of gebruikers in deze organisatie-eenheid nieuwe gedeelde drives mogen aanmaken.";
-            String dynamicExplanation = "Er is geen beleid ingesteld voor deze OU.";
-            String inheritanceExplanation = "Geen beleid voor gedeelde drive-aanmaak gevonden voor deze OU of bovenliggende OUs.";
+            String baseExplanation = messageSource.getMessage("orgUnits.shared_drive.create.base_explanation", null, locale);
+            String dynamicExplanation = messageSource.getMessage("orgUnits.shared_drive.create.dynamic_explanation", null, locale);
+            String inheritanceExplanation = messageSource.getMessage("orgUnits.shared_drive.create.inheritance_explanation", null, locale);
 
             return new OrgUnitPolicyDto(
                     key(),
-                    "Gedeelde drives aanmaken",
-                    "Wie mag nieuwe gedeelde drives aanmaken",
-                    "Niet geconfigureerd",
+                    messageSource.getMessage("orgUnits.shared_drive.create.title", null, locale),
+                    messageSource.getMessage("orgUnits.shared_drive.create.description", null, locale),
+                    messageSource.getMessage("orgUnits.not_configured", null, locale),
                     "bg-slate-100 text-slate-700",
                     baseExplanation + " " + dynamicExplanation,
                     inheritanceExplanation,
                     false,
-                    "Klik hier om deze instellingen aan te passen",
                     "apps",
                     null
             );
@@ -96,24 +102,24 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         String statusClass;
         String description;
 
-        String baseExplanation = "Deze instelling bepaalt wie nieuwe gedeelde drives mag aanmaken. Gedeelde drives maken samenwerking eenvoudiger, maar zonder beperking kunnen ze zorgen voor ongecontroleerde verspreiding van data.";
+        String baseExplanation = messageSource.getMessage("orgUnits.shared_drive.base_explanation", null, locale);
         String inheritanceExplanation;
 
         if (allowedNode.isMissingNode() || allowedNode.isNull()) {
-            status = "Kon niet bepalen";
+            status = messageSource.getMessage("orgUnits.shared_drive.status.not_found", null, locale);
             statusClass = "bg-slate-100 text-slate-700";
-            description = "Het beleid kon niet correct worden uitgelezen";
-            inheritanceExplanation = "Beleid gevonden maar waarde ontbreekt in API-response.";
+            description = messageSource.getMessage("orgUnits.shared_drive.description.not_found", null, locale);
+            inheritanceExplanation = messageSource.getMessage("orgUnits.shared_drive.inheritance.not_found", null, locale);
         } else {
             boolean allowed = allowedNode.asBoolean();
-            status = allowed ? "Toegestaan" : "Niet toegestaan";
+            status = allowed ? messageSource.getMessage("allowed", null, locale) : messageSource.getMessage("not_allowed", null, locale);
             statusClass = allowed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
             description = allowed
-                    ? "Gebruikers mogen nieuwe gedeelde drives aanmaken"
-                    : "Gebruikers mogen geen nieuwe gedeelde drives aanmaken";
+                    ? messageSource.getMessage("orgUnits.shared_drive.description.allowed", null, locale)
+                    : messageSource.getMessage("orgUnits.shared_drive.description.not_allowed", null, locale);
             inheritanceExplanation = inherited
-                    ? "Overgenomen van bovenliggende OU."
-                    : "Rechtstreeks ingesteld op deze OU.";
+                    ? messageSource.getMessage("orgUnits.shared_drive.inherited", null, locale)
+                    : messageSource.getMessage("orgUnits.shared_drive.not_inherited", null, locale);
         }
 
         return new OrgUnitPolicyDto(
@@ -125,7 +131,6 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
                 baseExplanation,
                 inheritanceExplanation,
                 inherited,
-                "Klik hier om deze instellingen aan te passen",
                 "https://admin.google.com/u/1/ac/managedsettings/55656082996",
                 null
         );

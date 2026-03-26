@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SectionTopCard } from '../../../components/section-top-card/section-top-card';
 import { PageHeader } from '../../../components/page-header/page-header';
@@ -6,11 +6,17 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { PasswordSettingsService } from '../../../services/password-settings-service';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
-import { OrgUnit2Sv, OuPasswordPolicy, PasswordSettings as PasswordSettingsData } from '../../../models/password/PasswordSettings';
+import {
+  OrgUnit2Sv,
+  OuPasswordPolicy,
+  PasswordSettings as PasswordSettingsData,
+} from '../../../models/password/PasswordSettings';
 import { AdminWithSecurityKey } from '../../../models/admin-security-keys/AdminWithSecurityKey';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-password-settings',
@@ -21,13 +27,15 @@ import { LucideAngularModule } from 'lucide-angular';
     PageWarnings,
     PageWarningsItem,
     LucideAngularModule,
+    TranslocoPipe,
   ],
   templateUrl: './password-settings.html',
 })
-export class PasswordSettings implements OnInit {
+export class PasswordSettings implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
   readonly #passwordSettingsService = inject(PasswordSettingsService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #translocoService = inject(TranslocoService);
 
   readonly data = signal<PasswordSettingsData | null>(null);
   readonly loading = signal(true);
@@ -39,18 +47,14 @@ export class PasswordSettings implements OnInit {
   readonly warningsExpanded = signal(true);
   readonly criticalWarningsExpanded = signal(true);
 
-  readonly hasAdminsWithoutSecurityKeys = computed(() =>
-    (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0
+  readonly hasAdminsWithoutSecurityKeys = computed(
+    () => (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0
   );
   readonly hasPasswordLengthWeak = computed(() =>
-    (this.data()?.passwordPoliciesByOu ?? []).some(
-      (p) => p.minLength != null && p.minLength < 12
-    )
+    (this.data()?.passwordPoliciesByOu ?? []).some((p) => p.minLength != null && p.minLength < 12)
   );
   readonly hasStrongPasswordNotRequired = computed(() =>
-    (this.data()?.passwordPoliciesByOu ?? []).some(
-      (p) => p.strongPasswordRequired === false
-    )
+    (this.data()?.passwordPoliciesByOu ?? []).some((p) => p.strongPasswordRequired === false)
   );
   readonly hasPasswordNeverExpires = computed(() =>
     (this.data()?.passwordPoliciesByOu ?? []).some(
@@ -71,8 +75,15 @@ export class PasswordSettings implements OnInit {
   readonly hasCriticalWarnings = computed(() => this.has2SvNotEnforced());
   readonly hasMultipleWarnings = computed(
     () =>
-      [this.hasAdminsWithoutSecurityKeys(), this.hasPasswordLengthWeak(), this.hasStrongPasswordNotRequired(), this.hasPasswordNeverExpires()].filter(Boolean).length > 1
+      [
+        this.hasAdminsWithoutSecurityKeys(),
+        this.hasPasswordLengthWeak(),
+        this.hasStrongPasswordNotRequired(),
+        this.hasPasswordNeverExpires(),
+      ].filter(Boolean).length > 1
   );
+
+  #langSubscription?: Subscription;
 
   toggleWarnings(): void {
     this.warningsExpanded.update((v) => !v);
@@ -91,7 +102,15 @@ export class PasswordSettings implements OnInit {
   }
 
   ngOnInit(): void {
-    this.#load();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#load();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   #load(showLoadingScreen = true, onComplete?: () => void): void {
@@ -138,8 +157,12 @@ export class PasswordSettings implements OnInit {
   }
 
   hasPolicyData(policy: OuPasswordPolicy): boolean {
-    return policy.minLength != null || policy.expirationDays != null ||
-      policy.strongPasswordRequired != null || policy.reusePreventionCount != null;
+    return (
+      policy.minLength != null ||
+      policy.expirationDays != null ||
+      policy.strongPasswordRequired != null ||
+      policy.reusePreventionCount != null
+    );
   }
 
   openAdminPasswordSettings(): void {
@@ -153,7 +176,7 @@ export class PasswordSettings implements OnInit {
   }
 
   formatOrgUnit(path: string): string {
-    if (!path || path === '/') return 'Hoofdorganisatie';
+    if (!path || path === '/') return 'password-settings.head-organisation';
     return path.startsWith('/') ? path.slice(1) : path;
   }
 
@@ -162,14 +185,14 @@ export class PasswordSettings implements OnInit {
     return `https://admin.google.com/u/1/ac/users/${encodeURIComponent(email.trim())}`;
   }
 
-  formatForcedChangeReason(reason: string): string {
-    if (reason === 'changePasswordAtNextLogin') return 'Verplicht bij volgende login';
-    return reason || 'Onbekend';
-  }
-
   openSecurityScoreDetail(): void {
     const settings = this.data();
-    const breakdown = settings?.securityScoreBreakdown ?? this.#securityScoreDetail.createSimpleBreakdown(settings?.securityScore ?? 0, 'Wachtwoord Instellingen');
-    this.#securityScoreDetail.open(breakdown, 'Wachtwoord Instellingen');
+    const breakdown =
+      settings?.securityScoreBreakdown ??
+      this.#securityScoreDetail.createSimpleBreakdown(
+        settings?.securityScore ?? 0,
+        'security-score.password-settings'
+      );
+    this.#securityScoreDetail.open(breakdown, 'security-score.password-settings');
   }
 }

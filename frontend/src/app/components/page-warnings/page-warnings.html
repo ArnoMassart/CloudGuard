@@ -12,7 +12,7 @@
 
                 <span [class.text-orange-700]="!isCritical" [class.text-red-700]="isCritical"
                     class="font-medium text-base">
-                    {{ title || (hasMultipleWarnings ? 'Beveiligingswaarschuwingen' : 'Beveiligingswaarschuwing') }}
+                    {{ title || ((hasMultipleWarnings ? 'warnings' : 'warning') | transloco) }}
                 </span>
             </div>
 
@@ -33,7 +33,7 @@
     @if (isDashboard) {
     <button (click)="navigateToNotifications()"
         class="cursor-pointer bg-red-600 text-white hover:bg-red-600/80 py-2 px-4 rounded-lg flex gap-2 items-center text-[13px] shrink-0 ml-4">
-        <span>Bekijk meldingen</span>
+        <span>{{ 'page-warnings.view-notifications' | transloco }}</span>
     </button>
     }
 </div>

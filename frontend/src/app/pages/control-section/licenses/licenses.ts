@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +16,8 @@ import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOvervie
 import { MfaStats } from '../../../models/licenses/MfaStats';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-licenses',
@@ -29,17 +31,19 @@ import { PageWarningsItem } from '../../../components/page-warnings/page-warning
     BaseChartDirective,
     PageWarnings,
     PageWarningsItem,
+    TranslocoPipe,
   ],
   templateUrl: './licenses.html',
   styleUrl: './licenses.css',
 })
-export class Licenses implements OnInit {
+export class Licenses implements OnInit, OnDestroy {
   // ==========================================
   // INJECTIONS
   // ==========================================
   readonly Icons = AppIcons;
-  readonly #licenseService = inject(LicenseService);
   readonly UtilityMethods = UtilityMethods;
+  readonly #licenseService = inject(LicenseService);
+  readonly #translocoService = inject(TranslocoService);
 
   constructor() {
     Chart.register(...registerables);
@@ -82,7 +86,6 @@ export class Licenses implements OnInit {
     datasets: [
       {
         data: [],
-        label: 'Toegewezen',
         backgroundColor: this.#colors.toegewezenBlue,
         borderColor: this.#colors.toegewezenBlue,
         borderWidth: 0,
@@ -137,7 +140,6 @@ export class Licenses implements OnInit {
 
   readonly pieChartData: ChartData<'pie'> = {
     // Re-order labels to match the clockwise flow: Blue -> Green -> Orange
-    labels: ['2FA Actief', '2FA Inactief'],
     datasets: [
       {
         data: [],
@@ -166,13 +168,22 @@ export class Licenses implements OnInit {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
+  #langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#loadPageOverview();
-    this.#loadLicenses();
+    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.#loadPageOverview();
+      this.#loadLicenses();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.#langSubscription) {
+      this.#langSubscription.unsubscribe();
+    }
   }
 
   // ==========================================
@@ -200,8 +211,6 @@ export class Licenses implements OnInit {
 
         this.#updateBarChart();
         this.#updatePieChart();
-
-        console.log(this.pieChartData.datasets);
 
         this.isLoading.set(false);
       },
@@ -231,6 +240,7 @@ export class Licenses implements OnInit {
     this.barChartData.labels = this.licenseTypes().map((l) => l.skuName);
 
     this.barChartData.datasets[0].data = this.licenseTypes().map((l) => l.totalAssigned);
+    this.barChartData.datasets[0].label = this.#translocoService.translate('assigned');
 
     if (this.barChartOptions?.scales?.['y']) {
       const yScale = this.barChartOptions.scales['y'] as any;
@@ -246,6 +256,11 @@ export class Licenses implements OnInit {
   }
 
   #updatePieChart() {
+    this.pieChartData.labels = [
+      '2FA ' + this.#translocoService.translate('active-2'),
+      '2FA ' + this.#translocoService.translate('inactive-caps'),
+    ];
+
     this.pieChartData.datasets[0].data = [
       this.mfaStats()?.activeCount!,
       this.mfaStats()?.inactiveCount!,

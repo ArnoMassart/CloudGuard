@@ -2,6 +2,7 @@ import { Component, inject, Input } from '@angular/core';
 import { AppIcons } from '../../shared/AppIcons';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 import { Router } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-security-component',
@@ -13,7 +14,7 @@ export class SecurityComponent {
   readonly Icons = AppIcons;
   readonly #router = inject(Router);
 
-  @Input() Label: string = 'Gebruikers';
+  @Input() Label: string = '';
   @Input() Value: number | undefined = 68;
   @Input() Icon: LucideIconData = this.Icons.Users;
   @Input() NoValueShow: boolean = false;
