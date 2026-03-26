@@ -22,6 +22,7 @@ import {
   Funnel,
   Globe,
   HardDrive,
+  Info,
   Key,
   Loader,
   Lock,
@@ -71,6 +72,7 @@ export class AppIcons {
   static readonly Funnel = Funnel;
   static readonly Globe = Globe;
   static readonly HardDrive = HardDrive;
+  static readonly Info = Info;
   static readonly Key = Key;
   static readonly Loader = Loader;
   static readonly Lock = Lock;

@@ -48,7 +48,10 @@ export class SecurityScoreDetailComponent {
     return '#e7000b';
   }
 
-  getFactorStyles(factor: { severity: string }): { borderColor: string; bg: string } {
+  getFactorStyles(factor: SecurityScoreFactor): { borderColor: string; bg: string } {
+    if (factor.muted) {
+      return { borderColor: 'rgba(107, 114, 128, 0.35)', bg: 'rgba(156, 163, 175, 0.08)' };
+    }
     const s = factor.severity;
     if (s === 'success') return { borderColor: 'rgba(58, 191, 173, 0.3)', bg: 'rgba(58, 191, 173, 0.06)' };
     if (s === 'warning') return { borderColor: 'rgba(214, 149, 24, 0.3)', bg: 'rgba(214, 149, 24, 0.06)' };
@@ -56,17 +59,27 @@ export class SecurityScoreDetailComponent {
   }
 
   getFactorIcon(factor: SecurityScoreFactor): LucideIconData {
+    if (factor.muted) return this.Icons.EyeOff;
     const s = factor.severity;
     if (s === 'success') return this.Icons.CircleCheck;
     if (s === 'warning') return this.Icons.TriangleAlert;
     return this.Icons.CircleX;
   }
 
-  getProgressColor(factor: { severity: string }): string {
+  getProgressColor(factor: SecurityScoreFactor): string {
+    if (factor.muted) return '#9ca3af';
     const s = factor.severity;
     if (s === 'success') return '#3abfad';
     if (s === 'warning') return '#d69518';
     return '#FF3B3B';
+  }
+
+  factorTitleClass(factor: SecurityScoreFactor): string {
+    return factor.muted ? 'text-gray-400' : 'text-gray-900';
+  }
+
+  factorDescClass(factor: SecurityScoreFactor): string {
+    return factor.muted ? 'text-gray-400' : 'text-gray-600';
   }
 
   close(): void {

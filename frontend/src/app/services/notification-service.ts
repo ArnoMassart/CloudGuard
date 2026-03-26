@@ -76,21 +76,22 @@ export class NotificationService {
         );
       case 'drive-orphan':
       case 'drive-external':
+      case 'drive-outside-domain':
+      case 'drive-non-member-access':
         return this.#driveService.getDrives(100).pipe(
           map((r) => {
             if (notification.notificationType === 'drive-orphan') {
               return r.drives.filter((d) => d.totalOrganizers <= 0).map((d) => d.name);
             }
-            return r.drives
-              .filter((d) => d.externalMembers > 0)
-              .map(
-                (d) =>
-                  `${d.name} (${d.externalMembers} ${
-                    d.externalMembers > 1
-                      ? this.#translocoService.translate('external-members')
-                      : this.#translocoService.translate('external-member')
-                  })`
-              );
+            if (notification.notificationType === 'drive-external') {
+              return r.drives
+                .filter((d) => d.externalMembers > 0)
+                .map((d) => `${d.name} (${d.externalMembers} this.#translocoService.translate('external-members')`);
+            }
+            if (notification.notificationType === 'drive-outside-domain') {
+              return r.drives.filter((d) => !d.onlyDomainUsersAllowed).map((d) => d.name);
+            }
+            return r.drives.filter((d) => !d.onlyMembersCanAccess).map((d) => d.name);
           }),
           catchError(() => of([]))
         );

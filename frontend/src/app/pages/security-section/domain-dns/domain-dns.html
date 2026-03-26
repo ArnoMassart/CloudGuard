@@ -149,27 +149,27 @@
             <span class="text-sm text-gray-500 mt-1">{{ 'domain.security-checks.loading' | transloco }}...</span>
         </div>
         } @else if (rows().length > 0) {
-        @if (hasCriticalProblems() || hasWarnings()) {
-        <div class="mx-6 mt-6 mb-0 rounded-lg border p-4" [class.bg-red-50]="hasCriticalProblems()"
-            [class.border-red-200]="hasCriticalProblems()" [class.bg-amber-50]="!hasCriticalProblems() && hasWarnings()"
-            [class.border-amber-200]="!hasCriticalProblems() && hasWarnings()">
+        @if (showDnsCriticalBanner() || showDnsAttentionBanner()) {
+        <div class="mx-6 mt-6 mb-0 rounded-lg border p-4" [class.bg-red-50]="showDnsCriticalBanner()"
+            [class.border-red-200]="showDnsCriticalBanner()" [class.bg-amber-50]="showDnsAttentionBanner()"
+            [class.border-amber-200]="showDnsAttentionBanner()">
             <div class="flex items-start gap-3">
-                @if (hasCriticalProblems()) {
+                @if (showDnsCriticalBanner()) {
                 <i-lucide [img]="Icons.CircleX" size="20" class="text-red-600 shrink-0 mt-0.5" />
                 } @else {
                 <i-lucide [img]="Icons.TriangleAlert" size="20" class="text-amber-600 shrink-0 mt-0.5" />
                 }
                 <div>
-                    <p class="font-medium text-sm" [class.text-red-800]="hasCriticalProblems()"
-                        [class.text-amber-800]="!hasCriticalProblems() && hasWarnings()">
-                        @if (hasCriticalProblems()) {
+                    <p class="font-medium text-sm" [class.text-red-800]="showDnsCriticalBanner()"
+                        [class.text-amber-800]="showDnsAttentionBanner()">
+                        @if (showDnsCriticalBanner()) {
                         {{ 'domain.security-checks.critical-problems' | transloco }}
                         } @else {
                         {{ 'domain.security-checks.problems' | transloco }}
                         }
                     </p>
-                    <p class="text-sm mt-1" [class.text-red-700]="hasCriticalProblems()"
-                        [class.text-amber-700]="!hasCriticalProblems() && hasWarnings()">
+                    <p class="text-sm mt-1" [class.text-red-700]="showDnsCriticalBanner()"
+                        [class.text-amber-700]="showDnsAttentionBanner()">
                         {{ 'domain.security-checks.advices' | transloco }}
                     </p>
                 </div>

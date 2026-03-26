@@ -17,6 +17,8 @@ import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -43,6 +45,7 @@ public class NotificationAggregationService {
 
     private static final Set<String> NOTIFICATION_TYPES_WITH_DETAILS = Set.of(
             "user-control", "group-external", "oauth-high-risk", "drive-orphan", "drive-external",
+            "drive-outside-domain", "drive-non-member-access",
             "device-lockscreen", "device-encryption", "device-os", "device-integrity",
             "password-2sv-not-enforced", "password-weak-length", "password-strong-not-required",
             "password-never-expires", "password-admins-no-security-keys"
@@ -59,6 +62,7 @@ public class NotificationAggregationService {
     private final PasswordSettingsService passwordSettingsService;
     private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
+    private final UserSecurityPreferenceService preferenceService;
     private final MessageSource messageSource;
 
     public NotificationAggregationService(
@@ -73,7 +77,8 @@ public class NotificationAggregationService {
             MessageSource messageSource,
             PasswordSettingsService passwordSettingsService,
             DismissedNotificationService dismissedService,
-            NotificationFeedbackService feedbackService) {
+            NotificationFeedbackService feedbackService,
+            UserSecurityPreferenceService preferenceService) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -85,10 +90,13 @@ public class NotificationAggregationService {
         this.passwordSettingsService = passwordSettingsService;
         this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
+        this.preferenceService = preferenceService;
         this.messageSource = messageSource;
     }
 
     public NotificationsResponse getNotifications(String userId) {
+        Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
+
         List<NotificationDto> active = aggregateActive(userId);
         List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
         Set<String> dismissedKeys = dismissed.stream()
@@ -97,15 +105,21 @@ public class NotificationAggregationService {
         Set<String> feedbackKeys = feedbackService.getAllFeedbackKeys();
 
         List<NotificationDto> filtered = active.stream()
+                .filter(n -> !isHiddenByPreference(n.source(), n.notificationType(), disabledPreferenceKeys))
                 .filter(n -> !dismissedKeys.contains(n.source() + ":" + n.notificationType()))
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
         List<NotificationDto> dismissedDtos = dismissed.stream()
+                .filter(d -> !isHiddenByPreference(d.getSource(), d.getNotificationType(), disabledPreferenceKeys))
                 .map(this::toDismissedDto)
                 .toList();
 
         return new NotificationsResponse(filtered, dismissedDtos);
+    }
+
+    private boolean isHiddenByPreference(String source, String notificationType, Set<String> disabledPreferenceKeys) {
+        return PreferenceToNotificationMapping.isDisabledByPreference(source, notificationType, disabledPreferenceKeys);
     }
 
     public long getNotificationsCount(String userId) {
@@ -153,12 +167,14 @@ public class NotificationAggregationService {
         List<NotificationDto> notifications = new ArrayList<>();
         int id = 0;
 
-        UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail));
-        SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail));
-        DeviceOverviewResponse devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail));
-        GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail));
-        OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail));
-        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true));
+        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(adminEmail);
+
+        UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
+        SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
+        DeviceOverviewResponse devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail, disabled));
+        GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail, disabled));
+        OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail, disabled));
+        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true, disabled));
 
         DnsRecordResponseDto dns = getDnsData(adminEmail);
 
@@ -243,6 +259,18 @@ public class NotificationAggregationService {
                         messageSource.getMessage("notifications.drives.external.description", new Object[]{drives.externalMembersDriveCount()}, locale),
                         List.of(messageSource.getMessage("notifications.drives.external.actions", null, locale)),
                         "drive-external", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
+            }
+            if (drives.notOnlyDomainUsersAllowedCount() > 0) {
+                notifications.add(create(++id, "warning", "Drives staan delen buiten het domein toe",
+                        drives.notOnlyDomainUsersAllowedCount() + " drive(s) staan delen met gebruikers buiten uw domein toe.",
+                        List.of("Beperk gedeelde drives tot alleen gebruikers van uw organisatie"),
+                        "drive-outside-domain", "shared-drives", "Gedeelde Drives", "/shared-drives"));
+            }
+            if (drives.notOnlyMembersCanAccessCount() > 0) {
+                notifications.add(create(++id, "warning", "Drives met toegang voor niet-leden",
+                        drives.notOnlyMembersCanAccessCount() + " drive(s) kunnen toegang verlenen aan niet-leden.",
+                        List.of("Beperk toegang tot leden van de drive"),
+                        "drive-non-member-access", "shared-drives", "Gedeelde Drives", "/shared-drives"));
             }
         }
 
@@ -375,7 +403,8 @@ public class NotificationAggregationService {
             if (primaryDomain == null || primaryDomain.isBlank()) {
                 return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
             }
-            return dnsRecordsService.getImportantRecords(primaryDomain, "google");
+            return dnsRecordsService.getImportantRecords(primaryDomain, "google",
+                    preferenceService.getDnsImportanceOverrides(adminEmail));
         } catch (Exception e) {
             log.warn("Failed to fetch DNS data for notifications: {}", e.getMessage());
             return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);

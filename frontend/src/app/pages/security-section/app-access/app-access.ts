@@ -13,6 +13,9 @@ import { AggregatedAppDto } from '../../../models/o-auth/AggregatedAppDto';
 import { OAuthOverviewResponse } from '../../../models/o-auth/OAuthOverviewResponse';
 import { Risk } from '../../../models/o-auth/Risk';
 import { FilterOption } from '../../../models/FilterOption';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -43,6 +46,7 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly UtilityMethods = UtilityMethods;
   readonly #oAuthService = inject(OAuthService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -68,29 +72,44 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly allHighRiskApps = signal(0);
   readonly allNotHighRiskApps = signal(0);
 
-  readonly filterOptions = computed<FilterOption[]>(() => [
-    {
-      value: 'all',
-      label: 'Alle apps',
-      count: this.allFilteredApps(),
-      activeClass: 'bg-[#3ABFAD] text-white',
-      inactiveClass: '',
-    },
-    {
-      value: 'high',
-      label: 'Hoog risico',
-      count: this.allHighRiskApps(),
-      activeClass: 'bg-red-100 text-red-800',
-      inactiveClass: '',
-    },
-    {
-      value: 'not-high',
-      label: 'Geen risico',
-      count: this.allNotHighRiskApps(),
-      activeClass: 'bg-emerald-100 text-emerald-800',
-      inactiveClass: '',
-    },
-  ]);
+  readonly highRiskAlertsEnabled = computed(
+    () => !this.#preferencesFacade.isDisabled('app-access', 'highRisk'),
+  );
+
+  readonly kpiHighRiskAppsColors = computed(() =>
+    kpiColors(
+      this.pageOverview()?.totalHighRiskApps ?? 0,
+      !this.highRiskAlertsEnabled(),
+      KPI_COLORS.okBlue, KPI_COLORS.alertRed,
+    )
+  );
+
+  readonly filterOptions = computed<FilterOption[]>(() => {
+    const highRiskChipMuted = !this.highRiskAlertsEnabled();
+    return [
+      {
+        value: 'all',
+        label: 'Alle apps',
+        count: this.allFilteredApps(),
+        activeClass: 'bg-[#3ABFAD] text-white',
+        inactiveClass: '',
+      },
+      {
+        value: 'high',
+        label: 'Hoog risico',
+        count: this.allHighRiskApps(),
+        activeClass: highRiskChipMuted ? 'bg-[#f3f4f6] text-[#6b7280]' : 'bg-red-100 text-red-800',
+        inactiveClass: '',
+      },
+      {
+        value: 'not-high',
+        label: 'Geen risico',
+        count: this.allNotHighRiskApps(),
+        activeClass: 'bg-emerald-100 text-emerald-800',
+        inactiveClass: '',
+      },
+    ];
+  });
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -211,13 +230,9 @@ export class AppAccess implements OnInit, OnDestroy {
   }
 
   #loadPageOverview(): void {
-    this.#oAuthService.getOAuthPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
-      },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+    this.#preferencesFacade.loadWithPrefs$(this.#oAuthService.getOAuthPageOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
+      error: (err) => console.error('Failed to load page overview', err),
     });
   }
 

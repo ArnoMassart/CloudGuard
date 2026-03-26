@@ -8,9 +8,11 @@
                 <app-section-top-card class="flex-1" Title="{{ 'app-access.connected-apps' | transloco }}"
                     [Value]="pageOverview()?.totalThirdPartyApps" />
 
-                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}"
-                    [Value]="pageOverview()?.totalHighRiskApps" BackgroundColor="#ffe2e2" IconColor="#e7000b"
-                    TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}" [Value]="pageOverview()?.totalHighRiskApps"
+                    [BackgroundColor]="kpiHighRiskAppsColors().bg"
+                    [IconColor]="kpiHighRiskAppsColors().icon"
+                    [TextColor]="kpiHighRiskAppsColors().text"
+                    [Icon]="(pageOverview()?.totalHighRiskApps ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
 
                 <app-section-top-card class="flex-1" Title="{{ 'app-access.permissions' | transloco }}"
                     [Value]="pageOverview()?.totalPermissionsGranted" BackgroundColor="#f3e8ff" IconColor="#9810fa"
@@ -56,8 +58,12 @@
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex items-center gap-3 min-w-0 flex-1">
                                 <div class="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
-                                    [class.text-emerald-600]="!app.isHighRisk" [class.bg-[#dbfce7]]="!app.isHighRisk"
-                                    [class.text-[#e7000b]]="app.isHighRisk" [class.bg-[#ffe2e2]]="app.isHighRisk">
+                                    [class.text-emerald-600]="!app.isHighRisk"
+                                    [class.bg-[#dbfce7]]="!app.isHighRisk"
+                                    [class.text-[#e7000b]]="app.isHighRisk && highRiskAlertsEnabled()"
+                                    [class.bg-[#ffe2e2]]="app.isHighRisk && highRiskAlertsEnabled()"
+                                    [class.text-[#6b7280]]="app.isHighRisk && !highRiskAlertsEnabled()"
+                                    [class.bg-[#f3f4f6]]="app.isHighRisk && !highRiskAlertsEnabled()">
                                     <i-lucide [img]="!app.isHighRisk ? Icons.ShieldCheck : Icons.ShieldAlert"
                                         size="24" />
                                 </div>
@@ -85,10 +91,16 @@
                                     {{ app.isAnonymous ? ('app-access.anonymous-app' | transloco) : '' }}
                                 </div>
                                 }
-                                @if (app.isHighRisk) {
+                                @if (app.isHighRisk && highRiskAlertsEnabled()) {
                                 <div
                                     class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100">
                                     {{ app.isHighRisk ? ('high-risk' | transloco) : '' }}
+                                </div>
+                                }
+                                @if (app.isHighRisk && !highRiskAlertsEnabled()) {
+                                <div
+                                    class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-[#6b7280] bg-[#f3f4f6]">
+                                    Hoog risico
                                 </div>
                                 }
                                 <i-lucide [img]="
@@ -138,25 +150,33 @@
                         @if (app.dataAccess.length > 0) {
                         <div class="flex flex-col gap-2 mt-2">
                             @for (access of app.dataAccess; track $index) {
-                            <div class="flex gap-3 items-center rounded-xl p-2 border" [class.bg-gray-50]="!access.risk"
-                                [class.border-gray-200/50]="!access.risk" [class.bg-red-50]="access.risk"
-                                [class.border-red-200/50]="access.risk">
+                            <div class="flex gap-3 items-center rounded-xl p-2 border"
+                                [class.bg-gray-50]="!access.risk"
+                                [class.bg-[#f3f4f6]]="access.risk && !highRiskAlertsEnabled()"
+                                [class.bg-red-50]="access.risk && highRiskAlertsEnabled()"
+                                [class.border-gray-200/50]="!access.risk || (access.risk && !highRiskAlertsEnabled())"
+                                [class.border-red-200/50]="access.risk && highRiskAlertsEnabled()">
                                 <i-lucide [img]="access.risk ? Icons.TriangleAlert : Icons.CircleCheck" size="15"
-                                    [class.text-muted-foreground]="!access.risk" [class.text-red-600]="access.risk" />
+                                    [class.text-muted-foreground]="!access.risk"
+                                    [class.text-red-600]="access.risk && highRiskAlertsEnabled()"
+                                    [class.text-[#6b7280]]="access.risk && !highRiskAlertsEnabled()" />
                                 <div class="flex flex-col">
                                     <span class="font-medium text-[13px] leading-tight pb-0.5"
-                                        [class.text-black]="!access.risk" [class.text-red-900]="access.risk">{{
+                                        [class.text-black]="!access.risk"
+                                        [class.text-red-900]="access.risk && highRiskAlertsEnabled()"
+                                        [class.text-[#6b7280]]="access.risk && !highRiskAlertsEnabled()">{{
                                         access.name }}</span>
                                     <span class="font-medium text-[11px] leading-tight"
                                         [class.text-muted-foreground]="!access.risk"
-                                        [class.text-red-700]="access.risk">{{ access.rights | transloco }}</span>
+                                        [class.text-red-700]="access.risk && highRiskAlertsEnabled()"
+                                        [class.text-[#6b7280]]="access.risk && !highRiskAlertsEnabled()">{{ access.rights | transloco }}</span>
                                 </div>
                             </div>
                             }
                         </div>
                         }
 
-                        @if (app.highRiskCount > 0) {
+                        @if (app.highRiskCount > 0 && highRiskAlertsEnabled()) {
                         <div
                             class="text-red-900 bg-red-50 flex flex-col gap-3 p-3 rounded-xl mt-5 border border-red-200/50">
                             <div class="flex gap-2 items-center font-medium">
@@ -181,7 +201,7 @@
                             <span class="text-[13px] font-normal">{{ 'app-access.manage-console' | transloco }}</span>
                             <i-lucide [img]="Icons.ExternalLink" size="12" />
                         </button>
-                        } @else if (app.isHighRisk) {
+                        } @else if (app.isHighRisk && highRiskAlertsEnabled()) {
                         <div
                             class="text-red-900 bg-red-50 flex gap-2 p-3 rounded-xl mt-5 border border-red-200/50 items-center">
                             <i-lucide [img]="Icons.TriangleAlert" size="15" />

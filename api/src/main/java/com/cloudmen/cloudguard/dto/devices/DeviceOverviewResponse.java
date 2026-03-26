@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.dto.devices;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 
 public record DeviceOverviewResponse(
         int totalDevices,
@@ -11,6 +12,6 @@ public record DeviceOverviewResponse(
         int encryptionCount,
         int osVersionCount,
         int integrityCount,
-        SecurityScoreBreakdownDto securityScoreBreakdown
-) {
-}
+        SecurityScoreBreakdownDto securityScoreBreakdown,
+        SectionWarningsDto warnings
+) {}

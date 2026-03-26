@@ -3,7 +3,10 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.devices.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
+import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.cloudmen.cloudguard.utility.UtilityFunctions;
@@ -62,7 +65,9 @@ public class GoogleDeviceService {
 
     public DevicePageResponse getDevicesPaged(
             String loggedInEmail, String pageToken, int size,
-            String filterStatusStr, String filterType) {
+            String filterStatusStr, String filterType, Set<String> disabledKeys) {
+
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
 
         List<DeviceDetail> filteredList = getAllMappedDevices(loggedInEmail);
         DeviceStatus filterStatus = DeviceStatus.fromString(filterStatusStr);
@@ -88,8 +93,12 @@ public class GoogleDeviceService {
                 ? Collections.emptyList()
                 : filteredList.subList(startIndex, endIndex);
 
+        List<DeviceDetail> adjustedPage = pagedDevices.stream()
+                .map(d -> applyPreferenceAdjustedCompliance(d, off))
+                .toList();
+
         String nextTokenToReturn = (endIndex < totalDevices) ? String.valueOf(page + 1) : null;
-        return new DevicePageResponse(pagedDevices, nextTokenToReturn);
+        return new DevicePageResponse(adjustedPage, nextTokenToReturn);
     }
 
     public List<String> getUniqueDeviceTypes(String loggedInEmail) {
@@ -112,6 +121,11 @@ public class GoogleDeviceService {
     }
 
     public DeviceOverviewResponse getDevicesPageOverview(String loggedInEmail) {
+        return getDevicesPageOverview(loggedInEmail, Set.of());
+    }
+
+    public DeviceOverviewResponse getDevicesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         List<DeviceDetail> allDevices = getAllMappedDevices(loggedInEmail);
 
         int totalDevices = allDevices.size();
@@ -124,20 +138,26 @@ public class GoogleDeviceService {
         int totalOsVersionCount = 0;
         int totalIntegrityCount = 0;
 
+        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "lockscreen");
+        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "encryption");
+        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "osVersion");
+        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "integrity");
+
         for (DeviceDetail device : allDevices) {
             String status = device.status();
             if ("APPROVED".equalsIgnoreCase(status) || "ACTIVE".equalsIgnoreCase(status) || "PROVISIONED".equalsIgnoreCase(status)) {
                 approvedDevices++;
             }
 
-            totalScoreSum += device.complianceScore();
+            int adj = adjustedDeviceComplianceScore(device, ignLock, ignEnc, ignOs, ignInt);
+            totalScoreSum += adj;
 
-            if (!device.lockSecure()) totalLockScreenCount++;
-            if (!device.encSecure()) totalEncryptionCount++;
-            if (!device.intSecure()) totalIntegrityCount++;
-            if (!device.osSecure()) totalOsVersionCount++;
+            if (!ignLock && !device.lockSecure()) totalLockScreenCount++;
+            if (!ignEnc && !device.encSecure()) totalEncryptionCount++;
+            if (!ignInt && !device.intSecure()) totalIntegrityCount++;
+            if (!ignOs && !device.osSecure()) totalOsVersionCount++;
 
-            if (device.complianceScore() < 75) {
+            if (adj < 75) {
                 nonCompliantDevices++;
             }
         }
@@ -145,31 +165,88 @@ public class GoogleDeviceService {
         int securityScore = totalDevices == 0 ? 100 : (int) Math.round((double) totalScoreSum / totalDevices);
 
         SecurityScoreBreakdownDto breakdown = buildDevicesBreakdown(
-                totalDevices, totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount, securityScore);
+                totalDevices, totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,
+                securityScore, ignLock, ignEnc, ignOs, ignInt);
+
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
+                .check("lockScreenWarning", totalLockScreenCount, "mobile-devices", "lockscreen")
+                .check("encryptionWarning", totalEncryptionCount, "mobile-devices", "encryption")
+                .check("osVersionWarning", totalOsVersionCount, "mobile-devices", "osVersion")
+                .check("integrityWarning", totalIntegrityCount, "mobile-devices", "integrity")
+                .build();
 
         return new DeviceOverviewResponse(
                 totalDevices, nonCompliantDevices, approvedDevices, securityScore,
                 totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,
-                breakdown
+                breakdown, warnings
         );
     }
 
-    private SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore) {
-        int lockScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - lockScreenCount) * 100.0 / totalDevices);
-        int encScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - encryptionCount) * 100.0 / totalDevices);
-        int osScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - osVersionCount) * 100.0 / totalDevices);
-        int intScore = totalDevices == 0 ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
+    /**
+     * Same per-device scoring as the overview aggregate, so muted preferences do not lower the Compliance column.
+     */
+    private static DeviceDetail applyPreferenceAdjustedCompliance(DeviceDetail d, Set<String> off) {
+        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "lockscreen");
+        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "encryption");
+        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "osVersion");
+        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "integrity");
+        int adj = adjustedDeviceComplianceScore(d, ignLock, ignEnc, ignOs, ignInt);
+        return new DeviceDetail(
+                d.resourceId(), d.deviceType(), d.userName(), d.userEmail(), d.deviceName(),
+                d.model(), d.os(), d.lastSync(), d.status(), adj,
+                d.lockSecure(), d.screenLockText(), d.encSecure(), d.encryptionText(),
+                d.osSecure(), d.osText(), d.intSecure(), d.integrityText()
+        );
+    }
+
+    private static int adjustedDeviceComplianceScore(DeviceDetail device, boolean ignLock, boolean ignEnc, boolean ignOs, boolean ignInt) {
+        int sum = 0;
+        int max = 0;
+        if (!ignLock) {
+            max += 25;
+            sum += device.lockSecure() ? 25 : 0;
+        }
+        if (!ignEnc) {
+            max += 25;
+            sum += device.encSecure() ? 25 : 0;
+        }
+        if (!ignOs) {
+            max += 25;
+            sum += device.osSecure() ? 25 : 0;
+        }
+        if (!ignInt) {
+            max += 25;
+            sum += device.intSecure() ? 25 : 0;
+        }
+        if (max == 0) {
+            return 100;
+        }
+        return (int) Math.round(sum * 100.0 / max);
+    }
+
+    private SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore,
+                                                          boolean ignLock, boolean ignEnc, boolean ignOs, boolean ignInt) {
+        int lockScore = totalDevices == 0 || ignLock ? 100 : (int) Math.round((totalDevices - lockScreenCount) * 100.0 / totalDevices);
+        int encScore = totalDevices == 0 || ignEnc ? 100 : (int) Math.round((totalDevices - encryptionCount) * 100.0 / totalDevices);
+        int osScore = totalDevices == 0 || ignOs ? 100 : (int) Math.round((totalDevices - osVersionCount) * 100.0 / totalDevices);
+        int intScore = totalDevices == 0 || ignInt ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
 
         Locale locale = LocaleContextHolder.getLocale();
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.lock_screen.title", null, locale), lockScreenCount == 0 ? messageSource.getMessage("devices.score.factor.lock_screen.description.all", null, locale) : messageSource.getMessage("devices.score.factor.lock_screen.description", new Object[]{lockScreenCount}, locale), lockScore, 100, severity(lockScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.enc.title", null, locale), encryptionCount == 0 ? messageSource.getMessage("devices.score.factor.enc.description.all", null, locale) : messageSource.getMessage("devices.score.factor.enc.description", new Object[]{encryptionCount}, locale), encScore, 100, severity(encScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.os_version.title", null, locale), osVersionCount == 0 ? messageSource.getMessage("devices.score.factor.os_version.description.all", null, locale) : messageSource.getMessage("devices.score.factor.os_version.description", new Object[]{osVersionCount}, locale), osScore, 100, severity(osScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.int.title", null, locale), integrityCount == 0 ? messageSource.getMessage("devices.score.factor.int.description.none", null, locale) : messageSource.getMessage("devices.score.factor.int.description", new Object[]{integrityCount}, locale), intScore, 100, severity(intScore))
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.lock_screen.title", null, locale), lockScreenCount == 0 ? messageSource.getMessage("devices.score.factor.lock_screen.description.all", null, locale) : messageSource.getMessage("devices.score.factor.lock_screen.description", new Object[]{lockScreenCount}, locale), lockScore, 100, severity(lockScore), ignLock),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.enc.title", null, locale), encryptionCount == 0 ? messageSource.getMessage("devices.score.factor.enc.description.all", null, locale) : messageSource.getMessage("devices.score.factor.enc.description", new Object[]{encryptionCount}, locale), encScore, 100, severity(encScore), ignEnc),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.os_version.title", null, locale), osVersionCount == 0 ? messageSource.getMessage("devices.score.factor.os_version.description.all", null, locale) : messageSource.getMessage("devices.score.factor.os_version.description", new Object[]{osVersionCount}, locale), osScore, 100, severity(osScore), ignOs),
+                new SecurityScoreFactorDto(messageSource.getMessage("devices.score.factor.int.title", null, locale), integrityCount == 0 ? messageSource.getMessage("devices.score.factor.int.description.none", null, locale) : messageSource.getMessage("devices.score.factor.int.description", new Object[]{integrityCount}, locale), intScore, 100, severity(intScore), ignInt)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     // =========================================================================================

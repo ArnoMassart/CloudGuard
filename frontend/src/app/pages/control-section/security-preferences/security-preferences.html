@@ -1,0 +1,83 @@
+<div class="px-10 py-6">
+  <app-page-header
+    Title="Beveiligingsvoorkeuren"
+    Description="Configureer welke controles meldingen genereren en meetellen voor de beveiligingsscore."
+    [NeedAdminLink]="false"
+  />
+
+  <div class="mt-6" role="note" aria-label="Toelichting beveiligingsvoorkeuren">
+    <app-page-warnings [isInfo]="true" title="Over deze instellingen">
+      <app-page-warnings-item body [isInfo]="true">
+        Per onderdeel bepaalt u of bijbehorende bevindingen als melding worden getoond. Uitgeschakelde controles worden niet weergegeven op het dashboard en niet meegenomen in de betreffende sectieweergaven.
+      </app-page-warnings-item>
+    </app-page-warnings>
+  </div>
+
+  @if (loading()) {
+  <div class="flex flex-col items-center py-16">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    <span class="mt-4 text-sm text-slate-600">Bezig met laden van de voorkeuren…</span>
+  </div>
+  } @else {
+  <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    @for (section of sections; track section.section) {
+    <div class="rounded-xl border-2 border-slate-200/80 bg-white p-6 shadow-sm">
+      <div class="flex items-center gap-2.5 border-b border-slate-200 pb-3">
+        <i-lucide
+          [img]="sectionNavIcon(section.route)"
+          size="20"
+          class="shrink-0 text-slate-600"
+          aria-hidden="true"
+        />
+        <h3 class="m-0 font-medium text-slate-900">{{ section.label }}</h3>
+      </div>
+      <ul class="mt-4 space-y-3">
+        @for (pref of section.preferences; track pref.key) {
+        <li class="flex items-center justify-between gap-4">
+          <label
+            class="flex-1 cursor-pointer text-sm text-slate-700"
+            [for]="section.section + '-' + pref.key"
+          >
+            {{ pref.label }}
+          </label>
+          @if (pref.control === 'dnsImportance' && pref.dnsType) {
+          <select
+            [id]="section.section + '-' + pref.key"
+            [disabled]="saving() !== null"
+            class="max-w-[11rem] shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
+            [value]="dnsSelectValue(pref.dnsType)"
+            (change)="setDnsImportance(section.section, pref.key, pref.dnsType, $any($event.target).value)"
+          >
+            <option value="">Standaard</option>
+            <option value="REQUIRED">Vereist</option>
+            <option value="RECOMMENDED">Aanbevolen</option>
+            <option value="OPTIONAL">Optioneel</option>
+          </select>
+          } @else {
+          <button
+            type="button"
+            role="switch"
+            [attr.aria-checked]="isEnabled(section.section, pref.key)"
+            [attr.aria-label]="pref.label + (isEnabled(section.section, pref.key) ? ': melding uitschakelen' : ': melding inschakelen')"
+            [id]="section.section + '-' + pref.key"
+            [disabled]="saving() !== null"
+            (click)="toggle(section.section, pref.key)"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+            [class.bg-primary]="isEnabled(section.section, pref.key)"
+            [class.bg-slate-300]="!isEnabled(section.section, pref.key)"
+          >
+            <span
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform"
+              [class.translate-x-5]="isEnabled(section.section, pref.key)"
+              [class.translate-x-0.5]="!isEnabled(section.section, pref.key)"
+            ></span>
+          </button>
+          }
+        </li>
+        }
+      </ul>
+    </div>
+    }
+  </div>
+  }
+</div>

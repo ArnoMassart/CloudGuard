@@ -1,10 +1,12 @@
 package com.cloudmen.cloudguard.utility;
 
+import com.cloudmen.cloudguard.dto.users.UserSecurityEvaluation;
 import com.google.api.client.util.DateTime;
 
 import java.security.PrivateKey;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -29,15 +31,46 @@ public class GoogleServiceHelperMethods {
         };
     }
 
-    public static boolean checkUserSecurityStatus(boolean isActive, DateTime lastLogin, boolean isTwoFactorEnabled) {
-        LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+    public static final String VIOLATION_NO_2FA = "NO_2FA";
+    public static final String VIOLATION_ACTIVITY_STALE = "ACTIVITY_STALE";
+    public static final String VIOLATION_ACTIVITY_INACTIVE_RECENT = "ACTIVITY_INACTIVE_RECENT";
+
+    /**
+     * Null-safe evaluation aligned with {@link #checkUserSecurityStatus(boolean, DateTime, boolean)}.
+     * Violation codes map to users-groups preferences: NO_2FA → 2fa; activity codes → activity.
+     */
+    public static UserSecurityEvaluation evaluateUserSecurity(boolean isActive, DateTime lastLogin, boolean isTwoFactorEnabled) {
         LocalDate now = LocalDate.now();
+        Long daysSinceLogin = null;
+        if (lastLogin != null) {
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+            daysSinceLogin = ChronoUnit.DAYS.between(loginDate, now);
+        }
 
-        long daysSinceLogin = ChronoUnit.DAYS.between(loginDate, now);
+        List<String> violations = new ArrayList<>();
+        if (isActive && !isTwoFactorEnabled) {
+            violations.add(VIOLATION_NO_2FA);
+        }
+        if (isActive && (daysSinceLogin == null || daysSinceLogin >= 90)) {
+            violations.add(VIOLATION_ACTIVITY_STALE);
+        }
+        if (!isActive && daysSinceLogin != null && daysSinceLogin <= 7) {
+            violations.add(VIOLATION_ACTIVITY_INACTIVE_RECENT);
+        }
 
-        if (isActive && !isTwoFactorEnabled) return false;
-        if (isActive && daysSinceLogin >= 90) return false;
-        return isActive || daysSinceLogin > 7;
+        boolean conform;
+        if (isActive && !isTwoFactorEnabled) {
+            conform = false;
+        } else if (isActive && (daysSinceLogin == null || daysSinceLogin >= 90)) {
+            conform = false;
+        } else {
+            conform = isActive || (daysSinceLogin != null && daysSinceLogin > 7);
+        }
+        return new UserSecurityEvaluation(conform, List.copyOf(violations));
+    }
+
+    public static boolean checkUserSecurityStatus(boolean isActive, DateTime lastLogin, boolean isTwoFactorEnabled) {
+        return evaluateUserSecurity(isActive, lastLogin, isTwoFactorEnabled).conform();
     }
 
     public static int getPage(String pageToken) {

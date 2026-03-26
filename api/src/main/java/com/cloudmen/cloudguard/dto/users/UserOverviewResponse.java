@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.dto.users;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 
 public record UserOverviewResponse(
             int totalUsers,
@@ -9,5 +10,6 @@ public record UserOverviewResponse(
             int securityScore,
             int activeLongNoLoginCount,
             int inactiveRecentLoginCount,
-            SecurityScoreBreakdownDto securityScoreBreakdown
+            SecurityScoreBreakdownDto securityScoreBreakdown,
+            SectionWarningsDto warnings
 ){}

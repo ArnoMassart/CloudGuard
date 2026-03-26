@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule } from 'lucide-angular';
 import { DeviceService } from '../../../services/device-service';
-import { Device } from '../../../models/devices/Device';
+import { Device, DeviceFactor } from '../../../models/devices/Device';
 import { DevicesOverviewResponse } from '../../../models/devices/DevicesOverviewResponse';
 import { DevicesPageWarnings } from '../../../models/devices/DevicesPageWarnings';
 import { DeviceStatus } from '../../../models/devices/DeviceStatus';
@@ -15,6 +15,8 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
+import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
+import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 
@@ -48,6 +50,8 @@ export class Devices implements OnInit, OnDestroy {
   readonly UtilityMethods = UtilityMethods;
   readonly #deviceService = inject(DeviceService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
+  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
+
   readonly #translocoService = inject(TranslocoService);
 
   // ==========================================
@@ -70,18 +74,16 @@ export class Devices implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
 
-  readonly hasWarnings = signal(false);
-  readonly devicePageWarnings = signal<DevicesPageWarnings>({
-    lockScreenWarning: false,
-    encryptionWarning: false,
-    osVersionWarning: false,
-    integrityWarning: false,
-  });
-
-  readonly hasMultipleWarnings = computed(() => {
-    const warnings = this.devicePageWarnings();
-    const activeCount = Object.values(warnings).filter((val) => val === true).length;
-    return activeCount > 1;
+  readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
+  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly devicePageWarnings = computed((): DevicesPageWarnings => {
+    const items = this.pageOverview()?.warnings?.items ?? {};
+    return {
+      lockScreenWarning: items['lockScreenWarning'] ?? false,
+      encryptionWarning: items['encryptionWarning'] ?? false,
+      osVersionWarning: items['osVersionWarning'] ?? false,
+      integrityWarning: items['integrityWarning'] ?? false,
+    };
   });
 
   // ==========================================
@@ -158,6 +160,22 @@ export class Devices implements OnInit, OnDestroy {
     this.#securityScoreDetail.open(breakdown, 'devices');
   }
 
+  getDeviceFactors(device: Device): DeviceFactor[] {
+    return [
+      { key: 'lockscreen', label: 'Vergrendelscherm', icon: AppIcons.Lock,       secure: device.lockSecure, text: device.screenLockText },
+      { key: 'encryption', label: 'Encryptie',        icon: AppIcons.HardDrive,  secure: device.encSecure,  text: device.encryptionText },
+      { key: 'osVersion',  label: 'OS Versie',        icon: AppIcons.Cpu,        secure: device.osSecure,   text: device.osText },
+      { key: 'integrity',  label: 'Integriteit',      icon: AppIcons.ShieldCheck, secure: device.intSecure, text: device.integrityText },
+    ].map((f) => ({
+      ...f,
+      state: f.secure
+        ? 'ok' as const
+        : this.#preferencesFacade.isDisabled('mobile-devices', f.key)
+          ? 'muted' as const
+          : 'warn' as const,
+    }));
+  }
+
   refreshData() {
     if (this.isRefreshing()) return;
 
@@ -209,37 +227,10 @@ export class Devices implements OnInit, OnDestroy {
   }
 
   #loadPageOverview() {
-    this.#deviceService.getDevicesPageOverview().subscribe({
-      next: (res) => {
-        this.pageOverview.set(res);
-        this.#loadWarnings();
-      },
-      error: (err) => {
-        console.error('Failed to load page overview', err);
-      },
+    this.#preferencesFacade.loadWithPrefs$(this.#deviceService.getDevicesPageOverview()).subscribe({
+      next: (overview) => this.pageOverview.set(overview),
+      error: (err) => console.error('Failed to load page overview', err),
     });
-  }
-
-  #loadWarnings() {
-    if (this.pageOverview()?.lockScreenCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().lockScreenWarning = true;
-    }
-
-    if (this.pageOverview()?.encryptionCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().encryptionWarning = true;
-    }
-
-    if (this.pageOverview()?.osVersionCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().osVersionWarning = true;
-    }
-
-    if (this.pageOverview()?.integrityCount! > 0) {
-      this.hasWarnings.set(true);
-      this.devicePageWarnings().integrityWarning = true;
-    }
   }
 
   #loadDeviceTypes() {

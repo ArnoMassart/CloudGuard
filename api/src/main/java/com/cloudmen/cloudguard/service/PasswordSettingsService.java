@@ -6,6 +6,8 @@ import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -31,6 +33,7 @@ public class PasswordSettingsService {
     private final GoogleUsersCacheService usersCache;
     private final GoogleOrgUnitCacheService orgUnitCache;
     private final AdminSecurityKeysService adminSecurityKeysService;
+    private final UserSecurityPreferenceService userSecurityPreferenceService;
 
     private final Cache<String, PasswordSettingsDto> cache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
@@ -39,13 +42,16 @@ public class PasswordSettingsService {
     private final MessageSource messageSource;
 
     public PasswordSettingsService(PolicyApiCacheService policyCache,
-                                   GoogleUsersCacheService usersCache,
-                                   GoogleOrgUnitCacheService orgUnitCache,
-                                   AdminSecurityKeysService adminSecurityKeysService, MessageSource messageSource) {
+                                  GoogleUsersCacheService usersCache,
+                                  GoogleOrgUnitCacheService orgUnitCache,
+                                  AdminSecurityKeysService adminSecurityKeysService,
+                                  UserSecurityPreferenceService userSecurityPreferenceService,
+                                  MessageSource messageSource) {
         this.policyCache = policyCache;
         this.usersCache = usersCache;
         this.orgUnitCache = orgUnitCache;
         this.adminSecurityKeysService = adminSecurityKeysService;
+        this.userSecurityPreferenceService = userSecurityPreferenceService;
         this.messageSource = messageSource;
     }
 
@@ -81,12 +87,14 @@ public class PasswordSettingsService {
                 ? adminSecurityKeysResponse.admins() : List.of();
         String adminsSecurityKeysErrorMessage = adminSecurityKeysResponse.errorMessage();
 
+        Set<String> disabledPrefs = userSecurityPreferenceService.getDisabledPreferenceKeys(adminEmail);
         var scoreResult = calculateSecurityScoreWithBreakdown(
                 adminSecurityKeysResponse.totalAdmins(),
                 adminsWithoutSecurityKeys.size(),
                 summary,
                 twoStepVerification,
-                passwordPoliciesByOu);
+                passwordPoliciesByOu,
+                disabledPrefs);
 
         return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
                 adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, scoreResult.score(), scoreResult.breakdown());
@@ -342,7 +350,10 @@ public class PasswordSettingsService {
             int adminsWithoutKeys,
             PasswordSettingsSummaryDto summary,
             TwoStepVerificationDto twoStepVerification,
-            List<OuPasswordPolicyDto> passwordPoliciesByOu) {
+            List<OuPasswordPolicyDto> passwordPoliciesByOu,
+            Set<String> disabledPrefs) {
+
+        Set<String> off = disabledPrefs == null ? Set.of() : disabledPrefs;
 
         double adminKeysScore = totalAdmins == 0 ? 100.0
                 : (totalAdmins - adminsWithoutKeys) * 100.0 / totalAdmins;
@@ -390,13 +401,23 @@ public class PasswordSettingsService {
 
         double historyScore = 100.0; // not used for security score
 
-        double weighted = adminKeysScore * 0.15
-                + usersNeedChangeScore * 0.15
-                + twoFaScore * 0.30
-                + lengthScore * 0.15
-                + expirationScore * 0.10
-                + strengthScore * 0.10
-                + historyScore * 0.05;
+        double wAdmin = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "adminsSecurityKeys") ? 0 : 0.15;
+        double wChange = 0.15;
+        double w2fa = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "2sv") ? 0 : 0.30;
+        double wLen = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "length") ? 0 : 0.15;
+        double wExp = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "expiration") ? 0 : 0.10;
+        double wStr = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "strongPassword") ? 0 : 0.10;
+        double wHist = 0.05;
+
+        double weightSum = wAdmin + wChange + w2fa + wLen + wExp + wStr + wHist;
+        double weighted = weightSum <= 0 ? 100.0
+                : (adminKeysScore * wAdmin
+                + usersNeedChangeScore * wChange
+                + twoFaScore * w2fa
+                + lengthScore * wLen
+                + expirationScore * wExp
+                + strengthScore * wStr
+                + historyScore * wHist) / weightSum;
 
         int totalScore = (int) Math.round(Math.max(0, Math.min(100, weighted)));
 
@@ -426,17 +447,35 @@ public class PasswordSettingsService {
                 : (int) strengthScore == 100 ? messageSource.getMessage("password-settings.score.factor.strength.description.full", null, locale)
                 : messageSource.getMessage("password-settings.score.factor.strength.description.not_full", null, locale);
 
+        boolean muteAdmin = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "adminsSecurityKeys");
+        boolean mute2sv = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "2sv");
+        boolean muteLen = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "length");
+        boolean muteExp = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "expiration");
+        boolean muteStr = SecurityPreferenceScoreSupport.preferenceDisabled(off, "password-settings", "strongPassword");
+
+        int dispAdmin = muteAdmin ? 100 : (int) Math.round(adminKeysScore);
+        int disp2fa = mute2sv ? 100 : (int) Math.round(twoFaScore);
+        int dispLen = muteLen ? 100 : (int) Math.round(lengthScore);
+        int dispExp = muteExp ? 100 : (int) Math.round(expirationScore);
+        int dispStr = muteStr ? 100 : (int) Math.round(strengthScore);
+
         List<SecurityScoreFactorDto> factors = List.of(
-                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, (int) Math.round(adminKeysScore), 100, severity(adminKeysScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore)),
-                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, (int) Math.round(twoFaScore), 100, severity(twoFaScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.length.title", null, locale), lengthDesc, (int) Math.round(lengthScore), 100, severity(lengthScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale), expirationDesc, (int) Math.round(expirationScore), 100, severity(expirationScore)),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.strength.title", null, locale), strengthDesc, (int) Math.round(strengthScore), 100, severity(strengthScore))
+                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin), muteAdmin),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore), false),
+                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa), mute2sv),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.length.title", null, locale), lengthDesc, dispLen, 100, severity(dispLen), muteLen),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale), expirationDesc, dispExp, 100, severity(dispExp), muteExp),
+                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.strength.title", null, locale), strengthDesc, dispStr, 100, severity(dispStr), muteStr)
         );
 
         String status = totalScore == 100 ? "perfect" : totalScore >= 75 ? "good" : totalScore > 50 ? "average" : "bad";
 
         return new SecurityScoreResult(totalScore, new SecurityScoreBreakdownDto(totalScore, status, factors));
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 }

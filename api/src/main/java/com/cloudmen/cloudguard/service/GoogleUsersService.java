@@ -2,7 +2,10 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.dto.users.*;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
+import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -18,6 +21,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
@@ -66,6 +70,7 @@ public class GoogleUsersService {
 
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
             boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
+            var security = GoogleServiceHelperMethods.evaluateUserSecurity(isActive, user.getLastLoginTime(), twoFAEnabled);
 
             return new UserOrgDetail(
                     user.getName().getFullName(),
@@ -74,7 +79,8 @@ public class GoogleUsersService {
                     isActive,
                     user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
                     twoFAEnabled,
-                    GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled)
+                    security.conform(),
+                    security.violationCodes()
             );
         }).toList();
 
@@ -95,6 +101,11 @@ public class GoogleUsersService {
     }
 
     public UserOverviewResponse getUsersPageOverview(String loggedInEmail) {
+        return getUsersPageOverview(loggedInEmail, Set.of());
+    }
+
+    public UserOverviewResponse getUsersPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
         List<User> googleUsers = cachedData.allUsers();
         LocalDate now = LocalDate.now();
@@ -104,7 +115,6 @@ public class GoogleUsersService {
                 .filter(user -> !Boolean.TRUE.equals(user.getSuspended()) && !Boolean.TRUE.equals(user.getIsEnrolledIn2Sv()))
                 .count();
         long adminUsers = googleUsers.stream().filter(User::getIsAdmin).count();
-        long securityScore = calculateSecurityScore(googleUsers);
 
         long activeLongNoLoginCount = googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
@@ -118,15 +128,27 @@ public class GoogleUsersService {
             return Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) <= 7;
         }).count();
 
-        SecurityScoreBreakdownDto breakdown = buildUsersBreakdown(googleUsers, (int) totalUsers, (int) securityScore);
+        boolean ignore2fa = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "2fa");
+        boolean ignoreActivity = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "activity");
 
-        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, (int) securityScore, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown);
+        int securityScore = calculateSecurityScoreWithPreferenceMask(googleUsers, ignore2fa, ignoreActivity);
+        SecurityScoreBreakdownDto breakdown = buildUsersBreakdown(googleUsers, (int) totalUsers, securityScore, ignore2fa, ignoreActivity);
+
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
+                .check("twoFactorWarning", (int) withoutTwoFactor, "users-groups", "2fa")
+                .check("activeWithLongNoLogin", (int) activeLongNoLoginCount, "users-groups", "activity")
+                .check("notActiveWithRecentLogin", (int) inactiveRecentLoginCount, "users-groups", "activity")
+                .build();
+
+        return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, securityScore,
+                (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown, warnings);
     }
 
     /**
      * Each non-compliant user is attributed to exactly one failure reason (in order of checks).
      */
-    private SecurityScoreBreakdownDto buildUsersBreakdown(List<User> googleUsers, int totalUsers, int securityScore) {
+    private SecurityScoreBreakdownDto buildUsersBreakdown(List<User> googleUsers, int totalUsers, int securityScore,
+                                                         boolean ignore2fa, boolean ignoreActivity) {
         LocalDate now = LocalDate.now();
         int no2FACount = 0;
         int longNoLoginCount = 0;
@@ -164,30 +186,75 @@ public class GoogleUsersService {
         int score2 = totalUsers == 0 ? 100 : (int) Math.round(100.0 * (totalUsers - longNoLoginCount) / totalUsers);
         int score3 = totalUsers == 0 ? 100 : (int) Math.round(100.0 * (totalUsers - inactiveRecentCount) / totalUsers);
 
+        if (ignore2fa) {
+            score1 = 100;
+        }
+        if (ignoreActivity) {
+            score2 = 100;
+            score3 = 100;
+        }
+
         Locale locale = LocaleContextHolder.getLocale();
 
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto("users.overview.2step-title",
+                new SecurityScoreFactorDto(messageSource.getMessage("users.overview.2step-title", null, locale),
                         no2FACount == 0 ? messageSource.getMessage("users.overview.2step.compliant", null, locale) : messageSource.getMessage("users.overview.2step.non_compliant", new Object[]{no2FACount}, locale),
-                        score1, 100, severity(score1)),
-                new SecurityScoreFactorDto("users.overview.activeLongNoLogin-title",
+                        score1, 100, severity(score1), ignore2fa),
+                new SecurityScoreFactorDto(messageSource.getMessage("users.overview.activeLongNoLogin-title", null, locale),
                         longNoLoginCount == 0 ? messageSource.getMessage("users.overview.no_login.compliant", null, locale) : messageSource.getMessage("users.overview.no_login.non_compliant", new Object[]{longNoLoginCount}, locale),
-                        score2, 100, severity(score2)),
-                new SecurityScoreFactorDto("users.overview.deactivatedRecentLogin-title",
+                        score2, 100, severity(score2), ignoreActivity),
+                new SecurityScoreFactorDto(messageSource.getMessage("users.overview.deactivatedRecentLogin-title", null, locale),
                         inactiveRecentCount == 0 ? messageSource.getMessage("users.overview.recent_login.compliant", null, locale) : messageSource.getMessage("users.overview.recent_login.non_compliant", new Object[]{inactiveRecentCount}, locale),
-                        score3, 100, severity(score3))
+                        score3, 100, severity(score3), ignoreActivity)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
-    private int calculateSecurityScore(List<User> googleUsers) {
-        if (googleUsers.isEmpty()) return 100;
-        long complyCount = googleUsers.stream().filter(user -> {
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
+    }
+
+    private int calculateSecurityScoreWithPreferenceMask(List<User> googleUsers, boolean ignore2fa, boolean ignoreActivity) {
+        if (googleUsers.isEmpty()) {
+            return 100;
+        }
+        int parts = 0;
+        long sum = 0;
+        for (User user : googleUsers) {
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
             boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
-            return GoogleServiceHelperMethods.checkUserSecurityStatus(isActive, user.getLastLoginTime(), twoFAEnabled);
-        }).count();
-        return (int) Math.floor((double) complyCount / googleUsers.size() * 100);
+
+            if (!ignore2fa) {
+                parts++;
+                sum += (!isActive || twoFAEnabled) ? 1 : 0;
+            }
+            if (!ignoreActivity) {
+                parts++;
+                sum += activityMeasuresComply(isActive, user.getLastLoginTime()) ? 1 : 0;
+            }
+        }
+        if (parts == 0) {
+            return 100;
+        }
+        return (int) Math.floor((double) sum / parts * 100);
+    }
+
+    private static boolean activityMeasuresComply(boolean isActive, DateTime lastLogin) {
+        LocalDate now = LocalDate.now();
+        if (isActive) {
+            if (lastLogin == null) {
+                return false;
+            }
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+            return ChronoUnit.YEARS.between(loginDate, now) < 1;
+        }
+        if (lastLogin == null) {
+            return true;
+        }
+        LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+        return ChronoUnit.DAYS.between(loginDate, now) > 7;
     }
 }

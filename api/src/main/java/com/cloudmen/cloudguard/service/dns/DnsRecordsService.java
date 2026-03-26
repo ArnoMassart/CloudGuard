@@ -7,6 +7,7 @@ import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.service.preference.DnsImportancePreferenceSupport;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
@@ -50,34 +52,34 @@ public class DnsRecordsService {
     }
 
     public DnsRecordResponseDto getImportantRecords(String domain, String dkimSelector) {
+        return getImportantRecords(domain, dkimSelector, Map.of());
+    }
+
+    /**
+     * @param importanceOverrides DNS type (SPF, DKIM, …) → user-chosen importance; missing entries use system defaults.
+     */
+    public DnsRecordResponseDto getImportantRecords(String domain, String dkimSelector, Map<String, DnsRecordImportance> importanceOverrides) {
+        Map<String, DnsRecordImportance> overrides = importanceOverrides != null ? importanceOverrides : Map.of();
         List<DnsRecordDto> rows = new ArrayList<>();
 
-        // SPF (TXT at root)
-        rows.add(buildSpf(domain));
+        rows.add(buildSpf(domain, overrides));
 
-        // DKIM (TXT at selector._domainkey.domain)
         String dkimName = dkimSelector + "._domainkey." + domain;
-        rows.add(buildDkim(dkimName));
+        rows.add(buildDkim(dkimName, overrides));
 
-        // DMARC (TXT at _dmarc.domain)
         String dmarcName = "_dmarc." + domain;
-        rows.add(buildDmarc(dmarcName));
+        rows.add(buildDmarc(dmarcName, overrides));
 
-        // MX (root)
-        rows.add(buildMx(domain));
+        rows.add(buildMx(domain, overrides));
 
-        // DNSSEC (DNSKEY at root) - recommended
-        rows.add(buildDnssec(domain));
+        rows.add(buildDnssec(domain, overrides));
 
-        // CAA (at root) - recommended
-        rows.add(buildCaa(domain));
+        rows.add(buildCaa(domain, overrides));
 
-        // TXT (root) - include google-site-verification if present (optional)
-        rows.add(buildSiteVerification(domain));
+        rows.add(buildSiteVerification(domain, overrides));
 
-        // Example CNAME (optional)
         String cnameName = "mail." + domain;
-        rows.add(buildCname(cnameName));
+        rows.add(buildCname(cnameName, overrides));
 
         int securityScore = calculateSecurityScore(rows);
         SecurityScoreBreakdownDto breakdown = buildDnsBreakdown(rows, securityScore);
@@ -85,9 +87,14 @@ public class DnsRecordsService {
         return new DnsRecordResponseDto(domain, rows, securityScore, breakdown);
     }
 
+    private static DnsRecordImportance eff(String type, Map<String, DnsRecordImportance> overrides) {
+        return overrides.getOrDefault(type, DnsImportancePreferenceSupport.systemDefaultImportance(type));
+    }
+
     private SecurityScoreBreakdownDto buildDnsBreakdown(List<DnsRecordDto> rows, int securityScore) {
         List<SecurityScoreFactorDto> factors = new ArrayList<>();
         for (DnsRecordDto row : rows) {
+            boolean optional = row.importance() == DnsRecordImportance.OPTIONAL;
             double mult = switch (row.status()) {
                 case VALID -> 1.0;
                 case OK, ATTENTION -> 0.5;
@@ -108,26 +115,40 @@ public class DnsRecordsService {
                 case "CNAME" -> messageSource.getMessage("dns.score.factor.title.cname", null, locale);
                 default -> row.type();
             };
-            factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score)));
+            factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score), optional));
         }
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
+    }
+
+    /**
+     * Weighted score over REQUIRED and RECOMMENDED rows only; OPTIONAL rows do not affect the percentage.
+     */
     private int calculateSecurityScore(List<DnsRecordDto> rows) {
         if (rows == null || rows.isEmpty()) return 0;
 
+        boolean anyScored = rows.stream().anyMatch(r -> r.importance() != DnsRecordImportance.OPTIONAL);
+        if (!anyScored) {
+            return 100;
+        }
+
         double score = 0;
-        for (DnsRecordDto row: rows) {
-            int weight = switch (row.importance()){
+        for (DnsRecordDto row : rows) {
+            int weight = switch (row.importance()) {
                 case REQUIRED -> 15;
                 case RECOMMENDED -> 10;
-                case OPTIONAL -> 5;
+                case OPTIONAL -> 0;
             };
 
             double mult = switch (row.status()) {
                 case VALID -> 1.0;
-                case OK,ATTENTION -> 0.5;
+                case OK, ATTENTION -> 0.5;
                 case ACTION_REQUIRED, ERROR -> 0.0;
             };
 
@@ -137,8 +158,8 @@ public class DnsRecordsService {
         return (int) Math.round(Math.min(100.0, score));
     }
 
-    private DnsRecordDto buildSpf(String domain) {
-        DnsRecordImportance importance = DnsRecordImportance.REQUIRED;
+    private DnsRecordDto buildSpf(String domain, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("SPF", overrides);
         DnsLookupResult result = dns.lookupTxt(domain);
         if (!result.isSuccess()) {
             return errorRecord("SPF", domain, importance, result);
@@ -156,8 +177,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("SPF", domain, spf, resolveStatus(importance, found, optimal), importance, message);
     }
 
-    private DnsRecordDto buildDkim(String name) {
-        DnsRecordImportance importance = DnsRecordImportance.REQUIRED;
+    private DnsRecordDto buildDkim(String name, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("DKIM", overrides);
         DnsLookupResult result = dns.lookupTxt(name);
         if (!result.isSuccess()) {
             return errorRecord("DKIM", name, importance, result);
@@ -175,8 +196,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("DKIM", name, txt, resolveStatus(importance, found, optimal), importance, message);
     }
 
-    private DnsRecordDto buildDmarc(String name) {
-        DnsRecordImportance importance = DnsRecordImportance.REQUIRED;
+    private DnsRecordDto buildDmarc(String name, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("DMARC", overrides);
         DnsLookupResult result = dns.lookupTxt(name);
         if (!result.isSuccess()) {
             return errorRecord("DMARC", name, importance, result);
@@ -193,8 +214,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("DMARC", name, txt, resolveStatus(importance, found, optimal), importance, message);
     }
 
-    private DnsRecordDto buildMx(String domain) {
-        DnsRecordImportance importance = DnsRecordImportance.REQUIRED;
+    private DnsRecordDto buildMx(String domain, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("MX", overrides);
         DnsLookupResult result = dns.lookupMx(domain);
         if (!result.isSuccess()) {
             return errorRecord("MX", domain, importance, result);
@@ -211,8 +232,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("MX", domain, mx, resolveStatus(importance, found, optimal), importance, message);
     }
 
-    private DnsRecordDto buildDnssec(String domain) {
-        DnsRecordImportance importance = DnsRecordImportance.RECOMMENDED;
+    private DnsRecordDto buildDnssec(String domain, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("DNSSEC", overrides);
         DnsLookupResult result = dns.lookupDnsKey(domain);
         if (!result.isSuccess()) {
             return errorRecord("DNSSEC", domain, importance, result);
@@ -228,8 +249,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("DNSSEC", domain, keys, resolveStatus(importance, found, found), importance, message);
     }
 
-    private DnsRecordDto buildCaa(String domain) {
-        DnsRecordImportance importance = DnsRecordImportance.RECOMMENDED;
+    private DnsRecordDto buildCaa(String domain, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("CAA", overrides);
         DnsLookupResult result = dns.lookupCaa(domain);
         if (!result.isSuccess()) {
             return errorRecord("CAA", domain, importance, result);
@@ -245,8 +266,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("CAA", domain, caa, resolveStatus(importance, found, found), importance, message);
     }
 
-    private DnsRecordDto buildSiteVerification(String domain) {
-        DnsRecordImportance importance = DnsRecordImportance.OPTIONAL;
+    private DnsRecordDto buildSiteVerification(String domain, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("TXT", overrides);
         DnsLookupResult result = dns.lookupTxt(domain);
         if (!result.isSuccess()) {
             return errorRecord("TXT", domain, importance, result);
@@ -261,8 +282,8 @@ public class DnsRecordsService {
         return new DnsRecordDto("TXT", domain, ver, resolveStatus(importance, found, found), importance, message);
     }
 
-    private DnsRecordDto buildCname(String name) {
-        DnsRecordImportance importance = DnsRecordImportance.OPTIONAL;
+    private DnsRecordDto buildCname(String name, Map<String, DnsRecordImportance> overrides) {
+        DnsRecordImportance importance = eff("CNAME", overrides);
         DnsLookupResult result = dns.lookupCname(name);
         if (!result.isSuccess()) {
             return errorRecord("CNAME", name, importance, result);

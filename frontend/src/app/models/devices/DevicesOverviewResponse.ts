@@ -1,4 +1,5 @@
 import type { SecurityScoreBreakdown } from '../password/PasswordSettings';
+import type { SectionWarnings } from '../SectionWarnings';
 
 export type DevicesOverviewResponse = {
   totalDevices: number;
@@ -10,4 +11,5 @@ export type DevicesOverviewResponse = {
   osVersionCount: number;
   integrityCount: number;
   securityScoreBreakdown?: SecurityScoreBreakdown;
+  warnings?: SectionWarnings;
 };
