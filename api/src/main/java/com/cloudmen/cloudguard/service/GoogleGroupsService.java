@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleGroupsCacheService;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -80,7 +81,7 @@ public class GoogleGroupsService {
                 : (int) Math.round((lowRiskGroups * 100.0 + mediumRiskGroups * 60.0 + highRiskGroups * 20.0) / totalGroups);
 
         SecurityScoreBreakdownDto breakdown = buildGroupsBreakdown(
-                totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore);
+                totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore, false);
 
         return new GroupOverviewResponse(
                 totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore, breakdown, null
@@ -88,22 +89,36 @@ public class GoogleGroupsService {
     }
 
     public GroupOverviewResponse getGroupsOverview(String loggedInEmail, Set<String> disabledKeys) {
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         GroupOverviewResponse base = getGroupsOverview(loggedInEmail);
-        SectionWarningsDto warnings = SectionWarningEvaluator.with(disabledKeys)
+        boolean ignoreGroupRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "groupExternal");
+        int securityScore = ignoreGroupRisk ? 100 : base.securityScore();
+        SecurityScoreBreakdownDto breakdown = ignoreGroupRisk
+                ? buildGroupsBreakdown(base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
+                base.mediumRiskGroups(), base.lowRiskGroups(), 100, true)
+                : base.securityScoreBreakdown();
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
                 .check("externalMember", base.groupsWithExternal(), "users-groups", "groupExternal")
                 .check("highRisk", base.highRiskGroups(), "users-groups", "groupExternal")
                 .build();
         return new GroupOverviewResponse(
                 base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
-                base.mediumRiskGroups(), base.lowRiskGroups(), base.securityScore(),
-                base.securityScoreBreakdown(), warnings);
+                base.mediumRiskGroups(), base.lowRiskGroups(), securityScore,
+                breakdown, warnings);
     }
 
-    private SecurityScoreBreakdownDto buildGroupsBreakdown(long totalGroups, long groupsWithExternal, long highRiskGroups, long mediumRiskGroups, long lowRiskGroups, int securityScore) {
+    private SecurityScoreBreakdownDto buildGroupsBreakdown(long totalGroups, long groupsWithExternal, long highRiskGroups, long mediumRiskGroups, long lowRiskGroups, int securityScore,
+                                                           boolean neutralizeForDisabledPref) {
         int lowScore = totalGroups == 0 ? 100 : (int) Math.round(lowRiskGroups * 100.0 / totalGroups);
         int mediumScore = totalGroups == 0 ? 0 : (int) Math.round(mediumRiskGroups * 60.0 / totalGroups);
         int highScore = totalGroups == 0 ? 0 : (int) Math.round(highRiskGroups * 20.0 / totalGroups);
         int externalScore = totalGroups == 0 ? 100 : groupsWithExternal == 0 ? 100 : (int) Math.max(0, 100 - groupsWithExternal * 100 / totalGroups);
+        if (neutralizeForDisabledPref) {
+            lowScore = 100;
+            mediumScore = 60;
+            highScore = 20;
+            externalScore = 100;
+        }
 
         Locale locale = LocaleContextHolder.getLocale();
 

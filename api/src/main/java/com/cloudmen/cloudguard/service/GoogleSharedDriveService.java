@@ -8,6 +8,7 @@ import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -78,10 +79,15 @@ public class GoogleSharedDriveService {
     }
 
     public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail) {
-            SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
-            List<SharedDriveBasicDetail> drives = cachedData.allDrives();
+        return getDrivesPageOverview(loggedInEmail, Set.of());
+    }
 
-            int totalDrives = drives.size();
+    public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
+        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
+        List<SharedDriveBasicDetail> drives = cachedData.allDrives();
+
+        int totalDrives = drives.size();
 
         int orphanDrives = (int) drives.stream().filter(d -> d.totalOrganizers() <= 0).count();
         int totalLowRisk = (int) drives.stream().filter(d -> d.risk().equals("low")).count();
@@ -89,7 +95,8 @@ public class GoogleSharedDriveService {
         int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("high")).count();
         int totalExternalMembersCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
 
-        int securityScore = totalDrives == 0 ? 100 : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
+        int riskOnlyScore = totalDrives == 0 ? 100
+                : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
 
         int notOnlyDomainUsersAllowedCount = (int) drives.stream().filter(d -> !d.onlyDomainUsersAllowed()).count();
         int notOnlyMembersCanAccessCount = (int) drives.stream().filter(d -> !d.onlyMembersCanAccess()).count();
@@ -97,44 +104,52 @@ public class GoogleSharedDriveService {
 
         SecurityScoreBreakdownDto breakdown = buildDrivesBreakdown(
                 totalDrives, totalLowRisk, totalMediumRisk, totalHighRisk, orphanDrives,
-                notOnlyDomainUsersAllowedCount, notOnlyMembersCanAccessCount, externalMembersDriveCount, securityScore);
+                notOnlyDomainUsersAllowedCount, notOnlyMembersCanAccessCount,
+                riskOnlyScore, off);
 
-            return new SharedDriveOverviewResponse(
-                    totalDrives,
-                    orphanDrives,
-                    totalHighRisk,
-                    totalExternalMembersCount,
-                    securityScore,
-                    notOnlyDomainUsersAllowedCount,
-                    notOnlyMembersCanAccessCount,
-                    externalMembersDriveCount,
-                    breakdown,
-                    null
-            );
-    }
-
-    public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
-        SharedDriveOverviewResponse base = getDrivesPageOverview(loggedInEmail);
-        SectionWarningsDto warnings = SectionWarningEvaluator.with(disabledKeys)
-                .check("notOnlyDomainUsersAllowedWarning", base.notOnlyDomainUsersAllowedCount(), "shared-drives", "outsideDomain")
-                .check("notOnlyMembersCanAccessWarning", base.notOnlyMembersCanAccessCount(), "shared-drives", "nonMemberAccess")
-                .check("externalMembersWarning", base.externalMembersDriveCount(), "shared-drives", "external")
-                .check("orphanDrivesWarning", base.orphanDrives(), "shared-drives", "orphan")
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
+                .check("notOnlyDomainUsersAllowedWarning", notOnlyDomainUsersAllowedCount, "shared-drives", "outsideDomain")
+                .check("notOnlyMembersCanAccessWarning", notOnlyMembersCanAccessCount, "shared-drives", "nonMemberAccess")
+                .check("externalMembersWarning", externalMembersDriveCount, "shared-drives", "external")
+                .check("orphanDrivesWarning", orphanDrives, "shared-drives", "orphan")
                 .build();
+
         return new SharedDriveOverviewResponse(
-                base.totalDrives(), base.orphanDrives(), base.totalHighRisk(), base.totalExternalMembersCount(),
-                base.securityScore(), base.notOnlyDomainUsersAllowedCount(), base.notOnlyMembersCanAccessCount(),
-                base.externalMembersDriveCount(), base.securityScoreBreakdown(), warnings);
+                totalDrives,
+                orphanDrives,
+                totalHighRisk,
+                totalExternalMembersCount,
+                breakdown.totalScore(),
+                notOnlyDomainUsersAllowedCount,
+                notOnlyMembersCanAccessCount,
+                externalMembersDriveCount,
+                breakdown,
+                warnings
+        );
     }
 
-    private SecurityScoreBreakdownDto buildDrivesBreakdown(int totalDrives, int totalLowRisk, int totalMediumRisk, int totalHighRisk, int orphanDrives,
-                                                          int notOnlyDomainUsersAllowedCount, int notOnlyMembersCanAccessCount, int externalMembersDriveCount, int securityScore) {
+    private SecurityScoreBreakdownDto buildDrivesBreakdown(int totalDrives, int totalLowRisk, int totalMediumRisk, int totalHighRisk,
+                                                            int orphanDrives, int notOnlyDomainUsersAllowedCount,
+                                                            int notOnlyMembersCanAccessCount,
+                                                            int riskOnlyScore, Set<String> off) {
         int lowScore = totalDrives == 0 ? 100 : (int) Math.round(totalLowRisk * 100.0 / totalDrives);
         int mediumScore = totalDrives == 0 ? 0 : (int) Math.round(totalMediumRisk * 60.0 / totalDrives);
         int highScore = totalDrives == 0 ? 0 : (int) Math.round(totalHighRisk * 20.0 / totalDrives);
         int orphanScore = totalDrives == 0 ? 100 : orphanDrives == 0 ? 100 : (int) Math.max(0, 100 - orphanDrives * 100 / totalDrives);
         int domainOnlyScore = totalDrives == 0 ? 100 : notOnlyDomainUsersAllowedCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyDomainUsersAllowedCount * 50 / totalDrives);
         int membersOnlyScore = totalDrives == 0 ? 100 : notOnlyMembersCanAccessCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyMembersCanAccessCount * 50 / totalDrives);
+
+        if (SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "orphan")) {
+            orphanScore = 100;
+        }
+        if (SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "outsideDomain")) {
+            domainOnlyScore = 100;
+        }
+        if (SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "nonMemberAccess")) {
+            membersOnlyScore = 100;
+        }
+
+        int combinedScore = combinedDriveSecurityScore(totalDrives, riskOnlyScore, orphanScore, domainOnlyScore, membersOnlyScore, off);
 
         Locale locale = LocaleContextHolder.getLocale();
 
@@ -146,8 +161,37 @@ public class GoogleSharedDriveService {
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_domain.title", null, locale), notOnlyDomainUsersAllowedCount == 0 ? messageSource.getMessage("drives.score.factor.only_domain_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_domain.description", new Object[]{notOnlyDomainUsersAllowedCount}, locale), domainOnlyScore, 100, severity(domainOnlyScore)),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_members.title", null, locale), notOnlyMembersCanAccessCount == 0 ? messageSource.getMessage("drives.score.factor.only_members_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_members.description", new Object[]{notOnlyMembersCanAccessCount}, locale), membersOnlyScore, 100, severity(membersOnlyScore))
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
-        return new SecurityScoreBreakdownDto(securityScore, status, factors);
+        String status = combinedScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        return new SecurityScoreBreakdownDto(combinedScore, status, factors);
+    }
+
+    private static int combinedDriveSecurityScore(int totalDrives, int riskOnlyScore, int orphanScore,
+                                                  int domainOnlyScore, int membersOnlyScore, Set<String> off) {
+        if (totalDrives == 0) {
+            return 100;
+        }
+        double sum = 0;
+        int parts = 0;
+        if (!SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "external")) {
+            sum += riskOnlyScore;
+            parts++;
+        }
+        if (!SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "orphan")) {
+            sum += orphanScore;
+            parts++;
+        }
+        if (!SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "outsideDomain")) {
+            sum += domainOnlyScore;
+            parts++;
+        }
+        if (!SecurityPreferenceScoreSupport.preferenceDisabled(off, "shared-drives", "nonMemberAccess")) {
+            sum += membersOnlyScore;
+            parts++;
+        }
+        if (parts == 0) {
+            return 100;
+        }
+        return (int) Math.round(sum / parts);
     }
 
     private static String severity(double score) {

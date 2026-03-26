@@ -65,23 +65,25 @@ public class DashboardService {
     }
 
     private DashboardScores getAllScores(String loggedInEmail) {
+        var disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
+
         CompletableFuture<Integer> usersFuture = CompletableFuture.supplyAsync(() ->
-                usersService.getUsersPageOverview(loggedInEmail).securityScore());
+                usersService.getUsersPageOverview(loggedInEmail, disabled).securityScore());
 
         CompletableFuture<Integer> groupsFuture = CompletableFuture.supplyAsync(() ->
-                groupsService.getGroupsOverview(loggedInEmail).securityScore());
+                groupsService.getGroupsOverview(loggedInEmail, disabled).securityScore());
 
         CompletableFuture<Integer> drivesFuture = CompletableFuture.supplyAsync(() ->
-                sharedDriveService.getDrivesPageOverview(loggedInEmail).securityScore());
+                sharedDriveService.getDrivesPageOverview(loggedInEmail, disabled).securityScore());
 
         CompletableFuture<Integer> devicesFuture = CompletableFuture.supplyAsync(() ->
-                googleDeviceService.getDevicesPageOverview(loggedInEmail).securityScore());
+                googleDeviceService.getDevicesPageOverview(loggedInEmail, disabled).securityScore());
 
         CompletableFuture<Integer> appAccessFuture = CompletableFuture.supplyAsync(() ->
-                oAuthService.getOAuthPageOverview(loggedInEmail).securityScore());
+                oAuthService.getOAuthPageOverview(loggedInEmail, disabled).securityScore());
 
         CompletableFuture<Integer> appPasswordsFuture = CompletableFuture.supplyAsync(() ->
-                passwordsService.getOverview(loggedInEmail, IS_TESTMODE).securityScore());
+                passwordsService.getOverview(loggedInEmail, IS_TESTMODE, disabled).securityScore());
 
         CompletableFuture<Integer> passwordSettingsFuture = CompletableFuture.supplyAsync(() -> passwordSettingsService.getPasswordSettings(loggedInEmail).securityScore());
 
@@ -110,7 +112,8 @@ public class DashboardService {
                 });
 
         CompletableFuture.allOf(
-                usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture, dnsAverageFuture
+                usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture,
+                passwordSettingsFuture, dnsAverageFuture
         ).join();
 
         int usersScore = usersFuture.join();

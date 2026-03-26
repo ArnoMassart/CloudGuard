@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.dto.apppasswords.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -80,23 +81,30 @@ public class AppPasswordsService {
     }
 
     public AppPasswordOverviewResponse getOverview(String adminEmail, boolean isTestMode) {
+        return getOverview(adminEmail, isTestMode, Set.of());
+    }
+
+    public AppPasswordOverviewResponse getOverview(String adminEmail, boolean isTestMode, Set<String> disabledKeys) {
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(adminEmail, this::fetchAllAppPasswords);
         int usersWithAppPasswords = entry.users().size();
         int totalAppPasswords = entry.users().stream()
                 .mapToInt(u -> u.passwords().size())
                 .sum();
         int totalUserCount = entry.totalUserCount();
-        int securityScore = totalUserCount == 0 ? 100
+        boolean ignored = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-passwords", "appPassword");
+        int securityScore = ignored ? 100 : totalUserCount == 0 ? 100
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
         SecurityScoreBreakdownDto breakdown = buildAppPasswordsBreakdown(
-                totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore);
+                totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore, ignored);
         return new AppPasswordOverviewResponse(true, totalAppPasswords, usersWithAppPasswords, securityScore, breakdown);
     }
 
-    private SecurityScoreBreakdownDto buildAppPasswordsBreakdown(int totalUserCount, int usersWithAppPasswords, int totalAppPasswords, int securityScore) {
-        int usersWithoutScore = totalUserCount == 0 ? 100
+    private SecurityScoreBreakdownDto buildAppPasswordsBreakdown(int totalUserCount, int usersWithAppPasswords, int totalAppPasswords, int securityScore,
+                                                                 boolean ignorePref) {
+        int usersWithoutScore = ignorePref ? 100 : totalUserCount == 0 ? 100
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
-        int totalCountScore = totalAppPasswords == 0 ? 100 : (int) Math.max(0, 100 - Math.min(totalAppPasswords, 50) * 2);
+        int totalCountScore = ignorePref ? 100 : totalAppPasswords == 0 ? 100 : (int) Math.max(0, 100 - Math.min(totalAppPasswords, 50) * 2);
 
         Locale locale = LocaleContextHolder.getLocale();
 
@@ -114,6 +122,12 @@ public class AppPasswordsService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
+    }
+
+    private static String severity(double score) {
+        if (score >= 75) return "success";
+        if (score >= 50) return "warning";
+        return "error";
     }
 
     public void forceRefreshCache(String adminEmail) {

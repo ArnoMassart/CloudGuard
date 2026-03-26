@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.oauth.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
+import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -163,6 +164,11 @@ public class GoogleOAuthService {
     }
 
     public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail) {
+        return getOAuthPageOverview(loggedInEmail, Set.of());
+    }
+
+    public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail, Set<String> disabledKeys) {
+        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchOAuthData(loggedInEmail);
         List<RawUserToken> rawTokens = cachedData.allRawTokens();
 
@@ -175,13 +181,15 @@ public class GoogleOAuthService {
                 .filter(app -> isAppHighRisk(app.allScopes))
                 .count();
 
+        boolean ignHighRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-access", "highRisk");
+
         int securityScore = 100;
-        if (totalThirdPartyApps > 0) {
+        if (!ignHighRisk && totalThirdPartyApps > 0) {
             double penalty = ((double) totalHighRiskApps / totalThirdPartyApps) * 100;
             securityScore = (int) Math.max(0, 100 - Math.round(penalty));
         }
 
-        SecurityScoreBreakdownDto breakdown = buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, totalPermissionsGranted, securityScore);
+        SecurityScoreBreakdownDto breakdown = buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, totalPermissionsGranted, securityScore, ignHighRisk);
 
         return new OAuthOverviewResponse(
                 totalThirdPartyApps,
@@ -192,8 +200,12 @@ public class GoogleOAuthService {
         );
     }
 
-    private SecurityScoreBreakdownDto buildOAuthBreakdown(long totalThirdPartyApps, long totalHighRiskApps, long totalPermissionsGranted, int securityScore) {
+    private SecurityScoreBreakdownDto buildOAuthBreakdown(long totalThirdPartyApps, long totalHighRiskApps, long totalPermissionsGranted, int securityScore,
+                                                         boolean ignoreHighRiskPref) {
         int highRiskScore = totalThirdPartyApps == 0 ? 100 : (int) Math.round((totalThirdPartyApps - totalHighRiskApps) * 100.0 / totalThirdPartyApps);
+        if (ignoreHighRiskPref) {
+            highRiskScore = 100;
+        }
         int noAppsScore = totalThirdPartyApps == 0 ? 100 : 100;
 
         Locale locale = LocaleContextHolder.getLocale();

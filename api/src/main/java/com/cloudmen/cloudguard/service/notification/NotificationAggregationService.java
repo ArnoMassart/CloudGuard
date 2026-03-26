@@ -167,12 +167,14 @@ public class NotificationAggregationService {
         List<NotificationDto> notifications = new ArrayList<>();
         int id = 0;
 
-        UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail));
-        SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail));
-        DeviceOverviewResponse devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail));
-        GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail));
-        OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail));
-        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true));
+        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(adminEmail);
+
+        UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
+        SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
+        DeviceOverviewResponse devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail, disabled));
+        GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail, disabled));
+        OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail, disabled));
+        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true, disabled));
 
         DnsRecordResponseDto dns = getDnsData(adminEmail);
 
