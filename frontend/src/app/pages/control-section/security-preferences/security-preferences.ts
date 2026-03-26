@@ -8,11 +8,12 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { SecurityPreferencesService } from '../../../services/security-preferences-service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { SECTION_PREFERENCE_CONFIGS } from '../../../models/preferences/section-preference-config';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-security-preferences',
   standalone: true,
-  imports: [CommonModule, PageHeader, PageWarnings, PageWarningsItem, LucideAngularModule],
+  imports: [CommonModule, PageHeader, PageWarnings, PageWarningsItem, LucideAngularModule, TranslocoPipe],
   templateUrl: './security-preferences.html',
   styleUrl: './security-preferences.css',
 })
