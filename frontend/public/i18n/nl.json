@@ -440,5 +440,6 @@
   "ignore-30-days": "Negeer (30 dagen)",
   "repairing": "Herstellen",
   "external-members": "externe leden",
-  "external-member": "extern lid"
+  "external-member": "extern lid",
+  "security-preferences": "Beveiligingsvoorkeuren"
 }

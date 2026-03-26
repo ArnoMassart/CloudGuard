@@ -62,8 +62,9 @@ public class PdfReportService {
     private final TeamleaderCompanyService teamleaderCompanyService;
     private final TeamleaderService teamleaderService;
     private final MessageSource messageSource;
+    private final UserSecurityPreferenceService userSecurityPreferenceService;
 
-    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService, @Qualifier("messageSource") MessageSource messageSource) {
+    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService, MessageSource messageSource, UserSecurityPreferenceService userSecurityPreferenceService) {
         this.templateEngine = templateEngine;
         this.dashboardService = dashboardService;
         this.notificationAggregationService = notificationAggregationService;
@@ -79,14 +80,14 @@ public class PdfReportService {
         this.teamleaderCompanyService = teamleaderCompanyService;
         this.teamleaderService = teamleaderService;
         this.messageSource = messageSource;
+        this.userSecurityPreferenceService = userSecurityPreferenceService;
     }
 
     public record ReportResponse(
             byte[] data,
             String companyName) { }
 
-    public ReportResponse generateSecurityRapport(String adminEmail) {
-        Locale locale = LocaleContextHolder.getLocale();
+    public ReportResponse generateSecurityRapport(String adminEmail, Locale locale) {
         log.info("Starting pdf generation");
 
         try {
@@ -100,7 +101,7 @@ public class PdfReportService {
 
             String companyName = teamleaderCompanyService.getCompanyNameByEmail(adminEmail, headers);
 
-            FullSecurityReport reportData = getFullSecurityReport(adminEmail);
+            FullSecurityReport reportData = getFullSecurityReport(adminEmail, locale);
 
             Context context = new Context(locale);
 
@@ -135,13 +136,13 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport getFullSecurityReport(String adminEmail) {
+    private FullSecurityReport getFullSecurityReport(String adminEmail, Locale locale) {
         int overallScore = dashboardService.getDashboardSecurityScores(adminEmail).overallScore();
         Set<String> disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(adminEmail);
 
         return new FullSecurityReport(
                 overallScore,
-                getSecurityReportRiskItems(adminEmail),
+                getSecurityReportRiskItems(adminEmail, locale),
                 getSecurityReportUsersMetrics(adminEmail, disabled),
                 getSecurityReportGroupsMetrics(adminEmail, disabled),
                 getSecurityReportDriveMetrics(adminEmail, disabled),
@@ -149,12 +150,12 @@ public class PdfReportService {
                 getSecurityReportAppAccessMetrics(adminEmail, disabled),
                 getSecurityReportAppPasswordMetrics(adminEmail, disabled),
                 getSecurityReportPasswordMetrics(adminEmail),
-                getSecurityReportDomainData(adminEmail)
+                getSecurityReportDomainData(adminEmail, locale)
         );
     }
 
-    private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems(String adminEmail) {
-        List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(adminEmail);
+    private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems(String adminEmail, Locale locale) {
+        List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(adminEmail, locale);
 
         return criticalNotifications.stream().map(n -> new FullSecurityReport.RiskItem(n.title(), n.description())).toList();
     }
@@ -260,7 +261,7 @@ public class PdfReportService {
         );
     }
 
-    private List<FullSecurityReport.DomainData> getSecurityReportDomainData(String adminEmail) {
+    private List<FullSecurityReport.DomainData> getSecurityReportDomainData(String adminEmail, Locale locale) {
         List<FullSecurityReport.DomainData> domainData = new ArrayList<>();
         List<DomainDto> domains = googleDomainService.getAllDomains(adminEmail);
 
@@ -271,8 +272,6 @@ public class PdfReportService {
             DnsRecordResponseDto dnsResponse = dnsRecordsService.getImportantRecords(domain, "google", dnsOverrides);
             List<DnsRecordDto> rows = dnsResponse.rows();
             int score = dnsResponse.securityScore();
-
-            Locale locale = LocaleContextHolder.getLocale();
 
             List<FullSecurityReport.SecurityCheck> checks = rows.stream().map(r -> {
                 String type = r.type();
@@ -316,7 +315,7 @@ public class PdfReportService {
                 }
 
                 return new FullSecurityReport.SecurityCheck(
-                        info.title(),
+                        messageSource.getMessage(info.title, null, locale),
                         description,
                         tip,
                         statusText,

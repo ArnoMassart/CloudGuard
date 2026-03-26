@@ -23,4 +23,6 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    private String language = "nl";
+
 }

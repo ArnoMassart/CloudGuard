@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.controller;
 import com.cloudmen.cloudguard.dto.notifications.NotificationsResponse;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,6 @@ public class NotificationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         String userId = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(aggregationService.getNotifications(userId));
+        return ResponseEntity.ok(aggregationService.getNotifications(userId, LocaleContextHolder.getLocale()));
     }
 }

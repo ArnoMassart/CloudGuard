@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.report.PdfReportService;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,7 +30,7 @@ public class ReportController {
 
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        byte[] pdfBytes = reportService.generateSecurityRapport(loggedInEmail).data();
+        byte[] pdfBytes = reportService.generateSecurityRapport(loggedInEmail, LocaleContextHolder.getLocale()).data();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Security_Report.pdf")

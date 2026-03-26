@@ -53,7 +53,7 @@ export class Navbar {
   readonly NavItemsControl = [
     { Icon: this.Icons.CreditCard, Label: 'licenses', Route: '/licenses' },
     { Icon: this.Icons.Bell, Label: 'notifications-feedback', Route: '/reports-reactions' },
-    { Icon: this.Icons.Settings, Label: 'Beveiligingsvoorkeuren', Route: '/security-preferences' },
+    { Icon: this.Icons.Settings, Label: 'security-preferences', Route: '/security-preferences' },
   ];
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {

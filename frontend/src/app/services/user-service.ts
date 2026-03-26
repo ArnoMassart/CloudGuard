@@ -62,4 +62,17 @@ export class UserService {
       { responseType: 'text' }
     );
   }
+
+  updateLanguage(language: string) {
+    const url = RouteService.getBackendUrl('/user/language');
+    return this.#http.post(url, { language: language });
+  }
+
+  getLanguage(): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/language');
+    return this.#http.get(url, {
+      responseType: 'text',
+      withCredentials: true,
+    });
+  }
 }
