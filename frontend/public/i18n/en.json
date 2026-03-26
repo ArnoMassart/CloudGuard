@@ -479,7 +479,7 @@
   "preferences.password-settings.expiration": "No enforced password expiry",
   "preferences.password-settings.securityKeys": "Administrator accounts without a hardware security key",
   "preferences.password-settings.strongPasswords": "Strong password requirements not enforced",
-  "preferences.domain-dns": "Domain & DNS"
+  "preferences.domain-dns": "Domain & DNS",
   "character": "sign",
   "security-preferences": "Security Preferences"
 }
