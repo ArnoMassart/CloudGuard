@@ -45,7 +45,7 @@
               <h3 class="m-0 text-sm font-medium" [class]="factorTitleClass(factor)">{{ factor.title }}</h3>
               <p class="m-0 text-sm mt-1" [class]="factorDescClass(factor)">{{ factor.description }}</p>
               @if (factor.muted) {
-              <p class="m-0 text-xs mt-1.5 text-gray-400 italic">Niet meegenomen in score (voorkeur uitgeschakeld)</p>
+              <p class="m-0 text-xs mt-1.5 text-gray-400 italic">Niet meegenomen in de security score</p>
               }
               <div class="flex items-center gap-4 mt-3 text-xs" [class.text-gray-400]="factor.muted" [class.text-gray-500]="!factor.muted" [style.opacity]="0.9">
                 <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>

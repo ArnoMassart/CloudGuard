@@ -94,6 +94,7 @@ public class DnsRecordsService {
     private SecurityScoreBreakdownDto buildDnsBreakdown(List<DnsRecordDto> rows, int securityScore) {
         List<SecurityScoreFactorDto> factors = new ArrayList<>();
         for (DnsRecordDto row : rows) {
+            boolean optional = row.importance() == DnsRecordImportance.OPTIONAL;
             double mult = switch (row.status()) {
                 case VALID -> 1.0;
                 case OK, ATTENTION -> 0.5;
@@ -114,7 +115,7 @@ public class DnsRecordsService {
                 case "CNAME" -> messageSource.getMessage("dns.score.factor.title.cname", null, locale);
                 default -> row.type();
             };
-            factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score)));
+            factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score), optional));
         }
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
@@ -126,20 +127,28 @@ public class DnsRecordsService {
         return "error";
     }
 
+    /**
+     * Weighted score over REQUIRED and RECOMMENDED rows only; OPTIONAL rows do not affect the percentage.
+     */
     private int calculateSecurityScore(List<DnsRecordDto> rows) {
         if (rows == null || rows.isEmpty()) return 0;
 
+        boolean anyScored = rows.stream().anyMatch(r -> r.importance() != DnsRecordImportance.OPTIONAL);
+        if (!anyScored) {
+            return 100;
+        }
+
         double score = 0;
-        for (DnsRecordDto row: rows) {
-            int weight = switch (row.importance()){
+        for (DnsRecordDto row : rows) {
+            int weight = switch (row.importance()) {
                 case REQUIRED -> 15;
                 case RECOMMENDED -> 10;
-                case OPTIONAL -> 5;
+                case OPTIONAL -> 0;
             };
 
             double mult = switch (row.status()) {
                 case VALID -> 1.0;
-                case OK,ATTENTION -> 0.5;
+                case OK, ATTENTION -> 0.5;
                 case ACTION_REQUIRED, ERROR -> 0.0;
             };
 
