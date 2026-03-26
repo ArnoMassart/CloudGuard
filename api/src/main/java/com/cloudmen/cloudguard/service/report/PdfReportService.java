@@ -85,7 +85,9 @@ public class PdfReportService {
             String companyName) { }
 
     public ReportResponse generateSecurityRapport(String adminEmail) {
+        Locale locale = LocaleContextHolder.getLocale();
         log.info("Starting pdf generation");
+
         try {
             byte[] imageBytes = new ClassPathResource("static/logo.png").getInputStream().readAllBytes();
             String base64Logo = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
@@ -99,8 +101,6 @@ public class PdfReportService {
 
             FullSecurityReport reportData = getFullSecurityReport(adminEmail);
 
-            Locale locale = LocaleContextHolder.getLocale();
-
             Context context = new Context(locale);
 
             context.setVariable("logoBase64", base64Logo);
@@ -110,7 +110,7 @@ public class PdfReportService {
             context.setVariable("report", reportData);
 
             // 2. Spring Boot vindt je template nu wél succesvol
-            String renderedHtml = templateEngine.process("security-template", context);
+            String renderedHtml = templateEngine.process("security-template_"+locale.getLanguage(), context);
 
             // 3. Gebruik JSoup om de HTML5 op te schonen en om te zetten naar een strict W3C DOM Document
             Document jsoupDoc = Jsoup.parse(renderedHtml, "UTF-8");
@@ -130,7 +130,7 @@ public class PdfReportService {
                 return new ReportResponse(baos.toByteArray(), companyName);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error with pdf generation", e);
+            throw new RuntimeException("Error with pdf generation: " + e.getMessage(), e);
         }
     }
 
