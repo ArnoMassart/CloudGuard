@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '@auth0/auth0-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../shared/AppIcons';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { LanguageBar } from '../../components/language-bar/language-bar';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, TranslocoPipe, LanguageBar],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

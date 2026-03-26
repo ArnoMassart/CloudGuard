@@ -16,29 +16,30 @@
                 <lucide-icon [img]="Icons.CircleX" size="28" class="text-destructive"></lucide-icon>
             </div>
 
-            <h2 class="flex justify-center text-xl font-semibold">Toegang geweigerd</h2>
+            <h2 class="flex justify-center text-xl">{{ 'forbidden.access-denied' | transloco }}</h2>
 
-            <span class="flex items-center justify-center text-center text-black/60 mb-3 text-sm px-2">
-                Uw organisatie heeft momenteel geen actieve toegang tot CloudGuard. Neem contact op met uw
-                accountmanager bij CLOUDMEN om dit te activeren.
+            <span class="flex items-center justify-center text-center text-black/50 mb-3 px-2">
+                {{ 'access-denied.description' | transloco }}
             </span>
 
             <div
-                class="bg-[#f9fafb] py-3 px-3 mb-3 text-black/60 text-center text-[13px] rounded-lg border-muted border">
-                <span class="font-semibold text-black">Let op: </span>
+                class="bg-[#f9fafb] py-3 px-3 mb-3 text-black/50 text-center text-[13px] rounded-lg border-muted border">
+                <span class="font-semibold">{{ 'forbidden.note' | transloco }}: </span>
                 <span>
-                    Toegang tot dit security dashboard vereist een actieve CloudGuard-licentie in ons systeem.
+                    {{ 'access-denied.note.description' | transloco }}
                 </span>
             </div>
 
             <button (click)="tryAgain()"
                 class="bg-primary text-white w-full p-2.5 rounded-lg hover:bg-primary/90 transition-colors cursor-pointer font-medium">
-                Terug naar login
+                {{ 'back-to-login' | transloco }}
             </button>
         </div>
     </div>
 
-    <div class="mt-auto mb-8 text-center text-sm text-white/60">
-        <p class="mb-1">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
+    <div class="mb-8 text-center text-sm text-white/60 mt-8">
+        <app-language-bar />
+
+        <p class="mb-1 pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
     </div>
 </div>
