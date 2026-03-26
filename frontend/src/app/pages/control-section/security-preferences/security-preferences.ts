@@ -1,6 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PageHeader } from '../../../components/page-header/page-header';
+import { PageWarnings } from '../../../components/page-warnings/page-warnings';
+import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../shared/AppIcons';
 import { SecurityPreferencesService } from '../../../services/security-preferences-service';
@@ -10,13 +12,23 @@ import { SECTION_PREFERENCE_CONFIGS } from '../../../models/preferences/section-
 @Component({
   selector: 'app-security-preferences',
   standalone: true,
-  imports: [CommonModule, PageHeader, LucideAngularModule],
+  imports: [CommonModule, PageHeader, PageWarnings, PageWarningsItem, LucideAngularModule],
   templateUrl: './security-preferences.html',
   styleUrl: './security-preferences.css',
 })
 export class SecurityPreferences implements OnInit {
-  readonly Icons = AppIcons;
   readonly sections = SECTION_PREFERENCE_CONFIGS;
+
+  /** Same icons as `NavItemsSecurity` in the navbar */
+  readonly #navIconByRoute: Record<string, typeof AppIcons.Shield> = {
+    '/users-groups': AppIcons.Users,
+    '/shared-drives': AppIcons.FolderOpen,
+    '/devices': AppIcons.SmartPhone,
+    '/app-access': AppIcons.Key,
+    '/app-passwords': AppIcons.LayoutGrid,
+    '/password-settings': AppIcons.Lock,
+    '/domain-dns': AppIcons.Globe,
+  };
 
   readonly #preferencesService = inject(SecurityPreferencesService);
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
@@ -65,6 +77,10 @@ export class SecurityPreferences implements OnInit {
   isEnabled(section: string, key: string): boolean {
     const fullKey = `${section}:${key}`;
     return this.preferences()[fullKey] !== false;
+  }
+
+  sectionNavIcon(route: string): typeof AppIcons.Shield {
+    return this.#navIconByRoute[route] ?? AppIcons.Shield;
   }
 
   dnsSelectValue(dnsType: string | undefined): string {

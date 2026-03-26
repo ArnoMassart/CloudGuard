@@ -17,6 +17,8 @@ export class PageWarnings {
 
   @Input() isCritical: boolean = false;
   @Input() isDashboard: boolean = false;
+  /** Info callout: same chrome as waarschuwing, blue palette, no toggle/chevron */
+  @Input() isInfo: boolean = false;
 
   @Input() isExpanded: boolean = false;
   @Input() hasMultipleWarnings: boolean = false;

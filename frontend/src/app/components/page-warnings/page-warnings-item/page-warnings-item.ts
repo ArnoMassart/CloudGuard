@@ -10,4 +10,5 @@ import { Component, Input } from '@angular/core';
 export class PageWarningsItem {
   @Input() showBullet: boolean = false;
   @Input() isCritical: boolean = false;
+  @Input() isInfo: boolean = false;
 }
