@@ -18,3 +18,12 @@ export type Device = {
   intSecure: boolean;
   integrityText: string;
 };
+
+export type DeviceFactor = {
+  key: string;
+  label: string;
+  icon: any;
+  secure: boolean;
+  text: string;
+  state: 'ok' | 'warn' | 'muted';
+};

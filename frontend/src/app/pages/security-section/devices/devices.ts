@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule } from 'lucide-angular';
 import { DeviceService } from '../../../services/device-service';
-import { Device } from '../../../models/devices/Device';
+import { Device, DeviceFactor } from '../../../models/devices/Device';
 import { DevicesOverviewResponse } from '../../../models/devices/DevicesOverviewResponse';
 import { DevicesPageWarnings } from '../../../models/devices/DevicesPageWarnings';
 import { DeviceStatus } from '../../../models/devices/DeviceStatus';
@@ -159,6 +159,22 @@ export class Devices implements OnInit, OnDestroy {
       overview?.securityScoreBreakdown ??
       this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'devices');
     this.#securityScoreDetail.open(breakdown, 'devices');
+  }
+
+  getDeviceFactors(device: Device): DeviceFactor[] {
+    return [
+      { key: 'lockscreen', label: 'Vergrendelscherm', icon: AppIcons.Lock,       secure: device.lockSecure, text: device.screenLockText },
+      { key: 'encryption', label: 'Encryptie',        icon: AppIcons.HardDrive,  secure: device.encSecure,  text: device.encryptionText },
+      { key: 'osVersion',  label: 'OS Versie',        icon: AppIcons.Cpu,        secure: device.osSecure,   text: device.osText },
+      { key: 'integrity',  label: 'Integriteit',      icon: AppIcons.ShieldCheck, secure: device.intSecure, text: device.integrityText },
+    ].map((f) => ({
+      ...f,
+      state: f.secure
+        ? 'ok' as const
+        : this.#preferencesFacade.isDisabled('mobile-devices', f.key)
+          ? 'muted' as const
+          : 'warn' as const,
+    }));
   }
 
   refreshData() {
