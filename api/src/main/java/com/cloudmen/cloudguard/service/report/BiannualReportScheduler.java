@@ -5,10 +5,14 @@ import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cglib.core.Local;
+import org.springframework.context.i18n.LocaleContext;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class BiannualReportScheduler {
@@ -44,13 +48,17 @@ public class BiannualReportScheduler {
             try {
                 log.info("Bezig met rapport voor: {}", email);
 
+                String userLang = userService.getLanguage(email);
+
+                Locale locale = Locale.forLanguageTag(userLang);
+
                 cacheWarmupService.warmupAllCachesAsync(email).join();
 
-                PdfReportService.ReportResponse response = reportService.generateSecurityRapport(email);
+                PdfReportService.ReportResponse response = reportService.generateSecurityRapport(email, locale);
 
                 String companyName = response.companyName();
 
-                emailService.sendSecurityReportEmail(email, companyName, response.data());
+                emailService.sendSecurityReportEmail(email, companyName, response.data(), locale);
 
                 log.info("Rapport succesvol verstuurd naar: {} ({})", email, companyName);
             } catch (Exception e) {

@@ -156,59 +156,91 @@ public class AdminSecurityKeysService {
         String token = creds.getAccessToken().getTokenValue();
 
         Map<String, SecurityKeyCounts> result = new HashMap<>();
-        // Reports API data can lag 48+ hours; use 3 days ago to avoid "data not yet available"
-        String date = LocalDate.now().minusDays(3).format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String pageToken = null;
 
-        do {
-            UriComponentsBuilder builder = UriComponentsBuilder
-                    .fromHttpUrl(REPORTS_API_BASE + "/" + date)
-                    .queryParam("parameters", PARAMETERS)
-                    .queryParam("maxResults", 500);
-            if (pageToken != null) builder.queryParam("pageToken", pageToken);
+        // We will try up to 7 days back.
+        int maxDaysBack = 7;
 
-            URI uri = builder.build().encode().toUri();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
+        for (int daysBack = 3; daysBack <= maxDaysBack; daysBack++) {
+            String date = LocalDate.now().minusDays(daysBack).format(DateTimeFormatter.ISO_LOCAL_DATE);
+            String pageToken = null;
+            boolean dataNotYetAvailable = false;
 
-            ResponseEntity<String> resp = restTemplate.exchange(
-                    uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            log.info("Attempting to fetch Reports API data for date: {}", date);
 
-            if (resp.getBody() == null) break;
+            try {
+                do {
+                    UriComponentsBuilder builder = UriComponentsBuilder
+                            .fromHttpUrl(REPORTS_API_BASE + "/" + date)
+                            .queryParam("parameters", PARAMETERS)
+                            .queryParam("maxResults", 500);
+                    if (pageToken != null) builder.queryParam("pageToken", pageToken);
 
-            JsonNode root = mapper.readTree(resp.getBody());
-            JsonNode usageReports = root.get("usageReports");
-            if (usageReports == null || !usageReports.isArray()) break;
+                    URI uri = builder.build().encode().toUri();
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setBearerAuth(token);
 
-            for (JsonNode report : usageReports) {
-                JsonNode entity = report.get("entity");
-                if (entity == null) continue;
-                String userEmail = entity.has("userEmail") ? entity.get("userEmail").asText() : null;
-                if (userEmail == null || userEmail.isBlank()) continue;
-
-                int numSecurityKeys = 0;
-                int numPasskeysEnrolled = 0;
-
-                JsonNode params = report.get("parameters");
-                if (params != null && params.isArray()) {
-                    for (JsonNode p : params) {
-                        String name = p.has("name") ? p.get("name").asText() : "";
-                        if ("accounts:num_security_keys".equals(name) && p.has("intValue")) {
-                            numSecurityKeys = p.get("intValue").asInt();
-                        } else if ("accounts:num_passkeys_enrolled".equals(name) && p.has("intValue")) {
-                            numPasskeysEnrolled = p.get("intValue").asInt();
+                    ResponseEntity<String> resp;
+                    try {
+                        resp = restTemplate.exchange(
+                                uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+                    } catch (org.springframework.web.client.HttpClientErrorException e) {
+                        // Check if the error is exactly the 400 "not yet available" lag issue
+                        if (e.getStatusCode().value() == 400 && e.getResponseBodyAsString().contains("not yet available")) {
+                            log.warn("Google Reports API data not yet available for {}, falling back to older date...", date);
+                            dataNotYetAvailable = true;
+                            break; // Break the pagination do-while loop, let the for loop try the next day
                         }
+                        throw e; // Rethrow if it's a different HTTP error (e.g., 401 Unauthorized or a different 400)
                     }
+
+                    if (resp.getBody() == null) break;
+
+                    JsonNode root = mapper.readTree(resp.getBody());
+                    JsonNode usageReports = root.get("usageReports");
+                    if (usageReports == null || !usageReports.isArray()) break;
+
+                    for (JsonNode report : usageReports) {
+                        JsonNode entity = report.get("entity");
+                        if (entity == null) continue;
+                        String userEmail = entity.has("userEmail") ? entity.get("userEmail").asText() : null;
+                        if (userEmail == null || userEmail.isBlank()) continue;
+
+                        int numSecurityKeys = 0;
+                        int numPasskeysEnrolled = 0;
+
+                        JsonNode params = report.get("parameters");
+                        if (params != null && params.isArray()) {
+                            for (JsonNode p : params) {
+                                String name = p.has("name") ? p.get("name").asText() : "";
+                                if ("accounts:num_security_keys".equals(name) && p.has("intValue")) {
+                                    numSecurityKeys = p.get("intValue").asInt();
+                                } else if ("accounts:num_passkeys_enrolled".equals(name) && p.has("intValue")) {
+                                    numPasskeysEnrolled = p.get("intValue").asInt();
+                                }
+                            }
+                        }
+
+                        result.put(userEmail.toLowerCase(), new SecurityKeyCounts(numSecurityKeys, numPasskeysEnrolled));
+                    }
+
+                    JsonNode next = root.get("nextPageToken");
+                    pageToken = (next != null && !next.isNull() && !next.asText().isBlank()) ? next.asText() : null;
+                } while (pageToken != null);
+
+                // If we successfully paginated through the whole date without hitting the "not available" flag:
+                if (!dataNotYetAvailable) {
+                    log.info("Successfully fetched security key counts for {} users from Reports API for date {}", result.size(), date);
+                    return result; // Exit the loop and return the data!
                 }
 
-                result.put(userEmail.toLowerCase(), new SecurityKeyCounts(numSecurityKeys, numPasskeysEnrolled));
+            } catch (Exception e) {
+                if (daysBack == maxDaysBack) {
+                    throw new Exception("Failed to fetch from Reports API even after " + maxDaysBack + " days fallback.", e);
+                }
+                log.warn("Unexpected error fetching date {}, trying older date. Error: {}", date, e.getMessage());
             }
+        }
 
-            JsonNode next = root.get("nextPageToken");
-            pageToken = (next != null && !next.isNull() && !next.asText().isBlank()) ? next.asText() : null;
-        } while (pageToken != null);
-
-        log.info("Fetched security key counts for {} users from Reports API", result.size());
         return result;
     }
 

@@ -440,5 +440,6 @@
   "repairing": "Restore",
   "external-members": "external members",
   "external-member": "external member",
-  "character": "sign"
+  "character": "sign",
+  "security-preferences": "Security Preferences"
 }

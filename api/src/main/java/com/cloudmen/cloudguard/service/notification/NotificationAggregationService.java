@@ -94,10 +94,10 @@ public class NotificationAggregationService {
         this.messageSource = messageSource;
     }
 
-    public NotificationsResponse getNotifications(String userId) {
+    public NotificationsResponse getNotifications(String userId, Locale locale) {
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
 
-        List<NotificationDto> active = aggregateActive(userId);
+        List<NotificationDto> active = aggregateActive(userId, locale);
         List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
         Set<String> dismissedKeys = dismissed.stream()
                 .map(d -> d.getSource() + ":" + d.getNotificationType())
@@ -123,19 +123,19 @@ public class NotificationAggregationService {
     }
 
     public long getNotificationsCount(String userId) {
-        NotificationsResponse response = getNotifications(userId);
+        NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
         return response.active().size();
     }
 
     public long getNotificationsCriticalCount(String userId) {
-        NotificationsResponse response = getNotifications(userId);
+        NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
         return response.active().stream()
                 .filter(n -> "critical".equals(n.severity()))
                 .count();
     }
 
-    public List<NotificationDto> getCriticalNotifications(String userId) {
-        NotificationsResponse response = getNotifications(userId);
+    public List<NotificationDto> getCriticalNotifications(String userId, Locale locale) {
+        NotificationsResponse response = getNotifications(userId, locale);
         return response.active().stream().filter(n -> n.severity().equals("critical")).toList();
     }
 
@@ -163,7 +163,7 @@ public class NotificationAggregationService {
         );
     }
 
-    private List<NotificationDto> aggregateActive(String adminEmail) {
+    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale) {
         List<NotificationDto> notifications = new ArrayList<>();
         int id = 0;
 
@@ -177,8 +177,6 @@ public class NotificationAggregationService {
         AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true, disabled));
 
         DnsRecordResponseDto dns = getDnsData(adminEmail);
-
-        Locale locale = LocaleContextHolder.getLocale();
 
         // DNS
         Set<String> criticalDnsTypes = new HashSet<>();
