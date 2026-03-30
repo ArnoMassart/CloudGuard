@@ -54,6 +54,7 @@ export class UsersSection implements OnInit {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   readonly orgUsers = signal<UserOrgDetail[]>([]);
   readonly isLoading = signal(false);
@@ -65,7 +66,9 @@ export class UsersSection implements OnInit {
   readonly nextPageToken = signal<string | null>(null);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
-  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly hasMultipleWarnings = computed(
+    () => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false
+  );
   readonly userPageWarnings = computed((): UsersPageWarnings => {
     const items = this.pageOverview()?.warnings?.items ?? {};
     return {
@@ -79,7 +82,8 @@ export class UsersSection implements OnInit {
     kpiColors(
       this.pageOverview()?.withoutTwoFactor ?? 0,
       this.#preferencesFacade.isDisabled('users-groups', '2fa'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertOrange
     )
   );
 
@@ -154,9 +158,7 @@ export class UsersSection implements OnInit {
 
   /** 2FA off and 2FA warning muted in preferences → gray cell (Security column unchanged). */
   twoFactorCellMuted(user: UserOrgDetail): boolean {
-    return (
-      !user.twoFactorEnabled && this.#preferencesFacade.isDisabled('users-groups', '2fa')
-    );
+    return !user.twoFactorEnabled && this.#preferencesFacade.isDisabled('users-groups', '2fa');
   }
 
   /** Activity warning muted and user has an activity violation → gray last-login cell. */
@@ -168,7 +170,7 @@ export class UsersSection implements OnInit {
     return codes.some(
       (c) =>
         c === USER_SECURITY_VIOLATION.ACTIVITY_STALE ||
-        c === USER_SECURITY_VIOLATION.ACTIVITY_INACTIVE_RECENT,
+        c === USER_SECURITY_VIOLATION.ACTIVITY_INACTIVE_RECENT
     );
   }
 
@@ -234,18 +236,22 @@ export class UsersSection implements OnInit {
   // ==========================================
   #loadUsers(token: string | null = null) {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
-    this.#userService.getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
-      next: (page) => {
-        this.orgUsers.set(page.users);
-        this.nextPageToken.set(page.nextPageToken);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load users', err);
-        this.isLoading.set(false);
-      },
-    });
+    this.#userService
+      .getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
+      .subscribe({
+        next: (page) => {
+          this.orgUsers.set(page.users);
+          this.nextPageToken.set(page.nextPageToken);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load users', err);
+          this.apiError.set(true);
+          this.isLoading.set(false);
+        },
+      });
   }
 
   #loadPageOverview() {

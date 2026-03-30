@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -57,7 +58,7 @@ public class GoogleSharedDriveCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new IllegalArgumentException("Fout bij ophalen Google Shared Drives, en geen cache beschikbaar: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen Google Shared Drives, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 
@@ -84,7 +85,7 @@ public class GoogleSharedDriveCacheService {
             return allDrivesData;
 
         } catch (Exception e) {
-            throw new IllegalArgumentException("Fout bij ophalen van alle Shared Drives: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen van alle Shared Drives: " + e.getMessage());
         }
     }
 

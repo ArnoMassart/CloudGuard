@@ -1,28 +1,18 @@
 <div class="w-full flex flex-col gap-5">
   <div class="w-full flex gap-4">
-    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}" [Value]="pageOverview()?.totalUsers" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}" [Value]="pageOverview()?.withoutTwoFactor"
-      [BackgroundColor]="kpiZonder2faColors().bg"
-      [IconColor]="kpiZonder2faColors().icon"
-      [TextColor]="kpiZonder2faColors().text"
+    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}"
+      [Value]="pageOverview()?.totalUsers" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}"
+      [Value]="pageOverview()?.withoutTwoFactor" [BackgroundColor]="kpiZonder2faColors().bg"
+      [IconColor]="kpiZonder2faColors().icon" [TextColor]="kpiZonder2faColors().text"
       [Icon]="(pageOverview()?.withoutTwoFactor ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}" [Value]="pageOverview()?.adminUsers"
-      BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-    <div
-      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-      (click)="openSecurityScoreDetail()"
-      role="button"
-      tabindex="0"
-      (keydown.enter)="openSecurityScoreDetail()"
-      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-    >
-      <app-section-top-card
-        Title="Security Score"
-        [Value]="pageOverview()?.securityScore"
-        [IsPercentage]="true"
-        BackgroundColor="#fef9c2"
-        IconColor="#d69518"
-      />
+    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}"
+      [Value]="pageOverview()?.adminUsers" BackgroundColor="#f3e8ff" IconColor="#9810fa" />
+    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+      <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
+        BackgroundColor="#fef9c2" IconColor="#d69518" />
     </div>
   </div>
 
@@ -62,20 +52,42 @@
 
   <app-search-bar placeholder="{{ 'users.search' | transloco }}..." (searchChange)="onSearch($event)" />
 
-  @if (!isLoading()) {
-  @if (orgUsers().length > 0) {
-  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-    <div class="flex justify-between items-center mx-5.5">
-      <span class="font-medium text-lg">{{ 'users.all' | transloco }}</span>
-      <button (click)="refreshData()" [disabled]="isRefreshing()"
-        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-        <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-        </i-lucide>
 
+  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+
+    <div class="flex justify-between items-center mx-5.5 mb-6">
+      <span class="font-medium text-lg">{{ 'users.all' | transloco }}</span>
+      <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
+        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+        <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
         {{ isRefreshing() ? ( 'refreshing' | transloco ) + '...' : ('renew-data' | transloco ) }}
       </button>
     </div>
 
+    @if (isLoading()) {
+    <div class="flex flex-col items-center p-3 pb-8">
+      <div class="relative flex items-center justify-center mb-4">
+        <div class="h-12 w-12 rounded-full"></div>
+        <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+      <span class="text-sm font-medium text-slate-600 animate-pulse">
+        {{ 'users.loading' | transloco }}...
+      </span>
+    </div>
+    }
+    @else if (apiError()) {
+    <div
+      class="flex flex-col items-center justify-center p-10 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
+      <div class="bg-red-100 p-3 rounded-full mb-3">
+        <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
+      </div>
+      <span class="text-lg font-medium text-slate-800">{{ 'users.error.title' | transloco }}</span>
+      <span class="text-sm text-slate-600 mt-1 max-w-md">
+        {{ 'users.error.description' | transloco }}
+      </span>
+    </div>
+    }
+    @else if (orgUsers().length > 0) {
     <table class="w-full text-left border-collapse mt-6">
       <thead>
         <tr class="border-b border-t border-gray-200 bg-gray-50/50">
@@ -118,30 +130,25 @@
           </td>
 
           <td class="px-6 py-4 text-sm">
-            <div
-              class="flex items-center gap-2"
-              [class.text-gray-500]="!lastLoginCellMuted(user)"
-              [class.text-[#6b7280]]="lastLoginCellMuted(user)"
-            >
+            <div class="flex items-center gap-2" [class.text-gray-500]="!lastLoginCellMuted(user)"
+              [class.text-[#6b7280]]="lastLoginCellMuted(user)">
               <lucide-icon [img]="Icons.Clock" size="14"></lucide-icon>
               {{ user.lastLogin }}
             </div>
           </td>
 
           <td class="px-6 py-4">
-            <div
-              class="flex items-center gap-1.5 text-xs font-medium"
-              [class.text-emerald-400]="user.twoFactorEnabled"
+            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFactorEnabled"
               [class.text-destructive]="!user.twoFactorEnabled && !twoFactorCellMuted(user)"
-              [class.text-[#6b7280]]="twoFactorCellMuted(user)"
-            >
+              [class.text-[#6b7280]]="twoFactorCellMuted(user)">
               <lucide-icon [img]="user.twoFactorEnabled ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
               {{ user.twoFactorEnabled ? ('enabled' | transloco) : ('off' | transloco) }}
             </div>
           </td>
 
           <td class="px-6 py-4">
-            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="effectiveSecurityConform(user)"
+            <div class="flex items-center gap-1.5 text-xs font-medium"
+              [class.text-emerald-400]="effectiveSecurityConform(user)"
               [class.text-destructive]="!effectiveSecurityConform(user)">
               <lucide-icon [img]="effectiveSecurityConform(user) ? Icons.CircleCheck : Icons.TriangleAlert"
                 size="14"></lucide-icon>
@@ -172,29 +179,12 @@
         </button>
       </div>
     </div>
-  </div>
-  } @else {
-  <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-    <div class="flex items-center justify-center p-5">
+
+    }
+    @else {
+    <div class="flex items-center justify-center p-10 border-t border-gray-100">
       <span class="text-lg font-medium text-slate-600"> {{ 'users.no-found' | transloco }}! </span>
     </div>
+    }
   </div>
-  }
-  } @else {
-  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-    <div class="flex flex-col items-center p-3">
-      <div class="flex flex-col items-center space-y-4 p-8">
-        <div class="relative flex items-center justify-center">
-          <div class="h-12 w-12 rounded-full"></div>
-
-          <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-
-        <span class="text-sm font-medium text-slate-600 animate-pulse">
-          {{ 'users.loading' | transloco }}...
-        </span>
-      </div>
-    </div>
-  </div>
-  }
 </div>

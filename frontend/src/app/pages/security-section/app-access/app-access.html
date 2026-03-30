@@ -8,10 +8,9 @@
                 <app-section-top-card class="flex-1" Title="{{ 'app-access.connected-apps' | transloco }}"
                     [Value]="pageOverview()?.totalThirdPartyApps" />
 
-                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}" [Value]="pageOverview()?.totalHighRiskApps"
-                    [BackgroundColor]="kpiHighRiskAppsColors().bg"
-                    [IconColor]="kpiHighRiskAppsColors().icon"
-                    [TextColor]="kpiHighRiskAppsColors().text"
+                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}"
+                    [Value]="pageOverview()?.totalHighRiskApps" [BackgroundColor]="kpiHighRiskAppsColors().bg"
+                    [IconColor]="kpiHighRiskAppsColors().icon" [TextColor]="kpiHighRiskAppsColors().text"
                     [Icon]="(pageOverview()?.totalHighRiskApps ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
 
                 <app-section-top-card class="flex-1" Title="{{ 'app-access.permissions' | transloco }}"
@@ -37,20 +36,46 @@
                 </div>
             </div>
 
-            @if (!isLoading()) {
-            @if (apps().length > 0) {
-            <!-- Drives list -->
             <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+
                 <div class="flex justify-between items-center mx-6 pb-2">
                     <span class="font-medium text-lg">{{ 'app-access.all' | transloco }}</span>
-                    <button (click)="refreshData()" [disabled]="isRefreshing()"
+                    <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
                         class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()" />
-
                         {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
                     </button>
                 </div>
-                <div class="space-y-4 mt-1 px-6">
+
+                @if (isLoading()) {
+                <div class="flex flex-col items-center p-3 pt-6 pb-12">
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="relative flex items-center justify-center">
+                            <div class="h-12 w-12 rounded-full"></div>
+                            <div
+                                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+                            </div>
+                        </div>
+                        <span class="text-sm font-medium text-slate-600 animate-pulse">
+                            {{ 'app-access.loading' | transloco }}...
+                        </span>
+                    </div>
+                </div>
+                }
+                @else if (apiError()) {
+                <div
+                    class="flex flex-col items-center justify-center p-10 mt-4 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
+                    <div class="bg-red-100 p-3 rounded-full mb-3">
+                        <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
+                    </div>
+                    <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+                    <span class="text-sm text-slate-600 mt-1 max-w-md">
+                        {{ 'app-access.error.description' | transloco }}
+                    </span>
+                </div>
+                }
+                @else if (apps().length > 0) {
+                <div class="space-y-4 mt-1 px-6 pb-6">
                     @for (app of apps(); track app.id) {
                     <article
                         class="rounded-lg border border-muted bg-white p-5 shadow-sm [&:not(:has(button:hover)):hover]:bg-gray-50/60 cursor-pointer group"
@@ -58,8 +83,7 @@
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex items-center gap-3 min-w-0 flex-1">
                                 <div class="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
-                                    [class.text-emerald-600]="!app.isHighRisk"
-                                    [class.bg-[#dbfce7]]="!app.isHighRisk"
+                                    [class.text-emerald-600]="!app.isHighRisk" [class.bg-[#dbfce7]]="!app.isHighRisk"
                                     [class.text-[#e7000b]]="app.isHighRisk && highRiskAlertsEnabled()"
                                     [class.bg-[#ffe2e2]]="app.isHighRisk && highRiskAlertsEnabled()"
                                     [class.text-[#6b7280]]="app.isHighRisk && !highRiskAlertsEnabled()"
@@ -87,7 +111,6 @@
                                 <div
                                     class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100">
                                     <i-lucide [img]="Icons.ShieldAlert" size="14" />
-
                                     {{ app.isAnonymous ? ('app-access.anonymous-app' | transloco) : '' }}
                                 </div>
                                 }
@@ -104,14 +127,13 @@
                                 </div>
                                 }
                                 <i-lucide [img]="
-                          expandedApp() === app.id.toString()
-                            ? Icons.ChevronDown
-                            : Icons.ChevronRight
-                        " size="20" class="cursor-pointer text-muted-foreground/70 transition-transform ml-3" />
+                    expandedApp() === app.id.toString()
+                      ? Icons.ChevronDown
+                      : Icons.ChevronRight
+                  " size="20" class="cursor-pointer text-muted-foreground/70 transition-transform ml-3" />
                             </div>
                         </div>
 
-                        <!-- Middle: 4 columns - TOTAAL LEDEN, EXTERNE LEDEN, AANTAL BEHEERDERS, OPGERICHT -->
                         <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
@@ -150,8 +172,7 @@
                         @if (app.dataAccess.length > 0) {
                         <div class="flex flex-col gap-2 mt-2">
                             @for (access of app.dataAccess; track $index) {
-                            <div class="flex gap-3 items-center rounded-xl p-2 border"
-                                [class.bg-gray-50]="!access.risk"
+                            <div class="flex gap-3 items-center rounded-xl p-2 border" [class.bg-gray-50]="!access.risk"
                                 [class.bg-[#f3f4f6]]="access.risk && !highRiskAlertsEnabled()"
                                 [class.bg-red-50]="access.risk && highRiskAlertsEnabled()"
                                 [class.border-gray-200/50]="!access.risk || (access.risk && !highRiskAlertsEnabled())"
@@ -169,7 +190,8 @@
                                     <span class="font-medium text-[11px] leading-tight"
                                         [class.text-muted-foreground]="!access.risk"
                                         [class.text-red-700]="access.risk && highRiskAlertsEnabled()"
-                                        [class.text-[#6b7280]]="access.risk && !highRiskAlertsEnabled()">{{ access.rights | transloco }}</span>
+                                        [class.text-[#6b7280]]="access.risk && !highRiskAlertsEnabled()">{{
+                                        access.rights | transloco }}</span>
                                 </div>
                             </div>
                             }
@@ -195,9 +217,9 @@
                         <button
                             class="flex items-center justify-center gap-2 text-muted-foreground py-2 px-3 border border-gray-200 rounded-lg mt-3 cursor-pointer shadow-sm hover:bg-gray-100/80"
                             (click)="
-                        $event.stopPropagation();
-                        UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
-                      ">
+              $event.stopPropagation();
+              UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
+            ">
                             <span class="text-[13px] font-normal">{{ 'app-access.manage-console' | transloco }}</span>
                             <i-lucide [img]="Icons.ExternalLink" size="12" />
                         </button>
@@ -234,33 +256,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            } @else {
-            <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-                <div class="flex items-center justify-center p-5">
+                }
+                @else {
+                <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
                     <span class="text-lg font-medium text-slate-600"> {{ 'app-access.no-founds' | transloco }}! </span>
                 </div>
+                }
             </div>
-            }
-            } @else {
-            <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
-                <div class="flex flex-col items-center p-3 pt-6">
-                    <div class="flex flex-col items-center space-y-4 p-8">
-                        <div class="relative flex items-center justify-center">
-                            <div class="h-12 w-12 rounded-full"></div>
-
-                            <div
-                                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-                            </div>
-                        </div>
-
-                        <span class="text-sm font-medium text-slate-600 animate-pulse">
-                            {{ 'app-access.loading' | transloco }}...
-                        </span>
-                    </div>
-                </div>
-            </div>
-            }
         </div>
     </div>
 </div>

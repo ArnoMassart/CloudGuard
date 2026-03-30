@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.licenses.InactiveUser;
 import com.cloudmen.cloudguard.dto.licenses.LicenseCacheEntry;
 import com.cloudmen.cloudguard.dto.licenses.LicenseType;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -77,7 +78,7 @@ public class GoogleLicenseCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallback;
             }
-            throw new IllegalArgumentException("Fout bij ophalen Google licentie data: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen Google licentie data: " + e.getMessage());
         }
     }
 

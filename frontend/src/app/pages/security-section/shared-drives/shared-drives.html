@@ -1,347 +1,261 @@
 <div class="px-10 py-6">
-  <app-page-header
-    Title="{{ 'shared-drives.title' | transloco }}"
-    Description="{{ 'shared-drives.description' | transloco }}"
-    AdminLink="drive/manageshareddrives"
-  />
+  <app-page-header Title="{{ 'shared-drives.title' | transloco }}"
+    Description="{{ 'shared-drives.description' | transloco }}" AdminLink="drive/manageshareddrives" />
 
   <div class="w-full flex flex-col gap-5 pt-6">
     <div class="w-full flex gap-4">
-      <app-section-top-card
-        class="flex-1"
-        Title="{{ 'shared-drives.total-drives' | transloco }}"
-        [Value]="pageOverview()?.totalDrives"
-        [Icon]="Icons.HardDrive"
-      />
+      <app-section-top-card class="flex-1" Title="{{ 'shared-drives.total-drives' | transloco }}"
+        [Value]="pageOverview()?.totalDrives" [Icon]="Icons.HardDrive" />
 
-      <app-section-top-card
-        class="flex-1"
-        Title="{{ 'shared-drives.without-managers' | transloco }}"
-        [Value]="pageOverview()?.orphanDrives"
-        [BackgroundColor]="kpiOrphanDrivesColors().bg"
-        [IconColor]="kpiOrphanDrivesColors().icon"
-        [TextColor]="kpiOrphanDrivesColors().text"
-        [Icon]="(pageOverview()?.orphanDrives ?? 0) > 0 ? Icons.Settings : Icons.HardDrive"
-      />
+      <app-section-top-card class="flex-1" Title="{{ 'shared-drives.without-managers' | transloco }}"
+        [Value]="pageOverview()?.orphanDrives" [BackgroundColor]="kpiOrphanDrivesColors().bg"
+        [IconColor]="kpiOrphanDrivesColors().icon" [TextColor]="kpiOrphanDrivesColors().text"
+        [Icon]="(pageOverview()?.orphanDrives ?? 0) > 0 ? Icons.Settings : Icons.HardDrive" />
 
-      <app-section-top-card
-        class="flex-1"
-        Title="{{ 'shared-drives.high-risk' | transloco }}"
-        [Value]="pageOverview()?.totalHighRisk"
-        BackgroundColor="#ffe2e2"
-        IconColor="#e7000b"
-        TextColor="#e7000b"
-        [Icon]="Icons.TriangleAlert"
-      />
+      <app-section-top-card class="flex-1" Title="{{ 'shared-drives.high-risk' | transloco }}"
+        [Value]="pageOverview()?.totalHighRisk" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b"
+        [Icon]="Icons.TriangleAlert" />
 
-      <app-section-top-card
-        class="flex-1"
-        Title="{{ 'shared-drives.with-external' | transloco }}"
-        [Value]="pageOverview()?.externalMembersDriveCount"
-        [BackgroundColor]="kpiExternalDrivesColors().bg"
-        [IconColor]="kpiExternalDrivesColors().icon"
-        [TextColor]="kpiExternalDrivesColors().text"
-        [Icon]="(pageOverview()?.externalMembersDriveCount ?? 0) > 0 ? Icons.Users : Icons.HardDrive"
-      />
+      <app-section-top-card class="flex-1" Title="{{ 'shared-drives.with-external' | transloco }}"
+        [Value]="pageOverview()?.externalMembersDriveCount" [BackgroundColor]="kpiExternalDrivesColors().bg"
+        [IconColor]="kpiExternalDrivesColors().icon" [TextColor]="kpiExternalDrivesColors().text"
+        [Icon]="(pageOverview()?.externalMembersDriveCount ?? 0) > 0 ? Icons.Users : Icons.HardDrive" />
 
-      <div
-        class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-        (click)="openSecurityScoreDetail()"
-        role="button"
-        tabindex="0"
-        (keydown.enter)="openSecurityScoreDetail()"
-        (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-      >
-        <app-section-top-card
-          Title="Security Score"
-          [Value]="pageOverview()?.securityScore"
-          [IsPercentage]="true"
-          BackgroundColor="#fef9c2"
-          IconColor="#d69518"
-        />
+      <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+        role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+        (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+        <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
+          BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
     </div>
 
-    @if (hasWarnings() && !isLoading()) {
-      <app-page-warnings
-        [hasMultipleWarnings]="hasMultipleWarnings()"
-        [isExpanded]="isExpanded()"
-        (toggle)="toggleExpanded()"
-      >
-        <div body class="flex flex-col gap-2">
-          @if (drivePageWarnings().orphanDrivesWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.orphanDrives }}
-              {{ 'orphan' | transloco }}
-              {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
-              {{ 'shared-drives.with-external-found' | transloco }}
-            </app-page-warnings-item>
-          }
+    @if (hasWarnings() && !isLoading() && !apiError()) {
+    <app-page-warnings [hasMultipleWarnings]="hasMultipleWarnings()" [isExpanded]="isExpanded()"
+      (toggle)="toggleExpanded()">
+      <div body class="flex flex-col gap-2">
+        @if (drivePageWarnings().orphanDrivesWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.orphanDrives }}
+          {{ 'orphan' | transloco }}
+          {{ pageOverview()?.orphanDrives === 1 ? 'drive' : 'drives' }}
+          {{ 'shared-drives.with-external-found' | transloco }}
+        </app-page-warnings-item>
+        }
 
-          @if (drivePageWarnings().externalMembersWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.externalMembersDriveCount }}
-              {{
-                pageOverview()?.externalMembersDriveCount === 1
-                  ? ('shared-drives.drive-has' | transloco)
-                  : ('shared-drives.drives-have' | transloco)
-              }}
-              {{ 'shared-drives.external-outside-domain' | transloco }}
-            </app-page-warnings-item>
-          }
+        @if (drivePageWarnings().externalMembersWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.externalMembersDriveCount }}
+          {{
+          pageOverview()?.externalMembersDriveCount === 1
+          ? ('shared-drives.drive-has' | transloco)
+          : ('shared-drives.drives-have' | transloco)
+          }}
+          {{ 'shared-drives.external-outside-domain' | transloco }}
+        </app-page-warnings-item>
+        }
 
-          @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
-              {{
-                pageOverview()?.notOnlyDomainUsersAllowedCount === 1
-                  ? ('shared-drives.drive-allows' | transloco)
-                  : ('shared-drives.drives-allow' | transloco)
-              }}
-              {{ 'shared-drives.share-with-outside-domain' | transloco }}
-            </app-page-warnings-item>
-          }
+        @if (drivePageWarnings().notOnlyDomainUsersAllowedWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.notOnlyDomainUsersAllowedCount }}
+          {{
+          pageOverview()?.notOnlyDomainUsersAllowedCount === 1
+          ? ('shared-drives.drive-allows' | transloco)
+          : ('shared-drives.drives-allow' | transloco)
+          }}
+          {{ 'shared-drives.share-with-outside-domain' | transloco }}
+        </app-page-warnings-item>
+        }
 
-          @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
-            <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-              {{ pageOverview()?.notOnlyMembersCanAccessCount }}
-              {{
-                pageOverview()?.notOnlyMembersCanAccessCount === 1
-                  ? ('shared-drives.drive-can' | transloco)
-                  : ('shared-drives.drives-can' | transloco)
-              }}
-              {{ 'shared-drives.access-non-members' | transloco }}
-            </app-page-warnings-item>
-          }
-        </div>
-      </app-page-warnings>
+        @if (drivePageWarnings().notOnlyMembersCanAccessWarning) {
+        <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+          {{ pageOverview()?.notOnlyMembersCanAccessCount }}
+          {{
+          pageOverview()?.notOnlyMembersCanAccessCount === 1
+          ? ('shared-drives.drive-can' | transloco)
+          : ('shared-drives.drives-can' | transloco)
+          }}
+          {{ 'shared-drives.access-non-members' | transloco }}
+        </app-page-warnings-item>
+        }
+      </div>
+    </app-page-warnings>
     }
 
-    <app-search-bar
-      placeholder="{{ 'shared-drives.search' | transloco }}..."
-      (searchChange)="onSearch($event)"
-    />
+    <app-search-bar placeholder="{{ 'shared-drives.search' | transloco }}..." (searchChange)="onSearch($event)" />
 
-    @if (!isLoading()) {
-      @if (drives().length > 0) {
-        <!-- Drives list -->
-        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-          <div class="flex justify-between items-center mx-5.5 pb-2">
-            <span class="font-medium text-lg">{{ 'shared-drives.all' | transloco }}</span>
-            <button
-              (click)="refreshData()"
-              [disabled]="isRefreshing()"
-              class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-            >
-              <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-              </i-lucide>
+    <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+      <div class="flex justify-between items-center mx-5.5 pb-2">
+        <span class="font-medium text-lg">{{ 'shared-drives.all' | transloco }}</span>
+        <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
+          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+          <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
+          </i-lucide>
 
-              {{ isRefreshing() ? ('refreshing' | transloco) + '...' : ('renew-data' | transloco) }}
-            </button>
+          {{ isRefreshing() ? ('refreshing' | transloco) + '...' : ('renew-data' | transloco) }}
+        </button>
+      </div>
+
+      @if (isLoading()) {
+      <div class="flex flex-col items-center p-3 pt-6 pb-12">
+        <div class="flex flex-col items-center space-y-4">
+          <div class="relative flex items-center justify-center">
+            <div class="h-12 w-12 rounded-full"></div>
+            <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+            </div>
           </div>
-          <div class="space-y-4 mt-1 px-6">
-            @for (drive of drives(); track drive.id) {
-              <article class="rounded-lg border border-muted bg-white p-5 shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                  <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div
-                      class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0"
-                    >
-                      <i-lucide [img]="Icons.FolderOpen" size="24" class="text-[#155dfc]" />
-                    </div>
-                    <p class="font-medium text-slate-900 text-base truncate">
-                      {{ drive.name }}
-                    </p>
-                  </div>
-                  <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
-                    <span
-                      class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
-                      [class.bg-emerald-100]="drive.risk === 'low'"
-                      [class.text-emerald-800]="drive.risk === 'low'"
-                      [class.bg-amber-100]="drive.risk === 'middle'"
-                      [class.text-amber-800]="drive.risk === 'middle'"
-                      [class.bg-rose-100]="drive.risk === 'high'"
-                      [class.text-rose-800]="drive.risk === 'high'"
-                    >
-                      {{ drive.risk | transloco }} {{ 'risk' | transloco }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Middle: 4 columns - TOTAAL LEDEN, EXTERNE LEDEN, AANTAL BEHEERDERS, OPGERICHT -->
-                <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      {{ 'groups.total-members' | transloco }}
-                    </p>
-                    <div class="flex items-center gap-2">
-                      <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
-                      <span class="font-medium text-slate-600">{{ drive.totalMembers }}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      {{ 'groups.external-members' | transloco }}
-                    </p>
-                    <span
-                      class="font-medium"
-                      [class.text-rose-600]="drive.externalMembers > 0"
-                      [class.text-emerald-600]="drive.externalMembers <= 0"
-                    >
-                      {{ drive.externalMembers }}
-                    </span>
-                  </div>
-                  <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      {{ 'shared-drives.number-of-managers' | transloco }}
-                    </p>
-                    <div class="flex items-center gap-2">
-                      <i-lucide
-                        [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert"
-                        size="16"
-                        class="text-gray-500"
-                        [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                        [class.text-black]="drive.totalOrganizers > 0"
-                        size="16"
-                      />
-                      <span
-                        [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
-                        [class.text-black]="drive.totalOrganizers > 0"
-                        class="text-sm font-medium text-slate-500"
-                      >
-                        {{ drive.totalOrganizers }}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      {{ 'founded' | transloco }}
-                    </p>
-                    <div class="flex items-center gap-2">
-                      <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
-                      <span class="text-muted-foreground text-sm font-medium">
-                        {{ drive.parsedTime }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Shared drive settings - always visible, no expand/collapse -->
-                <div
-                  class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4"
-                >
-                  <div class="bg-slate-50 rounded-md px-3 py-3">
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      {{ 'only-domain-users' | transloco }}
-                    </p>
-                    <div
-                      class="flex items-center gap-1 cursor-pointer"
-                      (click)="
-                        UtilityMethods.openAdminPage(
-                          'https://admin.google.com/ac/drive/manageshareddrives'
-                        );
-                        $event.stopPropagation()
-                      "
-                    >
-                      @if (!drive.onlyDomainUsersAllowed && !isSharedDrivePrefDisabled('outsideDomain')) {
-                        <i-lucide
-                          [img]="Icons.TriangleAlert"
-                          class="text-[#f54a00] cursor-pointer"
-                          size="13"
-                        />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">
-                            {{'no' | transloco}}</span>
-                      } @else if (drive.onlyDomainUsersAllowed) {
-                        <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
-                      } @else {
-                        <span class="text-[#6b7280] text-xs font-medium">Nee</span>
-                      }
-                    </div>
-                  </div>
-                  <div class="bg-slate-50 rounded-md px-3 py-3">
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                      {{ 'only-members' | transloco }}
-                    </p>
-                    <div
-                      class="flex items-center gap-1 cursor-pointer"
-                      (click)="
-                        UtilityMethods.openAdminPage(
-                          'https://admin.google.com/ac/drive/manageshareddrives'
-                        );
-                        $event.stopPropagation()
-                      "
-                    >
-                      @if (!drive.onlyMembersCanAccess && !isSharedDrivePrefDisabled('nonMemberAccess')) {
-                        <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
-                        <span class="text-[#f54a00] text-[13px] font-medium underline">{{'no' | transloco}}</span>
-                      } @else if (drive.onlyMembersCanAccess) {
-                        <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
-                        <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
-                      } @else {
-                        <span class="text-[#6b7280] text-xs font-medium">Nee</span>
-                      }
-                    </div>
-                  </div>
-                </div>
-              </article>
-            }
-
-            <div
-              class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
-            >
-              <span class="text-sm text-gray-500">
-                {{ 'page' | transloco }}
-                <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+          <span class="text-sm font-medium text-slate-600 animate-pulse">
+            {{ 'shared-drives.loading' | transloco }}...
+          </span>
+        </div>
+      </div>
+      }
+      @else if (apiError()) {
+      <div
+        class="flex flex-col items-center justify-center p-10 mt-4 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
+        <div class="bg-red-100 p-3 rounded-full mb-3">
+          <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
+        </div>
+        <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+        <span class="text-sm text-slate-600 mt-1 max-w-md">
+          {{ 'drives.error.description' | transloco }}
+        </span>
+      </div>
+      }
+      @else if (drives().length > 0) {
+      <div class="space-y-4 mt-1 px-6 pb-6">
+        @for (drive of drives(); track drive.id) {
+        <article class="rounded-lg border border-muted bg-white p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0">
+                <i-lucide [img]="Icons.FolderOpen" size="24" class="text-[#155dfc]" />
+              </div>
+              <p class="font-medium text-slate-900 text-base truncate">
+                {{ drive.name }}
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2 basis-full sm:basis-auto">
+              <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+                [class.bg-emerald-100]="drive.risk === 'low'" [class.text-emerald-800]="drive.risk === 'low'"
+                [class.bg-amber-100]="drive.risk === 'middle'" [class.text-amber-800]="drive.risk === 'middle'"
+                [class.bg-rose-100]="drive.risk === 'high'" [class.text-rose-800]="drive.risk === 'high'">
+                {{ drive.risk | transloco }} {{ 'risk' | transloco }}
               </span>
-              <div class="flex gap-2">
-                <button
-                  (click)="prevPage()"
-                  [disabled]="currentPage() === 1"
-                  class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <i-lucide [img]="Icons.ChevronLeft" size="16" />
-                  {{ 'previous' | transloco }}
-                </button>
-                <button
-                  (click)="nextPage()"
-                  [disabled]="!nextPageToken()"
-                  class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {{ 'next' | transloco }}
-                  <i-lucide [img]="Icons.ChevronRight" size="16" />
-                </button>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {{ 'groups.total-members' | transloco }}
+              </p>
+              <div class="flex items-center gap-2">
+                <i-lucide [img]="Icons.Users" size="16" class="text-gray-600" />
+                <span class="font-medium text-slate-600">{{ drive.totalMembers }}</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {{ 'groups.external-members' | transloco }}
+              </p>
+              <span class="font-medium" [class.text-rose-600]="drive.externalMembers > 0"
+                [class.text-emerald-600]="drive.externalMembers <= 0">
+                {{ drive.externalMembers }}
+              </span>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {{ 'shared-drives.number-of-managers' | transloco }}
+              </p>
+              <div class="flex items-center gap-2">
+                <i-lucide [img]="drive.totalOrganizers > 0 ? Icons.UserCog : Icons.TriangleAlert" size="16"
+                  class="text-gray-500" [class.text-[#f54a00]]="drive.totalOrganizers <= 0"
+                  [class.text-black]="drive.totalOrganizers > 0" />
+                <span [class.text-[#f54a00]]="drive.totalOrganizers <= 0" [class.text-black]="drive.totalOrganizers > 0"
+                  class="text-sm font-medium text-slate-500">
+                  {{ drive.totalOrganizers }}
+                </span>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {{ 'founded' | transloco }}
+              </p>
+              <div class="flex items-center gap-2">
+                <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
+                <span class="text-muted-foreground text-sm font-medium">
+                  {{ drive.parsedTime }}
+                </span>
               </div>
             </div>
           </div>
-        </div>
-      } @else {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-          <div class="flex items-center justify-center p-5">
-            <span class="text-lg font-medium text-slate-600">
-              {{ 'shared-drives.not-found' | transloco }}!
-            </span>
-          </div>
-        </div>
-      }
-    } @else {
-      <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 pt-6 flex-col">
-        <div class="flex flex-col items-center p-3 pt-6">
-          <div class="flex flex-col items-center space-y-4 p-8">
-            <div class="relative flex items-center justify-center">
-              <div class="h-12 w-12 rounded-full"></div>
 
-              <div
-                class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"
-              ></div>
+          <div class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-slate-50 rounded-md px-3 py-3">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {{ 'only-domain-users' | transloco }}
+              </p>
+              <div class="flex items-center gap-1 cursor-pointer"
+                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
+                @if (!drive.onlyDomainUsersAllowed && !isSharedDrivePrefDisabled('outsideDomain')) {
+                <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00] cursor-pointer" size="13" />
+                <span class="text-[#f54a00] text-[13px] font-medium underline">{{'no' | transloco}}</span>
+                } @else if (drive.onlyDomainUsersAllowed) {
+                <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
+                <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
+                } @else {
+                <span class="text-[#6b7280] text-xs font-medium">Nee</span>
+                }
+              </div>
             </div>
-
-            <span class="text-sm font-medium text-slate-600 animate-pulse">
-              {{ 'shared-drives.loading' | transloco }}...
-            </span>
+            <div class="bg-slate-50 rounded-md px-3 py-3">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {{ 'only-members' | transloco }}
+              </p>
+              <div class="flex items-center gap-1 cursor-pointer"
+                (click)="UtilityMethods.openAdminPage('https://admin.google.com/ac/drive/manageshareddrives'); $event.stopPropagation()">
+                @if (!drive.onlyMembersCanAccess && !isSharedDrivePrefDisabled('nonMemberAccess')) {
+                <i-lucide [img]="Icons.TriangleAlert" class="text-[#f54a00]" size="13" />
+                <span class="text-[#f54a00] text-[13px] font-medium underline">{{'no' | transloco}}</span>
+                } @else if (drive.onlyMembersCanAccess) {
+                <i-lucide [img]="Icons.CircleCheck" class="text-emerald-600" size="13" />
+                <span class="text-emerald-600 text-xs font-medium">{{'yes' | transloco}}</span>
+                } @else {
+                <span class="text-[#6b7280] text-xs font-medium">Nee</span>
+                }
+              </div>
+            </div>
           </div>
+        </article>
+        }
+      </div>
+
+      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+        <span class="text-sm text-gray-500">
+          {{ 'page' | transloco }}
+          <span class="font-medium text-slate-900">{{ currentPage() }}</span>
+        </span>
+        <div class="flex gap-2">
+          <button (click)="prevPage()" [disabled]="currentPage() === 1"
+            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <i-lucide [img]="Icons.ChevronLeft" size="16" />
+            {{ 'previous' | transloco }}
+          </button>
+          <button (click)="nextPage()" [disabled]="!nextPageToken()"
+            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ 'next' | transloco }}
+            <i-lucide [img]="Icons.ChevronRight" size="16" />
+          </button>
         </div>
       </div>
-    }
+      }
+      @else {
+      <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
+        <span class="text-lg font-medium text-slate-600">
+          {{ 'shared-drives.not-found' | transloco }}!
+        </span>
+      </div>
+      }
+    </div>
   </div>
 </div>

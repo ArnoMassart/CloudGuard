@@ -14,6 +14,7 @@ import com.cloudmen.cloudguard.dto.password.OrgUnit2SvDto;
 import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.report.FullSecurityReport;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
+import com.cloudmen.cloudguard.exception.PdfGenerationException;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
@@ -132,12 +133,19 @@ public class PdfReportService {
                 return new ReportResponse(baos.toByteArray(), companyName);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error with pdf generation: " + e.getMessage(), e);
+            throw new PdfGenerationException("Error with pdf generation: " + e.getMessage(), e);
         }
     }
 
     private FullSecurityReport getFullSecurityReport(String adminEmail, Locale locale) {
-        int overallScore = dashboardService.getDashboardSecurityScores(adminEmail).overallScore();
+        // Haal de overall score veilig op
+        int overallScore = 100;
+        try {
+            overallScore = dashboardService.getDashboardSecurityScores(adminEmail).overallScore();
+        } catch (Exception e) {
+            log.error("Fout bij ophalen overall score voor rapport: {}", e.getMessage());
+        }
+
         Set<String> disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(adminEmail);
 
         return new FullSecurityReport(
@@ -155,191 +163,189 @@ public class PdfReportService {
     }
 
     private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems(String adminEmail, Locale locale) {
-        List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(adminEmail, locale);
-
-        return criticalNotifications.stream().map(n -> new FullSecurityReport.RiskItem(n.title(), n.description())).toList();
+        try {
+            List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(adminEmail, locale);
+            return criticalNotifications.stream().map(n -> new FullSecurityReport.RiskItem(n.title(), n.description())).toList();
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Risk Items voor rapport: {}", e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     private FullSecurityReport.UsersMetrics getSecurityReportUsersMetrics(String adminEmail, Set<String> disabled) {
-        UserOverviewResponse response = googleUsersService.getUsersPageOverview(adminEmail, disabled);
-
-        int total = response.totalUsers();
-
-        int mfaPct = response.totalUsers() > 0 ? (int) (100 - Math.floor((double) response.withoutTwoFactor() / response.totalUsers() * 100)) : 100;
-
-        return new FullSecurityReport.UsersMetrics(
-                total,
-                mfaPct,
-                response.adminUsers(),
-                response.activeLongNoLoginCount(),
-                response.securityScore()
-        );
+        try {
+            UserOverviewResponse response = googleUsersService.getUsersPageOverview(adminEmail, disabled);
+            int total = response.totalUsers();
+            int mfaPct = response.totalUsers() > 0 ? (int) (100 - Math.floor((double) response.withoutTwoFactor() / response.totalUsers() * 100)) : 100;
+            return new FullSecurityReport.UsersMetrics(total, mfaPct, response.adminUsers(), response.activeLongNoLoginCount(), response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Users Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.UsersMetrics(0, 100, 0, 0, 100, true);
+        }
     }
 
     private FullSecurityReport.GroupsMetrics getSecurityReportGroupsMetrics(String adminEmail, Set<String> disabled) {
-        GroupOverviewResponse response = googleGroupsService.getGroupsOverview(adminEmail, disabled);
-
-        return new FullSecurityReport.GroupsMetrics(
-                (int) response.totalGroups(),
-                (int)response.groupsWithExternal(),
-                (int) response.highRiskGroups(),
-                response.securityScore()
-        );
+        try {
+            GroupOverviewResponse response = googleGroupsService.getGroupsOverview(adminEmail, disabled);
+            return new FullSecurityReport.GroupsMetrics((int) response.totalGroups(), (int) response.groupsWithExternal(), (int) response.highRiskGroups(), response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Groups Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.GroupsMetrics(0, 0, 0, 100, true);
+        }
     }
 
     private FullSecurityReport.DriveMetrics getSecurityReportDriveMetrics(String adminEmail, Set<String> disabled) {
-        SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(adminEmail, disabled);
-
-        return new FullSecurityReport.DriveMetrics(
-                response.totalDrives(),
-                response.notOnlyDomainUsersAllowedCount(),
-                response.orphanDrives(),
-                response.securityScore()
-        );
+        try {
+            SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(adminEmail, disabled);
+            return new FullSecurityReport.DriveMetrics(response.totalDrives(), response.notOnlyDomainUsersAllowedCount(), response.orphanDrives(), response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Drive Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.DriveMetrics(0, 0, 0, 100, true);
+        }
     }
 
     private FullSecurityReport.DeviceMetrics getSecurityReportDeviceMetrics(String adminEmail, Set<String> disabled) {
-        DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(adminEmail, disabled);
+        try {
+            DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(adminEmail, disabled);
+            int total = response.totalDevices();
+            int unsafe = response.totalNonCompliant();
+            int safe = total - unsafe;
+            int encrypted = total - response.encryptionCount();
+            int updated = total - response.osVersionCount();
 
-        int total = response.totalDevices();
+            int safePct = total == 0 ? 0 : (int) Math.round((double) safe / total * 100);
+            int unsafePct = total == 0 ? 0 : (int) Math.round((double) unsafe / total * 100);
+            int encryptedPct = total == 0 ? 0 : (int) Math.round((double) encrypted / total * 100);
+            int updatedPct = total == 0 ? 0 : (int) Math.round((double) updated / total * 100);
 
-        int unsafe = response.totalNonCompliant();
-        int safe = total - unsafe;
-
-        int encrypted = total - response.encryptionCount();
-        int updated = total - response.osVersionCount();
-
-        int safePct = total == 0 ? 0 : (int) Math.round((double) safe / total * 100);
-        int unsafePct = total == 0 ? 0 : (int) Math.round((double) unsafe / total * 100);
-        int encryptedPct = total == 0 ? 0 : (int) Math.round((double) encrypted / total * 100);
-        int updatedPct = total == 0 ? 0 : (int) Math.round((double) updated / total * 100);
-
-        return new FullSecurityReport.DeviceMetrics(
-                safe, safePct, unsafe, unsafePct, encrypted, encryptedPct, updated, updatedPct, response.securityScore()
-        );
+            return new FullSecurityReport.DeviceMetrics(safe, safePct, unsafe, unsafePct, encrypted, encryptedPct, updated, updatedPct, response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Device Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.DeviceMetrics(0, 0, 0, 0, 0, 0, 0, 0, 100, true);
+        }
     }
 
     private FullSecurityReport.AppAccessMetrics getSecurityReportAppAccessMetrics(String adminEmail, Set<String> disabled) {
-        OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(adminEmail, disabled);
-
-        int totalConnected = (int) response.totalThirdPartyApps();
-        int highRisk = (int) response.totalHighRiskApps();
-
-        int trusted = totalConnected - highRisk;
-
-        return new FullSecurityReport.AppAccessMetrics(
-                totalConnected,
-                trusted,
-                highRisk,
-                response.securityScore()
-        );
+        try {
+            OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(adminEmail, disabled);
+            int totalConnected = (int) response.totalThirdPartyApps();
+            int highRisk = (int) response.totalHighRiskApps();
+            int trusted = totalConnected - highRisk;
+            return new FullSecurityReport.AppAccessMetrics(totalConnected, trusted, highRisk, response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen App Access Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.AppAccessMetrics(0, 0, 0, 100, true);
+        }
     }
 
     private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics(String adminEmail, Set<String> disabled) {
-        AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, true, disabled);
-
-        return new FullSecurityReport.AppPasswordMetrics(
-                response.totalAppPasswords(),
-                response.usersWithAppPasswords(),
-                response.securityScore()
-        );
+        try {
+            AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, true, disabled);
+            return new FullSecurityReport.AppPasswordMetrics(response.totalAppPasswords(), response.usersWithAppPasswords(), response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen App Password Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.AppPasswordMetrics(0, 0, 100, true);
+        }
     }
 
     private FullSecurityReport.PasswordMetrics getSecurityReportPasswordMetrics(String adminEmail) {
-        PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(adminEmail);
-
-        int enforcedOus = (int) response.twoStepVerification().byOrgUnit().stream().filter(OrgUnit2SvDto::enforced).count();
-
-        long unenforcedWithUsers = response.twoStepVerification().byOrgUnit().stream().filter(ou-> !ou.enforced() && ou.totalCount() > 0).count();
-
-        return new FullSecurityReport.PasswordMetrics(
-                response.passwordPoliciesByOu().size(),
-                enforcedOus,
-                unenforcedWithUsers,
-                response.adminsWithoutSecurityKeys().size(),
-                response.securityScore()
-        );
+        try {
+            PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(adminEmail);
+            int enforcedOus = (int) response.twoStepVerification().byOrgUnit().stream().filter(OrgUnit2SvDto::enforced).count();
+            long unenforcedWithUsers = response.twoStepVerification().byOrgUnit().stream().filter(ou -> !ou.enforced() && ou.totalCount() > 0).count();
+            return new FullSecurityReport.PasswordMetrics(response.passwordPoliciesByOu().size(), enforcedOus, unenforcedWithUsers, response.adminsWithoutSecurityKeys().size(), response.securityScore(), false);
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Password Metrics voor rapport: {}", e.getMessage());
+            return new FullSecurityReport.PasswordMetrics(0, 0, 0, 0, 100, true);
+        }
     }
 
     private List<FullSecurityReport.DomainData> getSecurityReportDomainData(String adminEmail, Locale locale) {
         List<FullSecurityReport.DomainData> domainData = new ArrayList<>();
-        List<DomainDto> domains = googleDomainService.getAllDomains(adminEmail);
 
-        for (DomainDto d : domains) {
-            String domain = d.domainName();
+        try {
+            List<DomainDto> domains = googleDomainService.getAllDomains(adminEmail);
 
-            var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(adminEmail);
-            DnsRecordResponseDto dnsResponse = dnsRecordsService.getImportantRecords(domain, "google", dnsOverrides);
-            List<DnsRecordDto> rows = dnsResponse.rows();
-            int score = dnsResponse.securityScore();
+            for (DomainDto d : domains) {
+                String domain = d.domainName();
 
-            List<FullSecurityReport.SecurityCheck> checks = rows.stream().map(r -> {
-                String type = r.type();
+                try {
+                    var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(adminEmail);
+                    DnsRecordResponseDto dnsResponse = dnsRecordsService.getImportantRecords(domain, "google", dnsOverrides);
+                    List<DnsRecordDto> rows = dnsResponse.rows();
+                    int score = dnsResponse.securityScore();
 
-                DomainTip info = TIPS.get(type);
+                    List<FullSecurityReport.SecurityCheck> checks = rows.stream().map(r -> {
+                        String type = r.type();
+                        DomainTip info = TIPS.get(type);
+                        DnsRecordStatus status = r.status();
 
-                DnsRecordStatus status = r.status();
+                        String description = "";
+                        String tip = "";
+                        String badgeText = "";
+                        String statusText = "GREEN";
 
-                String description = "";
-                String tip = "";
-                String badgeText = "";
-                String statusText = "GREEN";
+                        switch (status) {
+                            case OK -> {
+                                description = messageSource.getMessage("report.domain.status.ok.description_1", null, locale) + " - " + messageSource.getMessage("report.domain.status.ok.description_2", null, locale);
+                                badgeText = messageSource.getMessage("report.domain.status.ok.badgeText", null, locale);
+                                statusText = "GRAY";
+                            }
+                            case ERROR -> {
+                                description = messageSource.getMessage("report.domain.status.error.description", null, locale);
+                                badgeText = messageSource.getMessage("report.domain.status.error.badgeText", null, locale);
+                                statusText = "RED";
+                            }
+                            case VALID -> {
+                                description = messageSource.getMessage(info.validDesc, null, locale);
+                                badgeText = messageSource.getMessage("report.domain.status.valid.badgeText", null, locale);
+                            }
+                            case ATTENTION -> {
+                                description = messageSource.getMessage(info.attentionDesc, null, locale);
+                                tip = messageSource.getMessage(info.tip, null, locale);
+                                badgeText = messageSource.getMessage("report.domain.status.attention.badgeText", null, locale);
+                                statusText = "ORANGE";
+                            }
+                            case ACTION_REQUIRED -> {
+                                description = messageSource.getMessage(info.actionDesc, null, locale);
+                                tip = messageSource.getMessage(info.tip, null, locale);
+                                badgeText = messageSource.getMessage("report.domain.status.action_required.badgeText", null, locale);
+                                statusText = "RED";
+                            }
+                        }
 
-                switch (status) {
-                    case OK -> {
-                        description = messageSource.getMessage("report.domain.status.ok.description_1", null, locale) +" - " + messageSource.getMessage("report.domain.status.ok.description_2", null, locale);
-                        badgeText = messageSource.getMessage("report.domain.status.ok.badgeText", null, locale);
-                        statusText = "GRAY";
-                    }
-                    case ERROR -> {
-                        description = messageSource.getMessage("report.domain.status.error.description", null, locale);
-                        badgeText = messageSource.getMessage("report.domain.status.error.badgeText", null, locale);
-                        statusText = "RED";
-                    }
-                    case VALID -> {
-                        description = messageSource.getMessage(info.validDesc, null, locale);
-                        badgeText = messageSource.getMessage("report.domain.status.valid.badgeText", null, locale);
-                    }
-                    case ATTENTION -> {
-                        description = messageSource.getMessage(info.attentionDesc, null, locale);
-                        tip = messageSource.getMessage(info.tip, null, locale);
-                        badgeText = messageSource.getMessage("report.domain.status.attention.badgeText", null, locale);
-                        statusText = "ORANGE";
-                    }
-                    case ACTION_REQUIRED -> {
-                        description = messageSource.getMessage(info.actionDesc, null, locale);
-                        tip = messageSource.getMessage(info.tip, null, locale);
-                        badgeText = messageSource.getMessage("report.domain.status.action_required.badgeText", null, locale);
-                        statusText = "RED";
-                    }
-                }
-
-                return new FullSecurityReport.SecurityCheck(
-                        messageSource.getMessage(info.title, null, locale),
-                        description,
-                        tip,
-                        statusText,
-                        badgeText
-
-                );
-            }).sorted(Comparator.comparingInt(check -> switch (check.status()) {
+                        return new FullSecurityReport.SecurityCheck(
+                                messageSource.getMessage(info.title, null, locale),
+                                description,
+                                tip,
+                                statusText,
+                                badgeText
+                        );
+                    }).sorted(Comparator.comparingInt(check -> switch (check.status()) {
                         case "RED" -> 1;
                         case "ORANGE" -> 2;
                         case "GREEN" -> 3;
                         case "GRAY" -> 4;
                         default -> 5;
-            })).toList();
+                    })).toList();
 
-            List<FullSecurityReport.DnsRecord> records = rows.stream().map(r -> new FullSecurityReport.DnsRecord(
-                    r.type(),
-                    r.name(),
-                    r.values().isEmpty() ? "" : insertZeroWidthSpaces(r.values().get(0), 40)
-            )).toList();
+                    List<FullSecurityReport.DnsRecord> records = rows.stream().map(r -> new FullSecurityReport.DnsRecord(
+                            r.type(),
+                            r.name(),
+                            r.values().isEmpty() ? "" : insertZeroWidthSpaces(r.values().get(0), 40)
+                    )).toList();
 
-            boolean hasCritical = rows.stream().anyMatch(r -> r.status().equals(DnsRecordStatus.ACTION_REQUIRED));
+                    boolean hasCritical = rows.stream().anyMatch(r -> r.status().equals(DnsRecordStatus.ACTION_REQUIRED));
 
-            domainData.add(new FullSecurityReport.DomainData(domain, score, hasCritical, checks, records));
+                    domainData.add(new FullSecurityReport.DomainData(domain, score, hasCritical, checks, records, false));
 
+                } catch (Exception innerE) {
+                    log.error("Fout bij ophalen DNS records voor domein {}: {}", domain, innerE.getMessage());
+                    domainData.add(new FullSecurityReport.DomainData(domain, 100, false, Collections.emptyList(), Collections.emptyList(), true));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Fout bij ophalen Domains voor rapport: {}", e.getMessage());
         }
 
         return domainData;
@@ -364,14 +370,12 @@ public class PdfReportService {
             entry("CNAME", new DomainTip("report.domain.tip.cname.title", "report.domain.tip.cname.valid", "report.domain.tip.cname.action", "report.domain.tip.cname.attention", "report.domain.tip.cname.tip"))
     );
 
-    // Helpt PDF-engines om extreem lange strings zonder spaties af te breken
     private String insertZeroWidthSpaces(String text, int interval) {
         if (text == null || text.length() <= interval || text.contains(" ")) {
-            return text; // Als de tekst al spaties heeft of kort is, doe niets
+            return text;
         }
 
         StringBuilder sb = new StringBuilder(text);
-        // Voeg elke 'interval' karakters een onzichtbaar breekpunt toe (&#8203;)
         for (int i = interval; i < sb.length(); i += interval + 1) {
             sb.insert(i, "\u200B");
         }

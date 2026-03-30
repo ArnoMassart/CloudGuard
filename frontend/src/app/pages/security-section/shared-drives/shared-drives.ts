@@ -54,6 +54,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   drives = signal<SharedDrive[]>([]);
   readonly isLoading = signal(false);
@@ -66,7 +67,9 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly nextPageToken = signal<string | null>(null);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
-  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly hasMultipleWarnings = computed(
+    () => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false
+  );
   readonly drivePageWarnings = computed((): SharedDrivesPageWarnings => {
     const items = this.pageOverview()?.warnings?.items ?? {};
     return {
@@ -81,7 +84,8 @@ export class SharedDrives implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.orphanDrives ?? 0,
       this.#preferencesFacade.isDisabled('shared-drives', 'orphan'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertPurple,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertPurple
     )
   );
 
@@ -89,7 +93,8 @@ export class SharedDrives implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.externalMembersDriveCount ?? 0,
       this.#preferencesFacade.isDisabled('shared-drives', 'external'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertOrange
     )
   );
 
@@ -188,6 +193,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   // ==========================================
   #loadDrives(token: string | null = null) {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
     this.#driveService.getDrives(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
       next: (res) => {
@@ -200,6 +206,7 @@ export class SharedDrives implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to load shared drives', err);
         this.isLoading.set(false);
+        this.apiError.set(true);
       },
     });
   }

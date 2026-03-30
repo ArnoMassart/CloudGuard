@@ -235,6 +235,10 @@
         .badge-orange { background-color: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
         .badge-green { background-color: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
         .badge-gray { background-color: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; }
+
+        .error-title {
+            color: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -296,6 +300,7 @@
 
     <div class="section-break">
         <h1>Gebruikers</h1>
+        <p class="error-title" th:if="${report.users().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Inzicht in de beveiliging van werknemersaccounts. Het afdwingen van sterke authenticatie en het beperken van beheerdersrechten is essentieel om identiteitsfraude te voorkomen.</p>
 
         <table class="full-card-table">
@@ -372,6 +377,7 @@
 
     <div class="section-break">
         <h1>Groepen</h1>
+        <p class="error-title" th:if="${report.groups().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Inzicht in de configuratie van uw Google Groups. Slecht beheerde groepen kunnen leiden tot datalekken (bijvoorbeeld als externe personen ongemerkt in een interne mailinglijst zitten) of spam-problemen.</p>
 
         <table class="full-card-table">
@@ -432,6 +438,7 @@
 
     <div class="section-break">
         <h1>Gedeelde Drives</h1>
+        <p class="error-title" th:if="${report.drives().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Overzicht van de cloud-opslag. Het is belangrijk om te controleren of bestanden niet onbedoeld toegankelijk zijn voor mensen buiten de organisatie.</p>
 
         <table class="full-card-table">
@@ -493,6 +500,7 @@
 
     <div class="section-break">
         <h1>Apparaten (Endpoints)</h1>
+        <p class="error-title" th:if="${report.devices().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Analyse van de telefoons, tablets en laptops die toegang hebben tot bedrijfsgegevens. Ontbrekende updates of encryptie vormen een direct datalekrisico bij verlies of diefstal.</p>
 
         <table class="full-card-table">
@@ -571,6 +579,7 @@
 
     <div class="section-break">
         <h1>App Toegang (OAuth)</h1>
+        <p class="error-title" th:if="${report.appAccess().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Applicaties van derden die via OAuth toegang hebben gekregen tot Google Workspace data (zoals e-mails lezen of bestanden inzien). Kwaadaardige apps kunnen ongemerkt data exfiltreren.</p>
 
         <table class="full-card-table">
@@ -630,6 +639,7 @@
 
     <div class="section-break">
         <h1>App-wachtwoorden</h1>
+        <p class="error-title" th:if="${report.appPasswords().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>App-wachtwoorden zijn een verouderde vorm van authenticatie die MFA omzeilen. Ze worden vaak gebruikt door oude mailclients, maar vormen een aanzienlijk beveiligingsrisico en moeten worden uitgefaseerd.</p>
 
         <table class="full-card-table">
@@ -678,6 +688,7 @@
 
     <div class="section-break">
         <h1>Wachtwoordbeleid & 2-Staps Verificatie</h1>
+        <p class="error-title" th:if="${report.passwordSettings().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Inzicht in de vereisten voor wachtwoorden en tweestapsverificatie (2FA/MFA) binnen uw organisatie. Een sterk wachtwoordbeleid, gecombineerd met hardware security keys voor beheerders, is de sterkste verdediging tegen accountovernames door phishing of datalekken.</p>
 
         <table class="full-card-table">
@@ -752,6 +763,8 @@
                 <div class="domain-header" th:text="${domain.name}">labo.cloudmen.com</div>
 
                 <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">Er zijn kritieke problemen gevonden met dit domein. Mail-flow kan worden beïnvloed.
+                </div>
+                <div th:if="${domain.hasError()}" class="domain-critical-alert">Data kon niet live worden opgehaald uit Google Workspace
                 </div>
 
                 <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">

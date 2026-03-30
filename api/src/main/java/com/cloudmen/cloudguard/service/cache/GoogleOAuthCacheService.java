@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.oauth.OAuthCacheEntry;
 import com.cloudmen.cloudguard.dto.oauth.RawUserToken;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -65,7 +66,7 @@ public class GoogleOAuthCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallback;
             }
-            throw new IllegalArgumentException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 
