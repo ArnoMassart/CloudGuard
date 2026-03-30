@@ -28,4 +28,16 @@ describe('NotificationFeedbackService', () => {
     expect(req.request.body).toEqual({ source: 's', notificationType: 't', feedbackText: 'hello' });
     req.flush(null);
   });
+
+  it('submitFeedback propagates HTTP errors to subscriber', () => {
+    const nextSpy = vi.fn();
+    const errorSpy = vi.fn();
+    service.submitFeedback('a', 'b', 'c').subscribe({ next: nextSpy, error: errorSpy });
+
+    const req = httpMock.expectOne((r) => r.url === '/api/notifications/feedback');
+    req.flush('fail', { status: 500, statusText: 'Server Error' });
+
+    expect(nextSpy).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
+  });
 });

@@ -222,6 +222,43 @@ describe('ReportsReactions', () => {
     expect(feedbackServiceMock.submitFeedback).not.toHaveBeenCalled();
   });
 
+  it('getFeedbackText defaults to empty and setFeedbackText stores value', () => {
+    expect(component.getFeedbackText('missing')).toBe('');
+    component.setFeedbackText('x', 'hello');
+    expect(component.getFeedbackText('x')).toBe('hello');
+  });
+
+  it('closeFeedbackForm closes and clears draft text', () => {
+    const n = makeNotification({ id: 'fb-close' });
+    component.openFeedbackForm(n);
+    component.setFeedbackText(n.id, 'draft');
+    component.closeFeedbackForm(n);
+    expect(component.isFeedbackFormOpen(n.id)).toBe(false);
+    expect(component.getFeedbackText(n.id)).toBe('');
+  });
+
+  it('submitFeedback clears submitting state on API error', async () => {
+    feedbackServiceMock.submitFeedback.mockReturnValue(throwError(() => new Error('network')));
+    const n = makeNotification({ id: 'fb-err' });
+    component.notifications.set([n]);
+    component.openFeedbackForm(n);
+    component.setFeedbackText(n.id, 'text');
+    component.submitFeedback(n);
+    await fixture.whenStable();
+
+    expect(component.isSubmittingFeedback(n.id)).toBe(false);
+    expect(component.notifications().find((x) => x.id === 'fb-err')?.hasReported).not.toBe(true);
+  });
+
+  it('refresh closes open feedback forms', () => {
+    const n = makeNotification({ id: 'fb-refresh' });
+    component.notifications.set([n]);
+    component.openFeedbackForm(n);
+    expect(component.isFeedbackFormOpen(n.id)).toBe(true);
+    component.refresh();
+    expect(component.isFeedbackFormOpen(n.id)).toBe(false);
+  });
+
   it('markAsDismissed calls API and refreshes list', async () => {
     const n = activeList[0];
     const callsBefore = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
