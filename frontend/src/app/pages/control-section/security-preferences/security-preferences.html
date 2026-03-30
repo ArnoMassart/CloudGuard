@@ -1,14 +1,14 @@
 <div class="px-10 py-6">
   <app-page-header
-    Title="Beveiligingsvoorkeuren"
-    Description="Configureer welke controles meldingen genereren en meetellen voor de beveiligingsscore."
+    Title="{{ 'preferences.title' | transloco }}"
+    Description="{{ 'preferences.description' | transloco }}"
     [NeedAdminLink]="false"
   />
 
-  <div class="mt-6" role="note" aria-label="Toelichting beveiligingsvoorkeuren">
-    <app-page-warnings [isInfo]="true" title="Over deze instellingen">
+  <div class="mt-6" role="note" aria-label="{{ 'preferences.info.label' | transloco }}">
+    <app-page-warnings [isInfo]="true" title="{{ 'preferences.info.title' | transloco }}">
       <app-page-warnings-item body [isInfo]="true">
-        Per onderdeel bepaalt u of bijbehorende bevindingen als melding worden getoond. Uitgeschakelde controles worden niet weergegeven op het dashboard en niet meegenomen in de betreffende sectieweergaven.
+        {{ 'preferences.info.description' | transloco }}      
       </app-page-warnings-item>
     </app-page-warnings>
   </div>
@@ -16,7 +16,7 @@
   @if (loading()) {
   <div class="flex flex-col items-center py-16">
     <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-    <span class="mt-4 text-sm text-slate-600">Bezig met laden van de voorkeuren…</span>
+    <span class="mt-4 text-sm text-slate-600">{{'preferences.loading' | transloco}}</span>
   </div>
   } @else {
   <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -29,7 +29,7 @@
           class="shrink-0 text-slate-600"
           aria-hidden="true"
         />
-        <h3 class="m-0 font-medium text-slate-900">{{ section.label }}</h3>
+        <h3 class="m-0 font-medium text-slate-900">{{ section.label  | transloco}}</h3>
       </div>
       <ul class="mt-4 space-y-3">
         @for (pref of section.preferences; track pref.key) {
@@ -38,7 +38,7 @@
             class="flex-1 cursor-pointer text-sm text-slate-700"
             [for]="section.section + '-' + pref.key"
           >
-            {{ pref.label }}
+            {{ pref.label | transloco}}
           </label>
           @if (pref.control === 'dnsImportance' && pref.dnsType) {
           <select
@@ -48,17 +48,17 @@
             [value]="dnsSelectValue(pref.dnsType)"
             (change)="setDnsImportance(section.section, pref.key, pref.dnsType, $any($event.target).value)"
           >
-            <option value="">Standaard</option>
-            <option value="REQUIRED">Vereist</option>
-            <option value="RECOMMENDED">Aanbevolen</option>
-            <option value="OPTIONAL">Optioneel</option>
+            <option value="">{{ 'preferences.dns.standard' | transloco }}</option>
+            <option value="REQUIRED">{{ 'preferences.dns.required' | transloco }}</option>
+            <option value="RECOMMENDED">{{ 'preferences.dns.recommended' | transloco }}</option>
+            <option value="OPTIONAL">{{ 'preferences.dns.optional' | transloco }}</option>
           </select>
           } @else {
           <button
             type="button"
             role="switch"
             [attr.aria-checked]="isEnabled(section.section, pref.key)"
-            [attr.aria-label]="pref.label + (isEnabled(section.section, pref.key) ? ': melding uitschakelen' : ': melding inschakelen')"
+            [attr.aria-label]="(pref.label | transloco) + (isEnabled(section.section, pref.key) ? ': ' + ('preferences.toggle-off' | transloco) : ': ' + ('preferences.toggle-on' | transloco))"
             [id]="section.section + '-' + pref.key"
             [disabled]="saving() !== null"
             (click)="toggle(section.section, pref.key)"
