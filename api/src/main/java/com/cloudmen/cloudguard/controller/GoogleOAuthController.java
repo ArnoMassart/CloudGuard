@@ -30,10 +30,6 @@ public class GoogleOAuthController {
                                                        @RequestParam(required = false) String query,
                                                        @RequestParam(required = false) String risk
                                                        ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(oAuthService.getOAuthPaged(loggedInEmail, pageToken, size, query, risk));
@@ -42,10 +38,6 @@ public class GoogleOAuthController {
     @GetMapping("/overview")
     public ResponseEntity<OAuthOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token
                                                           ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(oAuthService.getOAuthPageOverview(loggedInEmail,
@@ -55,10 +47,6 @@ public class GoogleOAuthController {
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshOAuthCache(@CookieValue(name = "AuthToken", required = false) String token
                                                           ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         oAuthService.forceRefreshCache(loggedInEmail);

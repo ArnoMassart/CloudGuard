@@ -12,12 +12,10 @@ import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport
 import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +28,7 @@ public class GoogleSharedDriveService {
     private final GoogleSharedDriveCacheService sharedDriveCacheService;
     private final MessageSource messageSource;
 
-    public GoogleSharedDriveService(GoogleSharedDriveCacheService sharedDriveCacheService, @Qualifier("messageSource") MessageSource messageSource) {
+    public GoogleSharedDriveService(GoogleSharedDriveCacheService sharedDriveCacheService, MessageSource messageSource) {
         this.sharedDriveCacheService = sharedDriveCacheService;
         this.messageSource = messageSource;
     }
@@ -76,10 +74,6 @@ public class GoogleSharedDriveService {
 
         String nextTokenToReturn = (endIndex < totalDrives) ? String.valueOf(page + 1) : null;
         return new SharedDrivePageResponse(pagedItems, nextTokenToReturn);
-    }
-
-    public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail) {
-        return getDrivesPageOverview(loggedInEmail, Set.of());
     }
 
     public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
@@ -132,10 +126,10 @@ public class GoogleSharedDriveService {
                                                             int orphanDrives, int notOnlyDomainUsersAllowedCount,
                                                             int notOnlyMembersCanAccessCount,
                                                             int riskOnlyScore, Set<String> off) {
-        int lowScore = totalDrives == 0 ? 100 : (int) Math.round(totalLowRisk * 100.0 / totalDrives);
-        int mediumScore = totalDrives == 0 ? 0 : (int) Math.round(totalMediumRisk * 60.0 / totalDrives);
-        int highScore = totalDrives == 0 ? 0 : (int) Math.round(totalHighRisk * 20.0 / totalDrives);
-        int orphanScore = totalDrives == 0 ? 100 : orphanDrives == 0 ? 100 : (int) Math.max(0, 100 - orphanDrives * 100 / totalDrives);
+        int lowScore = GoogleServiceHelperMethods.calculateWeightedScore(totalDrives, totalLowRisk, 100.0, 100);
+        int mediumScore = GoogleServiceHelperMethods.calculateWeightedScore(totalDrives, totalMediumRisk, 60.0, 0);
+        int highScore = GoogleServiceHelperMethods.calculateWeightedScore(totalDrives, totalHighRisk, 20.0, 0);
+        int orphanScore = GoogleServiceHelperMethods.calculateDeductionScore(totalDrives, orphanDrives);
         int domainOnlyScore = totalDrives == 0 ? 100 : notOnlyDomainUsersAllowedCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyDomainUsersAllowedCount * 50 / totalDrives);
         int membersOnlyScore = totalDrives == 0 ? 100 : notOnlyMembersCanAccessCount == 0 ? 100 : (int) Math.max(0, 100 - notOnlyMembersCanAccessCount * 50 / totalDrives);
 
@@ -160,8 +154,8 @@ public class GoogleSharedDriveService {
 
         var factors = java.util.List.of(
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.low_risk.title", null, locale), messageSource.getMessage("drives.score.factor.low_risk.description", new Object[]{totalLowRisk, totalDrives}, locale), lowScore, 100, severity(lowScore, true), muteRisk),
-                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.middle_risk.title", null, locale), messageSource.getMessage("drives.score.factor.middle_risk.description", new Object[]{totalMediumRisk, totalDrives}, locale), mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100 / 60 : 0,"warning"), muteRisk),
-                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.high_risk.title", null, locale), messageSource.getMessage("drives.score.factor.high_risk.description", new Object[]{totalHighRisk, totalDrives}, locale), highScore, 20, severity(highScore > 0 ? highScore * 100 / 20 : 0, true), muteRisk),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.middle_risk.title", null, locale), messageSource.getMessage("drives.score.factor.middle_risk.description", new Object[]{totalMediumRisk, totalDrives}, locale), mediumScore, 60, severity(mediumScore > 0 ? mediumScore * 100.0 / 60 : 0,"warning"), muteRisk),
+                new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.high_risk.title", null, locale), messageSource.getMessage("drives.score.factor.high_risk.description", new Object[]{totalHighRisk, totalDrives}, locale), highScore, 20, severity(highScore > 0 ? highScore * 100.0 / 20 : 0, true), muteRisk),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.with_managers.title", null, locale), orphanDrives == 0 ? messageSource.getMessage("drives.score.factor.with_managers_not.description", null, locale) : messageSource.getMessage("drives.score.factor.with_managers.description", new Object[]{orphanDrives}, locale), orphanScore, 100, severity(orphanScore), muteOrphan),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_domain.title", null, locale), notOnlyDomainUsersAllowedCount == 0 ? messageSource.getMessage("drives.score.factor.only_domain_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_domain.description", new Object[]{notOnlyDomainUsersAllowedCount}, locale), domainOnlyScore, 100, severity(domainOnlyScore), muteDomain),
                 new SecurityScoreFactorDto(messageSource.getMessage("drives.score.factor.only_members.title", null, locale), notOnlyMembersCanAccessCount == 0 ? messageSource.getMessage("drives.score.factor.only_members_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_members.description", new Object[]{notOnlyMembersCanAccessCount}, locale), membersOnlyScore, 100, severity(membersOnlyScore), muteMembers)

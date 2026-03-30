@@ -482,5 +482,12 @@
   "preferences.domain-dns": "Domain & DNS",
   "security-preferences": "Security Preferences",
   "control": "CONTROL",
-  "explanation": "Explanation"
+  "explanation": "Explanation",
+  "error.title": "Google Workspace Connection Error",
+  "users.error.description": "We temporarily could not fetch the user list. Please check your configuration or try refreshing the data.",
+  "drives.error.description": "We temporarily could not fetch the shared drives. Please check your configuration or try refreshing the data.",
+  "devices.error.description": "We temporarily could not fetch the devices. Please check your configuration or try refreshing the data.",
+  "app-access.error.description": "We temporarily could not fetch the apps. Please check your configuration or try refreshing the data.",
+  "licenses.error.description": "We temporarily could not fetch the licenses. Please check your configuration or try refreshing the data."
+
 }

@@ -211,12 +211,6 @@ public class GoogleUsersService {
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
-    }
-
     private int calculateSecurityScoreWithPreferenceMask(List<User> googleUsers, boolean ignore2fa, boolean ignoreActivity) {
         if (googleUsers.isEmpty()) {
             return 100;

@@ -235,6 +235,10 @@
         .badge-orange { background-color: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
         .badge-green { background-color: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
         .badge-gray { background-color: #f8fafc; color: #64748b; border: 1px solid #cbd5e1; }
+
+        .error-title {
+            color: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -296,6 +300,7 @@
 
     <div class="section-break">
         <h1>Users</h1>
+        <p class="error-title" th:if="${report.users().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>Visibility into employee account security. Enforcing string authentication and limiting administrative privileges is essential to preventing identity fraud.</p>
 
         <table class="full-card-table">
@@ -372,6 +377,7 @@
 
     <div class="section-break">
         <h1>Groups</h1>
+        <p class="error-title" th:if="${report.groups().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>Analysis of Google Groups configurations. Poorly managed groups can lead to data leaks (e.g., external parties unknowingly remaining on internal mailing lists) or spam-related vulnerabilities.
         </p>
 
@@ -433,6 +439,7 @@
 
     <div class="section-break">
         <h1>Shared Drives</h1>
+        <p class="error-title" th:if="${report.drives().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>Overview of cloud storage security. It is critical to ensure that files are not unintentionally accessible to individuals outside the organization.
         </p>
 
@@ -498,6 +505,7 @@
 
     <div class="section-break">
         <h1>Devices (Endpoints)</h1>
+        <p class="error-title" th:if="${report.devices().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>Analysis of mobile devices, tablets, and laptops accessing corporate data. Missing updates or lack of encryption pose a direct data breach risk in the event of loss or theft.
         </p>
 
@@ -581,6 +589,7 @@
 
     <div class="section-break">
         <h1>App Access (OAuth)</h1>
+        <p class="error-title" th:if="${report.appAccess().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>Third-party applications granted access to Google Workspace data via OAuth (e.g., reading emails or accessing files). Malicious or poorly secured apps can facilitate silent data exfiltration.
         </p>
 
@@ -644,6 +653,7 @@
 
     <div class="section-break">
         <h1>App Passwords</h1>
+        <p class="error-title" th:if="${report.appPasswords().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>App passwords are a legacy authentication method that bypasses MFA. Often used by older mail clients, they pose a significant security risk and should be phased out in favor of modern standards.
         </p>
 
@@ -695,6 +705,7 @@
 
     <div class="section-break">
         <h1>Password Policy & 2-Step Verification</h1>
+        <p class="error-title" th:if="${report.passwordSettings().hasError()}">Data could not be retrieved live from Google Workspace</p>
         <p>Review of organizational requirements for passwords and Multi-Factor Authentication (MFA). A robust password policy combined with hardware security keys for administrators provides the strongest defense against account takeovers.
         </p>
 
@@ -771,6 +782,8 @@
                 <div class="domain-header" th:text="${domain.name}">labo.cloudmen.com</div>
 
                 <div th:if="${domain.hasCriticalIssues}" class="domain-critical-alert">Critical issues found for this domain. Mail delivery may be impacted.
+                </div>
+                <div th:if="${domain.hasError()}" class="domain-critical-alert">Data could not be retrieved live from Google Workspace
                 </div>
 
                 <table style="width: 100%; border-collapse: collapse; background-color: #f8fafc;">

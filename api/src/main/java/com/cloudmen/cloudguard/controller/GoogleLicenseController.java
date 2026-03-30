@@ -26,10 +26,6 @@ public class GoogleLicenseController {
     public ResponseEntity<LicensePageResponse> getLicenses(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(licenseService.getLicenses(adminEmail));
@@ -37,10 +33,6 @@ public class GoogleLicenseController {
 
     @GetMapping("/overview")
     public ResponseEntity<LicenseOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(licenseService.getLicensesPageOverview(loggedInEmail));

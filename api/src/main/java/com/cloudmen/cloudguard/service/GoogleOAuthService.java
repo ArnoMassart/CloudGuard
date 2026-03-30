@@ -163,10 +163,6 @@ public class GoogleOAuthService {
         return new OAuthPagedResponse(mappedItems, nextTokenToReturn, allFilteredApps, allHighRiskApps, allNotHighRiskApps);
     }
 
-    public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail) {
-        return getOAuthPageOverview(loggedInEmail, Set.of());
-    }
-
     public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchOAuthData(loggedInEmail);
@@ -206,7 +202,7 @@ public class GoogleOAuthService {
         if (ignoreHighRiskPref) {
             highRiskScore = 100;
         }
-        int noAppsScore = totalThirdPartyApps == 0 ? 100 : 100;
+        int noAppsScore = 100;
 
         Locale locale = LocaleContextHolder.getLocale();
 
@@ -220,12 +216,6 @@ public class GoogleOAuthService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 
     private List<AggregatedAppBuilder> aggregateTokens(List<RawUserToken> rawTokens) {

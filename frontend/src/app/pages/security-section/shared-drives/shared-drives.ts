@@ -56,6 +56,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   drives = signal<SharedDrive[]>([]);
   readonly isLoading = signal(false);
@@ -194,6 +195,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   // ==========================================
   #loadDrives(token: string | null = null) {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
     this.#driveService.getDrives(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
       next: (res) => {
@@ -206,6 +208,7 @@ export class SharedDrives implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to load shared drives', err);
         this.isLoading.set(false);
+        this.apiError.set(true);
       },
     });
   }

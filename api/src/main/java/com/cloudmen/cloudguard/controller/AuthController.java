@@ -31,21 +31,11 @@ public class AuthController {
     @GetMapping("/check-session")
     public ResponseEntity<UserDto> checkSession(@CookieValue(name = "AuthToken", required = false) String token) {
         UserDto user = authService.validateSession(token);
-
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> getCurrentUser(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-
         return authService.getCurrentUser(token)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

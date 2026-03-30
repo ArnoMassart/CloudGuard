@@ -35,7 +35,7 @@ public class TeamleaderAccessService {
             log.info("Checking CloudGuard Access");
             return executeAccessCheckFlow(loggedInEmail);
         }catch (HttpClientErrorException.Unauthorized e) {
-        log.warn("Teamleader token verlopen (401), proberen te vernieuwen...");
+        log.warn("Teamleader token verlopen (401) tijdens hasCloudGuardAccess, proberen te vernieuwen...");
 
         // Als het token verlopen is, probeer het te vernieuwen
         if (teamleaderService.refreshTokens()) {

@@ -43,9 +43,6 @@ public class AppPasswordController {
 
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshCache(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         String email = jwtService.validateInternalToken(token);
         appPasswordsService.forceRefreshCache(email);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");

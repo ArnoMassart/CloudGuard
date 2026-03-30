@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -71,7 +72,7 @@ public class GoogleUsersCacheService {
                     .distinct()
                     .toList();
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to fetch roles from Google: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Failed to fetch roles from Google: " + e.getMessage());
         }
     }
 
@@ -103,7 +104,7 @@ public class GoogleUsersCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new IllegalArgumentException("Fout bij ophalen Google data, en geen cache beschikbaar: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen Google gebruikers, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 

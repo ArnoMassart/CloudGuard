@@ -13,7 +13,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([languageInterceptor])),
+    provideHttpClient(withInterceptors([errorInterceptor, languageInterceptor])),
     provideAuth0({
       domain: 'dev-x2l40e775g2q2ot3.eu.auth0.com',
       clientId: '6RChZH73eEvLLEhwrk8DjTgDETGYTe4u',

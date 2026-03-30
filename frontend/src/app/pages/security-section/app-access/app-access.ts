@@ -53,6 +53,7 @@ export class AppAccess implements OnInit, OnDestroy {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   readonly apps = signal<AggregatedAppDto[]>([]);
   readonly isLoading = signal(false);
@@ -73,14 +74,15 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly allNotHighRiskApps = signal(0);
 
   readonly highRiskAlertsEnabled = computed(
-    () => !this.#preferencesFacade.isDisabled('app-access', 'highRisk'),
+    () => !this.#preferencesFacade.isDisabled('app-access', 'highRisk')
   );
 
   readonly kpiHighRiskAppsColors = computed(() =>
     kpiColors(
       this.pageOverview()?.totalHighRiskApps ?? 0,
       !this.highRiskAlertsEnabled(),
-      KPI_COLORS.okBlue, KPI_COLORS.alertRed,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertRed
     )
   );
 
@@ -210,6 +212,7 @@ export class AppAccess implements OnInit, OnDestroy {
   // ==========================================
   #loadApps(token: string | null = null): void {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
     this.#oAuthService
       .getApps(ITEMS_PER_PAGE, this.riskFilter(), token || undefined, this.searchQuery())
@@ -224,6 +227,7 @@ export class AppAccess implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Failed to load oAuth apps', err);
+          this.apiError.set(true);
           this.isLoading.set(false);
         },
       });

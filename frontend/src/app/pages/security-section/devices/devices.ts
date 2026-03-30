@@ -60,6 +60,7 @@ export class Devices implements OnInit, OnDestroy {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   readonly devices = signal<Device[]>([]);
   readonly pageOverview = signal<DevicesOverviewResponse | null>(null);
@@ -233,6 +234,7 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   #loadDevices(token: string | null = null) {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
     this.#deviceService
       .getDevices(
@@ -250,6 +252,7 @@ export class Devices implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Failed to load devices', err);
           this.isLoading.set(false);
+          this.apiError.set(true);
         },
       });
   }

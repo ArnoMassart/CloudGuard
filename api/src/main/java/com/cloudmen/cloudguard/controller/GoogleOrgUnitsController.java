@@ -27,10 +27,6 @@ public class GoogleOrgUnitsController {
     @GetMapping
     public ResponseEntity<OrgUnitNodeDto> getOrgUnits(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(orgUnitService.getOrgUnitTree(email));
     }
@@ -39,10 +35,6 @@ public class GoogleOrgUnitsController {
     public ResponseEntity<List<OrgUnitPolicyDto>> getOrgUnitPolicies(
             @CookieValue(name = "AuthToken", required = false) String token,
             @RequestParam(defaultValue = "/") String orgUnitPath) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(orgUnitPolicyAggregator.getPolicies(email, orgUnitPath));
     }
@@ -51,10 +43,6 @@ public class GoogleOrgUnitsController {
     public ResponseEntity<String> refreshUsersCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
         orgUnitService.forceRefreshCache(adminEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");

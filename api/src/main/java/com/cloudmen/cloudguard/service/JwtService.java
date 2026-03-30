@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.exception.InvalidExternalTokenException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -38,7 +39,7 @@ public class JwtService {
         try {
             return googleJwtDecoder.decode(externalIdToken);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid External Token: " + e.getMessage());
+            throw new InvalidExternalTokenException("Invalid External Token: " + e.getMessage());
         }
     }
 

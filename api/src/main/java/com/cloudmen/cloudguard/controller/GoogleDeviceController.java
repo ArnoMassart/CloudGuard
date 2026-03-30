@@ -33,10 +33,6 @@ public class GoogleDeviceController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String deviceType
             ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         Set<String> disabled = preferenceService.getDisabledPreferenceKeys(loggedInEmail);
@@ -44,12 +40,7 @@ public class GoogleDeviceController {
     }
 
     @GetMapping("/types")
-    public ResponseEntity<List<String>> getDeviceTypes(@CookieValue(name = "AuthToken", required = false) String token
-                                                       ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+    public ResponseEntity<List<String>> getDeviceTypes(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(googleDeviceService.getUniqueDeviceTypes(loggedInEmail));
@@ -57,10 +48,6 @@ public class GoogleDeviceController {
 
     @GetMapping("/overview")
     public ResponseEntity<DeviceOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(googleDeviceService.getDevicesPageOverview(loggedInEmail, preferenceService.getDisabledPreferenceKeys(loggedInEmail)));
@@ -70,10 +57,6 @@ public class GoogleDeviceController {
     public ResponseEntity<String> refreshDevicesCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
         googleDeviceService.forceRefreshCache(adminEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");

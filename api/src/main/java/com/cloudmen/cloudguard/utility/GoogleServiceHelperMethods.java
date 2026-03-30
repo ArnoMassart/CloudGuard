@@ -127,4 +127,19 @@ public class GoogleServiceHelperMethods {
             return "error";
         }
     }
+
+    public static int calculateWeightedScore(int total, int count, double weight, int emptyFallback) {
+        if (total == 0) {
+            return emptyFallback;
+        }
+
+        return (int) Math.round(count * weight / total);
+    }
+
+    public static int calculateDeductionScore(int total, int violationCount) {
+        if (total == 0) {
+            return 100;
+        }
+        return Math.max(0, 100 - (violationCount * 100 / total));
+    }
 }
