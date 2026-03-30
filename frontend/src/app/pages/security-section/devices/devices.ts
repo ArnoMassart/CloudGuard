@@ -19,11 +19,12 @@ import { SecurityPreferencesFacade } from '../../../services/security-preference
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-devices',
@@ -37,6 +38,7 @@ const ITEMS_PER_PAGE = 5;
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    PageContentWrapper,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.css',
@@ -75,7 +77,9 @@ export class Devices implements OnInit, OnDestroy {
   readonly isRefreshing = signal<boolean>(false);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
-  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly hasMultipleWarnings = computed(
+    () => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false
+  );
   readonly devicePageWarnings = computed((): DevicesPageWarnings => {
     const items = this.pageOverview()?.warnings?.items ?? {};
     return {
@@ -162,17 +166,41 @@ export class Devices implements OnInit, OnDestroy {
 
   getDeviceFactors(device: Device): DeviceFactor[] {
     return [
-      { key: 'lockscreen', label: 'Vergrendelscherm', icon: AppIcons.Lock,       secure: device.lockSecure, text: device.screenLockText },
-      { key: 'encryption', label: 'Encryptie',        icon: AppIcons.HardDrive,  secure: device.encSecure,  text: device.encryptionText },
-      { key: 'osVersion',  label: 'OS Versie',        icon: AppIcons.Cpu,        secure: device.osSecure,   text: device.osText },
-      { key: 'integrity',  label: 'Integriteit',      icon: AppIcons.ShieldCheck, secure: device.intSecure, text: device.integrityText },
+      {
+        key: 'lockscreen',
+        label: 'Vergrendelscherm',
+        icon: AppIcons.Lock,
+        secure: device.lockSecure,
+        text: device.screenLockText,
+      },
+      {
+        key: 'encryption',
+        label: 'Encryptie',
+        icon: AppIcons.HardDrive,
+        secure: device.encSecure,
+        text: device.encryptionText,
+      },
+      {
+        key: 'osVersion',
+        label: 'OS Versie',
+        icon: AppIcons.Cpu,
+        secure: device.osSecure,
+        text: device.osText,
+      },
+      {
+        key: 'integrity',
+        label: 'Integriteit',
+        icon: AppIcons.ShieldCheck,
+        secure: device.intSecure,
+        text: device.integrityText,
+      },
     ].map((f) => ({
       ...f,
       state: f.secure
-        ? 'ok' as const
+        ? ('ok' as const)
         : this.#preferencesFacade.isDisabled('mobile-devices', f.key)
-          ? 'muted' as const
-          : 'warn' as const,
+        ? ('muted' as const)
+        : ('warn' as const),
     }));
   }
 

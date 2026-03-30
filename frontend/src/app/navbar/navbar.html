@@ -1,37 +1,63 @@
-<nav class="h-full min-h-0 flex flex-col bg-navbar-background p-5 animation-fade-in">
-  <div class="flex items-center gap-4 pb-4 px-4 shrink-0">
+<div>
+  <div class="md:hidden fixed z-40 p-4 bg-navbar-background text-white w-full flex justify-between">
+    <button (click)="toggleMobileMenu()" class="top-4 left-4">
+      <i-lucide [img]="Icons.Menu" size="24" />
+    </button>
+    <h2 class="text-white font-bold text-2xl cursor-pointer" (click)="navigateToHome()">CloudGuard</h2>
     <i-lucide [img]="Icons.Shield" size="30" class="text-primary" />
-    <h2 class="text-white font-bold text-2xl">CloudGuard</h2>
+  </div>
+</div>
+
+@if (isMobileMenuOpen()) {
+<div class="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity" (click)="closeMobileMenu()">
+</div>
+}
+
+<nav class="h-dvh min-h-0 flex flex-col bg-navbar-background p-5
+         fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out
+         md:relative md:translate-x-0" [class.-translate-x-full]="!isMobileMenuOpen()"
+  [class.translate-x-0]="isMobileMenuOpen()">
+
+  <div class="flex items-center justify-between gap-4 pb-4 px-4 shrink-0">
+    <div class="flex items-center gap-4">
+      <i-lucide [img]="Icons.Shield" size="30" class="text-primary" />
+      <h2 class="text-white font-bold text-2xl cursor-pointer" (click)="navigateToHome()">CloudGuard</h2>
+    </div>
+
+    <button (click)="closeMobileMenu()" class="md:hidden text-muted-foreground hover:text-white">
+      <i-lucide [img]="Icons.X" size="24" />
+    </button>
   </div>
 
   <div class="mb-4">
     <app-language-bar />
   </div>
 
-  <div class="flex-1 min-h-0 overflow-y-auto navbar-scroll">
-    <span class="text-muted-foreground font-medium text-sm px-4 pb-2 tracking-wider">SECURITY</span>
-    <ul class="flex flex-col gap-2">
+  <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain navbar-scroll">
+    <span class="text-muted-foreground font-medium text-sm px-4 tracking-wider">SECURITY</span>
+    <ul class="flex flex-col gap-2 pt-2">
       @for (item of NavItemsSecurity; track item.Label) {
-      <app-nav-item [Route]="item.Route" [Icon]="item.Icon" [Label]="item.Label | transloco"></app-nav-item>
+      <app-nav-item (click)="closeMobileMenu()" [Route]="item.Route" [Icon]="item.Icon"
+        [Label]="item.Label | transloco"></app-nav-item>
       }
     </ul>
 
     <div class="seperator"></div>
 
-    <span class="text-muted-foreground font-medium text-sm px-4 pb-2 tracking-wider">BEHEER</span>
-    <ul class="flex flex-col gap-2">
+    <span class="text-muted-foreground font-medium text-sm px-4 tracking-wider">{{ 'control' | transloco }}</span>
+    <ul class="flex flex-col gap-2 pt-2">
       @for (item of NavItemsControl; track item.Label) {
-      <app-nav-item [Route]="item.Route" [Icon]="item.Icon" [Label]="item.Label | transloco"></app-nav-item>
+      <app-nav-item (click)="closeMobileMenu()" [Route]="item.Route" [Icon]="item.Icon"
+        [Label]="item.Label | transloco"></app-nav-item>
       }
     </ul>
 
     <div class="seperator"></div>
   </div>
 
-  <!-- User section -->
   @if (currentUser(); as user) {
   <div (click)="openProfilePopup($event)"
-    class="shrink-0 min-h-[72px] group relative flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer overflow-hidden mt-auto">
+    class="shrink-0 min-h-18 group relative flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer overflow-hidden mt-auto">
     <div
       class="absolute inset-0 bg-gray-50/15 opacity-0  group-hover:opacity-100 group-has-[.logout-zone:hover]:opacity-0 transition-opacity pointer-events-none">
     </div>
@@ -60,7 +86,7 @@
     </div>
   </div>
   } @else {
-  <div class="min-h-[72px] flex items-center justify-between px-3 pt-2 mt-auto">
+  <div class="min-h-18 flex items-center justify-between px-3 pt-2 mt-auto">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-full bg-muted animate-pulse"></div>
       <div class="flex flex-col gap-1">
@@ -76,6 +102,7 @@
   </div>
   }
 </nav>
+
 
 @if (profilePopupOpen()) {
 <div class="profile-overlay" (click)="closeProfilePopup()">

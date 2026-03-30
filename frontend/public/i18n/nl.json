@@ -479,7 +479,8 @@
   "preferences.password-settings.securityKeys": "Beheerdersaccounts zonder hardware-beveiligingssleutel",
   "preferences.dns.site-verification": "Siteverificatie (TXT)",
   "preferences.dns.mail-subdomain": "Mailsubdomein (CNAME)",
-  "preferences.domain-dns": "Domein & DNS"
-  "external-member": "extern lid",
-  "security-preferences": "Beveiligingsvoorkeuren"
+  "preferences.domain-dns": "Domein & DNS",
+  "security-preferences": "Beveiligingsvoorkeuren",
+  "explanation": "Toelichting",
+  "control": "BEHEER"
 }

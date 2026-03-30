@@ -1,28 +1,18 @@
 <div class="w-full flex flex-col gap-5">
-  <div class="w-full flex gap-4">
-    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}" [Value]="pageOverview()?.totalUsers" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}" [Value]="pageOverview()?.withoutTwoFactor"
-      [BackgroundColor]="kpiZonder2faColors().bg"
-      [IconColor]="kpiZonder2faColors().icon"
-      [TextColor]="kpiZonder2faColors().text"
+  <div class="w-full flex flex-col lg:flex-row gap-4">
+    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}"
+      [Value]="pageOverview()?.totalUsers" />
+    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}"
+      [Value]="pageOverview()?.withoutTwoFactor" [BackgroundColor]="kpiZonder2faColors().bg"
+      [IconColor]="kpiZonder2faColors().icon" [TextColor]="kpiZonder2faColors().text"
       [Icon]="(pageOverview()?.withoutTwoFactor ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}" [Value]="pageOverview()?.adminUsers"
-      BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-    <div
-      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-      (click)="openSecurityScoreDetail()"
-      role="button"
-      tabindex="0"
-      (keydown.enter)="openSecurityScoreDetail()"
-      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
-    >
-      <app-section-top-card
-        Title="Security Score"
-        [Value]="pageOverview()?.securityScore"
-        [IsPercentage]="true"
-        BackgroundColor="#fef9c2"
-        IconColor="#d69518"
-      />
+    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}"
+      [Value]="pageOverview()?.adminUsers" BackgroundColor="#f3e8ff" IconColor="#9810fa" />
+    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+      (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
+      <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
+        [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
     </div>
   </div>
 
@@ -76,8 +66,8 @@
       </button>
     </div>
 
-    <table class="w-full text-left border-collapse mt-6">
-      <thead>
+    <table class="w-full text-left border-collapse mt-6 block sm:table">
+      <thead class="hidden sm:table-header-group">
         <tr class="border-b border-t border-gray-200 bg-gray-50/50">
           <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'user-cap' | transloco }}</th>
           <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'role' | transloco }}</th>
@@ -88,17 +78,23 @@
         </tr>
       </thead>
 
-      <tbody class="divide-y divide-gray-200">
+      <tbody class="block sm:table-row-group sm:divide-y sm:divide-gray-200">
         @for (user of orgUsers(); track user.email) {
-        <tr class="hover:bg-gray-50 transition-colors">
-          <td class="px-6 py-4">
+
+        <tr
+          class="block sm:table-row mb-4 sm:mb-0 bg-white sm:bg-transparent border border-gray-200 sm:border-none rounded-lg sm:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
+
+          <td
+            class="block sm:table-cell px-4 sm:px-6 py-4 border-b sm:border-none border-gray-200 bg-gray-50/30 sm:bg-transparent">
             <div class="flex flex-col">
               <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
               <span class="text-xs text-gray-500">{{ user.email }}</span>
             </div>
           </td>
 
-          <td class="px-6 py-4">
+          <td
+            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'role' | transloco }}</span>
             <span class="px-3 py-1 inline-flex justify-center text-center gap-1.5 rounded-md text-xs font-medium"
               [ngClass]="getRoleClass(user.role)">
               @if (user.role === 'Super Admin') {
@@ -108,7 +104,9 @@
             </span>
           </td>
 
-          <td class="px-6 py-4">
+          <td
+            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'state' | transloco }}</span>
             <div class="px-3 py-1 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
               [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
               [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
@@ -117,31 +115,31 @@
             </div>
           </td>
 
-          <td class="px-6 py-4 text-sm">
-            <div
-              class="flex items-center gap-2"
-              [class.text-gray-500]="!lastLoginCellMuted(user)"
-              [class.text-[#6b7280]]="lastLoginCellMuted(user)"
-            >
+          <td
+            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100 text-sm">
+            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'last-login' | transloco }}</span>
+            <div class="flex items-center gap-2" [class.text-gray-500]="!lastLoginCellMuted(user)"
+              [class.text-[#6b7280]]="lastLoginCellMuted(user)">
               <lucide-icon [img]="Icons.Clock" size="14"></lucide-icon>
               {{ user.lastLogin }}
             </div>
           </td>
 
-          <td class="px-6 py-4">
-            <div
-              class="flex items-center gap-1.5 text-xs font-medium"
-              [class.text-emerald-400]="user.twoFactorEnabled"
+          <td
+            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">2FA</span>
+            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFactorEnabled"
               [class.text-destructive]="!user.twoFactorEnabled && !twoFactorCellMuted(user)"
-              [class.text-[#6b7280]]="twoFactorCellMuted(user)"
-            >
+              [class.text-[#6b7280]]="twoFactorCellMuted(user)">
               <lucide-icon [img]="user.twoFactorEnabled ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
               {{ user.twoFactorEnabled ? ('enabled' | transloco) : ('off' | transloco) }}
             </div>
           </td>
 
-          <td class="px-6 py-4">
-            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="effectiveSecurityConform(user)"
+          <td class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4">
+            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">Security</span>
+            <div class="flex items-center gap-1.5 text-xs font-medium"
+              [class.text-emerald-400]="effectiveSecurityConform(user)"
               [class.text-destructive]="!effectiveSecurityConform(user)">
               <lucide-icon [img]="effectiveSecurityConform(user) ? Icons.CircleCheck : Icons.TriangleAlert"
                 size="14"></lucide-icon>

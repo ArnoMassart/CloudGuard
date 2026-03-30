@@ -1,13 +1,20 @@
-<div class="flex items-center justify-between">
-    <div>
-        <h1>{{Title}}</h1>
-        <span class="text-black/50 text-[15px]">{{Description}}</span>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+    <div class="flex-1 min-w-0">
+        <h1 class="text-2xl sm:text-3xl font-medium text-slate-800 mb-1 leading-tight">
+            {{Title}}
+        </h1>
+        <p class="text-slate-500 text-sm sm:text-[15px] leading-relaxed">
+            {{Description}}
+        </p>
     </div>
+
     @if (NeedAdminLink) {
     <button (click)="UtilityMethods.openAdminPage(`https://admin.google.com/ac/${this.AdminLink}`)"
-        class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center"><span>{{
-            'to-admin-console' | transloco }}</span> <lucide-icon [img]="Icons.ExternalLink" size="16"
-            class=""></lucide-icon>
+        class="shrink-0 w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer bg-primary text-white hover:bg-primary/80 py-2.5 px-5 rounded-lg font-medium transition-colors shadow-sm">
+        <span class="whitespace-nowrap">{{ 'to-admin-console' | transloco }}</span>
+        <lucide-icon [img]="Icons.ExternalLink" size="16"></lucide-icon>
     </button>
     }
+
 </div>

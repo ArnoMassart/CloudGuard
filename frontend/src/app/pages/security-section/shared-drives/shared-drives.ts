@@ -18,6 +18,7 @@ import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 // ==========================================
 // CONSTANTS
@@ -35,6 +36,7 @@ const ITEMS_PER_PAGE = 2;
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    PageContentWrapper,
   ],
   templateUrl: './shared-drives.html',
   styleUrl: './shared-drives.css',
@@ -66,7 +68,9 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly nextPageToken = signal<string | null>(null);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
-  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly hasMultipleWarnings = computed(
+    () => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false
+  );
   readonly drivePageWarnings = computed((): SharedDrivesPageWarnings => {
     const items = this.pageOverview()?.warnings?.items ?? {};
     return {
@@ -81,7 +85,8 @@ export class SharedDrives implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.orphanDrives ?? 0,
       this.#preferencesFacade.isDisabled('shared-drives', 'orphan'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertPurple,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertPurple
     )
   );
 
@@ -89,7 +94,8 @@ export class SharedDrives implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.externalMembersDriveCount ?? 0,
       this.#preferencesFacade.isDisabled('shared-drives', 'external'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertOrange
     )
   );
 
