@@ -81,7 +81,7 @@
       <div class="bg-red-100 p-3 rounded-full mb-3">
         <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
       </div>
-      <span class="text-lg font-medium text-slate-800">{{ 'users.error.title' | transloco }}</span>
+      <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
       <span class="text-sm text-slate-600 mt-1 max-w-md">
         {{ 'users.error.description' | transloco }}
       </span>
@@ -100,7 +100,7 @@
         </tr>
       </thead>
 
-      <tbody class="block sm:table-row-group sm:divide-y sm:divide-gray-200">
+      <tbody class="block sm:table-row-group">
         @for (user of orgUsers(); track user.email) {
 
         <tr

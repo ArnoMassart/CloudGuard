@@ -3,7 +3,7 @@
     Description="{{ 'shared-drives.description' | transloco }}" AdminLink="drive/manageshareddrives" />
 
   <div class="w-full flex flex-col gap-5 pt-6">
-    <div class="w-full flex gap-4">
+    <div class="w-full flex flex-col lg:flex-row gap-4">
       <app-section-top-card class="flex-1" Title="{{ 'shared-drives.total-drives' | transloco }}"
         [Value]="pageOverview()?.totalDrives" [Icon]="Icons.HardDrive" />
 

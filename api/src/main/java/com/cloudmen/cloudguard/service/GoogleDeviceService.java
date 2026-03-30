@@ -396,6 +396,8 @@ public class GoogleDeviceService {
         // Voor de rest (Windows, Android, Linux):
         // Eerste letter een hoofdletter, de rest kleine letters
         return osName.substring(0, 1).toUpperCase() + osName.substring(1).toLowerCase();
+    }
+
     private int calculateFactorScore(int total, int violations, boolean shouldIgnore) {
         if (total == 0 || shouldIgnore) {
             return 100;
