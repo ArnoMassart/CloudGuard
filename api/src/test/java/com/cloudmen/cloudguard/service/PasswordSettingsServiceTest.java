@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminSecurityKeysResponse;
+import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
@@ -8,6 +9,8 @@ import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.google.api.services.admin.directory.model.User;
+import com.google.api.services.admin.directory.model.UserName;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,10 +21,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -98,6 +98,54 @@ class PasswordSettingsServiceTest {
         assertEquals(0, dto.summary().totalUsers());
         assertEquals(100, dto.securityScore());
         assertEquals("perfect", dto.securityScoreBreakdown().status());
+    }
+
+    @Test
+    void getPasswordSettings_wiresAdminKeysAndForcedPasswordChangeIntoDtoAndScore() throws Exception {
+        User forced = new User();
+        forced.setPrimaryEmail("alice@example.com");
+        forced.setName(new UserName().setFullName("Alice"));
+        forced.setOrgUnitPath("/");
+        forced.setChangePasswordAtNextLogin(true);
+        forced.setIsEnrolledIn2Sv(true);
+        forced.setIsEnforcedIn2Sv(true);
+
+        User ok = new User();
+        ok.setPrimaryEmail("bob@example.com");
+        ok.setName(new UserName().setFullName("Bob"));
+        ok.setOrgUnitPath("/");
+        ok.setChangePasswordAtNextLogin(false);
+        ok.setIsEnrolledIn2Sv(true);
+        ok.setIsEnforcedIn2Sv(true);
+
+        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
+                new UserCacheEntry(List.of(forced, ok), Map.of(), Map.of(), 0L));
+        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
+                new OrgUnitCacheEntry(List.of(), Map.of("/", 2), 0L));
+        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
+        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
+
+        var missingKeyAdmin = new AdminWithSecurityKeyDto(
+                "a1", "Admin One", "admin1@example.com", "Admin", "/", true, 0);
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
+                .thenReturn(new AdminSecurityKeysResponse(List.of(missingKeyAdmin), 2, null));
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
+
+        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+
+        assertEquals(1, dto.usersWithForcedChange().size());
+        assertEquals(1, dto.summary().usersWithForcedChange());
+        assertEquals(2, dto.summary().totalUsers());
+        assertEquals(1, dto.adminsWithoutSecurityKeys().size());
+        assertEquals("admin1@example.com", dto.adminsWithoutSecurityKeys().get(0).email());
+        assertNull(dto.adminsSecurityKeysErrorMessage());
+
+        var breakdown = dto.securityScoreBreakdown();
+        assertEquals(50, breakdown.factors().get(0).score());
+        assertEquals(50, breakdown.factors().get(1).score());
+        assertFalse(breakdown.factors().get(0).muted());
+        assertFalse(breakdown.factors().get(1).muted());
+        assertTrue(dto.securityScore() < 100);
     }
 
     @Test
@@ -228,6 +276,37 @@ class PasswordSettingsServiceTest {
                 2, 0, summary, twoSv, policies, Set.of());
 
         assertEquals(50, result.breakdown().factors().get(1).score());
+        assertTrue(result.score() < 100);
+    }
+
+    @Test
+    void calculateSecurityScore_noForcedPasswordChanges_usersChangeFactorAt100() {
+        var summary = new PasswordSettingsSummaryDto(0, 10, 10, 10);
+        var twoSv = new TwoStepVerificationDto(
+                List.of(new OrgUnit2SvDto("/", "Root", true, 10, 10)),
+                10, 10, 10);
+        var policies = List.of(ouPolicy("/", 10, 14, 180, true));
+
+        var result = service.calculateSecurityScoreWithBreakdown(
+                2, 0, summary, twoSv, policies, Set.of());
+
+        assertEquals(100, result.breakdown().factors().get(1).score());
+        assertFalse(result.breakdown().factors().get(1).muted());
+    }
+
+    @Test
+    void calculateSecurityScore_partialAdminKeysWithoutSecurityKeys_lowersAdminFactor() {
+        var summary = new PasswordSettingsSummaryDto(0, 10, 10, 10);
+        var twoSv = new TwoStepVerificationDto(
+                List.of(new OrgUnit2SvDto("/", "Root", true, 10, 10)),
+                10, 10, 10);
+        var policies = List.of(ouPolicy("/", 10, 14, 180, true));
+
+        var result = service.calculateSecurityScoreWithBreakdown(
+                4, 2, summary, twoSv, policies, Set.of());
+
+        assertEquals(50, result.breakdown().factors().get(0).score());
+        assertFalse(result.breakdown().factors().get(0).muted());
         assertTrue(result.score() < 100);
     }
 
