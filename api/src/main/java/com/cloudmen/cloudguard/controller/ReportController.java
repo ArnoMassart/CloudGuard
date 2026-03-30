@@ -24,10 +24,6 @@ public class ReportController {
 
     @GetMapping
     public ResponseEntity<byte[]> downloadReport(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         byte[] pdfBytes = reportService.generateSecurityRapport(loggedInEmail, LocaleContextHolder.getLocale()).data();

@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.service.teamleader;
 
+import com.cloudmen.cloudguard.exception.AccessTokenEmptyException;
+import com.cloudmen.cloudguard.exception.RefreshTokenEmptyException;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +30,12 @@ public class TeamleaderService {
     }
 
     public void updateCredentials(String accessToken, String refreshToken) {
-        if (accessToken == null || refreshToken == null || accessToken.isBlank() || refreshToken.isBlank()) {
-            throw new IllegalArgumentException("Access token and Refresh token cannot be empty.");
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new AccessTokenEmptyException("Access token cannot be empty.");
+        }
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new RefreshTokenEmptyException("Refresh token cannot be empty.");
         }
 
         // Sla de tokens direct op in Supabase

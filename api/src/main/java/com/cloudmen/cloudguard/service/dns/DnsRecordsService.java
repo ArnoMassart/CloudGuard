@@ -121,12 +121,6 @@ public class DnsRecordsService {
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
-    }
-
     /**
      * Weighted score over REQUIRED and RECOMMENDED rows only; OPTIONAL rows do not affect the percentage.
      */

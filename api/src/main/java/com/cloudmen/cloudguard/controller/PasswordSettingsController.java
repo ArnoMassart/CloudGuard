@@ -21,10 +21,6 @@ public class PasswordSettingsController {
     @GetMapping
     public ResponseEntity<PasswordSettingsDto> getPasswordSettings(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(passwordSettingsService.getPasswordSettings(email));
     }
@@ -32,9 +28,6 @@ public class PasswordSettingsController {
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshCache(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         String email = jwtService.validateInternalToken(token);
         passwordSettingsService.forceRefreshCache(email);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");

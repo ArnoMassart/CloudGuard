@@ -12,7 +12,9 @@ import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.password.OrgUnit2SvDto;
 import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
+import com.cloudmen.cloudguard.dto.report.DomainTip;
 import com.cloudmen.cloudguard.dto.report.FullSecurityReport;
+import com.cloudmen.cloudguard.dto.report.ReportResponse;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.exception.PdfGenerationException;
 import com.cloudmen.cloudguard.service.*;
@@ -28,9 +30,7 @@ import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -83,10 +83,6 @@ public class PdfReportService {
         this.messageSource = messageSource;
         this.userSecurityPreferenceService = userSecurityPreferenceService;
     }
-
-    public record ReportResponse(
-            byte[] data,
-            String companyName) { }
 
     public ReportResponse generateSecurityRapport(String adminEmail, Locale locale) {
         log.info("Starting pdf generation");
@@ -297,25 +293,25 @@ public class PdfReportService {
                                 statusText = "RED";
                             }
                             case VALID -> {
-                                description = messageSource.getMessage(info.validDesc, null, locale);
+                                description = messageSource.getMessage(info.validDesc(), null, locale);
                                 badgeText = messageSource.getMessage("report.domain.status.valid.badgeText", null, locale);
                             }
                             case ATTENTION -> {
-                                description = messageSource.getMessage(info.attentionDesc, null, locale);
-                                tip = messageSource.getMessage(info.tip, null, locale);
+                                description = messageSource.getMessage(info.attentionDesc(), null, locale);
+                                tip = messageSource.getMessage(info.tip(), null, locale);
                                 badgeText = messageSource.getMessage("report.domain.status.attention.badgeText", null, locale);
                                 statusText = "ORANGE";
                             }
                             case ACTION_REQUIRED -> {
-                                description = messageSource.getMessage(info.actionDesc, null, locale);
-                                tip = messageSource.getMessage(info.tip, null, locale);
+                                description = messageSource.getMessage(info.actionDesc(), null, locale);
+                                tip = messageSource.getMessage(info.tip(), null, locale);
                                 badgeText = messageSource.getMessage("report.domain.status.action_required.badgeText", null, locale);
                                 statusText = "RED";
                             }
                         }
 
                         return new FullSecurityReport.SecurityCheck(
-                                messageSource.getMessage(info.title, null, locale),
+                                messageSource.getMessage(info.title(), null, locale),
                                 description,
                                 tip,
                                 statusText,
@@ -332,7 +328,7 @@ public class PdfReportService {
                     List<FullSecurityReport.DnsRecord> records = rows.stream().map(r -> new FullSecurityReport.DnsRecord(
                             r.type(),
                             r.name(),
-                            r.values().isEmpty() ? "" : insertZeroWidthSpaces(r.values().get(0), 40)
+                            r.values().isEmpty() ? "" : insertZeroWidthSpaces(r.values().get(0))
                     )).toList();
 
                     boolean hasCritical = rows.stream().anyMatch(r -> r.status().equals(DnsRecordStatus.ACTION_REQUIRED));
@@ -351,14 +347,6 @@ public class PdfReportService {
         return domainData;
     }
 
-    public record DomainTip(
-            String title,
-            String validDesc,
-            String actionDesc,
-            String attentionDesc,
-            String tip
-    ) {}
-
     public static final Map<String, DomainTip> TIPS = Map.ofEntries(
             entry("SPF", new DomainTip("report.domain.tip.spf.title", "report.domain.tip.spf.valid", "report.domain.tip.spf.action", "report.domain.tip.spf.attention", "report.domain.tip.spf.tip")),
             entry("DKIM", new DomainTip("report.domain.tip.dkim.title", "report.domain.tip.dkim.valid", "report.domain.tip.dkim.action", "report.domain.tip.dkim.attention", "report.domain.tip.dkim.tip")),
@@ -370,7 +358,9 @@ public class PdfReportService {
             entry("CNAME", new DomainTip("report.domain.tip.cname.title", "report.domain.tip.cname.valid", "report.domain.tip.cname.action", "report.domain.tip.cname.attention", "report.domain.tip.cname.tip"))
     );
 
-    private String insertZeroWidthSpaces(String text, int interval) {
+    private String insertZeroWidthSpaces(String text) {
+        int interval = 40;
+
         if (text == null || text.length() <= interval || text.contains(" ")) {
             return text;
         }

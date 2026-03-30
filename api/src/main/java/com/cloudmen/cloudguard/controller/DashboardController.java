@@ -24,10 +24,6 @@ public class DashboardController {
 
     @GetMapping
     public ResponseEntity<DashboardPageResponse> getDashboardData(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(dashboardService.getDashboardSecurityScores(loggedInEmail));
@@ -35,10 +31,6 @@ public class DashboardController {
 
     @GetMapping("/overview")
     public ResponseEntity<DashboardOverviewResponse> getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(dashboardService.getDashboardOverview(loggedInEmail));

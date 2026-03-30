@@ -124,12 +124,6 @@ public class AppPasswordsService {
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
-    }
-
     public void forceRefreshCache(String adminEmail) {
         cache.asMap().compute(adminEmail, (email, existing) -> fetchAllAppPasswords(email));
     }

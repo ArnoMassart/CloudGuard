@@ -23,9 +23,6 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<NotificationsResponse> getNotifications(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         String userId = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(aggregationService.getNotifications(userId, LocaleContextHolder.getLocale()));
     }

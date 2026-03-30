@@ -39,10 +39,6 @@ public class TeamleaderAccessController {
 
     @GetMapping("/check")
     public ResponseEntity<Map<String, Boolean>> checkAccess(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         boolean hasAccess = teamleaderAccessService.hasCloudGuardAccess(loggedInEmail);

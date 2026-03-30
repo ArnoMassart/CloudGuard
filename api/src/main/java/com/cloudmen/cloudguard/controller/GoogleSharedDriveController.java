@@ -29,10 +29,6 @@ public class GoogleSharedDriveController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String query) {
 
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String loggedInEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(driveService.getSharedDrivesPaged(loggedInEmail, pageToken, size, query));
@@ -53,10 +49,6 @@ public class GoogleSharedDriveController {
     public ResponseEntity<String> refreshUsersCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
         driveService.forceRefreshCache(adminEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");

@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.report;
 
+import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,7 +59,7 @@ public class SecurityReportEmailService {
             }
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send feedback email", e);
+            throw new FailedFeedbackEmailException("Failed to send feedback email", e);
         }
     }
 
