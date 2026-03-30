@@ -58,6 +58,7 @@ export class Devices implements OnInit, OnDestroy {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   readonly devices = signal<Device[]>([]);
   readonly pageOverview = signal<DevicesOverviewResponse | null>(null);
@@ -75,7 +76,9 @@ export class Devices implements OnInit, OnDestroy {
   readonly isRefreshing = signal<boolean>(false);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
-  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly hasMultipleWarnings = computed(
+    () => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false
+  );
   readonly devicePageWarnings = computed((): DevicesPageWarnings => {
     const items = this.pageOverview()?.warnings?.items ?? {};
     return {
@@ -162,17 +165,41 @@ export class Devices implements OnInit, OnDestroy {
 
   getDeviceFactors(device: Device): DeviceFactor[] {
     return [
-      { key: 'lockscreen', label: 'Vergrendelscherm', icon: AppIcons.Lock,       secure: device.lockSecure, text: device.screenLockText },
-      { key: 'encryption', label: 'Encryptie',        icon: AppIcons.HardDrive,  secure: device.encSecure,  text: device.encryptionText },
-      { key: 'osVersion',  label: 'OS Versie',        icon: AppIcons.Cpu,        secure: device.osSecure,   text: device.osText },
-      { key: 'integrity',  label: 'Integriteit',      icon: AppIcons.ShieldCheck, secure: device.intSecure, text: device.integrityText },
+      {
+        key: 'lockscreen',
+        label: 'Vergrendelscherm',
+        icon: AppIcons.Lock,
+        secure: device.lockSecure,
+        text: device.screenLockText,
+      },
+      {
+        key: 'encryption',
+        label: 'Encryptie',
+        icon: AppIcons.HardDrive,
+        secure: device.encSecure,
+        text: device.encryptionText,
+      },
+      {
+        key: 'osVersion',
+        label: 'OS Versie',
+        icon: AppIcons.Cpu,
+        secure: device.osSecure,
+        text: device.osText,
+      },
+      {
+        key: 'integrity',
+        label: 'Integriteit',
+        icon: AppIcons.ShieldCheck,
+        secure: device.intSecure,
+        text: device.integrityText,
+      },
     ].map((f) => ({
       ...f,
       state: f.secure
-        ? 'ok' as const
+        ? ('ok' as const)
         : this.#preferencesFacade.isDisabled('mobile-devices', f.key)
-          ? 'muted' as const
-          : 'warn' as const,
+        ? ('muted' as const)
+        : ('warn' as const),
     }));
   }
 
@@ -205,6 +232,7 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   #loadDevices(token: string | null = null) {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
     this.#deviceService
       .getDevices(
@@ -222,6 +250,7 @@ export class Devices implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Failed to load devices', err);
           this.isLoading.set(false);
+          this.apiError.set(true);
         },
       });
   }

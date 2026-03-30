@@ -57,11 +57,11 @@ public class GoogleGroupsService {
     public GroupOverviewResponse getGroupsOverview(String loggedInEmail) {
         GroupCacheEntry cachedData = groupsCacheService.getOrFetchGroupData(loggedInEmail);
 
-        long totalGroups = cachedData.allGroups().size();
-        long groupsWithExternal = 0;
-        long highRiskGroups = 0;
-        long mediumRiskGroups = 0;
-        long lowRiskGroups = 0;
+        int totalGroups = cachedData.allGroups().size();
+        int groupsWithExternal = 0;
+        int highRiskGroups = 0;
+        int mediumRiskGroups = 0;
+        int lowRiskGroups = 0;
 
         for (CachedGroupItem item : cachedData.allGroups()) {
             GroupOrgDetail detail = item.detail();
@@ -107,12 +107,12 @@ public class GoogleGroupsService {
                 breakdown, warnings);
     }
 
-    private SecurityScoreBreakdownDto buildGroupsBreakdown(long totalGroups, long groupsWithExternal, long highRiskGroups, long mediumRiskGroups, long lowRiskGroups, int securityScore,
+    private SecurityScoreBreakdownDto buildGroupsBreakdown(int totalGroups, int groupsWithExternal, int highRiskGroups, int mediumRiskGroups, int lowRiskGroups, int securityScore,
                                                            boolean neutralizeForDisabledPref) {
-        int lowScore = totalGroups == 0 ? 100 : (int) Math.round(lowRiskGroups * 100.0 / totalGroups);
-        int mediumScore = totalGroups == 0 ? 0 : (int) Math.round(mediumRiskGroups * 60.0 / totalGroups);
-        int highScore = totalGroups == 0 ? 0 : (int) Math.round(highRiskGroups * 20.0 / totalGroups);
-        int externalScore = totalGroups == 0 ? 100 : groupsWithExternal == 0 ? 100 : (int) Math.max(0, 100 - groupsWithExternal * 100 / totalGroups);
+        int lowScore = GoogleServiceHelperMethods.calculateWeightedScore(totalGroups, lowRiskGroups, 100.0, 100);
+        int mediumScore = GoogleServiceHelperMethods.calculateWeightedScore(totalGroups, mediumRiskGroups, 60.0, 100);
+        int highScore = GoogleServiceHelperMethods.calculateWeightedScore(totalGroups, highRiskGroups, 20.0, 100);
+        int externalScore = GoogleServiceHelperMethods.calculateDeductionScore(totalGroups, groupsWithExternal);
         if (neutralizeForDisabledPref) {
             lowScore = 100;
             mediumScore = 60;
@@ -124,17 +124,11 @@ public class GoogleGroupsService {
 
         var factors = java.util.List.of(
                 new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.low_risk.title", null, locale), messageSource.getMessage("groups.score.factor.low_risk.description", new Object[]{lowRiskGroups, totalGroups}, locale), lowScore, 100, severity(lowScore), neutralizeForDisabledPref),
-                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.middle_risk.title", null, locale),messageSource.getMessage("groups.score.factor.middle_risk.description", new Object[]{mediumRiskGroups, totalGroups}, locale) , mediumScore, 60, severity(mediumScore * 100 / 60), neutralizeForDisabledPref),
-                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.high_risk.title", null, locale), messageSource.getMessage("groups.score.factor.high_risk.description", new Object[]{highRiskGroups, totalGroups}, locale) , highScore, 20, severity(highScore * 100 / 20), neutralizeForDisabledPref),
+                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.middle_risk.title", null, locale),messageSource.getMessage("groups.score.factor.middle_risk.description", new Object[]{mediumRiskGroups, totalGroups}, locale) , mediumScore, 60, severity(mediumScore * 100.0 / 60), neutralizeForDisabledPref),
+                new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.high_risk.title", null, locale), messageSource.getMessage("groups.score.factor.high_risk.description", new Object[]{highRiskGroups, totalGroups}, locale) , highScore, 20, severity(highScore * 100.0 / 20), neutralizeForDisabledPref),
                 new SecurityScoreFactorDto(messageSource.getMessage("groups.score.factor.no_external.title", null, locale), groupsWithExternal == 0 ? messageSource.getMessage("groups.score.factor.no_external.description.no_found", null, locale) : messageSource.getMessage("groups.score.factor.no_external.description", new Object[]{groupsWithExternal}, locale), externalScore, 100, severity(externalScore), neutralizeForDisabledPref)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 }

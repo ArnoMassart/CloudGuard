@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
-import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -471,11 +470,5 @@ public class PasswordSettingsService {
         String status = totalScore == 100 ? "perfect" : totalScore >= 75 ? "good" : totalScore > 50 ? "average" : "bad";
 
         return new SecurityScoreResult(totalScore, new SecurityScoreBreakdownDto(totalScore, status, factors));
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 }

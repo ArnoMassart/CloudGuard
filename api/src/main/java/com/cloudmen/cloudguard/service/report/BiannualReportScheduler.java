@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.report;
 
+import com.cloudmen.cloudguard.dto.report.ReportResponse;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
@@ -54,7 +55,7 @@ public class BiannualReportScheduler {
 
                 cacheWarmupService.warmupAllCachesAsync(email).join();
 
-                PdfReportService.ReportResponse response = reportService.generateSecurityRapport(email, locale);
+                ReportResponse response = reportService.generateSecurityRapport(email, locale);
 
                 String companyName = response.companyName();
 

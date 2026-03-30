@@ -53,6 +53,7 @@ export class Licenses implements OnInit, OnDestroy {
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
   readonly isExpanded = signal(true);
+  readonly apiError = signal(false);
 
   readonly expandedDevice = signal<string | null>(null);
 
@@ -198,11 +199,10 @@ export class Licenses implements OnInit, OnDestroy {
   // ==========================================
   #loadLicenses() {
     this.isLoading.set(true);
+    this.apiError.set(false);
 
     this.#licenseService.getLicenses().subscribe({
       next: (res) => {
-        console.log(res);
-
         this.licenseTypes.set(res.licenseTypes);
         this.inactiveUsers.set(res.inactiveUsers);
         this.maxLicenseAmount.set(res.maxLicenseAmount);
@@ -216,6 +216,7 @@ export class Licenses implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to load licenses', err);
+        this.apiError.set(true);
         this.isLoading.set(false);
       },
     });

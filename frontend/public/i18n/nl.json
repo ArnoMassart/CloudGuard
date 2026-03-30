@@ -479,7 +479,12 @@
   "preferences.password-settings.securityKeys": "Beheerdersaccounts zonder hardware-beveiligingssleutel",
   "preferences.dns.site-verification": "Siteverificatie (TXT)",
   "preferences.dns.mail-subdomain": "Mailsubdomein (CNAME)",
-  "preferences.domain-dns": "Domein & DNS"
-  "external-member": "extern lid",
-  "security-preferences": "Beveiligingsvoorkeuren"
+  "preferences.domain-dns": "Domein & DNS",
+  "security-preferences": "Beveiligingsvoorkeuren",
+  "error.title": "Verbindingsfout met Google Workspace",
+  "users.error.description": "We konden de gebruikers tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
+  "drives.error.description": "We konden de gedeelde drives tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
+  "devices.error.description": "We konden de apparaten tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
+  "app-access.error.description": "We konden de apps tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
+  "licenses.error.description": "We konden de licenties tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen."
 }

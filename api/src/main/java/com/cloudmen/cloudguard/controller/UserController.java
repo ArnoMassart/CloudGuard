@@ -21,10 +21,6 @@ public class UserController {
 
     @GetMapping("/language")
     public ResponseEntity<String> getLanguage(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
 
         return ResponseEntity.ok(userService.getLanguage(adminEmail));
@@ -32,10 +28,6 @@ public class UserController {
 
     @PostMapping("/language")
     public ResponseEntity<Void> updateLanguage(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody Map<String, String> request) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
 
         String newLanguage = request.get("language");

@@ -22,10 +22,6 @@ public class CacheWarmupController {
 
     @PostMapping
     public ResponseEntity<Void> triggerWarmup(@CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         String adminEmail = jwtService.validateInternalToken(token);
 
         warmupService.warmupAllCachesAsync(adminEmail);

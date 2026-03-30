@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.devices.DeviceCacheEntry;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -79,7 +80,7 @@ public class GoogleDeviceCacheService {
 
         } catch (Exception e) {
             if (fallbackEntry != null) { return fallbackEntry; }
-            throw new IllegalArgumentException("Fout bij ophalen Google Devices: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen Google Devices: " + e.getMessage());
         }
     }
 

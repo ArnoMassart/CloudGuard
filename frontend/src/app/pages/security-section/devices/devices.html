@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    @if (hasWarnings() && !isLoading()) {
+    @if (hasWarnings() && !isLoading() && !apiError()) {
     <app-page-warnings [hasMultipleWarnings]="hasMultipleWarnings()" [isExpanded]="isExpanded()"
       (toggle)="toggleExpanded()">
       <div body class="flex flex-col gap-2">
@@ -59,14 +59,11 @@
     }
 
     <div class="flex w-full items-center justify-end gap-3">
-      <!-- Filters label with icon -->
       <div class="flex items-center gap-2 text-sm text-gray-600">
         <i-lucide [img]="Icons.Funnel" size="18" />
         <span>Filter:</span>
       </div>
-      <!-- Compact filters next to label -->
       <div class="flex gap-3 flex-wrap">
-        <!-- Status filter -->
         <div class="relative">
           <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
             class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
@@ -83,7 +80,6 @@
           </i-lucide>
         </div>
 
-        <!-- Device type filter -->
         <div class="relative">
           <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
             class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
@@ -100,20 +96,44 @@
       </div>
     </div>
 
-    @if (!isLoading()) {
-    @if (devices().length > 0) {
     <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
-      <div class="flex justify-between items-center mx-5.5">
-        <span class="font-medium text-lg">{{ 'devices.all' | transloco }}</span>
-        <button (click)="refreshData()" [disabled]="isRefreshing()"
-          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
-          <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
-          </i-lucide>
 
+      <div class="flex justify-between items-center mx-5.5 pb-2">
+        <span class="font-medium text-lg">{{ 'devices.all' | transloco }}</span>
+        <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
+          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+          <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
           {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
         </button>
       </div>
 
+      @if (isLoading()) {
+      <div class="flex flex-col items-center p-3 pt-6 pb-12">
+        <div class="flex flex-col items-center space-y-4">
+          <div class="relative flex items-center justify-center">
+            <div class="h-12 w-12 rounded-full"></div>
+            <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
+            </div>
+          </div>
+          <span class="text-sm font-medium text-slate-600 animate-pulse">
+            {{ 'devices.loading' | transloco }}...
+          </span>
+        </div>
+      </div>
+      }
+      @else if (apiError()) {
+      <div
+        class="flex flex-col items-center justify-center p-10 mt-4 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
+        <div class="bg-red-100 p-3 rounded-full mb-3">
+          <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
+        </div>
+        <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+        <span class="text-sm text-slate-600 mt-1 max-w-md">
+          {{ 'devices.error.description' | transloco }}
+        </span>
+      </div>
+      }
+      @else if (devices().length > 0) {
       <table class="w-full text-left border-collapse mt-6">
         <thead>
           <tr class="border-b border-t border-gray-200 bg-gray-50/50">
@@ -132,10 +152,10 @@
           <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="toggleExpand(device.resourceId)">
             <td class="px-6 py-4">
               <i-lucide [img]="
-                        expandedDevice() === device.resourceId
-                          ? Icons.ChevronDown
-                          : Icons.ChevronRight
-                      " class="text-gray-500 transition-transform" size="20" />
+                          expandedDevice() === device.resourceId
+                            ? Icons.ChevronDown
+                            : Icons.ChevronRight
+                        " class="text-gray-500 transition-transform" size="20" />
             </td>
 
             <td class="px-6 py-4">
@@ -168,10 +188,10 @@
               <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                 [class.text-emerald-600]="device.complianceScore >= 75"
                 [class.bg-[#dbfce7]]="device.complianceScore >= 75" [class.text-[#d69518]]="
-                        device.complianceScore < 75 && device.complianceScore >= 50
-                      " [class.bg-[#fef9c2]]="
-                        device.complianceScore < 75 && device.complianceScore >= 50
-                      " [class.text-[#e7000b]]="device.complianceScore < 50"
+                          device.complianceScore < 75 && device.complianceScore >= 50
+                        " [class.bg-[#fef9c2]]="
+                          device.complianceScore < 75 && device.complianceScore >= 50
+                        " [class.text-[#e7000b]]="device.complianceScore < 50"
                 [class.bg-[#ffe2e2]]="device.complianceScore < 50">
                 <lucide-icon [img]="device.complianceScore >= 75 ? Icons.CircleCheck : Icons.CircleX"
                   size="14"></lucide-icon>
@@ -185,12 +205,12 @@
                 [class.bg-[#fef9c2]]="device.status === 'Pending'" [class.text-[#e7000b]]="device.status === 'Blocked'"
                 [class.bg-[#ffe2e2]]="device.status === 'Blocked'">
                 <lucide-icon [img]="
-                          device.status === 'Approved'
-                            ? Icons.Shield
-                            : device.status === 'Pending'
-                              ? Icons.Clock
-                              : Icons.ShieldAlert
-                        " size="14"></lucide-icon>
+                            device.status === 'Approved'
+                              ? Icons.Shield
+                              : device.status === 'Pending'
+                                ? Icons.Clock
+                                : Icons.ShieldAlert
+                          " size="14"></lucide-icon>
                 {{
                 device.status === 'Approved'
                 ? 'Approved'
@@ -207,55 +227,39 @@
             <td colspan="7" class="px-12 py-6">
               <div class="grid grid-cols-2 gap-4">
                 @for (f of getDeviceFactors(device); track f.key) {
-                <div
-                  class="p-4 rounded-xl border flex items-center gap-4 shadow-sm"
-                  [ngClass]="f.state === 'muted' ? 'bg-gray-50/90 border-gray-200' : 'bg-white border-gray-200'"
-                >
-                  <div
-                    class="p-2.5 rounded-lg"
-                    [ngClass]="
-                      f.state === 'ok'
-                        ? 'bg-[#dbfce7] text-emerald-600'
-                        : f.state === 'warn'
-                          ? 'bg-[#ffe2e2] text-[#e7000b]'
-                          : 'bg-gray-100 text-gray-400'
-                    "
-                  >
+                <div class="p-4 rounded-xl border flex items-center gap-4 shadow-sm"
+                  [ngClass]="f.state === 'muted' ? 'bg-gray-50/90 border-gray-200' : 'bg-white border-gray-200'">
+                  <div class="p-2.5 rounded-lg" [ngClass]="
+                        f.state === 'ok'
+                          ? 'bg-[#dbfce7] text-emerald-600'
+                          : f.state === 'warn'
+                            ? 'bg-[#ffe2e2] text-[#e7000b]'
+                            : 'bg-gray-100 text-gray-400'
+                      ">
                     <lucide-icon [img]="f.icon" size="22"></lucide-icon>
                   </div>
                   <div class="flex flex-col min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span
-                        class="font-medium text-sm"
-                        [ngClass]="
-                          f.state === 'ok'
-                            ? 'text-emerald-700'
-                            : f.state === 'warn'
-                              ? 'text-[#e7000b]'
-                              : 'text-gray-500'
-                        "
-                      >{{ f.label }}</span>
+                      <span class="font-medium text-sm" [ngClass]="
+                            f.state === 'ok'
+                              ? 'text-emerald-700'
+                              : f.state === 'warn'
+                                ? 'text-[#e7000b]'
+                                : 'text-gray-500'
+                          ">{{ f.label }}</span>
                       @if (f.state === 'warn') {
-                      <i-lucide
-                        [img]="Icons.ExternalLink"
-                        size="14"
-                        class="text-[#e7000b] cursor-pointer"
-                        (click)="
-                          UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list');
-                          $event.stopPropagation()
-                        "
-                      ></i-lucide>
+                      <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
+                            UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list');
+                            $event.stopPropagation()
+                          "></i-lucide>
                       }
                       <i-lucide
                         [img]="f.state === 'ok' ? Icons.CircleCheck : f.state === 'muted' ? Icons.CircleQuestionMark : Icons.TriangleAlert"
                         size="14"
-                        [ngClass]="f.state === 'ok' ? 'text-emerald-600' : f.state === 'warn' ? 'text-[#e7000b]' : 'text-gray-400'"
-                      ></i-lucide>
+                        [ngClass]="f.state === 'ok' ? 'text-emerald-600' : f.state === 'warn' ? 'text-[#e7000b]' : 'text-gray-400'"></i-lucide>
                     </div>
-                    <span
-                      class="text-sm"
-                      [ngClass]="f.state === 'muted' ? 'text-gray-400' : 'text-gray-500'"
-                    >{{ f.text }}</span>
+                    <span class="text-sm" [ngClass]="f.state === 'muted' ? 'text-gray-400' : 'text-gray-500'">{{ f.text
+                      }}</span>
                   </div>
                 </div>
                 }
@@ -286,33 +290,14 @@
           </button>
         </div>
       </div>
-    </div>
-    } @else {
-    <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-      <div class="flex items-center justify-center p-5">
+      }
+      @else {
+      <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
         <span class="text-lg font-medium text-slate-600">
           {{ 'devices.no-found' | transloco }}!
         </span>
       </div>
+      }
     </div>
-    }
-    } @else {
-    <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col">
-      <div class="flex flex-col items-center p-3">
-        <div class="flex flex-col items-center space-y-4 p-8">
-          <div class="relative flex items-center justify-center">
-            <div class="h-12 w-12 rounded-full"></div>
-
-            <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
-            </div>
-          </div>
-
-          <span class="text-sm font-medium text-slate-600 animate-pulse">
-            {{ 'devices.loading' | transloco }}...
-          </span>
-        </div>
-      </div>
-    </div>
-    }
   </div>
 </div>

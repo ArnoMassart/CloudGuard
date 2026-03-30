@@ -21,9 +21,6 @@ public class AdminSecurityKeysController {
     @GetMapping
     public ResponseEntity<AdminSecurityKeysResponse> getAdminsWithSecurityKeys(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        if (token == null || token.isEmpty()) {
-            return ResponseEntity.status(401).build();
-        }
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(adminSecurityKeysService.getAdminsWithSecurityKeys(email));
     }

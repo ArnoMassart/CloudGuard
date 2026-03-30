@@ -226,10 +226,10 @@ public class GoogleDeviceService {
 
     private SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore,
                                                           boolean ignLock, boolean ignEnc, boolean ignOs, boolean ignInt) {
-        int lockScore = totalDevices == 0 || ignLock ? 100 : (int) Math.round((totalDevices - lockScreenCount) * 100.0 / totalDevices);
-        int encScore = totalDevices == 0 || ignEnc ? 100 : (int) Math.round((totalDevices - encryptionCount) * 100.0 / totalDevices);
-        int osScore = totalDevices == 0 || ignOs ? 100 : (int) Math.round((totalDevices - osVersionCount) * 100.0 / totalDevices);
-        int intScore = totalDevices == 0 || ignInt ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
+        int lockScore = calculateFactorScore(totalDevices, lockScreenCount, ignLock);
+        int encScore = calculateFactorScore(totalDevices, encryptionCount, ignEnc);
+        int osScore = calculateFactorScore(totalDevices, osVersionCount, ignOs);
+        int intScore = calculateFactorScore(totalDevices, integrityCount, ignInt);
 
         Locale locale = LocaleContextHolder.getLocale();
 
@@ -241,12 +241,6 @@ public class GoogleDeviceService {
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private static String severity(double score) {
-        if (score >= 75) return "success";
-        if (score >= 50) return "warning";
-        return "error";
     }
 
     // =========================================================================================
@@ -355,7 +349,6 @@ public class GoogleDeviceService {
         boolean lockSecure = true;
         String lockText = messageSource.getMessage("devices.endpoint.lock", null, locale);
         boolean osSecure = true;
-        String osText = os;
 
         int score = calculateScore(lockSecure, encSecure, intSecure, osSecure);
 
@@ -363,7 +356,7 @@ public class GoogleDeviceService {
                 d.getName(), deviceType, userName, userEmail, deviceName,
                 model, os, syncTime, status.getValue(), score,
                 lockSecure, lockText, encSecure, encText,
-                osSecure, osText, intSecure, intText
+                osSecure, os, intSecure, intText
         );
     }
 
@@ -384,5 +377,13 @@ public class GoogleDeviceService {
         if (integrity) score += 25;
         if (os) score += 25;
         return score;
+    }
+
+    private int calculateFactorScore(int total, int violations, boolean shouldIgnore) {
+        if (total == 0 || shouldIgnore) {
+            return 100;
+        }
+
+        return (int) Math.round((total - violations) * 100.0 / total);
     }
 }
