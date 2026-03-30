@@ -149,11 +149,11 @@
           </tr>
         </thead>
 
-        <tbody class="block sm:table-row-group sm:divide-y sm:divide-gray-200">
+        <tbody class="block sm:table-row-group">
           @for (device of devices(); track device.resourceId) {
 
           <tr
-            class="block sm:table-row bg-white sm:bg-transparent border border-gray-200 sm:border-none overflow-hidden relative hover:bg-gray-50 transition-colors cursor-pointer sm:mb-0"
+            class="block sm:table-row bg-white sm:bg-transparent border border-gray-200 sm:border-0 sm:border-b sm:border-gray-200 overflow-hidden relative hover:bg-gray-50 transition-colors cursor-pointer sm:mb-0"
             [class.rounded-t-lg]="expandedDevice() === device.resourceId"
             [class.border-b-0]="expandedDevice() === device.resourceId"
             [class.rounded-lg]="expandedDevice() !== device.resourceId"
