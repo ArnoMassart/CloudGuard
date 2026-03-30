@@ -52,6 +52,7 @@ const PW_SETTINGS_I18N: Record<string, string> = {
   'not-configured': 'No',
   'to-admin-console': 'Admin',
   'password-settings.head-organisation': 'Head',
+  'security-score.password-settings': 'Password settings score',
 };
 
 class PasswordSettingsTranslocoLoader implements TranslocoLoader {
@@ -187,6 +188,17 @@ describe('PasswordSettings', () => {
     await fixture.whenStable();
 
     expect(component.error()).toContain('boom');
+    expect(component.loading()).toBe(false);
+  });
+
+  it('sets fallback error when load error has no message', async () => {
+    serviceMock.getPasswordSettings.mockReturnValue(throwError(() => ({})));
+    fixture = TestBed.createComponent(PasswordSettings);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.error()).toBe('Kon gegevens niet laden.');
     expect(component.loading()).toBe(false);
   });
 
@@ -331,6 +343,14 @@ describe('PasswordSettings', () => {
     expect(component.isRefreshing()).toBe(false);
   });
 
+  it('refreshData clears refreshing flag when refresh fails', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    serviceMock.refreshCache.mockReturnValueOnce(throwError(() => new Error('cache')));
+    component.refreshData();
+    expect(component.isRefreshing()).toBe(false);
+    errSpy.mockRestore();
+  });
+
   it('effectivePolicyProblemCount sums visible issues', () => {
     const policy = {
       orgUnitPath: '/x',
@@ -345,6 +365,121 @@ describe('PasswordSettings', () => {
       inherited: false,
     };
     expect(component.effectivePolicyProblemCount(policy)).toBe(4);
+  });
+
+  it('effectivePolicyProblemCount skips length when length preference is muted', () => {
+    preferencesMock.isDisabled.mockImplementation((_s, key: string) => key === 'length');
+    const policy = {
+      orgUnitPath: '/x',
+      orgUnitName: 'X',
+      userCount: 1,
+      score: 0,
+      problemCount: 0,
+      minLength: 8,
+      expirationDays: 0,
+      strongPasswordRequired: false,
+      reusePreventionCount: 0,
+      inherited: false,
+    };
+    expect(component.effectivePolicyProblemCount(policy)).toBe(3);
+  });
+
+  it('hasPasswordLengthWeak when min length under 12 and preference active', () => {
+    const p = component.data()!.passwordPoliciesByOu[0];
+    component.data.set(
+      buildSettings({
+        passwordPoliciesByOu: [{ ...p, minLength: 8 }],
+      }),
+    );
+    expect(component.hasPasswordLengthWeak()).toBe(true);
+  });
+
+  it('has2SvNotEnforced and hasCriticalWarnings when an OU is not enforced', () => {
+    component.data.set(
+      buildSettings({
+        twoStepVerification: {
+          byOrgUnit: [
+            {
+              orgUnitPath: '/org/a',
+              orgUnitName: 'Unit A',
+              enforced: false,
+              enrolledCount: 0,
+              totalCount: 3,
+            },
+          ],
+          totalEnrolled: 0,
+          totalEnforced: 0,
+          totalUsers: 3,
+        },
+      }),
+    );
+    expect(component.has2SvNotEnforced()).toBe(true);
+    expect(component.hasCriticalWarnings()).toBe(true);
+  });
+
+  it('hasAdminsWithoutSecurityKeys when list non-empty and preference active', () => {
+    component.data.set(
+      buildSettings({
+        adminsWithoutSecurityKeys: [
+          {
+            id: 'a1',
+            name: 'Admin',
+            email: 'a@b.com',
+            role: 'ADMIN',
+            orgUnitPath: '/',
+            twoFactorEnabled: true,
+            numSecurityKeys: 0,
+          },
+        ],
+      }),
+    );
+    expect(component.hasAdminsWithoutSecurityKeys()).toBe(true);
+  });
+
+  it('hasMultipleWarnings when more than one warning type applies', () => {
+    const p = component.data()!.passwordPoliciesByOu[0];
+    component.data.set(
+      buildSettings({
+        passwordPoliciesByOu: [{ ...p, minLength: 8 }],
+        adminsWithoutSecurityKeys: [
+          {
+            id: 'a1',
+            name: 'Admin',
+            email: 'a@b.com',
+            role: 'ADMIN',
+            orgUnitPath: '/',
+            twoFactorEnabled: true,
+            numSecurityKeys: 0,
+          },
+        ],
+      }),
+    );
+    expect(component.hasWarnings()).toBe(true);
+    expect(component.hasMultipleWarnings()).toBe(true);
+  });
+
+  it('hasWarnings is false when muted preferences hide all issue types', () => {
+    preferencesMock.isDisabled.mockReturnValue(true);
+    const p = component.data()!.passwordPoliciesByOu[0];
+    component.data.set(
+      buildSettings({
+        passwordPoliciesByOu: [{ ...p, minLength: 8, strongPasswordRequired: false }],
+        adminsWithoutSecurityKeys: [
+          {
+            id: 'a1',
+            name: 'Admin',
+            email: 'a@b.com',
+            role: 'ADMIN',
+            orgUnitPath: '/',
+            twoFactorEnabled: true,
+            numSecurityKeys: 0,
+          },
+        ],
+      }),
+    );
+    expect(component.hasAdminsWithoutSecurityKeys()).toBe(false);
+    expect(component.hasPasswordLengthWeak()).toBe(false);
+    expect(component.hasStrongPasswordNotRequired()).toBe(false);
   });
 
   it('isPasswordPrefDisabled delegates to facade', async () => {
