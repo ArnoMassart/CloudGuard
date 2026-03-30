@@ -50,6 +50,22 @@ class NotificationFeedbackServiceTest {
     }
 
     @Test
+    void submitFeedback_existingWithNullText_updatesSendsEmailAndSaves() {
+        NotificationFeedback existing = new NotificationFeedback();
+        existing.setId(3L);
+        existing.setFeedbackText(null);
+        when(repository.findByUserIdAndSourceAndNotificationType("u1", "s", "t"))
+                .thenReturn(Optional.of(existing));
+        when(repository.save(existing)).thenReturn(existing);
+
+        service.submitFeedback("u1", "s", "t", "first");
+
+        assertEquals("first", existing.getFeedbackText());
+        verify(emailService).sendFeedbackEmail("u1", "s", "t", "first");
+        verify(repository).save(existing);
+    }
+
+    @Test
     void submitFeedback_existingWithBlankText_updatesSendsEmailAndSaves() {
         NotificationFeedback existing = new NotificationFeedback();
         existing.setId(2L);
@@ -93,6 +109,18 @@ class NotificationFeedbackServiceTest {
         when(repository.findByUserIdAndSourceAndNotificationType("u1", "s", "t"))
                 .thenReturn(Optional.empty());
         assertFalse(service.hasFeedback("u1", "s", "t"));
+
+        NotificationFeedback blank = new NotificationFeedback();
+        blank.setFeedbackText("  ");
+        when(repository.findByUserIdAndSourceAndNotificationType("u1", "s", "t2"))
+                .thenReturn(Optional.of(blank));
+        assertFalse(service.hasFeedback("u1", "s", "t2"));
+
+        NotificationFeedback nul = new NotificationFeedback();
+        nul.setFeedbackText(null);
+        when(repository.findByUserIdAndSourceAndNotificationType("u1", "s", "t3"))
+                .thenReturn(Optional.of(nul));
+        assertFalse(service.hasFeedback("u1", "s", "t3"));
     }
 
     @Test
