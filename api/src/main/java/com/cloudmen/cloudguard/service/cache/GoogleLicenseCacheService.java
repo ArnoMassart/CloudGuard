@@ -72,6 +72,22 @@ public class GoogleLicenseCacheService {
 
             List<InactiveUser> inactiveUsers = findInactiveUsersWithLicenses(allUsers, allItems);
 
+            // ==========================================
+            // START SIMULATIE INACTIVE USER
+            // ==========================================
+            // Dit is een hardcoded inactieve gebruiker om de frontend/service te testen.
+            // Verwijder dit blok weer als je klaar bent met testen!
+            inactiveUsers.add(new InactiveUser(
+                    "test.inactief@" + domain,         // email
+                    "5 maanden geleden",               // time ago text
+                    "Google Workspace Business Plus",  // sku/license name
+                    false,                             // 2FA status
+                    150L                               // days inactive
+            ));
+            // ==========================================
+            // EINDE SIMULATIE
+            // ==========================================
+
             return new LicenseCacheEntry(licenseTypes, inactiveUsers, System.currentTimeMillis());
         } catch (Exception e) {
             if (fallback != null) {

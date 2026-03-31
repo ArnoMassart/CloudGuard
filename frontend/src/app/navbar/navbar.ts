@@ -30,6 +30,7 @@ export class Navbar {
   readonly currentUser = this.authService.currentUser;
   readonly profilePopupOpen = signal(false);
   readonly profileImageError = signal(false);
+  readonly isMobileMenuOpen = signal(false);
 
   constructor() {
     effect(() => {
@@ -55,6 +56,27 @@ export class Navbar {
     { Icon: this.Icons.Bell, Label: 'notifications-feedback', Route: '/reports-reactions' },
     { Icon: this.Icons.Settings, Label: 'security-preferences', Route: '/security-preferences' },
   ];
+
+  toggleMobileMenu() {
+    this.isMobileMenuOpen.update((v) => !v);
+
+    if (this.isMobileMenuOpen()) {
+      setTimeout(() => {
+        const activeItem = document.querySelector('li.selected');
+
+        if (activeItem) {
+          activeItem.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+      }, 50);
+    }
+  }
+
+  closeMobileMenu() {
+    this.isMobileMenuOpen.set(false);
+  }
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
     if (user.firstName && user.lastName) {
@@ -97,5 +119,9 @@ export class Navbar {
 
   onLogout() {
     this.authService.logout();
+  }
+
+  navigateToHome() {
+    this.router.navigate(['/']);
   }
 }

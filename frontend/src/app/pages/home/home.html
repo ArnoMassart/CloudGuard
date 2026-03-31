@@ -1,27 +1,30 @@
-<div class="px-10 py-6">
+<app-page-content-wrapper>
   <app-page-header Title="{{ 'home.page-title' | transloco }}" Description="{{ 'home.page-description' | transloco }}"
     AdminLink="home" />
 
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
-      <div class="w-full flex gap-4">
-        <app-section-top-card class="flex-1" Title="{{ 'home.section-card.meldingen' | transloco }}"
+
+      <div class="w-full grid grid-cols-2 md:grid-cols-3 md:gap-4 gap-2">
+        <app-section-top-card Title="{{ 'home.section-card.meldingen' | transloco }}"
           [Value]="pageOverview()?.totalNotifications" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
           [Icon]="Icons.TriangleAlert" />
 
-        <app-section-top-card class="flex-1" Title="{{ 'home.section-card.critical' | transloco }}"
+        <app-section-top-card Title="{{ 'home.section-card.critical' | transloco }}"
           [Value]="pageOverview()?.criticalNotifications" BackgroundColor="#ffe2e2" IconColor="#e7000b"
           TextColor="#e7000b" [Icon]="Icons.CircleX" />
 
-        <app-section-top-card class="flex-1" Title="Compliance" [Value]="score()" [IsPercentage]="true"
-          BackgroundColor="#fef9c2" IconColor="#d69518" />
+        <app-section-top-card class="col-span-2 md:col-span-1 w-full" Title="Compliance" [Value]="score()"
+          [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
 
       @if (hasWarnings() && !isLoading()) {
       <app-page-warnings [isCritical]="true" [isDashboard]="true"
-        title="{{ pageOverview()?.criticalNotifications }} {{ (pageOverview()?.criticalNotifications === 1 ? 'critical-warning' : 'critical-warnings') | transloco }}">
+        title="{{ pageOverview()?.criticalNotifications }} {{ ((pageOverview()?.criticalNotifications === 1 ? 'critical-warning' : 'critical-warnings') | transloco) }}">
         <app-page-warnings-item body [isCritical]="true">
-          {{ 'home.page-warning' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+            {{ 'home.page-warning' | transloco }}
+          </span>
         </app-page-warnings-item>
       </app-page-warnings>
       }
@@ -31,7 +34,7 @@
         <div class="p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col items-center font-sans">
           <div class="flex flex-col justify-between gap-15 items-center flex-1">
             <div class="flex flex-col items-center">
-              <h2 class="text-xl font-bold mb-8">{{ 'home.overall-score' | transloco }}</h2>
+              <h2 class="text-[17px] md:text-xl font-bold mb-8 text-center">{{ 'home.overall-score' | transloco }}</h2>
 
               <app-security-gauge [score]="score()" />
             </div>
@@ -40,7 +43,7 @@
               <span [class.bg-emerald-50]="score() >= 75" [class.text-emerald-600]="score() >= 75"
                 [class.bg-amber-50]="score() > 50 && score() < 75" [class.text-amber-600]="score() > 50 && score() < 75"
                 [class.bg-rose-50]="score() <= 50" [class.text-rose-600]="score() <= 50"
-                class="px-4 py-1 rounded-full text-sm font-semibold mb-4">
+                class="px-4 py-1 rounded-full text-sm font-semibold mb-4 text-center">
                 {{
                 score() == 100
                 ? 'Perfect'
@@ -51,7 +54,7 @@
                 :( 'bad' | transloco)
                 }}
               </span>
-              <p class="text-gray-400 text-xs">
+              <p class="text-gray-400 text-xs text-center">
                 {{ 'home.last-update' | transloco }}: {{ pageResponse()?.lastUpdated }}
               </p>
             </div>
@@ -59,11 +62,13 @@
         </div>
 
         <div
-          class="p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col font-sans flex-2 lg:col-span-2">
-          <div class="flex justify-between items-center mb-8">
-            <h2 class="text-xl font-bold">{{ 'home.security-areas' | transloco }}</h2>
+          class="p-4 sm:p-8 bg-white rounded-xl shadow-sm border-2 border-muted/50 flex flex-col font-sans flex-2 lg:col-span-2">
+          <div class="flex flex-wrap justify-center md:justify-between items-center mb-8 gap-4">
+            <h2 class="text-[17px] md:text-xl font-bold flex justify-center items-center">{{ 'home.security-areas' |
+              transloco }}
+            </h2>
             <button (click)="generateRapport()" [disabled]="isGenerating()"
-              class="flex items-center gap-2 px-4 py-2 bg-primary border border-gray-300 rounded-lg text-sm font-medium text-white hover:bg-primary/70 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-70 disabled:cursor-not-allowed transition-colors shadow-sm">
+              class="flex items-center gap-2 px-4 py-2 bg-primary border border-gray-300 rounded-lg text-sm font-medium text-white hover:bg-primary/70 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-70 disabled:cursor-not-allowed transition-colors shadow-sm w-full sm:w-auto justify-center">
               <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isGenerating()">
               </i-lucide>
 
@@ -100,11 +105,9 @@
           <div class="flex flex-col items-center space-y-4 p-8">
             <div class="relative flex items-center justify-center">
               <div class="h-12 w-12 rounded-full"></div>
-
               <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent">
               </div>
             </div>
-
             <span class="text-sm font-medium text-slate-600 animate-pulse">
               {{ 'home.loading' | transloco }}...
             </span>
@@ -114,4 +117,4 @@
       }
     </div>
   </div>
-</div>
+</app-page-content-wrapper>

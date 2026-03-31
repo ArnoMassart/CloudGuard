@@ -100,12 +100,23 @@ public class GoogleServiceHelperMethods {
     }
 
 
-
     public static String severity(double score) {
-        return severity(score, false);
+        return severity(score, false, "");
     }
 
     public static String severity(double score, boolean reverse) {
+        return severity(score, reverse, "");
+    }
+
+    public static String severity(double score, String color) {
+        return severity(score, false, color);
+    }
+
+    public static String severity(double score, boolean reverse, String color) {
+        if (!color.isEmpty()) {
+            return color;
+        }
+
         if (reverse) {
             if (score >= 75) return "error";
             if (score >= 50) return "warning";

@@ -1,18 +1,17 @@
-<div class="px-10 py-6">
+<app-page-content-wrapper>
   <app-page-header Title="{{ 'devices.title' | transloco }}" Description="{{ 'devices.description' | transloco }}"
     AdminLink="devices/list" />
 
   <div class="w-full flex flex-col gap-5 pt-6">
-    <div class="w-full flex gap-4">
-      <app-section-top-card class="flex-1" Title="{{ 'devices.total' | transloco }}"
-        [Value]="pageOverview()?.totalDevices" [Icon]="Icons.SmartPhone" />
-      <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
-        BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
-      <app-section-top-card class="flex-1" Title="{{ 'devices.allowed' | transloco }}"
-        [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f"
-        [Icon]="Icons.CircleCheck" />
-      <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-        role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+    <div class="w-full grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-2">
+      <app-section-top-card Title="{{ 'devices.total' | transloco }}" [Value]="pageOverview()?.totalDevices"
+        [Icon]="Icons.SmartPhone" />
+      <app-section-top-card Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant" BackgroundColor="#ffe2e2"
+        IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+      <app-section-top-card Title="{{ 'devices.allowed' | transloco }}" [Value]="pageOverview()?.totalApprovedDevices"
+        BackgroundColor="#dbfce7" IconColor="#17b04f" [Icon]="Icons.CircleCheck" />
+      <div class="cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()" role="button"
+        tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
         (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
         <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
           BackgroundColor="#fef9c2" IconColor="#d69518" />
@@ -25,48 +24,66 @@
       <div body class="flex flex-col gap-2">
         @if (this.devicePageWarnings().lockScreenWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.lockScreenCount }}
-          {{ pageOverview()?.lockScreenCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.without-lock' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.lockScreenCount }}
+            {{ pageOverview()?.lockScreenCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.without-lock' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().encryptionWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.encryptionCount }}
-          {{ pageOverview()?.encryptionCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.without-enc' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.encryptionCount }}
+            {{ pageOverview()?.encryptionCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.without-enc' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().osVersionWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.osVersionCount }}
-          {{ pageOverview()?.osVersionCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.with-old-os' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.osVersionCount }}
+            {{ pageOverview()?.osVersionCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.with-old-os' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().integrityWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.integrityCount }}
-          {{ pageOverview()?.integrityCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.with-int' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.integrityCount }}
+            {{ pageOverview()?.integrityCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.with-int' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
       </div>
     </app-page-warnings>
     }
 
-    <div class="flex w-full items-center justify-end gap-3">
+    <div
+      class="flex flex-col sm:flex-row w-full items-start sm:items-center justify-start sm:justify-end gap-3 sm:gap-4">
       <div class="flex items-center gap-2 text-sm text-gray-600">
         <i-lucide [img]="Icons.Funnel" size="18" />
         <span>Filter:</span>
       </div>
-      <div class="flex gap-3 flex-wrap">
-        <div class="relative">
+
+      <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div class="relative w-full sm:w-auto">
           <select [ngModel]="selectedStatus()" (ngModelChange)="onStatusChange($event)"
-            class="w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
+            class="w-full sm:w-44 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
             [class.border-primary]="selectedStatus() !== statusEnum.All"
             [class.ring-1]="selectedStatus() !== statusEnum.All"
             [class.ring-primary]="selectedStatus() !== statusEnum.All">
@@ -80,9 +97,9 @@
           </i-lucide>
         </div>
 
-        <div class="relative">
+        <div class="relative w-full sm:w-auto">
           <select [ngModel]="selectedDeviceType()" (ngModelChange)="onDeviceTypeChange($event)"
-            class="w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
+            class="w-full sm:w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
             [class.border-primary]="selectedDeviceType() !== 'all'" [class.ring-1]="selectedDeviceType() !== 'all'"
             [class.ring-primary]="selectedDeviceType() !== 'all'">
             @for (type of uniqueDeviceTypes(); track type) {
@@ -98,10 +115,10 @@
 
     <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
 
-      <div class="flex justify-between items-center mx-5.5 pb-2">
-        <span class="font-medium text-lg">{{ 'devices.all' | transloco }}</span>
+      <div class="flex justify-between items-center gap-4 mx-6 mb-6">
+        <span class="font-medium md:text-lg text-[17px]">{{ 'devices.all' | transloco }}</span>
         <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
-          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+          class="w-auto flex justify-center items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
           <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
           {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
         </button>
@@ -127,15 +144,15 @@
         <div class="bg-red-100 p-3 rounded-full mb-3">
           <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
         </div>
-        <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+        <span class="md:text-lg text-[17px] font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
         <span class="text-sm text-slate-600 mt-1 max-w-md">
           {{ 'devices.error.description' | transloco }}
         </span>
       </div>
       }
       @else if (devices().length > 0) {
-      <table class="w-full text-left border-collapse mt-6">
-        <thead>
+      <table class="w-full text-left border-collapse mt-6 block sm:table">
+        <thead class="hidden sm:table-header-group">
           <tr class="border-b border-t border-gray-200 bg-gray-50/50">
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase"></th>
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'user-cap' | transloco }}</th>
@@ -147,44 +164,61 @@
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="block sm:table-row-group">
           @for (device of devices(); track device.resourceId) {
-          <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="toggleExpand(device.resourceId)">
-            <td class="px-6 py-4">
-              <i-lucide [img]="
-                          expandedDevice() === device.resourceId
-                            ? Icons.ChevronDown
-                            : Icons.ChevronRight
-                        " class="text-gray-500 transition-transform" size="20" />
+
+          <tr
+            class="block sm:table-row bg-white sm:bg-transparent border border-gray-200 sm:border-0 sm:border-b sm:border-gray-200 overflow-hidden relative hover:bg-gray-50 transition-colors cursor-pointer sm:mb-0"
+            [class.rounded-t-lg]="expandedDevice() === device.resourceId"
+            [class.border-b-0]="expandedDevice() === device.resourceId"
+            [class.rounded-lg]="expandedDevice() !== device.resourceId"
+            [class.mb-4]="expandedDevice() !== device.resourceId" (click)="toggleExpand(device.resourceId)">
+
+            <td
+              class="block sm:table-cell absolute right-4 top-4 sm:static sm:right-auto sm:top-auto px-0 py-0 sm:px-6 sm:py-4 border-none">
+              <i-lucide [img]="expandedDevice() === device.resourceId ? Icons.ChevronDown : Icons.ChevronRight"
+                class="text-gray-500 transition-transform" size="20" />
             </td>
 
-            <td class="px-6 py-4">
+            <td
+              class="block sm:table-cell px-4 sm:px-6 py-4 border-b sm:border-none border-gray-200 bg-gray-50/30 sm:bg-transparent pr-12 sm:pr-6">
               <div class="flex flex-col">
                 <span class="font-medium text-slate-900 text-sm">{{ device.userName }}</span>
                 <span class="text-xs text-gray-500">{{ device.userEmail }}</span>
               </div>
             </td>
-            <td class="px-6 py-4">
-              <span class="text-[13px]">{{ device.deviceName }}</span>
+
+            <td
+              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'device-cap' | transloco }}</span>
+              <span class="text-[13px] text-right sm:text-left">{{ device.deviceName }}</span>
             </td>
-            <td class="px-6 py-4">
-              <div class="flex gap-2">
-                <i-lucide [img]="Icons.SmartPhone" class="text-primary" size="20" />
-                <div class="flex flex-col">
+
+            <td
+              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">OS & Model</span>
+              <div class="flex gap-2 items-center justify-end sm:justify-start">
+                <i-lucide [img]="Icons.SmartPhone" class="text-primary hidden sm:block" size="20" />
+                <div class="flex flex-col text-right sm:text-left">
                   <span class="text-[13px] font-medium">{{ device.os }}</span>
                   <span class="text-[13px] text-muted-foreground">{{ device.model }}</span>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4">
+
+            <td
+              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'devices.last-sync' | transloco
+                }}</span>
               <div class="flex gap-1 items-center">
                 <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
-                <span class="text-[13px] text-muted-foreground font-light">{{
-                  device.lastSync
-                  }}</span>
+                <span class="text-[13px] text-muted-foreground font-light">{{ device.lastSync }}</span>
               </div>
             </td>
-            <td class="px-6 py-4">
+
+            <td
+              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
+              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">Compliance</span>
               <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                 [class.text-emerald-600]="device.complianceScore >= 75"
                 [class.bg-[#dbfce7]]="device.complianceScore >= 75" [class.text-[#d69518]]="
@@ -198,7 +232,9 @@
                 <span>{{ device.complianceScore }}%</span>
               </div>
             </td>
-            <td class="px-6 py-4">
+
+            <td class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4">
+              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">Status</span>
               <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                 [class.text-emerald-600]="device.status === 'Approved'"
                 [class.bg-[#dbfce7]]="device.status === 'Approved'" [class.text-[#d69518]]="device.status === 'Pending'"
@@ -223,21 +259,19 @@
           </tr>
 
           @if (expandedDevice() === device.resourceId) {
-          <tr class="bg-[#f9fafb] border-b border-gray-200">
-            <td colspan="7" class="px-12 py-6">
-              <div class="grid grid-cols-2 gap-4">
+          <tr
+            class="block sm:table-row bg-[#f9fafb] border-x border-b border-t-0 border-gray-200 sm:border-x-0 sm:border-b sm:border-t-auto rounded-b-lg sm:rounded-none mb-4 sm:mb-0">
+            <td colspan="7" class="block sm:table-cell px-4 py-4 sm:px-12 sm:py-6">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 @for (f of getDeviceFactors(device); track f.key) {
                 <div class="p-4 rounded-xl border flex items-center gap-4 shadow-sm"
                   [ngClass]="f.state === 'muted' ? 'bg-gray-50/90 border-gray-200' : 'bg-white border-gray-200'">
-                  <div class="p-2.5 rounded-lg" [ngClass]="
-                        f.state === 'ok'
-                          ? 'bg-[#dbfce7] text-emerald-600'
-                          : f.state === 'warn'
-                            ? 'bg-[#ffe2e2] text-[#e7000b]'
-                            : 'bg-gray-100 text-gray-400'
-                      ">
+
+                  <div class="p-2.5 rounded-lg shrink-0"
+                    [ngClass]="f.state === 'ok' ? 'bg-[#dbfce7] text-emerald-600' : f.state === 'warn' ? 'bg-[#ffe2e2] text-[#e7000b]' : 'bg-gray-100 text-gray-400'">
                     <lucide-icon [img]="f.icon" size="22"></lucide-icon>
                   </div>
+
                   <div class="flex flex-col min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="font-medium text-sm" [ngClass]="
@@ -270,34 +304,19 @@
           }
         </tbody>
       </table>
-
-      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-        <span class="text-sm text-gray-500">
-          {{ 'page' | transloco }} <span class="font-medium text-gray-900">{{ currentPage() }}</span>
-        </span>
-
-        <div class="flex gap-2">
-          <button (click)="prevPage()" [disabled]="currentPage() === 1"
-            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
-            <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
-            {{ 'previous' | transloco }}
-          </button>
-
-          <button (click)="nextPage()" [disabled]="!nextPageToken()"
-            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
-            {{ 'next' | transloco }}
-            <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
-          </button>
-        </div>
-      </div>
       }
       @else {
       <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
-        <span class="text-lg font-medium text-slate-600">
+        <span class="md:text-lg text-[17px] font-medium text-slate-600">
           {{ 'devices.no-found' | transloco }}!
         </span>
       </div>
       }
+      <div [class.hidden]="devices().length === 0 || apiError()">
+        <app-pagination-bar [nextPageToken]="nextPageToken()" [isLoading]="isLoading()"
+          (loadData)="loadDevices($event)" />
+      </div>
     </div>
   </div>
-</div>
+
+</app-page-content-wrapper>

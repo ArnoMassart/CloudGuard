@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -15,9 +15,9 @@ import { PageWarningsItem } from '../../../../components/page-warnings/page-warn
 import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../../services/security-preferences-facade';
 import { KPI_COLORS, kpiColors } from '../../../../shared/KpiColors';
-import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
 
 // ==========================================
 // CONSTANTS
@@ -36,6 +36,7 @@ const ITEMS_PER_PAGE = 4;
     PageWarningsItem,
     SearchBar,
     TranslocoPipe,
+    PaginationBar,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
@@ -50,6 +51,8 @@ export class UsersSection implements OnInit {
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
+  readonly pagination = viewChild(PaginationBar);
+
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
@@ -62,7 +65,6 @@ export class UsersSection implements OnInit {
   readonly searchQuery = signal('');
   readonly pageOverview = signal<UserOverviewResponse | null>(null);
 
-  readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
@@ -90,7 +92,6 @@ export class UsersSection implements OnInit {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  #tokenHistory: (string | null)[] = [null];
   #langSubscription?: Subscription;
 
   // ==========================================
@@ -99,7 +100,7 @@ export class UsersSection implements OnInit {
   ngOnInit(): void {
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadPageOverview();
-      this.#loadUsers();
+      this.loadUsers();
     });
   }
 
@@ -118,27 +119,8 @@ export class UsersSection implements OnInit {
 
   onSearch(value: string) {
     this.searchQuery.set(value);
-    this.currentPage.set(1);
-    this.#tokenHistory = [null];
-    this.#loadUsers(null);
-  }
-
-  nextPage() {
-    const token = this.nextPageToken();
-    if (token) {
-      this.#tokenHistory.push(token);
-      this.currentPage.update((p) => p + 1);
-      this.#loadUsers(token);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory.at(-1);
-      this.currentPage.update((p) => p - 1);
-      this.#loadUsers(prevToken);
-    }
+    this.pagination()?.reset();
+    this.loadUsers();
   }
 
   getRoleClass(role: string) {
@@ -214,10 +196,9 @@ export class UsersSection implements OnInit {
 
     this.#userService.refreshUsersCache().subscribe({
       next: () => {
-        this.currentPage.set(1);
-        this.#tokenHistory = [null];
+        this.pagination()?.reset();
 
-        this.#loadUsers(null);
+        this.loadUsers();
         this.#loadPageOverview();
       },
       error: (err) => {
@@ -234,7 +215,7 @@ export class UsersSection implements OnInit {
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
-  #loadUsers(token: string | null = null) {
+  loadUsers(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
 

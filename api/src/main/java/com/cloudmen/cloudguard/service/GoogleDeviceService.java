@@ -110,7 +110,7 @@ public class GoogleDeviceService {
             if (os != null && !os.isBlank() && !os.equalsIgnoreCase("Onbekend")) {
                 String baseOs = os.split(" ")[0];
                 if (!baseOs.isBlank()) {
-                    uniqueTypes.add(baseOs);
+                    uniqueTypes.add(normalizeOsName(baseOs));
                 }
             }
         }
@@ -329,7 +329,7 @@ public class GoogleDeviceService {
         String userName = UtilityFunctions.capitalizeWords(userEmail.split("@")[0].replace(".", " "));
         String deviceType = "MAC_OS".equalsIgnoreCase(type) ? "MAC" : (type != null ? type : "WINDOWS");
         String deviceName = userName.split(" ")[0] + "'s " + ("MAC".equals(deviceType) ? "MacBook/Mac" : "Windows PC");
-        String os = ("MAC".equals(deviceType) ? "MacOS " : "Windows ") + (d.getOsVersion() != null ? d.getOsVersion() : "10.0");
+        String os = (d.getOsVersion() != null ? d.getOsVersion() : "10.0");
         String model = "Endpoint (GCPW/EV)";
 
         String syncTime = messageSource.getMessage("never", null, locale);
@@ -377,6 +377,25 @@ public class GoogleDeviceService {
         if (integrity) score += 25;
         if (os) score += 25;
         return score;
+    }
+
+    private String normalizeOsName(String osName) {
+        String lowerOs = osName.toLowerCase();
+
+        // Vang specifieke merknamen af
+        if (lowerOs.equals("macos") || lowerOs.equals("mac")) {
+            return "macOS";
+        }
+        if (lowerOs.equals("ios")) {
+            return "iOS";
+        }
+        if (lowerOs.equals("chromeos") || lowerOs.equals("chrome")) {
+            return "ChromeOS";
+        }
+
+        // Voor de rest (Windows, Android, Linux):
+        // Eerste letter een hoofdletter, de rest kleine letters
+        return osName.substring(0, 1).toUpperCase() + osName.substring(1).toLowerCase();
     }
 
     private int calculateFactorScore(int total, int violations, boolean shouldIgnore) {
