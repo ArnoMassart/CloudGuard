@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PageHeader } from '../../../components/page-header/page-header';
@@ -8,7 +9,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { SecurityPreferencesService } from '../../../services/security-preferences-service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { SECTION_PREFERENCE_CONFIGS } from '../../../models/preferences/section-preference-config';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-security-preferences',
@@ -32,26 +33,37 @@ export class SecurityPreferences implements OnInit {
   };
 
   readonly #preferencesService = inject(SecurityPreferencesService);
-  readonly #preferencesFacade = inject(SecurityPreferencesFacade);
+  readonly #transloco = inject(TranslocoService);
+  readonly preferencesFacade = inject(SecurityPreferencesFacade);
 
   readonly preferences = signal<Record<string, boolean>>({});
   readonly dnsImportance = signal<Record<string, string>>({});
   readonly dnsOverrideTypes = signal<ReadonlySet<string>>(new Set());
   readonly loading = signal(true);
   readonly saving = signal<string | null>(null);
+  readonly loadError = signal<string | null>(null);
+  readonly saveError = signal<string | null>(null);
 
   ngOnInit(): void {
     this.#loadPreferences();
   }
 
+  retryLoad(): void {
+    this.#loadPreferences();
+  }
+
   #loadPreferences(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.#preferencesService.getAllPreferences().subscribe({
       next: (res) => this.#applyPreferencesPayload(res),
-      error: () => {
+      error: (err: unknown) => {
         this.preferences.set({});
         this.dnsImportance.set({});
         this.dnsOverrideTypes.set(new Set());
+        this.loadError.set(
+          this.#httpErrorDetail(err) || this.#transloco.translate('preferences.error.load'),
+        );
         this.loading.set(false);
       },
       complete: () => this.loading.set(false),
@@ -65,6 +77,13 @@ export class SecurityPreferences implements OnInit {
     });
   }
 
+  #httpErrorDetail(err: unknown): string {
+    if (err instanceof HttpErrorResponse && typeof err.error === 'string' && err.error.trim()) {
+      return err.error.trim();
+    }
+    return '';
+  }
+
   #applyPreferencesPayload(res: {
     preferences?: Record<string, boolean>;
     dnsImportance?: Record<string, string>;
@@ -73,6 +92,7 @@ export class SecurityPreferences implements OnInit {
     this.preferences.set(res.preferences ?? {});
     this.dnsImportance.set(res.dnsImportance ?? {});
     this.dnsOverrideTypes.set(new Set(res.dnsImportanceOverrideTypes ?? []));
+    this.saveError.set(null);
   }
 
   isEnabled(section: string, key: string): boolean {
@@ -95,12 +115,19 @@ export class SecurityPreferences implements OnInit {
     const newValue = !current;
 
     this.saving.set(fullKey);
+    this.saveError.set(null);
     this.#preferencesService.setPreference(section, key, newValue).subscribe({
       next: () => {
         this.preferences.update((p) => ({ ...p, [fullKey]: newValue }));
-        this.#preferencesFacade.refresh();
+        this.preferencesFacade.refresh();
       },
-      error: () => this.#loadPreferences(),
+      error: (err: unknown) => {
+        this.saveError.set(
+          this.#httpErrorDetail(err) || this.#transloco.translate('preferences.error.save'),
+        );
+        this.#loadPreferences();
+        this.saving.set(null);
+      },
       complete: () => this.saving.set(null),
     });
   }
@@ -111,13 +138,32 @@ export class SecurityPreferences implements OnInit {
     if (raw === previous) return;
 
     this.saving.set(fullKey);
+    this.saveError.set(null);
     this.#preferencesService.setPreference(section, prefKey, true, raw).subscribe({
       next: () => {
-        this.#preferencesFacade.refresh();
+        this.preferencesFacade.refresh();
         this.#reloadPrefsQuiet();
       },
-      error: () => this.#loadPreferences(),
+      error: (err: unknown) => {
+        this.saveError.set(
+          this.#httpErrorDetail(err) || this.#transloco.translate('preferences.error.save'),
+        );
+        this.#loadPreferences();
+        this.saving.set(null);
+      },
       complete: () => this.saving.set(null),
     });
+  }
+
+  dismissSaveError(): void {
+    this.saveError.set(null);
+  }
+
+  dismissLoadError(): void {
+    this.loadError.set(null);
+  }
+
+  dismissSyncWarning(): void {
+    this.preferencesFacade.disabledKeysRefreshFailed.set(false);
   }
 }

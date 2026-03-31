@@ -1,12 +1,14 @@
 package com.cloudmen.cloudguard.service.preference;
 
 import com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference;
+import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.util.List;
 import java.util.Map;
@@ -18,9 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,12 +33,14 @@ class UserSecurityPreferenceServiceTest {
 
     @Mock
     UserSecurityPreferenceRepository repository;
+    @Mock
+    MessageSource messageSource;
 
     UserSecurityPreferenceService service;
 
     @BeforeEach
     void setUp() {
-        service = new UserSecurityPreferenceService(repository);
+        service = new UserSecurityPreferenceService(repository, messageSource);
     }
 
     @Test
@@ -210,9 +217,38 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void setPreference_dnsInvalidEnum_rejectsBeforePersist() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.setPreference("u1", "domain-dns", "impMx", true, "NOT_AN_ENUM"));
+        when(messageSource.getMessage(
+                        eq("api.preferences.validation.dns_importance_invalid"), isNull(), any()))
+                .thenReturn("Invalid DNS importance");
+
+        SecurityPreferenceValidationException ex =
+                assertThrows(
+                        SecurityPreferenceValidationException.class,
+                        () -> service.setPreference("u1", "domain-dns", "impMx", true, "NOT_AN_ENUM"));
+        assertEquals("Invalid DNS importance", ex.getMessage());
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void setPreference_blankSection_throws() {
+        when(messageSource.getMessage(eq("api.preferences.validation.section_required"), isNull(), any()))
+                .thenReturn("Section required");
+
+        assertThrows(
+                SecurityPreferenceValidationException.class,
+                () -> service.setPreference("u1", " ", "2fa", true, null));
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void setPreference_blankPreferenceKey_throws() {
+        when(messageSource.getMessage(eq("api.preferences.validation.preference_key_required"), isNull(), any()))
+                .thenReturn("Key required");
+
+        assertThrows(
+                SecurityPreferenceValidationException.class,
+                () -> service.setPreference("u1", "users-groups", "  ", true, null));
+        verifyNoInteractions(repository);
     }
 
     private static UserSecurityPreference row(

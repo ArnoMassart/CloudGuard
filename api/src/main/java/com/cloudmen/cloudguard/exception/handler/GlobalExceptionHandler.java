@@ -37,4 +37,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleNotificationFeedbackValidationException(NotificationFeedbackValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
+
+    @ExceptionHandler(SecurityPreferenceValidationException.class)
+    public ResponseEntity<String> handleSecurityPreferenceValidationException(SecurityPreferenceValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
 }

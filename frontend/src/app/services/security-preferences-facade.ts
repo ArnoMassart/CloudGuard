@@ -12,12 +12,19 @@ export class SecurityPreferencesFacade {
   /** Full keys as returned by the API: `section:preferenceKey` */
   readonly disabledKeys = signal<ReadonlySet<string>>(new Set());
 
+  /** True when the last refresh of disabled keys failed (e.g. after saving a preference). */
+  readonly disabledKeysRefreshFailed = signal(false);
+
   loadDisabled$(): Observable<void> {
     return this.#prefs.getDisabledKeys().pipe(
-      tap((keys) => this.disabledKeys.set(new Set(keys))),
+      tap((keys) => {
+        this.disabledKeys.set(new Set(keys));
+        this.disabledKeysRefreshFailed.set(false);
+      }),
       map(() => undefined),
       catchError(() => {
         this.disabledKeys.set(new Set());
+        this.disabledKeysRefreshFailed.set(true);
         return of(undefined);
       }),
     );
@@ -36,8 +43,14 @@ export class SecurityPreferencesFacade {
 
   refresh(): void {
     this.#prefs.getDisabledKeys().subscribe({
-      next: (keys) => this.disabledKeys.set(new Set(keys)),
-      error: () => this.disabledKeys.set(new Set()),
+      next: (keys) => {
+        this.disabledKeys.set(new Set(keys));
+        this.disabledKeysRefreshFailed.set(false);
+      },
+      error: () => {
+        this.disabledKeys.set(new Set());
+        this.disabledKeysRefreshFailed.set(true);
+      },
     });
   }
 }

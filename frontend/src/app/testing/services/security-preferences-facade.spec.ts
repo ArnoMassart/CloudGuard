@@ -36,6 +36,7 @@ describe('SecurityPreferencesFacade', () => {
     req.flush('', { status: 500, statusText: 'err' });
     await done;
     expect(facade.disabledKeys().size).toBe(0);
+    expect(facade.disabledKeysRefreshFailed()).toBe(true);
   });
 
   it('loadWithPrefs$ emits overview data after disabled load', async () => {
@@ -52,6 +53,7 @@ describe('SecurityPreferencesFacade', () => {
     httpMock.expectOne((r) => r.url === '/api/user/preferences/disabled').flush(['a:b']);
     expect(getDisabledKeysSpy).toHaveBeenCalled();
     expect(facade.isDisabled('a', 'b')).toBe(true);
+    expect(facade.disabledKeysRefreshFailed()).toBe(false);
   });
 
   it('refresh clears keys on error', () => {
@@ -62,5 +64,6 @@ describe('SecurityPreferencesFacade', () => {
       statusText: 'err',
     });
     expect(facade.disabledKeys().size).toBe(0);
+    expect(facade.disabledKeysRefreshFailed()).toBe(true);
   });
 });
