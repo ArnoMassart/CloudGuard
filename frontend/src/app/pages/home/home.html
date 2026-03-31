@@ -80,7 +80,7 @@
             </button>
           </div>
 
-          <div class="grid sm:grid-cols-2 gap-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <app-security-component Label="{{ 'users' | transloco }}" [Value]="pageResponse()?.scores?.usersScore" />
             <app-security-component Label="{{ 'groups' | transloco }}" [Value]="pageResponse()?.scores?.groupsScore"
               [Icon]="Icons.UsersRound" [IsGroups]="true" />
