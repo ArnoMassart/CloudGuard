@@ -3,16 +3,15 @@
     AdminLink="devices/list" />
 
   <div class="w-full flex flex-col gap-5 pt-6">
-    <div class="w-full flex flex-col lg:flex-row gap-4">
-      <app-section-top-card class="flex-1" Title="{{ 'devices.total' | transloco }}"
-        [Value]="pageOverview()?.totalDevices" [Icon]="Icons.SmartPhone" />
-      <app-section-top-card class="flex-1" Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant"
-        BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
-      <app-section-top-card class="flex-1" Title="{{ 'devices.allowed' | transloco }}"
-        [Value]="pageOverview()?.totalApprovedDevices" BackgroundColor="#dbfce7" IconColor="#17b04f"
-        [Icon]="Icons.CircleCheck" />
-      <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-        role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+    <div class="w-full grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-2">
+      <app-section-top-card Title="{{ 'devices.total' | transloco }}" [Value]="pageOverview()?.totalDevices"
+        [Icon]="Icons.SmartPhone" />
+      <app-section-top-card Title="Non-compliant" [Value]="pageOverview()?.totalNonCompliant" BackgroundColor="#ffe2e2"
+        IconColor="#e7000b" TextColor="#e7000b" [Icon]="Icons.TriangleAlert" />
+      <app-section-top-card Title="{{ 'devices.allowed' | transloco }}" [Value]="pageOverview()?.totalApprovedDevices"
+        BackgroundColor="#dbfce7" IconColor="#17b04f" [Icon]="Icons.CircleCheck" />
+      <div class="cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()" role="button"
+        tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
         (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
         <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
           BackgroundColor="#fef9c2" IconColor="#d69518" />
@@ -25,33 +24,49 @@
       <div body class="flex flex-col gap-2">
         @if (this.devicePageWarnings().lockScreenWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.lockScreenCount }}
-          {{ pageOverview()?.lockScreenCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.without-lock' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.lockScreenCount }}
+            {{ pageOverview()?.lockScreenCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.without-lock' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().encryptionWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.encryptionCount }}
-          {{ pageOverview()?.encryptionCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.without-enc' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.encryptionCount }}
+            {{ pageOverview()?.encryptionCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.without-enc' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().osVersionWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.osVersionCount }}
-          {{ pageOverview()?.osVersionCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.with-old-os' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.osVersionCount }}
+            {{ pageOverview()?.osVersionCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.with-old-os' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
 
         @if (this.devicePageWarnings().integrityWarning) {
         <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-          {{ pageOverview()?.integrityCount }}
-          {{ pageOverview()?.integrityCount === 1 ? ('devices.warning.device' | transloco) : ('devices.warning.devices'
-          | transloco) }} {{ 'devices.with-int' | transloco }}
+          <span class="text-[13px] md:text-[15px]">
+
+            {{ pageOverview()?.integrityCount }}
+            {{ pageOverview()?.integrityCount === 1 ? ('devices.warning.device' | transloco) :
+            ('devices.warning.devices'
+            | transloco) }} {{ 'devices.with-int' | transloco }}
+          </span>
         </app-page-warnings-item>
         }
       </div>
@@ -100,10 +115,10 @@
 
     <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
 
-      <div class="flex justify-between items-center mx-5.5 pb-2">
-        <span class="font-medium text-lg">{{ 'devices.all' | transloco }}</span>
+      <div class="flex justify-between items-center gap-4 mx-6 mb-6">
+        <span class="font-medium md:text-lg text-[17px]">{{ 'devices.all' | transloco }}</span>
         <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
-          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+          class="w-auto flex justify-center items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
           <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
           {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
         </button>
@@ -129,7 +144,7 @@
         <div class="bg-red-100 p-3 rounded-full mb-3">
           <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
         </div>
-        <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+        <span class="md:text-lg text-[17px] font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
         <span class="text-sm text-slate-600 mt-1 max-w-md">
           {{ 'devices.error.description' | transloco }}
         </span>
@@ -292,7 +307,7 @@
       }
       @else {
       <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
-        <span class="text-lg font-medium text-slate-600">
+        <span class="md:text-lg text-[17px] font-medium text-slate-600">
           {{ 'devices.no-found' | transloco }}!
         </span>
       </div>

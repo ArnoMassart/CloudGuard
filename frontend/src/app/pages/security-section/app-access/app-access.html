@@ -4,22 +4,21 @@
 
     <div class="pt-6">
         <div class="w-full flex flex-col gap-5">
-            <div class="w-full flex flex-col lg:flex-row gap-4">
-                <app-section-top-card class="flex-1" Title="{{ 'app-access.connected-apps' | transloco }}"
+            <div class="w-full grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-2">
+                <app-section-top-card Title="{{ 'app-access.connected-apps' | transloco }}"
                     [Value]="pageOverview()?.totalThirdPartyApps" />
 
-                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}"
-                    [Value]="pageOverview()?.totalHighRiskApps" [BackgroundColor]="kpiHighRiskAppsColors().bg"
-                    [IconColor]="kpiHighRiskAppsColors().icon" [TextColor]="kpiHighRiskAppsColors().text"
+                <app-section-top-card Title="{{ 'high-risk' | transloco }}" [Value]="pageOverview()?.totalHighRiskApps"
+                    [BackgroundColor]="kpiHighRiskAppsColors().bg" [IconColor]="kpiHighRiskAppsColors().icon"
+                    [TextColor]="kpiHighRiskAppsColors().text"
                     [Icon]="(pageOverview()?.totalHighRiskApps ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
 
-                <app-section-top-card class="flex-1" Title="{{ 'app-access.permissions' | transloco }}"
+                <app-section-top-card Title="{{ 'app-access.permissions' | transloco }}"
                     [Value]="pageOverview()?.totalPermissionsGranted" BackgroundColor="#f3e8ff" IconColor="#9810fa"
                     TextColor="#9810fa" [Icon]="Icons.ShieldCheck" />
 
-                <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-                    (click)="openSecurityScoreDetail()" role="button" tabindex="0"
-                    (keydown.enter)="openSecurityScoreDetail()"
+                <div class="cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+                    role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
                     (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
                     <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore"
                         [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
@@ -36,10 +35,12 @@
 
             <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
 
-                <div class="flex justify-between items-center mx-6 pb-2">
-                    <span class="font-medium text-lg">{{ 'app-access.all' | transloco }}</span>
+                <div class="flex items-center justify-between gap-3 mb-4 mx-6">
+                    <span class="md:text-lg text-[17px] sm:text-xl font-medium leading-tight text-slate-900">{{
+                        'app-access.all' |
+                        transloco }}</span>
                     <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
-                        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                        class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-[13px] sm:text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shrink-0 whitespace-nowrap">
                         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()" />
                         {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
                     </button>
@@ -66,7 +67,8 @@
                     <div class="bg-red-100 p-3 rounded-full mb-3">
                         <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
                     </div>
-                    <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+                    <span class="md:text-lg text-[17px] font-medium text-slate-800">{{ 'error.title' | transloco
+                        }}</span>
                     <span class="text-sm text-slate-600 mt-1 max-w-md">
                         {{ 'app-access.error.description' | transloco }}
                     </span>
@@ -136,15 +138,16 @@
                                 </div>
 
                                 <i-lucide [img]="
-                expandedApp() === app.id.toString()
-                    ? Icons.ChevronDown
-                    : Icons.ChevronRight
-            " size="20" class="shrink-0 cursor-pointer text-muted-foreground/70 transition-transform sm:ml-3" />
+expandedApp() === app.id.toString()
+    ? Icons.ChevronDown
+    : Icons.ChevronRight
+" size="20" class="shrink-0 cursor-pointer text-muted-foreground/70 transition-transform sm:ml-3" />
                             </div>
                         </div>
 
-                        <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
+                        <div
+                            class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-4 divide-y divide-gray-200/60 sm:divide-y-0">
+                            <div class="py-3 sm:py-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     {{ 'users' | transloco }}
                                 </p>
@@ -153,7 +156,7 @@
                                     <span class="font-medium text-slate-600">{{ app.totalUsers }}</span>
                                 </div>
                             </div>
-                            <div>
+                            <div class="py-3 sm:py-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Exposure
                                 </p>
@@ -163,7 +166,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div>
+                            <div class="py-3 sm:py-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Scope count
                                 </p>
@@ -224,11 +227,11 @@
                         }
 
                         <button
-                            class="flex items-center justify-center gap-2 text-muted-foreground py-2 px-3 border border-gray-200 rounded-lg mt-3 cursor-pointer shadow-sm hover:bg-gray-100/80"
+                            class="w-full sm:w-auto flex items-center justify-center gap-2 text-muted-foreground py-2 px-3 border border-gray-200 rounded-lg mt-3 cursor-pointer shadow-sm hover:bg-gray-100/80"
                             (click)="
-                                $event.stopPropagation();
-                                UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
-                                ">
+$event.stopPropagation();
+UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
+">
                             <span class="text-[13px] font-normal">{{ 'app-access.manage-console' | transloco }}</span>
                             <i-lucide [img]="Icons.ExternalLink" size="12" />
                         </button>
@@ -249,7 +252,8 @@
                 }
                 @else {
                 <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
-                    <span class="text-lg font-medium text-slate-600"> {{ 'app-access.no-founds' | transloco }}! </span>
+                    <span class="md:text-lg text-[17px] font-medium text-slate-600"> {{ 'app-access.no-founds' |
+                        transloco }}! </span>
                 </div>
                 }
                 <div [class.hidden]="apps().length === 0 || apiError()">

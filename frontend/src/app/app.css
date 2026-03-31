@@ -19,9 +19,6 @@
 
   /* Smooth scrolling on iOS */
   -webkit-overflow-scrolling: touch;
-
-  /* Adds a little extra space at the bottom so the last item never touches the screen edge */
-  padding-bottom: 2rem;
 }
 
 .content-area.no-padding {

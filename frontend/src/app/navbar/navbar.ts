@@ -59,6 +59,19 @@ export class Navbar {
 
   toggleMobileMenu() {
     this.isMobileMenuOpen.update((v) => !v);
+
+    if (this.isMobileMenuOpen()) {
+      setTimeout(() => {
+        const activeItem = document.querySelector('li.selected');
+
+        if (activeItem) {
+          activeItem.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+      }, 50);
+    }
   }
 
   closeMobileMenu() {

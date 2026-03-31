@@ -9,11 +9,11 @@
             [class.group]="!isDashboard && !isInfo" (click)="!isDashboard && !isInfo ? toggle.emit() : null">
 
             <div class="flex gap-3 items-center">
-                <i-lucide [img]="isInfo ? Icons.Info : (isCritical ? Icons.TriangleAlert : Icons.ShieldAlert)" size="20"
-                    [class.text-blue-600]="isInfo" [class.text-orange-600]="!isCritical && !isInfo"
-                    [class.text-red-600]="isCritical && !isInfo" />
+                <i-lucide [img]="isInfo ? Icons.Info : (isCritical ? Icons.TriangleAlert : Icons.ShieldAlert)"
+                    class="w-4.5 h-4.5 md:w-5 md:h-5" [class.text-blue-600]="isInfo"
+                    [class.text-orange-600]="!isCritical && !isInfo" [class.text-red-600]="isCritical && !isInfo" />
 
-                <span class="font-medium text-base" [class.text-blue-700]="isInfo"
+                <span class="font-medium text-[15px] md:text-[17px]" [class.text-blue-700]="isInfo"
                     [class.text-orange-700]="!isCritical && !isInfo" [class.text-red-700]="isCritical && !isInfo">
                     {{ isInfo
                     ? title || ('explanation' | transloco)

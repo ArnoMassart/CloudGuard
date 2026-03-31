@@ -1,18 +1,17 @@
 <div class="w-full flex flex-col gap-5">
-  <div class="w-full flex flex-col lg:flex-row gap-4">
-    <app-section-top-card class="flex-1" Title="{{ 'users.total-users' | transloco }}"
-      [Value]="pageOverview()?.totalUsers" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.without2FA' | transloco }}"
-      [Value]="pageOverview()?.withoutTwoFactor" [BackgroundColor]="kpiZonder2faColors().bg"
-      [IconColor]="kpiZonder2faColors().icon" [TextColor]="kpiZonder2faColors().text"
+  <div class="w-full grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-2">
+    <app-section-top-card Title="{{ 'users.total-users' | transloco }}" [Value]="pageOverview()?.totalUsers" />
+    <app-section-top-card Title="{{ 'users.without2FA' | transloco }}" [Value]="pageOverview()?.withoutTwoFactor"
+      [BackgroundColor]="kpiZonder2faColors().bg" [IconColor]="kpiZonder2faColors().icon"
+      [TextColor]="kpiZonder2faColors().text"
       [Icon]="(pageOverview()?.withoutTwoFactor ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
-    <app-section-top-card class="flex-1" Title="{{ 'users.admin-users' | transloco }}"
-      [Value]="pageOverview()?.adminUsers" BackgroundColor="#f3e8ff" IconColor="#9810fa" />
-    <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-      role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+    <app-section-top-card Title="{{ 'users.admin-users' | transloco }}" [Value]="pageOverview()?.adminUsers"
+      BackgroundColor="#f3e8ff" IconColor="#9810fa" />
+    <div class="cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()" role="button"
+      tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
       (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
-      <app-section-top-card class="flex-1" Title="Security Score" [Value]="pageOverview()?.securityScore"
-        [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
+      <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
+        BackgroundColor="#fef9c2" IconColor="#d69518" />
     </div>
   </div>
 
@@ -21,29 +20,37 @@
     (toggle)="toggleExpanded()">
     <div body class="flex flex-col gap-2">
       @if (userPageWarnings().twoFactorWarning) {
-      <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-        {{ pageOverview()?.withoutTwoFactor }} {{ 'active' | transloco }}
-        {{
-        (pageOverview()?.withoutTwoFactor === 1 ? 'users.user-has' : 'users.users-have') | transloco
-        }}
-        {{ 'users.no2FA' | transloco }}
 
+
+      <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
+        <span class="text-[13px] md:text-[15px]">
+          {{ pageOverview()?.withoutTwoFactor }} {{ 'active' | transloco }}
+          {{
+          (pageOverview()?.withoutTwoFactor === 1 ? 'users.user-has' : 'users.users-have') | transloco
+          }}
+          {{ 'users.no2FA' | transloco }}
+
+        </span>
       </app-page-warnings-item>
       }
 
       @if (userPageWarnings().activeWithLongNoLogin) {
       <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-        {{ pageOverview()?.activeLongNoLoginCount }} {{ 'active' | transloco }}
-        {{ (pageOverview()?.activeLongNoLoginCount === 1 ? 'user' : 'users-no-cap') | transloco }}
-        {{ 'users.warning.activeNoLogin' | transloco }}
+        <span class="text-[13px] md:text-[15px]">
+          {{ pageOverview()?.activeLongNoLoginCount }} {{ 'active' | transloco }}
+          {{ (pageOverview()?.activeLongNoLoginCount === 1 ? 'user' : 'users-no-cap') | transloco }}
+          {{ 'users.warning.activeNoLogin' | transloco }}
+        </span>
       </app-page-warnings-item>
       }
 
       @if (userPageWarnings().notActiveWithRecentLogin) {
       <app-page-warnings-item [showBullet]="hasMultipleWarnings()">
-        {{ pageOverview()?.inactiveRecentLoginCount }} {{ 'inactive' | transloco }}
-        {{ (pageOverview()?.inactiveRecentLoginCount === 1 ? 'user' : 'users-no-cap') | transloco}}
-        {{ 'users.warning.notActive' | transloco }}
+        <span class="text-[13px] md:text-[15px]">
+          {{ pageOverview()?.inactiveRecentLoginCount }} {{ 'inactive' | transloco }}
+          {{ (pageOverview()?.inactiveRecentLoginCount === 1 ? 'user' : 'users-no-cap') | transloco}}
+          {{ 'users.warning.notActive' | transloco }}
+        </span>
       </app-page-warnings-item>
       }
     </div>
@@ -55,13 +62,16 @@
 
   <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
 
-    <div class="flex justify-between items-center mx-5.5 mb-6">
-      <span class="font-medium text-lg">{{ 'users.all' | transloco }}</span>
+    <div class="flex flex-row justify-between items-center gap-4 mx-6 mb-6">
+
+      <span class="font-medium md:text-lg text-[17px]">{{ 'users.all' | transloco }}</span>
+
       <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
-        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+        class="w-auto flex justify-center items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()"></i-lucide>
         {{ isRefreshing() ? ( 'refreshing' | transloco ) + '...' : ('renew-data' | transloco ) }}
       </button>
+
     </div>
 
     @if (isLoading()) {
@@ -81,7 +91,7 @@
       <div class="bg-red-100 p-3 rounded-full mb-3">
         <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
       </div>
-      <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+      <span class="md:text-lg text-[17px] font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
       <span class="text-sm text-slate-600 mt-1 max-w-md">
         {{ 'users.error.description' | transloco }}
       </span>
@@ -175,7 +185,7 @@
     }
     @else {
     <div class="flex items-center justify-center p-10 border-t border-gray-100">
-      <span class="text-lg font-medium text-slate-600"> {{ 'users.no-found' | transloco }}! </span>
+      <span class="md:text-lg text-[17px] font-medium text-slate-600"> {{ 'users.no-found' | transloco }}! </span>
     </div>
     }
     <div [class.hidden]="orgUsers().length === 0 || apiError()">

@@ -13,11 +13,11 @@ import { LicenseService } from '../../../services/license-service';
 import { LicenseType } from '../../../models/licenses/LicenseType';
 import { InactiveUser } from '../../../models/licenses/InactiveUser';
 import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOverviewResponse';
-import { MfaStats } from '../../../models/licenses/MfaStats';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-licenses',
@@ -32,6 +32,7 @@ import { Subscription } from 'rxjs';
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    PageContentWrapper,
   ],
   templateUrl: './licenses.html',
   styleUrl: './licenses.css',
@@ -61,7 +62,6 @@ export class Licenses implements OnInit, OnDestroy {
   readonly inactiveUsers = signal<InactiveUser[]>([]);
   readonly maxLicenseAmount = signal(0);
   readonly stepSize = signal(0);
-  readonly mfaStats = signal<MfaStats | null>(null);
 
   readonly pageOverview = signal<LicenseOverviewResponse | null>(null);
 
@@ -136,36 +136,6 @@ export class Licenses implements OnInit, OnDestroy {
     },
   };
 
-  // --- PIE CHART CONFIGURATION (RIGHT) ---
-  readonly pieChartType: ChartType = 'pie';
-
-  readonly pieChartData: ChartData<'pie'> = {
-    // Re-order labels to match the clockwise flow: Blue -> Green -> Orange
-    datasets: [
-      {
-        data: [],
-        backgroundColor: ['#10b981', '#ef4444'],
-        borderWidth: 2,
-        borderColor: '#ffffff', // Adds the white gap between slices
-      },
-    ],
-  };
-
-  readonly pieChartOptions: ChartConfiguration['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          boxWidth: 15,
-          usePointStyle: false,
-        },
-      },
-      tooltip: { enabled: true },
-    },
-  };
-
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
@@ -207,10 +177,8 @@ export class Licenses implements OnInit, OnDestroy {
         this.inactiveUsers.set(res.inactiveUsers);
         this.maxLicenseAmount.set(res.maxLicenseAmount);
         this.stepSize.set(res.chartStepSize);
-        this.mfaStats.set(res.mfaStats);
 
         this.#updateBarChart();
-        this.#updatePieChart();
 
         this.isLoading.set(false);
       },
@@ -254,17 +222,5 @@ export class Licenses implements OnInit, OnDestroy {
     }
 
     this.barChartData = { ...this.barChartData };
-  }
-
-  #updatePieChart() {
-    this.pieChartData.labels = [
-      '2FA ' + this.#translocoService.translate('active-2'),
-      '2FA ' + this.#translocoService.translate('inactive-caps'),
-    ];
-
-    this.pieChartData.datasets[0].data = [
-      this.mfaStats()?.activeCount!,
-      this.mfaStats()?.inactiveCount!,
-    ];
   }
 }
