@@ -499,5 +499,10 @@
   "app-passwords.error.list-failed": "Could not load users with app passwords.",
   "app-passwords.error.refresh-failed": "Could not refresh data. Please try again later.",
   "password-settings.error.load-failed": "Could not load password settings.",
-  "password-settings.error.refresh-failed": "Could not refresh data. Please try again later."
+  "password-settings.error.refresh-failed": "Could not refresh data. Please try again later.",
+  "notifications.error.load-failed": "Could not load notifications. Try again later.",
+  "notifications.error.dismiss-failed": "Could not ignore this notification.",
+  "notifications.error.undismiss-failed": "Could not restore this notification.",
+  "notifications.error.feedback-failed": "Could not send feedback.",
+  "notifications.error.details-failed": "Could not load details."
 }

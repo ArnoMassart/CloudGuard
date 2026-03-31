@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.notification;
 
+import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Part;
 import jakarta.mail.Multipart;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -20,6 +23,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,12 +31,14 @@ class FeedbackEmailServiceTest {
 
     @Mock
     JavaMailSender mailSender;
+    @Mock
+    MessageSource messageSource;
 
     FeedbackEmailService service;
 
     @BeforeEach
     void setUp() {
-        service = new FeedbackEmailService(mailSender);
+        service = new FeedbackEmailService(mailSender, messageSource);
     }
 
     @Test
@@ -74,6 +80,24 @@ class FeedbackEmailServiceTest {
         assertTrue(combined.contains("users-groups"));
         assertTrue(combined.contains("user-control"));
         assertTrue(combined.contains("My feedback"));
+    }
+
+    @Test
+    void sendFeedbackEmail_sendFails_throwsFailedFeedbackEmailException() throws Exception {
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doThrow(new MailSendException("smtp error")).when(mailSender).send(any(MimeMessage.class));
+
+        ReflectionTestUtils.setField(service, "recipientEmails", List.of("ops@example.com"));
+        ReflectionTestUtils.setField(service, "fromEmail", "noreply@example.com");
+        when(messageSource.getMessage(eq("api.email.send_failed"), isNull(), any())).thenReturn("Could not send");
+
+        FailedFeedbackEmailException ex =
+                assertThrows(
+                        FailedFeedbackEmailException.class,
+                        () -> service.sendFeedbackEmail("u", "s", "t", "hello"));
+
+        assertEquals("Could not send", ex.getMessage());
     }
 
     @Test

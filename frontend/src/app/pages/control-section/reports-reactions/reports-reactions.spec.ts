@@ -49,6 +49,12 @@ const FB_I18N: Record<string, string> = {
   'to-admin-console': 'Admin',
   info: 'Info',
   refresh: 'Refresh',
+  'notifications.error.load-failed': 'Load failed (stub)',
+  'notifications.error.dismiss-failed': 'Dismiss failed (stub)',
+  'notifications.error.undismiss-failed': 'Undismiss failed (stub)',
+  'notifications.error.feedback-failed': 'Feedback failed (stub)',
+  'notifications.error.details-failed': 'Details failed (stub)',
+  'try-again': 'Try again',
 };
 
 class ReportsReactionsTranslocoLoader implements TranslocoLoader {
@@ -282,8 +288,8 @@ describe('ReportsReactions', () => {
     );
   });
 
-  it('clears lists when load fails', async () => {
-    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(throwError(() => new Error('x')));
+  it('clears lists and sets listLoadErrorwhen load fails', async () => {
+    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(throwError(() => new Error('boom')));
     fixture = TestBed.createComponent(ReportsReactions);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -292,5 +298,7 @@ describe('ReportsReactions', () => {
     expect(component.notifications()).toEqual([]);
     expect(component.dismissedNotifications()).toEqual([]);
     expect(component.isLoading()).toBe(false);
+    expect(component.listLoadError()).toBeTruthy();
+    expect(component.listLoadError() ?? '').toContain('boom');
   });
 });

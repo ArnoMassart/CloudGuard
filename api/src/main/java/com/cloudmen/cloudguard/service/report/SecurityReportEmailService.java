@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -59,8 +60,15 @@ public class SecurityReportEmailService {
             }
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new FailedFeedbackEmailException("Failed to send feedback email", e);
+            throwReportEmailFailed(locale, e);
+        } catch (MailException e) {
+            throwReportEmailFailed(locale, e);
         }
+    }
+
+    private void throwReportEmailFailed(Locale locale, Throwable cause) {
+        String msg = messageSource.getMessage("api.email.send_failed", null, locale);
+        throw new FailedFeedbackEmailException(msg, cause);
     }
 
     private String buildReportHtml(String companyName, Locale locale) {

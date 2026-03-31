@@ -30,6 +30,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FailedFeedbackEmailException.class)
     public ResponseEntity<String> handleFailedFeedbackEmailException(FailedFeedbackEmailException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(NotificationFeedbackValidationException.class)
+    public ResponseEntity<String> handleNotificationFeedbackValidationException(NotificationFeedbackValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 }
