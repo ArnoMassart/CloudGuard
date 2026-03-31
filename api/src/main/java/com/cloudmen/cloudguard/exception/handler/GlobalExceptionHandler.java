@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
     @ExceptionHandler(GoogleWorkspaceSyncException.class)
     public ResponseEntity<String> handleGoogleWorkspaceSyncException(GoogleWorkspaceSyncException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(ex.getMessage());
     }
 
     @ExceptionHandler(PdfGenerationException.class)

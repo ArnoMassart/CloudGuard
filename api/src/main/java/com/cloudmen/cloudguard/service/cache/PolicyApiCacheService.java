@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +10,9 @@ import com.google.api.services.admin.directory.model.OrgUnit;
 import com.google.api.services.admin.directory.model.OrgUnits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -35,6 +39,7 @@ public class PolicyApiCacheService {
     private static final long CACHE_TTL_MS = 15 * 60 * 1000L; // 15 min (Policy API: 1 QPS per customer)
 
     private final GoogleApiFactory directoryFactory;
+    private final MessageSource messageSource;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -47,8 +52,10 @@ public class PolicyApiCacheService {
     private final Object policyLock = new Object();
     private final Object ouLock = new Object();
 
-    public PolicyApiCacheService(GoogleApiFactory directoryFactory) {
+    public PolicyApiCacheService(
+            GoogleApiFactory directoryFactory, @Qualifier("messageSource") MessageSource messageSource) {
         this.directoryFactory = directoryFactory;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -200,8 +207,13 @@ public class PolicyApiCacheService {
                         log.warn("Policy API 429 rate-limited, retrying in {}ms (attempt {}/{})", backoff, attempt + 1, maxRetries);
                         Thread.sleep(backoff);
                     } else {
-                        throw new RuntimeException("Policy API fetch failed: HTTP " +
-                                e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
+                        log.error(
+                                "Policy API fetch failed: HTTP {} (response body omitted from logs if large)",
+                                e.getStatusCode(), e);
+                        throw new GoogleWorkspaceSyncException(
+                                messageSource.getMessage(
+                                        "api.google.policy_api_fetch_failed", null, LocaleContextHolder.getLocale()),
+                                e);
                     }
                 }
             }

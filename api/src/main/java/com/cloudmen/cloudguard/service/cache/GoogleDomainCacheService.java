@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.domain.DomainCacheEntry;
 import com.cloudmen.cloudguard.dto.domain.DomainDto;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -10,6 +11,9 @@ import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -23,14 +27,16 @@ public class GoogleDomainCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleDomainCacheService.class);
 
     private final GoogleApiFactory apiFactory;
+    private final MessageSource messageSource;
 
     private final Cache<String, DomainCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(4, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 
-    public GoogleDomainCacheService(GoogleApiFactory apiFactory) {
+    public GoogleDomainCacheService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource) {
         this.apiFactory = apiFactory;
+        this.messageSource = messageSource;
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -101,7 +107,9 @@ public class GoogleDomainCacheService {
                 return fallbackEntry;
             }
             log.error("Fout bij ophalen Google domains: {}", e.getMessage(), e);
-            throw new RuntimeException("Domains ophalen mislukt: " + e.getMessage(), e);
+            throw new GoogleWorkspaceSyncException(
+                    messageSource.getMessage("api.google.domains_fetch_failed", null, LocaleContextHolder.getLocale()),
+                    e);
         }
     }
 
