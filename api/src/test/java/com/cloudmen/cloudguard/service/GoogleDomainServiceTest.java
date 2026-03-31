@@ -11,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static com.cloudmen.cloudguard.utility.GlobalTestHelper.TEST_ADMIN_USER;
+import static com.cloudmen.cloudguard.utility.GlobalTestHelper.ADMIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.verify;
@@ -28,8 +28,8 @@ class GoogleDomainServiceTest {
 
     @Test
     void forceRefreshCache_delegatesToCacheService() {
-        service.forceRefreshCache(TEST_ADMIN_USER);
-        verify(domainCacheService).forceRefreshCache(TEST_ADMIN_USER);
+        service.forceRefreshCache(ADMIN);
+        verify(domainCacheService).forceRefreshCache(ADMIN);
     }
 
     @Test
@@ -37,10 +37,10 @@ class GoogleDomainServiceTest {
         List<DomainDto> domains = List.of(
                 new DomainDto("primary.com", "PRIMARY", true, 42),
                 new DomainDto("alias.com", "ALIAS", false, 0));
-        when(domainCacheService.getOrFetchDomainData(TEST_ADMIN_USER))
+        when(domainCacheService.getOrFetchDomainData(ADMIN))
                 .thenReturn(new DomainCacheEntry(domains, 1L));
 
-        List<DomainDto> result = service.getAllDomains(TEST_ADMIN_USER);
+        List<DomainDto> result = service.getAllDomains(ADMIN);
 
         assertEquals(2, result.size());
         assertSame(domains, result);
