@@ -494,6 +494,9 @@
   "organisational-units.error.policies-failed": "Beleidsregels konden niet worden geladen.",
   "app-passwords.error.overview-failed": "Overzicht kon niet worden geladen.",
   "app-passwords.error.list-failed": "Gebruikers met app-wachtwoorden konden niet worden geladen.",
+  "app-passwords.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw.",
+  "password-settings.error.load-failed": "Wachtwoordinstellingen konden niet worden geladen.",
+  "password-settings.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw."
   "app-passwords.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw."
   "organisational-units.error.policies-failed": "Beleidsregels konden niet worden geladen."
   "licenses.error.description": "We konden de licenties tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
