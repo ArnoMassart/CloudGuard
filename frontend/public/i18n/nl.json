@@ -501,11 +501,7 @@
   "notifications.error.dismiss-failed": "Deze melding kon niet worden genegeerd.",
   "notifications.error.undismiss-failed": "Deze melding kon niet worden hersteld.",
   "notifications.error.feedback-failed": "Feedback kon niet worden verzonden.",
-  "notifications.error.details-failed": "Details konden niet worden geladen."
-  "password-settings.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw."
-  "app-passwords.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw."
-  "organisational-units.error.policies-failed": "Beleidsregels konden niet worden geladen."
-  "licenses.error.description": "We konden de licenties tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
+  "notifications.error.details-failed": "Details konden niet worden geladen.",
   "all-apps": "Alle apps",
   "no-risk": "Geen risico"
 }
