@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -64,8 +65,8 @@ public class GoogleOrgUnitCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            log.error("Fout bij ophalen Google OrgUnits: {}", e.getMessage(), e);
-            return new OrgUnitCacheEntry(new ArrayList<>(), new HashMap<>(), System.currentTimeMillis());
+            throw new GoogleWorkspaceSyncException(
+                    "Fout bij ophalen Google OrgUnits, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 

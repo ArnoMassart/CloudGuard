@@ -8,6 +8,7 @@ import { OrgUnitPolicyDto } from '../../../models/org-unit/OrgUnitPolicyDto';
 import { AppIcons } from '../../../shared/AppIcons';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export interface OrgUnitNode {
   id: string;
@@ -37,6 +38,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
   readonly tree = signal<OrgUnitNode | null>(null);
   readonly loading = signal(true);
   readonly isRefreshing = signal<boolean>(false);
+  readonly refreshError = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly selectedOrgUnit = signal<OrgUnitNodeDto | null>(null);
 
@@ -62,7 +64,10 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
           this.policiesLoading.set(false);
         },
         error: (err) => {
-          this.policiesError.set(err?.message ?? 'Beleidsregels laden mislukt');
+          const msg = this.#httpErrorDetail(err);
+          this.policiesError.set(
+            msg || this.#translocoService.translate('organisational-units.error.policies-failed'),
+          );
           this.policies.set([]);
           this.policiesLoading.set(false);
         },
@@ -83,16 +88,20 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
   }
 
   loadUnitTree(): void {
+    this.error.set(null);
+    this.loading.set(true);
     this.#orgUnitService.getOrgUnitTree().subscribe({
       next: (data) => {
         this.tree.set(data);
         this.selectedOrgUnit.set(data);
         if (data?.id) this.expandedOuIds.set(new Set([data.id]));
         this.loading.set(false);
+        this.refreshError.set(null);
       },
       error: (err) => {
+        const msg = this.#httpErrorDetail(err);
         this.error.set(
-          err.message || 'Er is een fout opgetreden bij het laden van de organisatie-eenheden.',
+          msg || this.#translocoService.translate('organisational-units.error.load-failed'),
         );
         this.loading.set(false);
       },
@@ -141,6 +150,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
     if (this.isRefreshing()) return;
 
     this.isRefreshing.set(true);
+    this.refreshError.set(null);
 
     this.#orgUnitService.refreshOrgUnitsCache().subscribe({
       next: () => {
@@ -148,10 +158,13 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
+        const msg = this.#httpErrorDetail(err);
+        this.refreshError.set(
+          msg || this.#translocoService.translate('organisational-units.error.refresh-failed'),
+        );
         this.isRefreshing.set(false);
       },
       complete: () => {
-        // Stop de spinner zodra alles klaar is
         this.isRefreshing.set(false);
       },
     });
@@ -179,4 +192,17 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
       return 'Let op: er zijn aandachtspunten bij deze beleidsregel.';
     return 'De status van deze beleidsregel kon niet worden vastgesteld.';
   };
+
+  #httpErrorDetail(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (typeof err.error === 'string' && err.error.trim()) {
+        return err.error.trim();
+      }
+    }
+    if (err instanceof Error && err.message) {
+      return err.message;
+    }
+
+    return '';
+  }
 }

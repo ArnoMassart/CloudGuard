@@ -99,7 +99,7 @@
   "no": "No",
   "yes": "Yes",
   "dashboard": "Dashboard",
-  "domain-dns": "Domain & DNS",
+  "domain-dns": "Domain",
   "licenses": "Licenses",
   "notifications-feedback": "Notifications & Feedback",
   "organisational-units": "Organizational units",
@@ -458,7 +458,7 @@
   "preferences.info.description": "For each area, you decide whether related findings are shown as notifications. Disabled checks are hidden on the dashboard, omitted from the corresponding section views, and excluded from the security score.",
   "preferences.info.label": "About security preferences",
   "preferences.info.title": "About these settings",
-  "preferences.loading": "Loading preferences…",
+  "preferences.loading": "Loading preferences...",
   "preferences.password-settings": "Password settings",
   "preferences.password-settings.2fa": "Two-step verification (2SV) not enforced",
   "preferences.password-settings.passwordLength": "Minimum password length below twelve characters",
@@ -491,4 +491,8 @@
   "licenses.error.description": "We temporarily could not fetch the licenses. Please check your configuration or try refreshing the data.",
   "all-apps": "All apps",
   "no-risk": "No risk"
+  "licenses.error.description": "Could not load licenses. Check your configuration or try again later.",
+  "organisational-units.error.load-failed": "Could not load organizational units.",
+  "organisational-units.error.refresh-failed": "Could not refresh data. Please try again later.",
+  "organisational-units.error.policies-failed": "Could not load policies."
 }
