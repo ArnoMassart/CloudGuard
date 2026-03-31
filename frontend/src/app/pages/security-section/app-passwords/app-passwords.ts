@@ -8,7 +8,6 @@ import { SecurityScoreDetailService } from '../../../services/security-score-det
 import { AppPassword } from '../../../models/app-password/AppPassword';
 import { AppPasswordOverviewResponse } from '../../../models/app-password/AppPasswordOverviewResponse';
 import { UserAppPasswords } from '../../../models/app-password/UserAppPasswords';
-
 import { LucideAngularModule } from 'lucide-angular';
 import { Subject, Subscription } from 'rxjs';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
@@ -16,8 +15,9 @@ import { PageWarningsItem } from '../../../components/page-warnings/page-warning
 import { SearchBar } from '../../../components/search-bar/search-bar';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
-import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { HttpErrorResponse } from '@angular/common/http';
+
 
 const ITEMS_PER_PAGE = 4;
 
@@ -50,7 +50,11 @@ export class AppPasswords implements OnInit, OnDestroy {
   readonly nextPageToken = signal<string | null>(null);
   readonly isLoading = signal(false);
   readonly isRefreshing = signal(false);
-  readonly loadError = signal(false);
+
+  readonly listLoadError = signal<string | null>(null);
+  readonly overviewError = signal<string | null>(null);
+  readonly refreshError = signal<string | null>(null);
+   
   readonly searchQuery = signal('');
   readonly filteredUserAppPasswords = computed(() => {
     const users = this.userAppPasswords();
@@ -88,14 +92,32 @@ export class AppPasswords implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
-      next: (overview) => this.pageOverview.set(overview),
-      error: () => {},
+      next: (overview) => {
+        this.pageOverview.set(overview);
+        this.overviewError.set(null);
+      },
+      error: (err) => {
+        console.error('App passwords overview failed: ', err);
+        const msg = this.#httpErrorDetail(err);
+        this.overviewError.set(
+          msg || this.#translocoService.translate('app-passwords.error.overview-failed'),
+        );
+      },
     });
     this.#loadAppPasswords(null);
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
-        next: (overview) => this.pageOverview.set(overview),
-        error: () => {},
+        next: (overview) => {
+          this.pageOverview.set(overview);
+          this.overviewError.set(null);
+        },
+        error: (err) => {
+          console.error('App passwords overview failed: ', err);
+          const msg = this.#httpErrorDetail(err);
+          this.overviewError.set(
+            msg || this.#translocoService.translate('app-passwords.error.overview-failed'),
+          );
+        },
       });
       this.#loadAppPasswords(null);
     });
@@ -159,11 +181,21 @@ export class AppPasswords implements OnInit, OnDestroy {
   refreshData() {
     if (this.isRefreshing()) return;
     this.isRefreshing.set(true);
+    this.refreshError.set(null);
     this.#appPasswordsService.refreshCache().subscribe({
       next: () => {
-        this.#appPasswordsService.getOverview().subscribe({
-          next: (overview) => this.pageOverview.set(overview),
-          error: () => {},
+        this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
+          next: (overview) => {
+            this.pageOverview.set(overview);
+            this.overviewError.set(null);
+          },
+          error: (err) => {
+            console.error('App passwords overview failed after refresh: ', err);
+            const msg = this.#httpErrorDetail(err);
+            this.overviewError.set(
+              msg || this.#translocoService.translate('app-passwords.error.overview-failed'),
+            );
+          },
         });
         this.#tokenHistory = [null];
         this.currentPage.set(1);
@@ -171,6 +203,10 @@ export class AppPasswords implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
+        const msg = this.#httpErrorDetail(err);
+        this.refreshError.set(
+          msg || this.#translocoService.translate('app-passwords.error.refresh-failed'),
+        );
         this.isRefreshing.set(false);
       },
       complete: () => {
@@ -181,7 +217,7 @@ export class AppPasswords implements OnInit, OnDestroy {
 
   #loadAppPasswords(pageToken: string | null) {
     this.isLoading.set(true);
-    this.loadError.set(false);
+    this.listLoadError.set(null);
     this.expandedAppPassword.set(null);
     this.#appPasswordsService
       .getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery())
@@ -190,12 +226,17 @@ export class AppPasswords implements OnInit, OnDestroy {
           const data = response.users.map((u) => this.#mapToUserAppPasswords(u));
           this.userAppPasswords.set(data);
           this.nextPageToken.set(response.nextPageToken ?? null);
+          this.listLoadError.set(null);
           this.isLoading.set(false);
         },
-        error: () => {
+        error: (err) => {
+          console.error('App passwords list failed: ', err);
           this.userAppPasswords.set([]);
           this.nextPageToken.set(null);
-          this.loadError.set(true);
+          const msg = this.#httpErrorDetail(err);
+          this.listLoadError.set(
+            msg || this.#translocoService.translate('app-passwords.error.list-failed'),
+          );
           this.isLoading.set(false);
         },
       });
@@ -250,4 +291,17 @@ export class AppPasswords implements OnInit, OnDestroy {
       );
     this.#securityScoreDetail.open(breakdown, 'app-passwords');
   }
+
+  #httpErrorDetail(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (typeof err.error === 'string' && err.error.trim()) {
+        return err.error.trim();
+      }
+    }
+    if (err instanceof Error && err.message) {
+      return err.message;
+    }
+    return '';
+  }
+
 }

@@ -494,5 +494,8 @@
   "licenses.error.description": "Could not load licenses. Check your configuration or try again later.",
   "organisational-units.error.load-failed": "Could not load organizational units.",
   "organisational-units.error.refresh-failed": "Could not refresh data. Please try again later.",
-  "organisational-units.error.policies-failed": "Could not load policies."
+  "organisational-units.error.policies-failed": "Could not load policies.",
+  "app-passwords.error.overview-failed": "Could not load overview.",
+  "app-passwords.error.list-failed": "Could not load users with app passwords.",
+  "app-passwords.error.refresh-failed": "Could not refresh data. Please try again later."
 }
