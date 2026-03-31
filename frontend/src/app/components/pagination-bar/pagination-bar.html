@@ -1,0 +1,19 @@
+<div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+    <span class="text-sm text-gray-500">
+        {{ 'page' | transloco }} <span class="font-medium text-gray-900">{{ currentPage() }}</span>
+    </span>
+
+    <div class="flex gap-2">
+        <button (click)="prevPage()" [disabled]="currentPage() === 1"
+            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
+            <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
+            {{ 'previous' | transloco }}
+        </button>
+
+        <button (click)="nextPage()" [disabled]="!nextPageToken()"
+            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
+            {{ 'next' | transloco }}
+            <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
+        </button>
+    </div>
+</div>

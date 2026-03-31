@@ -72,3 +72,14 @@ body {
   width: 100%;
   overflow: hidden; /* Prevents the body from scrolling, forcing .content-area to do the work */
 }
+
+/* Verberg scrollbar voor Chrome, Safari en Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Verberg scrollbar voor IE, Edge en Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
