@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
@@ -15,9 +15,10 @@ import { PageWarningsItem } from '../../../components/page-warnings/page-warning
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
-import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
+import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
 
 // ==========================================
 // CONSTANTS
@@ -35,6 +36,8 @@ const ITEMS_PER_PAGE = 2;
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    PageContentWrapper,
+    PaginationBar,
   ],
   templateUrl: './shared-drives.html',
   styleUrl: './shared-drives.css',
@@ -50,6 +53,8 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
+  readonly pagination = viewChild(PaginationBar);
+
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
@@ -63,7 +68,6 @@ export class SharedDrives implements OnInit, OnDestroy {
   readonly searchQuery = signal('');
   readonly pageOverview = signal<SharedDriveOverviewResponse | null>(null);
 
-  readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
@@ -101,7 +105,6 @@ export class SharedDrives implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  #tokenHistory: (string | null)[] = [null];
   #langSubscription?: Subscription;
 
   // ==========================================
@@ -110,7 +113,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadPageOverview();
-      this.#loadDrives();
+      this.loadDrives();
     });
   }
 
@@ -129,27 +132,8 @@ export class SharedDrives implements OnInit, OnDestroy {
 
   onSearch(value: string) {
     this.searchQuery.set(value);
-    this.currentPage.set(1);
-    this.#tokenHistory = [null];
-    this.#loadDrives(null);
-  }
-
-  nextPage() {
-    const token = this.nextPageToken();
-    if (token) {
-      this.#tokenHistory.push(token);
-      this.currentPage.update((p) => p + 1);
-      this.#loadDrives(token);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory.at(-1);
-      this.currentPage.update((p) => p - 1);
-      this.#loadDrives(prevToken);
-    }
+    this.pagination()?.reset();
+    this.loadDrives();
   }
 
   isSharedDrivePrefDisabled(key: 'outsideDomain' | 'nonMemberAccess'): boolean {
@@ -171,10 +155,9 @@ export class SharedDrives implements OnInit, OnDestroy {
 
     this.#driveService.refreshDriveCache().subscribe({
       next: (res) => {
-        this.currentPage.set(1);
-        this.#tokenHistory = [null];
+        this.pagination()?.reset();
 
-        this.#loadDrives(null);
+        this.loadDrives();
         this.#loadPageOverview();
       },
       error: (err) => {
@@ -191,7 +174,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
-  #loadDrives(token: string | null = null) {
+  loadDrives(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
 

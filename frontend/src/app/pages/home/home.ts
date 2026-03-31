@@ -15,6 +15,7 @@ import { PageWarningsItem } from '../../components/page-warnings/page-warnings-i
 import { ReportService } from '../../services/report-service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-home',
@@ -27,6 +28,7 @@ import { Subscription } from 'rxjs';
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    PageContentWrapper,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',

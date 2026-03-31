@@ -1,32 +1,23 @@
-<div class="border-2 rounded-lg p-4 transition-all duration-200"
-    [class.bg-blue-50]="isInfo"
-    [class.border-blue-200/30]="isInfo"
-    [class.bg-orange-50]="!isCritical && !isInfo"
-    [class.bg-red-50]="isCritical && !isInfo"
-    [class.border-orange-200/30]="!isCritical && !isInfo"
-    [class.border-red-200/30]="isCritical && !isInfo"
-    [class.flex]="isDashboard" [class.items-center]="isDashboard" [class.justify-between]="isDashboard">
+<div class="border-2 rounded-lg p-4 transition-all duration-200" [class.bg-blue-50]="isInfo"
+    [class.border-blue-200/30]="isInfo" [class.bg-orange-50]="!isCritical && !isInfo"
+    [class.bg-red-50]="isCritical && !isInfo" [class.border-orange-200/30]="!isCritical && !isInfo"
+    [class.border-red-200/30]="isCritical && !isInfo" [class.flex]="isDashboard" [class.flex-col]="isDashboard"
+    [class.sm:flex-row]="isDashboard" [class.items-center]="isDashboard" [class.justify-between]="isDashboard">
 
     <div class="flex flex-col gap-1 w-full">
         <div class="flex items-start justify-between" [class.cursor-pointer]="!isDashboard && !isInfo"
-            [class.group]="!isDashboard && !isInfo"
-            (click)="!isDashboard && !isInfo ? toggle.emit() : null">
+            [class.group]="!isDashboard && !isInfo" (click)="!isDashboard && !isInfo ? toggle.emit() : null">
 
             <div class="flex gap-3 items-center">
-                <i-lucide
-                    [img]="isInfo ? Icons.Info : (isCritical ? Icons.TriangleAlert : Icons.ShieldAlert)"
-                    size="20"
-                    [class.text-blue-600]="isInfo"
-                    [class.text-orange-600]="!isCritical && !isInfo"
-                    [class.text-red-600]="isCritical && !isInfo" />
+                <i-lucide [img]="isInfo ? Icons.Info : (isCritical ? Icons.TriangleAlert : Icons.ShieldAlert)"
+                    class="w-4.5 h-4.5 md:w-5 md:h-5" [class.text-blue-600]="isInfo"
+                    [class.text-orange-600]="!isCritical && !isInfo" [class.text-red-600]="isCritical && !isInfo" />
 
-                <span class="font-medium text-base"
-                    [class.text-blue-700]="isInfo"
-                    [class.text-orange-700]="!isCritical && !isInfo"
-                    [class.text-red-700]="isCritical && !isInfo">
+                <span class="font-medium text-[15px] md:text-[17px]" [class.text-blue-700]="isInfo"
+                    [class.text-orange-700]="!isCritical && !isInfo" [class.text-red-700]="isCritical && !isInfo">
                     {{ isInfo
-                        ? (title || 'Toelichting')
-                        : (title || (hasMultipleWarnings ? 'Beveiligingswaarschuwingen' : 'Beveiligingswaarschuwing')) }}
+                    ? title || ('explanation' | transloco)
+                    : title || ((hasMultipleWarnings ? 'warnings' : 'warning') | transloco) }}
                 </span>
             </div>
 
@@ -38,7 +29,7 @@
         </div>
 
         @if (isDashboard || isExpanded || isInfo) {
-        <div class="flex flex-col gap-2 mt-1 mx-8">
+        <div class="flex flex-col gap-2 mt-1 lg:mx-8">
             <ng-content select="[body]"></ng-content>
         </div>
         }
@@ -46,7 +37,7 @@
 
     @if (isDashboard) {
     <button (click)="navigateToNotifications()"
-        class="cursor-pointer bg-red-600 text-white hover:bg-red-600/80 py-2 px-4 rounded-lg flex gap-2 items-center text-[13px] shrink-0 ml-4">
+        class="cursor-pointer bg-red-600 text-white hover:bg-red-600/80 py-2 px-4 rounded-lg flex gap-2 items-center text-[13px] shrink-0 mt-4 sm:mt-0 sm:ml-4">
         <span>{{ 'page-warnings.view-notifications' | transloco }}</span>
     </button>
     }

@@ -33,27 +33,9 @@ public class GoogleLicenseService {
 
         int stepSize = getStepSize(maxLicenseAmount);
 
-        List<User> allDomainUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
-
-        int activeCount = 0;
-        int inactiveCount = 0;
-
-        if (allDomainUsers != null) {
-            for (User user: allDomainUsers) {
-                if (Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())) {
-                    activeCount++;
-                } else {
-                    inactiveCount++;
-                }
-            }
-        }
-
-        MfaStats mfaStats = new MfaStats(activeCount, inactiveCount);
-
         return new LicensePageResponse(
           types,
           cachedData.inactiveUsers(),
-                mfaStats,
                 maxLicenseAmount + stepSize,
                 stepSize
         );
@@ -69,27 +51,19 @@ public class GoogleLicenseService {
 
         int riskyAccounts =0;
         int unusedLicenses = cachedData.inactiveUsers() != null ? cachedData.inactiveUsers().size() : 0;
-        int mfaActiveCount=0;
 
         if (allDomainUsers != null) {
             for (User user : allDomainUsers) {
                 if (Boolean.TRUE.equals(user.getSuspended())) {
                     riskyAccounts++;
                 }
-                if (Boolean.TRUE.equals(user.getIsEnrolledIn2Sv())) {
-                    mfaActiveCount++;
-                }
             }
         }
-
-        long totalUsers = allDomainUsers != null ? allDomainUsers.size() : 0;
-        int mfaPercentage = totalUsers == 0 ? 100 : (int) Math.round(((double) mfaActiveCount / totalUsers) * 100);
 
         return new LicenseOverviewResponse(
                 totalAssigned,
                 riskyAccounts + unusedLicenses ,
-                unusedLicenses,
-                mfaPercentage
+                unusedLicenses
         );
     }
 

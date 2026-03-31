@@ -45,6 +45,7 @@ import {
   UserX,
   ServerCrash,
   X,
+  Menu,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -77,6 +78,7 @@ export class AppIcons {
   static readonly Loader = Loader;
   static readonly Lock = Lock;
   static readonly LogOut = LogOut;
+  static readonly Menu = Menu;
   static readonly MessageCircle = MessageCircle;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,14 +16,15 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { SecurityScoreDetailService } from '../../../services/security-score-detail.service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
+import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
 
 // ==========================================
 // CONSTANTS
 // ==========================================
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-devices',
@@ -37,6 +38,8 @@ const ITEMS_PER_PAGE = 5;
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    PageContentWrapper,
+    PaginationBar,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.css',
@@ -51,8 +54,9 @@ export class Devices implements OnInit, OnDestroy {
   readonly #deviceService = inject(DeviceService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
-
   readonly #translocoService = inject(TranslocoService);
+
+  readonly pagination = viewChild(PaginationBar);
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -70,7 +74,6 @@ export class Devices implements OnInit, OnDestroy {
   readonly selectedStatus = signal<DeviceStatus>(DeviceStatus.All);
   readonly statusOptions = Object.values(DeviceStatus);
 
-  readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
@@ -92,7 +95,6 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  #tokenHistory: (string | null)[] = [null];
   #langSubscription?: Subscription;
 
   // ==========================================
@@ -102,7 +104,7 @@ export class Devices implements OnInit, OnDestroy {
     this.#loadDeviceTypes();
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadPageOverview();
-      this.#loadDevices();
+      this.loadDevices();
     });
   }
 
@@ -115,6 +117,7 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
+
   toggleExpanded() {
     this.isExpanded.update((v) => !v);
   }
@@ -135,24 +138,6 @@ export class Devices implements OnInit, OnDestroy {
   onDeviceTypeChange(newType: string) {
     this.selectedDeviceType.set(newType);
     this.#resetAndLoad();
-  }
-
-  nextPage() {
-    const token = this.nextPageToken();
-    if (token) {
-      this.#tokenHistory.push(token);
-      this.currentPage.update((p) => p + 1);
-      this.#loadDevices(token);
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage() > 1) {
-      this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory.at(-1);
-      this.currentPage.update((p) => p - 1);
-      this.#loadDevices(prevToken);
-    }
   }
 
   openSecurityScoreDetail() {
@@ -210,10 +195,9 @@ export class Devices implements OnInit, OnDestroy {
 
     this.#deviceService.refreshDeviceCache().subscribe({
       next: (res) => {
-        this.currentPage.set(1);
-        this.#tokenHistory = [null];
+        this.pagination()?.reset();
 
-        this.#loadDevices(null);
+        this.loadDevices();
         this.#loadPageOverview();
       },
       error: (err) => {
@@ -230,7 +214,7 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
-  #loadDevices(token: string | null = null) {
+  loadDevices(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
 
@@ -274,9 +258,10 @@ export class Devices implements OnInit, OnDestroy {
   }
 
   #resetAndLoad() {
-    this.currentPage.set(1);
-    this.#tokenHistory = [null];
     this.expandedDevice.set(null);
-    this.#loadDevices(null);
+
+    this.pagination()?.reset();
+
+    this.loadDevices();
   }
 }

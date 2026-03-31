@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, OnDestroy, viewChild } from '@angular/core';
 import { AppIcons } from '../../../shared/AppIcons';
 import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { FormsModule } from '@angular/forms';
@@ -15,9 +15,10 @@ import { Risk } from '../../../models/o-auth/Risk';
 import { FilterOption } from '../../../models/FilterOption';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
-import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
+import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
 
 // ==========================================
 // CONSTANTS
@@ -34,6 +35,8 @@ const ITEMS_PER_PAGE = 3;
     LucideAngularModule,
     FormsModule,
     TranslocoPipe,
+    PageContentWrapper,
+    PaginationBar,
   ],
   templateUrl: './app-access.html',
   styleUrl: './app-access.css',
@@ -49,6 +52,8 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly #translocoService = inject(TranslocoService);
 
+  readonly pagination = viewChild(PaginationBar);
+
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
@@ -62,7 +67,6 @@ export class AppAccess implements OnInit, OnDestroy {
   readonly searchQuery = signal('');
   readonly pageOverview = signal<OAuthOverviewResponse | null>(null);
 
-  readonly currentPage = signal(1);
   readonly nextPageToken = signal<string | null>(null);
 
   readonly expandedApp = signal<string | null>(null);
@@ -91,21 +95,21 @@ export class AppAccess implements OnInit, OnDestroy {
     return [
       {
         value: 'all',
-        label: 'Alle apps',
+        label: 'all-apps',
         count: this.allFilteredApps(),
         activeClass: 'bg-[#3ABFAD] text-white',
         inactiveClass: '',
       },
       {
         value: 'high',
-        label: 'Hoog risico',
+        label: 'high-risk',
         count: this.allHighRiskApps(),
         activeClass: highRiskChipMuted ? 'bg-[#f3f4f6] text-[#6b7280]' : 'bg-red-100 text-red-800',
         inactiveClass: '',
       },
       {
         value: 'not-high',
-        label: 'Geen risico',
+        label: 'no-risk',
         count: this.allNotHighRiskApps(),
         activeClass: 'bg-emerald-100 text-emerald-800',
         inactiveClass: '',
@@ -116,7 +120,6 @@ export class AppAccess implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  #tokenHistory: (string | null)[] = [null];
   #langSubscription?: Subscription;
 
   // ==========================================
@@ -125,7 +128,7 @@ export class AppAccess implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadPageOverview();
-      this.#loadApps();
+      this.loadApps();
     });
   }
 
@@ -145,24 +148,6 @@ export class AppAccess implements OnInit, OnDestroy {
   onSearch(value: string): void {
     this.searchQuery.set(value);
     this.#resetData();
-  }
-
-  nextPage(): void {
-    const token = this.nextPageToken();
-    if (token) {
-      this.#tokenHistory.push(token);
-      this.currentPage.update((p) => p + 1);
-      this.#loadApps(token);
-    }
-  }
-
-  prevPage(): void {
-    if (this.currentPage() > 1) {
-      this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory.at(-1);
-      this.currentPage.update((p) => p - 1);
-      this.#loadApps(prevToken);
-    }
   }
 
   toggleExpand(deviceId: string): void {
@@ -210,7 +195,7 @@ export class AppAccess implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE METHODS
   // ==========================================
-  #loadApps(token: string | null = null): void {
+  loadApps(token?: string): void {
     this.isLoading.set(true);
     this.apiError.set(false);
 
@@ -241,8 +226,7 @@ export class AppAccess implements OnInit, OnDestroy {
   }
 
   #resetData(): void {
-    this.currentPage.set(1);
-    this.#tokenHistory = [null];
-    this.#loadApps(null);
+    this.pagination()?.reset();
+    this.loadApps();
   }
 }

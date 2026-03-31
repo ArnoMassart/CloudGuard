@@ -1,25 +1,24 @@
-<div class="px-10 py-6">
+<app-page-content-wrapper>
     <app-page-header Title="{{ 'app-access' | transloco }}" Description="{{ 'app-access.description' | transloco }}"
         AdminLink="owl/list" />
 
     <div class="pt-6">
         <div class="w-full flex flex-col gap-5">
-            <div class="w-full flex gap-4">
-                <app-section-top-card class="flex-1" Title="{{ 'app-access.connected-apps' | transloco }}"
+            <div class="w-full grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-2">
+                <app-section-top-card Title="{{ 'app-access.connected-apps' | transloco }}"
                     [Value]="pageOverview()?.totalThirdPartyApps" />
 
-                <app-section-top-card class="flex-1" Title="{{ 'high-risk' | transloco }}"
-                    [Value]="pageOverview()?.totalHighRiskApps" [BackgroundColor]="kpiHighRiskAppsColors().bg"
-                    [IconColor]="kpiHighRiskAppsColors().icon" [TextColor]="kpiHighRiskAppsColors().text"
+                <app-section-top-card Title="{{ 'high-risk' | transloco }}" [Value]="pageOverview()?.totalHighRiskApps"
+                    [BackgroundColor]="kpiHighRiskAppsColors().bg" [IconColor]="kpiHighRiskAppsColors().icon"
+                    [TextColor]="kpiHighRiskAppsColors().text"
                     [Icon]="(pageOverview()?.totalHighRiskApps ?? 0) > 0 ? Icons.TriangleAlert : Icons.Shield" />
 
-                <app-section-top-card class="flex-1" Title="{{ 'app-access.permissions' | transloco }}"
+                <app-section-top-card Title="{{ 'app-access.permissions' | transloco }}"
                     [Value]="pageOverview()?.totalPermissionsGranted" BackgroundColor="#f3e8ff" IconColor="#9810fa"
                     TextColor="#9810fa" [Icon]="Icons.ShieldCheck" />
 
-                <div class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
-                    (click)="openSecurityScoreDetail()" role="button" tabindex="0"
-                    (keydown.enter)="openSecurityScoreDetail()"
+                <div class="cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
+                    role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
                     (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
                     <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore"
                         [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
@@ -30,18 +29,18 @@
                 <app-search-bar placeholder="{{ 'app-access.search' | transloco }}..." class="flex-1 min-w-50"
                     (searchChange)="onSearch($event)" />
 
-                <div class="flex items-center justify-end">
-                    <app-filter-chips [options]="filterOptions()" [selectedValue]="riskFilter()" label="Filters:"
-                        variant="pilled" [showRefresh]="false" (filterChange)="setRiskFilter($event)" />
-                </div>
+                <app-filter-chips [options]="filterOptions()" [selectedValue]="riskFilter()" label="Filters:"
+                    variant="pilled" [showRefresh]="false" (filterChange)="setRiskFilter($event)" />
             </div>
 
             <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
 
-                <div class="flex justify-between items-center mx-6 pb-2">
-                    <span class="font-medium text-lg">{{ 'app-access.all' | transloco }}</span>
+                <div class="flex items-center justify-between gap-3 mb-4 mx-6">
+                    <span class="md:text-lg text-[17px] sm:text-xl font-medium leading-tight text-slate-900">{{
+                        'app-access.all' |
+                        transloco }}</span>
                     <button (click)="refreshData()" [disabled]="isRefreshing() || isLoading()"
-                        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+                        class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-[13px] sm:text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shrink-0 whitespace-nowrap">
                         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()" />
                         {{ isRefreshing() ? ('refreshing' | transloco)+'...' : ('renew-data' | transloco) }}
                     </button>
@@ -68,19 +67,22 @@
                     <div class="bg-red-100 p-3 rounded-full mb-3">
                         <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
                     </div>
-                    <span class="text-lg font-medium text-slate-800">{{ 'error.title' | transloco }}</span>
+                    <span class="md:text-lg text-[17px] font-medium text-slate-800">{{ 'error.title' | transloco
+                        }}</span>
                     <span class="text-sm text-slate-600 mt-1 max-w-md">
                         {{ 'app-access.error.description' | transloco }}
                     </span>
                 </div>
                 }
                 @else if (apps().length > 0) {
-                <div class="space-y-4 mt-1 px-6 pb-6">
+                <div class="space-y-4 mt-1 md:px-6 pb-4">
                     @for (app of apps(); track app.id) {
                     <article
                         class="rounded-lg border border-muted bg-white p-5 shadow-sm [&:not(:has(button:hover)):hover]:bg-gray-50/60 cursor-pointer group"
                         (click)="toggleExpand(app.id.toString())">
+
                         <div class="flex flex-wrap items-center justify-between gap-3">
+
                             <div class="flex items-center gap-3 min-w-0 flex-1">
                                 <div class="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
                                     [class.text-emerald-600]="!app.isHighRisk" [class.bg-[#dbfce7]]="!app.isHighRisk"
@@ -91,7 +93,8 @@
                                     <i-lucide [img]="!app.isHighRisk ? Icons.ShieldCheck : Icons.ShieldAlert"
                                         size="24" />
                                 </div>
-                                <div class="flex flex-col gap-2">
+
+                                <div class="flex flex-col gap-1 sm:gap-2 min-w-0">
                                     <span class="font-medium text-slate-900 text-base truncate">
                                         {{ app.name }}
                                     </span>
@@ -101,41 +104,50 @@
                                 </div>
                             </div>
 
-                            <div class="flex gap-3 items-center">
-                                <div
-                                    class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg bg-sky-100 text-sky-700">
-                                    {{ app.appSource }}
+                            <div
+                                class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-1 sm:mt-0">
+
+                                <div class="flex flex-wrap items-center gap-2">
+
+                                    <div
+                                        class="inline-flex items-center px-2 py-1 text-[11px] sm:text-xs font-medium gap-1.5 rounded-md sm:rounded-lg bg-sky-100 text-sky-700 whitespace-nowrap shrink-0">
+                                        {{ app.appSource }}
+                                    </div>
+
+                                    @if (app.isAnonymous) {
+                                    <div
+                                        class="inline-flex items-center px-2 py-1 text-[11px] sm:text-xs font-medium gap-1.5 rounded-md sm:rounded-lg text-red-800 bg-red-100 whitespace-nowrap shrink-0">
+                                        <i-lucide [img]="Icons.ShieldAlert" size="14" />
+                                        {{ app.isAnonymous ? ('app-access.anonymous-app' | transloco) : '' }}
+                                    </div>
+                                    }
+
+                                    @if (app.isHighRisk && highRiskAlertsEnabled()) {
+                                    <div
+                                        class="inline-flex items-center px-2 py-1 text-[11px] sm:text-xs font-medium gap-1.5 rounded-md sm:rounded-lg text-red-800 bg-red-100 whitespace-nowrap shrink-0">
+                                        {{ app.isHighRisk ? ('high-risk' | transloco) : '' }}
+                                    </div>
+                                    }
+
+                                    @if (app.isHighRisk && !highRiskAlertsEnabled()) {
+                                    <div
+                                        class="inline-flex items-center px-2 py-1 text-[11px] sm:text-xs font-medium gap-1.5 rounded-md sm:rounded-lg text-[#6b7280] bg-[#f3f4f6] whitespace-nowrap shrink-0">
+                                        {{ 'high-risk' | transloco }}
+                                    </div>
+                                    }
                                 </div>
 
-                                @if (app.isAnonymous) {
-                                <div
-                                    class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100">
-                                    <i-lucide [img]="Icons.ShieldAlert" size="14" />
-                                    {{ app.isAnonymous ? ('app-access.anonymous-app' | transloco) : '' }}
-                                </div>
-                                }
-                                @if (app.isHighRisk && highRiskAlertsEnabled()) {
-                                <div
-                                    class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-red-800 bg-red-100">
-                                    {{ app.isHighRisk ? ('high-risk' | transloco) : '' }}
-                                </div>
-                                }
-                                @if (app.isHighRisk && !highRiskAlertsEnabled()) {
-                                <div
-                                    class="flex flex-wrap basis-full sm:basis-auto items-center px-2 py-1 text-xs font-medium gap-1.5 rounded-lg text-[#6b7280] bg-[#f3f4f6]">
-                                    Hoog risico
-                                </div>
-                                }
                                 <i-lucide [img]="
-                    expandedApp() === app.id.toString()
-                      ? Icons.ChevronDown
-                      : Icons.ChevronRight
-                  " size="20" class="cursor-pointer text-muted-foreground/70 transition-transform ml-3" />
+expandedApp() === app.id.toString()
+    ? Icons.ChevronDown
+    : Icons.ChevronRight
+" size="20" class="shrink-0 cursor-pointer text-muted-foreground/70 transition-transform sm:ml-3" />
                             </div>
                         </div>
 
-                        <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
+                        <div
+                            class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-4 divide-y divide-gray-200/60 sm:divide-y-0">
+                            <div class="py-3 sm:py-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     {{ 'users' | transloco }}
                                 </p>
@@ -144,7 +156,7 @@
                                     <span class="font-medium text-slate-600">{{ app.totalUsers }}</span>
                                 </div>
                             </div>
-                            <div>
+                            <div class="py-3 sm:py-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Exposure
                                 </p>
@@ -154,7 +166,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div>
+                            <div class="py-3 sm:py-0">
                                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
                                     Scope count
                                 </p>
@@ -215,11 +227,11 @@
                         }
 
                         <button
-                            class="flex items-center justify-center gap-2 text-muted-foreground py-2 px-3 border border-gray-200 rounded-lg mt-3 cursor-pointer shadow-sm hover:bg-gray-100/80"
+                            class="w-full sm:w-auto flex items-center justify-center gap-2 text-muted-foreground py-2 px-3 border border-gray-200 rounded-lg mt-3 cursor-pointer shadow-sm hover:bg-gray-100/80"
                             (click)="
-              $event.stopPropagation();
-              UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
-            ">
+$event.stopPropagation();
+UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
+">
                             <span class="text-[13px] font-normal">{{ 'app-access.manage-console' | transloco }}</span>
                             <i-lucide [img]="Icons.ExternalLink" size="12" />
                         </button>
@@ -236,33 +248,19 @@
                         }
                     </article>
                     }
-
-                    <div
-                        class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-                        <span class="text-sm text-gray-500">
-                            {{ 'page' | transloco }} <span class="font-medium text-slate-900">{{ currentPage() }}</span>
-                        </span>
-                        <div class="flex gap-2">
-                            <button (click)="prevPage()" [disabled]="currentPage() === 1"
-                                class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i-lucide [img]="Icons.ChevronLeft" size="16" />
-                                {{ 'previous' | transloco }}
-                            </button>
-                            <button (click)="nextPage()" [disabled]="!nextPageToken()"
-                                class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                {{ 'next' | transloco }}
-                                <i-lucide [img]="Icons.ChevronRight" size="16" />
-                            </button>
-                        </div>
-                    </div>
                 </div>
                 }
                 @else {
                 <div class="flex items-center justify-center p-10 mt-4 border-t border-gray-100">
-                    <span class="text-lg font-medium text-slate-600"> {{ 'app-access.no-founds' | transloco }}! </span>
+                    <span class="md:text-lg text-[17px] font-medium text-slate-600"> {{ 'app-access.no-founds' |
+                        transloco }}! </span>
                 </div>
                 }
+                <div [class.hidden]="apps().length === 0 || apiError()">
+                    <app-pagination-bar [nextPageToken]="nextPageToken()" [isLoading]="isLoading()"
+                        (loadData)="loadApps($event)" />
+                </div>
             </div>
         </div>
     </div>
-</div>
+</app-page-content-wrapper>
