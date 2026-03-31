@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import static com.cloudmen.cloudguard.utility.GlobalTestHelper.TEST_ADMIN_USER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
@@ -33,8 +34,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationAggregationServiceTest {
-
-    private static final String USER = "admin@example.com";
 
     @Mock
     GoogleDomainService domainService;
@@ -96,10 +95,10 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_addsCriticalUserControl_whenUsersWithout2fa() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        var response = service.getNotifications(USER, Locale.ENGLISH);
+        var response = service.getNotifications(TEST_ADMIN_USER, Locale.ENGLISH);
 
         assertEquals(1, response.active().size());
         var n = response.active().get(0);
@@ -114,12 +113,12 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_filtersOutActiveWhenPreferenceMapsToDisabledKey() {
         stubQuietBaselines();
-        when(preferenceService.getDisabledPreferenceKeys(USER))
+        when(preferenceService.getDisabledPreferenceKeys(TEST_ADMIN_USER))
                 .thenReturn(Set.of("users-groups:2fa"));
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        var response = service.getNotifications(USER, Locale.ENGLISH);
+        var response = service.getNotifications(TEST_ADMIN_USER, Locale.ENGLISH);
 
         assertTrue(response.active().isEmpty());
     }
@@ -127,7 +126,7 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_excludesDismissedMatchingSourceAndType() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         DismissedNotification d = new DismissedNotification();
@@ -137,9 +136,9 @@ class NotificationAggregationServiceTest {
         d.setTitle("t");
         d.setDescription("d");
         d.setSeverity("critical");
-        when(dismissedService.getDismissedForUser(USER)).thenReturn(List.of(d));
+        when(dismissedService.getDismissedForUser(TEST_ADMIN_USER)).thenReturn(List.of(d));
 
-        var response = service.getNotifications(USER, Locale.ENGLISH);
+        var response = service.getNotifications(TEST_ADMIN_USER, Locale.ENGLISH);
 
         assertTrue(response.active().isEmpty());
     }
@@ -147,11 +146,11 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_setsHasReportedFromGlobalFeedbackKeys() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
         when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of("users-groups:user-control"));
 
-        var response = service.getNotifications(USER, Locale.ENGLISH);
+        var response = service.getNotifications(TEST_ADMIN_USER, Locale.ENGLISH);
 
         assertEquals(1, response.active().size());
         assertTrue(response.active().get(0).hasReported());
@@ -160,7 +159,7 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_dnsCritical_whenSpfActionRequired() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 0, 0, 100, 0, 0, null, null));
 
         var badSpf = new DnsRecordDto(
@@ -173,7 +172,7 @@ class NotificationAggregationServiceTest {
         when(dnsRecordsService.getImportantRecords(eq("example.com"), eq("google"), any()))
                 .thenReturn(new DnsRecordResponseDto("example.com", List.of(badSpf), 40, null));
 
-        var response = service.getNotifications(USER, Locale.ENGLISH);
+        var response = service.getNotifications(TEST_ADMIN_USER, Locale.ENGLISH);
 
         assertEquals(1, response.active().size());
         assertEquals("dns-critical", response.active().get(0).notificationType());
@@ -183,22 +182,22 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotificationsCount_matchesActiveListSize() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        assertEquals(1, service.getNotificationsCount(USER));
+        assertEquals(1, service.getNotificationsCount(TEST_ADMIN_USER));
     }
 
     @Test
     void getNotificationsCriticalCount_countsOnlyCriticalSeverity() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
-        when(groupsService.getGroupsOverview(eq(USER), any()))
+        when(groupsService.getGroupsOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse(
                         1, 1, 0, 0, 0, 100, null, null));
 
-        long critical = service.getNotificationsCriticalCount(USER);
+        long critical = service.getNotificationsCriticalCount(TEST_ADMIN_USER);
 
         assertEquals(1, critical);
     }
@@ -206,38 +205,38 @@ class NotificationAggregationServiceTest {
     @Test
     void getCriticalNotifications_returnsOnlyCriticalEntries() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(USER), any()))
+        when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
-        when(groupsService.getGroupsOverview(eq(USER), any()))
+        when(groupsService.getGroupsOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse(
                         1, 1, 0, 0, 0, 100, null, null));
 
-        var critical = service.getCriticalNotifications(USER, Locale.ENGLISH);
+        var critical = service.getCriticalNotifications(TEST_ADMIN_USER, Locale.ENGLISH);
 
         assertEquals(1, critical.size());
         assertEquals("critical", critical.get(0).severity());
     }
 
     private void stubQuietBaselines() {
-        lenient().when(preferenceService.getDisabledPreferenceKeys(USER)).thenReturn(Set.of());
-        lenient().when(preferenceService.getDnsImportanceOverrides(USER)).thenReturn(Map.of());
+        lenient().when(preferenceService.getDisabledPreferenceKeys(TEST_ADMIN_USER)).thenReturn(Set.of());
+        lenient().when(preferenceService.getDnsImportanceOverrides(TEST_ADMIN_USER)).thenReturn(Map.of());
 
-        lenient().when(domainService.getAllDomains(USER))
+        lenient().when(domainService.getAllDomains(TEST_ADMIN_USER))
                 .thenReturn(List.of(new DomainDto("example.com", "Primary Domain", true, 1)));
         lenient().when(dnsRecordsService.getImportantRecords(eq("example.com"), eq("google"), any()))
                 .thenReturn(new DnsRecordResponseDto("example.com", List.of(), 100, null));
 
-        lenient().when(usersService.getUsersPageOverview(eq(USER), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(TEST_ADMIN_USER), any()))
                 .thenReturn(new UserOverviewResponse(10, 0, 0, 100, 0, 0, null, null));
-        lenient().when(driveService.getDrivesPageOverview(eq(USER), any())).thenReturn(null);
-        lenient().when(deviceService.getDevicesPageOverview(eq(USER), any())).thenReturn(null);
-        lenient().when(groupsService.getGroupsOverview(eq(USER), any())).thenReturn(null);
-        lenient().when(oAuthService.getOAuthPageOverview(eq(USER), any())).thenReturn(null);
-        lenient().when(appPasswordsService.getOverview(eq(USER), eq(true), any()))
+        lenient().when(driveService.getDrivesPageOverview(eq(TEST_ADMIN_USER), any())).thenReturn(null);
+        lenient().when(deviceService.getDevicesPageOverview(eq(TEST_ADMIN_USER), any())).thenReturn(null);
+        lenient().when(groupsService.getGroupsOverview(eq(TEST_ADMIN_USER), any())).thenReturn(null);
+        lenient().when(oAuthService.getOAuthPageOverview(eq(TEST_ADMIN_USER), any())).thenReturn(null);
+        lenient().when(appPasswordsService.getOverview(eq(TEST_ADMIN_USER), eq(true), any()))
                 .thenReturn(new AppPasswordOverviewResponse(true, 0, 0, 100, null));
-        lenient().when(passwordSettingsService.getPasswordSettings(USER)).thenReturn(null);
+        lenient().when(passwordSettingsService.getPasswordSettings(TEST_ADMIN_USER)).thenReturn(null);
 
-        lenient().when(dismissedService.getDismissedForUser(USER)).thenReturn(List.of());
+        lenient().when(dismissedService.getDismissedForUser(TEST_ADMIN_USER)).thenReturn(List.of());
         lenient().when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of());
     }
 }

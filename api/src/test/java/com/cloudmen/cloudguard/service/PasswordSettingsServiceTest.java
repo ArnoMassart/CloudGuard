@@ -23,13 +23,12 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.cloudmen.cloudguard.utility.GlobalTestHelper.TEST_ADMIN_USER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PasswordSettingsServiceTest {
-
-    private static final String ADMIN = "admin@example.com";
 
     @Mock
     PolicyApiCacheService policyCache;
@@ -63,37 +62,37 @@ class PasswordSettingsServiceTest {
 
     @Test
     void forceRefreshCache_invalidatesInternalCacheAndRefreshesDependencies() {
-        service.forceRefreshCache(ADMIN);
+        service.forceRefreshCache(TEST_ADMIN_USER);
 
         verify(policyCache).forceRefreshCache();
-        verify(usersCache).forceRefreshCache(ADMIN);
-        verify(orgUnitCache).forceRefreshCache(ADMIN);
-        verify(adminSecurityKeysService).forceRefreshCache(ADMIN);
+        verify(usersCache).forceRefreshCache(TEST_ADMIN_USER);
+        verify(orgUnitCache).forceRefreshCache(TEST_ADMIN_USER);
+        verify(adminSecurityKeysService).forceRefreshCache(TEST_ADMIN_USER);
     }
 
     @Test
     void getPasswordSettings_secondCallDoesNotRefetchUsersFromCacheService() throws Exception {
         stubMinimalTenant();
 
-        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(TEST_ADMIN_USER))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(TEST_ADMIN_USER)).thenReturn(Set.of());
 
-        service.getPasswordSettings(ADMIN);
-        service.getPasswordSettings(ADMIN);
+        service.getPasswordSettings(TEST_ADMIN_USER);
+        service.getPasswordSettings(TEST_ADMIN_USER);
 
-        verify(usersCache, times(1)).getOrFetchUsersData(ADMIN);
+        verify(usersCache, times(1)).getOrFetchUsersData(TEST_ADMIN_USER);
     }
 
     @Test
     void getPasswordSettings_emptyUsers_summaryAndScoreStillCoherent() throws Exception {
         stubMinimalTenant();
 
-        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(TEST_ADMIN_USER))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(TEST_ADMIN_USER)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+        PasswordSettingsDto dto = service.getPasswordSettings(TEST_ADMIN_USER);
 
         assertEquals(0, dto.summary().totalUsers());
         assertEquals(100, dto.securityScore());
@@ -118,20 +117,20 @@ class PasswordSettingsServiceTest {
         ok.setIsEnrolledIn2Sv(true);
         ok.setIsEnforcedIn2Sv(true);
 
-        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
+        when(usersCache.getOrFetchUsersData(TEST_ADMIN_USER)).thenReturn(
                 new UserCacheEntry(List.of(forced, ok), Map.of(), Map.of(), 0L));
-        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
+        when(orgUnitCache.getOrFetchOrgUnitData(TEST_ADMIN_USER)).thenReturn(
                 new OrgUnitCacheEntry(List.of(), Map.of("/", 2), 0L));
-        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
-        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
+        when(policyCache.getOuIdToPathMap(TEST_ADMIN_USER)).thenReturn(Collections.emptyMap());
+        when(policyCache.getAllPolicies(TEST_ADMIN_USER)).thenReturn(Collections.emptyList());
 
         var missingKeyAdmin = new AdminWithSecurityKeyDto(
                 "a1", "Admin One", "admin1@example.com", "Admin", "/", true, 0);
-        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(TEST_ADMIN_USER))
                 .thenReturn(new AdminSecurityKeysResponse(List.of(missingKeyAdmin), 2, null));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(TEST_ADMIN_USER)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+        PasswordSettingsDto dto = service.getPasswordSettings(TEST_ADMIN_USER);
 
         assertEquals(1, dto.usersWithForcedChange().size());
         assertEquals(1, dto.summary().usersWithForcedChange());
@@ -311,12 +310,12 @@ class PasswordSettingsServiceTest {
     }
 
     private void stubMinimalTenant() throws Exception {
-        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
+        when(usersCache.getOrFetchUsersData(TEST_ADMIN_USER)).thenReturn(
                 new UserCacheEntry(List.of(), Map.of(), Map.of(), 0L));
-        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
+        when(orgUnitCache.getOrFetchOrgUnitData(TEST_ADMIN_USER)).thenReturn(
                 new OrgUnitCacheEntry(List.of(), Map.of("/", 0), 0L));
-        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
-        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
+        when(policyCache.getOuIdToPathMap(TEST_ADMIN_USER)).thenReturn(Collections.emptyMap());
+        when(policyCache.getAllPolicies(TEST_ADMIN_USER)).thenReturn(Collections.emptyList());
     }
 
     private static OuPasswordPolicyDto ouPolicy(
