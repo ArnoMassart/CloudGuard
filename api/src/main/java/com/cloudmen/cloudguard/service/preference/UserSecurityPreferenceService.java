@@ -3,7 +3,11 @@ package com.cloudmen.cloudguard.service.preference;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference;
 import com.cloudmen.cloudguard.dto.preferences.PreferencesResponse;
+import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +22,12 @@ import java.util.stream.Collectors;
 public class UserSecurityPreferenceService {
 
     private final UserSecurityPreferenceRepository repository;
+    private final MessageSource messageSource;
 
-    public UserSecurityPreferenceService(UserSecurityPreferenceRepository repository) {
+    public UserSecurityPreferenceService(
+            UserSecurityPreferenceRepository repository, @Qualifier("messageSource") MessageSource messageSource) {
         this.repository = repository;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -119,13 +126,24 @@ public class UserSecurityPreferenceService {
      */
     @Transactional
     public void setPreference(String userId, String section, String preferenceKey, Boolean enabled, String value) {
+        validateSection(section);
+        validatePreferenceKey(preferenceKey);
+
         if ("domain-dns".equals(section) && DnsImportancePreferenceSupport.isDnsImportancePreferenceKey(preferenceKey)) {
             if (value == null || value.isBlank()) {
                 repository.findByUserIdAndSectionAndPreferenceKey(userId, section, preferenceKey)
                         .ifPresent(repository::delete);
                 return;
             }
-            DnsRecordImportance.valueOf(value.trim());
+            try {
+                DnsRecordImportance.valueOf(value.trim());
+            } catch (IllegalArgumentException e) {
+                throw new SecurityPreferenceValidationException(
+                        messageSource.getMessage(
+                                "api.preferences.validation.dns_importance_invalid",
+                                null,
+                                LocaleContextHolder.getLocale()));
+            }
             UserSecurityPreference p = repository.findByUserIdAndSectionAndPreferenceKey(userId, section, preferenceKey)
                     .orElseGet(() -> {
                         UserSecurityPreference newP = new UserSecurityPreference();
@@ -181,5 +199,23 @@ public class UserSecurityPreferenceService {
     public boolean isNotificationHiddenByPreference(String userId, String source, String notificationType) {
         Set<String> disabled = getDisabledPreferenceKeys(userId);
         return PreferenceToNotificationMapping.isDisabledByPreference(source, notificationType, disabled);
+    }
+
+    private void validateSection(String section) {
+        if (section == null || section.isBlank()) {
+            throw new SecurityPreferenceValidationException(
+                    messageSource.getMessage(
+                            "api.preferences.validation.section_required", null, LocaleContextHolder.getLocale()));
+        }
+    }
+
+    private void validatePreferenceKey(String preferenceKey) {
+        if (preferenceKey == null || preferenceKey.isBlank()) {
+            throw new SecurityPreferenceValidationException(
+                    messageSource.getMessage(
+                            "api.preferences.validation.preference_key_required",
+                            null,
+                            LocaleContextHolder.getLocale()));
+        }
     }
 }

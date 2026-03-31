@@ -1,11 +1,15 @@
 package com.cloudmen.cloudguard.service.notification;
 
+import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +25,7 @@ public class FeedbackEmailService {
     private static final String FOREGROUND = "#030213";
 
     private final JavaMailSender mailSender;
+    private final MessageSource messageSource;
 
     @Value("${app.feedback.notification-emails:}")
     private List<String> recipientEmails;
@@ -28,11 +33,11 @@ public class FeedbackEmailService {
     @Value("${spring.mail.username:noreply@cloudguard.com}")
     private String fromEmail;
 
-    public FeedbackEmailService(JavaMailSender mailSender) {
+    public FeedbackEmailService(JavaMailSender mailSender, @Qualifier("messageSource") MessageSource messageSource) {
         this.mailSender = mailSender;
+        this.messageSource = messageSource;
     }
 
-    @Async
     public void sendFeedbackEmail(String userId, String source, String notificationType, String feedbackText) {
         if (recipientEmails == null || recipientEmails.isEmpty()) return;
 
@@ -49,8 +54,15 @@ public class FeedbackEmailService {
             helper.setText(buildPlainText(userId, source, notificationType, feedbackText), buildHtmlContent(userId, source, notificationType, feedbackText));
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send feedback email", e);
+            throwFeedbackEmailFailed(e);
+        } catch (MailException e) {
+            throwFeedbackEmailFailed(e);
         }
+    }
+
+    private void throwFeedbackEmailFailed(Throwable cause) {
+        String msg = messageSource.getMessage("api.email.send_failed", null, LocaleContextHolder.getLocale());
+        throw new FailedFeedbackEmailException(msg, cause);
     }
 
     private String buildPlainText(String userId, String source, String notificationType, String feedbackText) {

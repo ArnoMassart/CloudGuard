@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminSecurityKeysResponse;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -13,6 +14,9 @@ import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -36,6 +40,7 @@ public class AdminSecurityKeysService {
     private static final String PARAMETERS = "accounts:num_security_keys,accounts:num_passkeys_enrolled,accounts:first_name,accounts:last_name,accounts:is_2sv_enrolled";
 
     private final GoogleApiFactory apiFactory;
+    private final MessageSource messageSource;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -44,8 +49,9 @@ public class AdminSecurityKeysService {
             .maximumSize(100)
             .build();
 
-    public AdminSecurityKeysService(GoogleApiFactory apiFactory) {
+    public AdminSecurityKeysService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource) {
         this.apiFactory = apiFactory;
+        this.messageSource = messageSource;
     }
 
     public AdminSecurityKeysResponse getAdminsWithSecurityKeys(String adminEmail) {
@@ -121,7 +127,10 @@ public class AdminSecurityKeysService {
                 return new AdminSecurityKeysResponse(Collections.emptyList(), 0, userMsg);
             }
             log.error("Failed to fetch admins without security keys", e);
-            throw new RuntimeException("Kon admins zonder security keys niet ophalen: " + e.getMessage(), e);
+            throw new GoogleWorkspaceSyncException(
+                    messageSource.getMessage(
+                            "api.google.admin_security_keys_fetch_failed", null, LocaleContextHolder.getLocale()),
+                    e);
         }
     }
 

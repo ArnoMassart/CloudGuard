@@ -78,7 +78,29 @@
 
     <div></div>
 
-    @if (!loading()) {
+    @if (loading()) {
+      <div class="flex flex-col items-center p-3">
+        <div class="flex flex-col items-center space-y-4 p-8">
+          <div class="relative flex items-center justify-center">
+            <div class="h-12 w-12 rounded-full"></div>
+            <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+          <span class="text-sm font-medium text-slate-600 animate-pulse">
+            {{ 'groups.loading' | transloco }}...
+          </span>
+        </div>
+      </div>
+    }@else if (apiError()) {
+      <div class="flex flex-col items-center justify-center p-10 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
+        <div class="bg-red-100 p-3 rounded-full mb-3">
+          <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
+        </div>
+        <span class="text-lg font-medium text-slate-800">{{'error.title' | transloco}}</span>
+        <span class="text-sm text-slate-600 mt-1 max-w-md">
+          {{ 'groups.error.description' | transloco}}
+        </span>
+      </div>
+    } @else {
     <div class="space-y-4 mt-1 px-6">
       @for (group of groups(); track group.name) {
       <article class="rounded-lg border border-muted bg-white p-5 shadow-sm">
@@ -178,7 +200,7 @@
           </div>
         </div>
       </article>
-      } @empty {
+      }  @empty {
       <p class="text-sm text-slate-500">{{ 'groups.no-found' | transloco }}.</p>
       }
 
@@ -198,18 +220,6 @@
             <i-lucide [img]="Icons.ChevronRight" size="16" />
           </button>
         </div>
-      </div>
-    </div>
-    } @else {
-    <div class="flex flex-col items-center p-3">
-      <div class="flex flex-col items-center space-y-4 p-8">
-        <div class="relative flex items-center justify-center">
-          <div class="h-12 w-12 rounded-full"></div>
-          <div class="absolute h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-        <span class="text-sm font-medium text-slate-600 animate-pulse">
-          {{ 'groups.loading' | transloco }}...
-        </span>
       </div>
     </div>
     }

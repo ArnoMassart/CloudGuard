@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.domain.model.feedback.NotificationFeedback;
+import com.cloudmen.cloudguard.exception.NotificationFeedbackValidationException;
 import com.cloudmen.cloudguard.repository.NotificationFeedbackRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,12 +26,73 @@ class NotificationFeedbackServiceTest {
     NotificationFeedbackRepository repository;
     @Mock
     FeedbackEmailService emailService;
+    @Mock
+    MessageSource messageSource;
 
     NotificationFeedbackService service;
 
     @BeforeEach
     void setUp() {
-        service = new NotificationFeedbackService(repository, emailService);
+        service = new NotificationFeedbackService(repository, emailService, messageSource);
+    }
+
+    @Test
+    void submitFeedback_blankSource_throwsAndDoesNotQueryRepository() {
+        when(messageSource.getMessage(eq("api.feedback.validation.source_required"), isNull(), any()))
+                .thenReturn("Source required");
+
+        assertThrows(
+                NotificationFeedbackValidationException.class,
+                () -> service.submitFeedback("u1", " ", "t", "text"));
+
+        verifyNoInteractions(repository);
+        verifyNoInteractions(emailService);
+    }
+
+    @Test
+    void submitFeedback_blankNotificationType_throws() {
+        when(messageSource.getMessage(eq("api.feedback.validation.notification_type_required"), isNull(), any()))
+                .thenReturn("Type required");
+
+        assertThrows(
+                NotificationFeedbackValidationException.class,
+                () -> service.submitFeedback("u1", "s", "  ", "text"));
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void submitFeedback_blankFeedbackText_whenExistingNullText_throws() {
+        NotificationFeedback existing = new NotificationFeedback();
+        existing.setId(9L);
+        existing.setFeedbackText(null);
+        when(repository.findByUserIdAndSourceAndNotificationType("u1", "s", "t"))
+                .thenReturn(Optional.of(existing));
+        when(messageSource.getMessage(eq("api.feedback.validation.feedback_text_required"), isNull(), any()))
+                .thenReturn("Text required");
+
+        assertThrows(
+                NotificationFeedbackValidationException.class,
+                () -> service.submitFeedback("u1", "s", "t", null));
+
+        verify(emailService, never()).sendFeedbackEmail(anyString(), anyString(), anyString(), anyString());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void submitFeedback_blankFeedbackText_whenNew_throwsAfterLookup() {
+        when(repository.findByUserIdAndSourceAndNotificationType("u1", "s", "t"))
+                .thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("api.feedback.validation.feedback_text_required"), isNull(), any()))
+                .thenReturn("Text required");
+
+        assertThrows(
+                NotificationFeedbackValidationException.class,
+                () -> service.submitFeedback("u1", "s", "t", "\t"));
+
+        verify(repository).findByUserIdAndSourceAndNotificationType("u1", "s", "t");
+        verifyNoInteractions(emailService);
+        verify(repository, never()).save(any());
     }
 
     @Test

@@ -53,6 +53,8 @@ const PW_SETTINGS_I18N: Record<string, string> = {
   'to-admin-console': 'Admin',
   'password-settings.head-organisation': 'Head',
   'security-score.password-settings': 'Password settings score',
+  'password-settings.error.load-failed': 'Could not load (fallback)',
+  'password-settings.error.refresh-failed': 'Could not refresh (fallback)',
 };
 
 class PasswordSettingsTranslocoLoader implements TranslocoLoader {
@@ -198,7 +200,7 @@ describe('PasswordSettings', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.error()).toBe('Kon gegevens niet laden.');
+    expect(component.error()).toBe('Could not load (fallback)');
     expect(component.loading()).toBe(false);
   });
 
@@ -348,6 +350,7 @@ describe('PasswordSettings', () => {
     serviceMock.refreshCache.mockReturnValueOnce(throwError(() => new Error('cache')));
     component.refreshData();
     expect(component.isRefreshing()).toBe(false);
+    expect(component.refreshError() ?? '').toContain('cache');
     errSpy.mockRestore();
   });
 

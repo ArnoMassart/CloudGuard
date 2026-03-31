@@ -55,7 +55,9 @@ export class GroupsSection implements OnInit, OnDestroy {
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);
   readonly groups = signal<GroupSummary[]>([]);
-  readonly loading = signal(true);
+  readonly loading = signal(false);
+  readonly overviewError = signal(false);
+  readonly apiError = signal(false);
   readonly isRefreshing = signal<boolean>(false);
   readonly pageOverview = signal<GroupOverviewResponse | null>(null);
   readonly searchQuery = signal('');
@@ -110,8 +112,14 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadGroupsOverview(): void {
     this.#preferencesFacade.loadWithPrefs$(this.#groupService.getGroupsOverview()).subscribe({
-      next: (overview) => this.pageOverview.set(overview),
-      error: (err) => console.error('Failed to load groups overview', err),
+      next: (overview) => {
+        this.pageOverview.set(overview);
+        this.overviewError.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load groups overview', err);
+        this.apiError.set(true);
+      },
     });
   }
 
@@ -166,16 +174,15 @@ export class GroupsSection implements OnInit, OnDestroy {
       next: () => {
         this.currentPage.set(1);
         this.tokenHistory = [null];
-
         this.loadGroups(null);
         this.loadGroupsOverview();
       },
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
         this.isRefreshing.set(false);
+        this.apiError.set(true);
       },
       complete: () => {
-        // Stop de spinner zodra alles klaar is
         this.isRefreshing.set(false);
       },
     });
@@ -183,6 +190,8 @@ export class GroupsSection implements OnInit, OnDestroy {
 
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
+    this.apiError.set(false);
+
     this.#groupService.getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize).subscribe({
       next: (res) => {
         this.groups.set(this.mapToGroupSummary(res.groups));
@@ -193,6 +202,7 @@ export class GroupsSection implements OnInit, OnDestroy {
         console.error('Error fetching groups:', error);
         this.groups.set([]);
         this.loading.set(false);
+        this.apiError.set(true);
       },
     });
   }

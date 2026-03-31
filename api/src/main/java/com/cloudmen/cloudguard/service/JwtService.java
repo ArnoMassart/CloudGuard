@@ -2,10 +2,16 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.exception.InvalidExternalTokenException;
+import com.cloudmen.cloudguard.exception.UnauthorizedException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -17,16 +23,20 @@ import java.util.Date;
 @Service
 public class JwtService {
     private static final String GOOGLE_JWK_SET_URI = "https://dev-x2l40e775g2q2ot3.eu.auth0.com/.well-known/jwks.json";
-    private final JwtDecoder googleJwtDecoder;
 
-    // 2. Configuration for Internal Session Token
+    private final JwtDecoder googleJwtDecoder;
+    private final MessageSource messageSource;
+
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
+
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
+
     private SecretKey signInKey;
 
-    public JwtService() {
+    public JwtService(@Qualifier("messageSource") MessageSource messageSource) {
+        this.messageSource = messageSource;
         this.googleJwtDecoder = NimbusJwtDecoder.withJwkSetUri(GOOGLE_JWK_SET_URI).build();
     }
 
@@ -53,12 +63,24 @@ public class JwtService {
     }
 
     public String validateInternalToken(String token) {
-        return Jwts.parser()
-                .verifyWith(signInKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        if (token == null || token.isBlank()) {
+            throw new UnauthorizedException(
+                    messageSource.getMessage("api.auth.token_required", null, LocaleContextHolder.getLocale()));
+        }
+        try {
+            return Jwts.parser()
+                    .verifyWith(signInKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (ExpiredJwtException e) {
+            throw new UnauthorizedException(
+                    messageSource.getMessage("api.auth.session_expired", null, LocaleContextHolder.getLocale()));
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new UnauthorizedException(
+                    messageSource.getMessage("api.auth.session_invalid", null, LocaleContextHolder.getLocale()));
+        }
     }
 
     public boolean isGoogleAdmin(Jwt jwt) {

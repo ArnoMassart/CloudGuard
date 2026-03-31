@@ -5,6 +5,52 @@
     [NeedAdminLink]="false"
   />
 
+  @if (loadError()) {
+  <div
+    class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    role="alert"
+  >
+    <span>{{ loadError() }}</span>
+    <button
+      type="button"
+      class="shrink-0 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-200"
+      (click)="retryLoad()"
+    >
+      {{ 'try-again' | transloco }}
+    </button>
+  </div>
+  }
+  @if (saveError()) {
+  <div
+    class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    role="alert"
+  >
+    <span>{{ saveError() }}</span>
+    <button
+      type="button"
+      class="shrink-0 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-200"
+      (click)="dismissSaveError()"
+    >
+      {{ 'cancel' | transloco }}
+    </button>
+  </div>
+  }
+  @if (preferencesFacade.disabledKeysRefreshFailed()) {
+  <div
+    class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    role="status"
+  >
+    <span>{{ 'preferences.error.sync' | transloco }}</span>
+    <button
+      type="button"
+      class="shrink-0 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-200"
+      (click)="dismissSyncWarning()"
+    >
+      {{ 'cancel' | transloco }}
+    </button>
+  </div>
+  }
+
   <div class="mt-6" role="note" aria-label="{{ 'preferences.info.label' | transloco }}">
     <app-page-warnings [isInfo]="true" title="{{ 'preferences.info.title' | transloco }}">
       <app-page-warnings-item body [isInfo]="true">

@@ -17,6 +17,9 @@ const ORG_UNITS_I18N_STUB: Record<string, string> = {
   'security-rules.loading': 'Loading rules',
   'org-units.change-settings': 'Change',
   'to-admin-console': 'Admin',
+  'organisational-units.error.load-failed': 'Load failed',
+  'organisational-units.error.refresh-failed': 'Refresh failed',
+  'organisational-units.error.policies-failed': 'Policies failed',
 };
 
 class OrgUnitsTranslocoLoader implements TranslocoLoader {
@@ -163,7 +166,7 @@ describe('OrganizationalUnits', () => {
 
   it('sets policiesError when policy request fails', async () => {
     orgUnitServiceMock.getPoliciesForOrgUnit.mockReturnValueOnce(
-      throwError(() => ({ message: 'Policy HTTP 500' })),
+      throwError(() => new Error('Policy HTTP 500')),
     );
     fixture = TestBed.createComponent(OrganizationalUnits);
     component = fixture.componentInstance;
