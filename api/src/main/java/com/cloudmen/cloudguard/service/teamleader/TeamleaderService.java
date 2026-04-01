@@ -1,7 +1,9 @@
 package com.cloudmen.cloudguard.service.teamleader;
 
+import com.cloudmen.cloudguard.dto.TeamleaderTokens;
 import com.cloudmen.cloudguard.exception.AccessTokenEmptyException;
 import com.cloudmen.cloudguard.exception.RefreshTokenEmptyException;
+import com.cloudmen.cloudguard.exception.TeamleaderResponseBodyEmptyException;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +48,7 @@ public class TeamleaderService {
 
     public HttpHeaders createHeaders() {
         // Haal altijd de meest verse token op uit Supabase!
-        SupabaseTokenService.TeamleaderTokens tokens = supabaseTokenService.getTokens();
+        TeamleaderTokens tokens = supabaseTokenService.getTokens();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(tokens.accessToken());
@@ -57,7 +59,7 @@ public class TeamleaderService {
 
     public boolean refreshTokens() {
         // Haal de refresh token centraal op
-        SupabaseTokenService.TeamleaderTokens tokens = supabaseTokenService.getTokens();
+        TeamleaderTokens tokens = supabaseTokenService.getTokens();
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("client_id", clientId);
@@ -74,7 +76,9 @@ public class TeamleaderService {
             );
 
             Map<String, Object> body = response.getBody();
-            assert body != null;
+            if (body == null) {
+                throw new TeamleaderResponseBodyEmptyException("Response body van Teamleader was leeg tijdens het vernieuwen van tokens.");
+            }
 
             String newAccessToken = (String) body.get("access_token");
             String newRefreshToken = (String) body.get("refresh_token");

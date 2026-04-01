@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.TeamleaderTokens;
+import com.cloudmen.cloudguard.exception.TokensNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +22,6 @@ public class SupabaseTokenService {
     private final RestTemplate restTemplate;
     private final String supabaseUrl;
     private final String supabaseKey;
-
-    public record TeamleaderTokens(String accessToken, String refreshToken) {}
 
     public SupabaseTokenService(
             @Value("${supabase.url}") String supabaseUrl,
@@ -57,7 +57,7 @@ public class SupabaseTokenService {
             Map<String, String> row = body.get(0);
             return new TeamleaderTokens(row.get("access_token"), row.get("refresh_token"));
         }
-        throw new RuntimeException("Geen Teamleader tokens gevonden in Supabase! Voer de initiële setup uit.");
+        throw new TokensNotFoundException("Geen Teamleader tokens gevonden in Supabase! Voer de initiële setup uit.");
     }
 
     public void updateTokens(String accessToken, String refreshToken) {
