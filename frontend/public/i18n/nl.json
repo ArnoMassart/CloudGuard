@@ -293,6 +293,7 @@
   "domain.all": "Alle domeinen",
   "domain.all-linked": "Alle domeinen gekoppeld aan je Workspace",
   "domain.domain-name": "Domeinnaam",
+  "domain.record-type": "Type",
   "domain.verification-status": "Verificatiestatus",
   "domain.number-users": "Aantal Gebruikers",
   "verified": "Geverifieerd",

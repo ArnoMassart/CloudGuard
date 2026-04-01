@@ -296,6 +296,7 @@
   "domain.dns-records.none": "No DNS records found for this domain",
   "domain.dns-records.select-domain": "Select a domain to view DNS records",
   "domain.domain-name": "Domain name",
+  "domain.record-type": "Type",
   "domain.loading": "Domains are loading",
   "domain.none": "No domains found",
   "domain.none-selected": "Select a domain to view security controls",
