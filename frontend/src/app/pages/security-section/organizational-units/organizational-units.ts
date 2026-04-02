@@ -46,7 +46,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
   readonly policiesLoading = signal(false);
   readonly policiesError = signal<string | null>(null);
 
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   constructor() {
     effect(() => {
@@ -66,7 +66,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
         error: (err) => {
           const msg = this.#httpErrorDetail(err);
           this.policiesError.set(
-            msg || this.#translocoService.translate('organisational-units.error.policies-failed'),
+            msg || this.#translocoService.translate('organisational-units.error.policies-failed')
           );
           this.policies.set([]);
           this.policiesLoading.set(false);
@@ -76,14 +76,14 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.loadUnitTree();
     });
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 
@@ -101,7 +101,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
       error: (err) => {
         const msg = this.#httpErrorDetail(err);
         this.error.set(
-          msg || this.#translocoService.translate('organisational-units.error.load-failed'),
+          msg || this.#translocoService.translate('organisational-units.error.load-failed')
         );
         this.loading.set(false);
       },
@@ -160,7 +160,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
         console.error('Kon cache niet vernieuwen:', err);
         const msg = this.#httpErrorDetail(err);
         this.refreshError.set(
-          msg || this.#translocoService.translate('organisational-units.error.refresh-failed'),
+          msg || this.#translocoService.translate('organisational-units.error.refresh-failed')
         );
         this.isRefreshing.set(false);
       },

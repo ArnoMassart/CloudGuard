@@ -128,17 +128,17 @@ export class ReportsReactions implements OnInit, OnDestroy {
     },
   ]);
 
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   ngOnInit() {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadNotifications();
     });
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 
@@ -193,11 +193,13 @@ export class ReportsReactions implements OnInit, OnDestroy {
         this.listLoadError.set(null);
       },
       error: (err) => {
-        console.error("Notifications load failed: ", err);
+        console.error('Notifications load failed: ', err);
         this.notifications.set([]);
         this.dismissedNotifications.set([]);
         const msg = this.#httpErrorDetail(err);
-        this.listLoadError.set(msg || this.#translocoService.translate('reports-reactions.error.load-failed'));
+        this.listLoadError.set(
+          msg || this.#translocoService.translate('reports-reactions.error.load-failed')
+        );
         this.isLoading.set(false);
       },
     });
@@ -229,9 +231,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
           this.refresh();
         },
         error: (err) => {
-          console.error("Mark as dismissed failed: ", err);
+          console.error('Mark as dismissed failed: ', err);
           const msg = this.#httpErrorDetail(err);
-          this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.dismiss-failed'));
+          this.actionError.set(
+            msg || this.#translocoService.translate('reports-reactions.error.dismiss-failed')
+          );
           this.dismissingIds.update((s) => {
             const next = new Set(s);
             next.delete(key);
@@ -260,9 +264,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
         this.refresh();
       },
       error: (err) => {
-        console.error("Un dismiss failed: ", err);
+        console.error('Un dismiss failed: ', err);
         const msg = this.#httpErrorDetail(err);
-        this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.un-dismiss-failed'));
+        this.actionError.set(
+          msg || this.#translocoService.translate('reports-reactions.error.un-dismiss-failed')
+        );
         this.unDismissingIds.update((s) => {
           const next = new Set(s);
           next.delete(key);
@@ -315,9 +321,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
             this.actionError.set(null);
           },
           error: (err) => {
-            console.error("Get details failed: ", err);
+            console.error('Get details failed: ', err);
             const msg = this.#httpErrorDetail(err);
-            this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.get-details-failed'));
+            this.actionError.set(
+              msg || this.#translocoService.translate('reports-reactions.error.get-details-failed')
+            );
             this.loadingDetailsIds.update((s) => {
               const next = new Set(s);
               next.delete(id);
@@ -370,9 +378,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
         this.actionError.set(null);
       },
       error: (err) => {
-        console.error("Submit feedback failed: ", err);
+        console.error('Submit feedback failed: ', err);
         const msg = this.#httpErrorDetail(err);
-        this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed'));
+        this.actionError.set(
+          msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed')
+        );
         this.submittingIds.update((s) => {
           const next = new Set(s);
           next.delete(n.id);
@@ -382,13 +392,13 @@ export class ReportsReactions implements OnInit, OnDestroy {
     });
   }
 
-  #httpErrorDetail(err:unknown): string{
-    if( err instanceof HttpErrorResponse){
-      if(typeof err.error==='string'&& err.error.trim()){
+  #httpErrorDetail(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (typeof err.error === 'string' && err.error.trim()) {
         return err.error.trim();
       }
     }
-    if(err instanceof Error && err.message){
+    if (err instanceof Error && err.message) {
       return err.message;
     }
     return '';

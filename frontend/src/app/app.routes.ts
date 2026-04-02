@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { ApiTest } from './pages/api-test/api-test';
-import { Login } from './auth/login/login';
 import { Callback } from './auth/callback/callback';
 import { Home } from './pages/home/home';
 import { UsersGroups } from './pages/security-section/users-groups/users-groups';
@@ -19,6 +18,7 @@ import { Forbidden } from './pages/forbidden/forbidden';
 import { TeamleaderAccessDenied } from './pages/teamleader-access-denied/teamleader-access-denied';
 import { ServerError } from './pages/server-error/server-error';
 import { accessGuard } from './access/access.guard';
+import { Login } from './pages/login/login';
 
 export const routes: Routes = [
   {

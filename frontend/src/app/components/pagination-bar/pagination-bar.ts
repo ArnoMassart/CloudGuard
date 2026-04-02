@@ -20,12 +20,12 @@ export class PaginationBar {
   loadData = output<string | undefined>();
 
   currentPage = signal(1);
-  #tokenHistory: string[] = [];
+  private tokenHistory: string[] = [];
 
   nextPage() {
     const token = this.nextPageToken();
     if (token) {
-      this.#tokenHistory.push(token);
+      this.tokenHistory.push(token);
       this.currentPage.update((p) => p + 1);
       this.loadData.emit(token);
     }
@@ -33,8 +33,8 @@ export class PaginationBar {
 
   prevPage() {
     if (this.currentPage() > 1) {
-      this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory.at(-1);
+      this.tokenHistory.pop();
+      const prevToken = this.tokenHistory.at(-1);
       this.currentPage.update((p) => p - 1);
       this.loadData.emit(prevToken);
     }
@@ -42,6 +42,6 @@ export class PaginationBar {
 
   reset() {
     this.currentPage.set(1);
-    this.#tokenHistory = [];
+    this.tokenHistory = [];
   }
 }

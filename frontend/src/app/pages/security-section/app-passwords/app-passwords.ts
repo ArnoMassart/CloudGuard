@@ -18,7 +18,6 @@ import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HttpErrorResponse } from '@angular/common/http';
 
-
 const ITEMS_PER_PAGE = 4;
 
 @Component({
@@ -54,7 +53,7 @@ export class AppPasswords implements OnInit, OnDestroy {
   readonly listLoadError = signal<string | null>(null);
   readonly overviewError = signal<string | null>(null);
   readonly refreshError = signal<string | null>(null);
-   
+
   readonly searchQuery = signal('');
   readonly filteredUserAppPasswords = computed(() => {
     const users = this.userAppPasswords();
@@ -68,14 +67,15 @@ export class AppPasswords implements OnInit, OnDestroy {
   readonly isExpanded = signal(true);
 
   readonly appPasswordAlertsEnabled = computed(
-    () => !this.#preferencesFacade.isDisabled('app-passwords', 'appPassword'),
+    () => !this.#preferencesFacade.isDisabled('app-passwords', 'appPassword')
   );
 
   readonly kpiAppPasswordAllowedColors = computed(() =>
     kpiColors(
       this.pageOverview()?.allowed ? 1 : 0,
       !this.appPasswordAlertsEnabled(),
-      KPI_COLORS.okGreen, KPI_COLORS.alertRed,
+      KPI_COLORS.okGreen,
+      KPI_COLORS.alertRed
     )
   );
 
@@ -83,12 +83,13 @@ export class AppPasswords implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.totalAppPasswords ?? 0,
       !this.appPasswordAlertsEnabled(),
-      KPI_COLORS.okBlue, KPI_COLORS.alertRed,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertRed
     )
   );
 
-  #tokenHistory: (string | null)[] = [null];
-  #langSubscription?: Subscription;
+  private tokenHistory: (string | null)[] = [null];
+  private langSubscription?: Subscription;
 
   ngOnInit(): void {
     this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
@@ -100,12 +101,12 @@ export class AppPasswords implements OnInit, OnDestroy {
         console.error('App passwords overview failed: ', err);
         const msg = this.#httpErrorDetail(err);
         this.overviewError.set(
-          msg || this.#translocoService.translate('app-passwords.error.overview-failed'),
+          msg || this.#translocoService.translate('app-passwords.error.overview-failed')
         );
       },
     });
     this.#loadAppPasswords(null);
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#preferencesFacade.loadWithPrefs$(this.#appPasswordsService.getOverview()).subscribe({
         next: (overview) => {
           this.pageOverview.set(overview);
@@ -115,7 +116,7 @@ export class AppPasswords implements OnInit, OnDestroy {
           console.error('App passwords overview failed: ', err);
           const msg = this.#httpErrorDetail(err);
           this.overviewError.set(
-            msg || this.#translocoService.translate('app-passwords.error.overview-failed'),
+            msg || this.#translocoService.translate('app-passwords.error.overview-failed')
           );
         },
       });
@@ -124,15 +125,15 @@ export class AppPasswords implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 
   onSearch(value: string) {
     this.searchQuery.set(value);
     this.currentPage.set(1);
-    this.#tokenHistory = [null];
+    this.tokenHistory = [null];
     this.#loadAppPasswords(null);
   }
 
@@ -143,7 +144,7 @@ export class AppPasswords implements OnInit, OnDestroy {
   nextPage() {
     const token = this.nextPageToken();
     if (token) {
-      this.#tokenHistory.push(token);
+      this.tokenHistory.push(token);
       this.currentPage.update((p) => p + 1);
       this.#loadAppPasswords(token);
     }
@@ -151,8 +152,8 @@ export class AppPasswords implements OnInit, OnDestroy {
 
   prevPage() {
     if (this.currentPage() > 1) {
-      this.#tokenHistory.pop();
-      const prevToken = this.#tokenHistory.at(-1) ?? null;
+      this.tokenHistory.pop();
+      const prevToken = this.tokenHistory.at(-1) ?? null;
       this.currentPage.update((p) => p - 1);
       this.#loadAppPasswords(prevToken);
     }
@@ -173,7 +174,7 @@ export class AppPasswords implements OnInit, OnDestroy {
   }
 
   retryLoad() {
-    this.#tokenHistory = [null];
+    this.tokenHistory = [null];
     this.currentPage.set(1);
     this.#loadAppPasswords(null);
   }
@@ -193,11 +194,11 @@ export class AppPasswords implements OnInit, OnDestroy {
             console.error('App passwords overview failed after refresh: ', err);
             const msg = this.#httpErrorDetail(err);
             this.overviewError.set(
-              msg || this.#translocoService.translate('app-passwords.error.overview-failed'),
+              msg || this.#translocoService.translate('app-passwords.error.overview-failed')
             );
           },
         });
-        this.#tokenHistory = [null];
+        this.tokenHistory = [null];
         this.currentPage.set(1);
         this.#loadAppPasswords(null);
       },
@@ -205,7 +206,7 @@ export class AppPasswords implements OnInit, OnDestroy {
         console.error('Kon cache niet vernieuwen:', err);
         const msg = this.#httpErrorDetail(err);
         this.refreshError.set(
-          msg || this.#translocoService.translate('app-passwords.error.refresh-failed'),
+          msg || this.#translocoService.translate('app-passwords.error.refresh-failed')
         );
         this.isRefreshing.set(false);
       },
@@ -235,7 +236,7 @@ export class AppPasswords implements OnInit, OnDestroy {
           this.nextPageToken.set(null);
           const msg = this.#httpErrorDetail(err);
           this.listLoadError.set(
-            msg || this.#translocoService.translate('app-passwords.error.list-failed'),
+            msg || this.#translocoService.translate('app-passwords.error.list-failed')
           );
           this.isLoading.set(false);
         },
@@ -303,5 +304,4 @@ export class AppPasswords implements OnInit, OnDestroy {
     }
     return '';
   }
-
 }
