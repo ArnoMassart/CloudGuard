@@ -68,7 +68,7 @@ public class PdfReportServiceTest {
     }
 
     @Test
-    void generateSecurityRapport_success_mapsDataToContextCorrectly() {
+    void generateSecurityReport_success_mapsDataToContextCorrectly() {
         Locale locale = new Locale("nl");
         HttpHeaders mockHeaders = new HttpHeaders();
         Set<String> disabledPrefs = Set.of();
@@ -107,7 +107,7 @@ public class PdfReportServiceTest {
 
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("<html><body>Test Report</body></html>");
 
-        ReportResponse response = pdfReportService.generateSecurityRapport(ADMIN, locale);
+        ReportResponse response = pdfReportService.generateSecurityReport(ADMIN, locale);
 
         assertEquals("Cloudmen BV", response.companyName());
         assertNotNull(response.data());
@@ -130,7 +130,7 @@ public class PdfReportServiceTest {
     }
 
     @Test
-    void generateSecurityRapport_withServiceExceptions_usesFallbacksAndSetsIsError() {
+    void generateSecurityReport_withServiceExceptions_usesFallbacksAndSetsIsError() {
         Locale locale = new Locale("nl");
         HttpHeaders mockHeaders = new HttpHeaders();
         Set<String> disabledPrefs = Set.of();
@@ -153,7 +153,7 @@ public class PdfReportServiceTest {
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("<html><body>Fallback Report</body></html>");
 
         // Act: Moet succesvol afronden ondanks alle API errors, dankzij de interne try-catch blokken
-        ReportResponse response = pdfReportService.generateSecurityRapport(ADMIN, locale);
+        ReportResponse response = pdfReportService.generateSecurityReport(ADMIN, locale);
 
         // Vang het context object op
         ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
@@ -178,7 +178,7 @@ public class PdfReportServiceTest {
     }
 
     @Test
-    void generateSecurityRapport_templateEngineFails_throwsPdfGenerationException() {
+    void generateSecurityReport_templateEngineFails_throwsPdfGenerationException() {
         Locale locale = new Locale("nl");
         HttpHeaders mockHeaders = new HttpHeaders();
 
@@ -190,7 +190,7 @@ public class PdfReportServiceTest {
 
         // Act & Assert
         PdfGenerationException exception = assertThrows(PdfGenerationException.class, () -> {
-            pdfReportService.generateSecurityRapport(ADMIN, locale);
+            pdfReportService.generateSecurityReport(ADMIN, locale);
         });
 
         assertTrue(exception.getMessage().contains("Error with pdf generation"));

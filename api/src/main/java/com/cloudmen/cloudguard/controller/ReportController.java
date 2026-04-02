@@ -4,7 +4,6 @@ import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.report.PdfReportService;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -26,7 +25,7 @@ public class ReportController {
     public ResponseEntity<byte[]> downloadReport(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        byte[] pdfBytes = reportService.generateSecurityRapport(loggedInEmail, LocaleContextHolder.getLocale()).data();
+        byte[] pdfBytes = reportService.generateSecurityReport(loggedInEmail, LocaleContextHolder.getLocale()).data();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Security_Report.pdf")

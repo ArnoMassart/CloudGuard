@@ -75,17 +75,24 @@ describe('UsersGroups Integration', () => {
   it('should switch sections and update sessionStorage when a tab is clicked', () => {
     fixture.detectChanges();
 
-    // Zoek de 'Groepen' knop
+    // Zoek de 'Groups' knop (Engels!)
     const buttons = fixture.debugElement.queryAll(By.css('button'));
-    const groupsButton = buttons.find((b) => b.nativeElement.textContent.includes('Groepen'));
+    const groupsButton = buttons.find((b) =>
+      b.nativeElement.textContent.toLowerCase().includes('groups')
+    );
+
+    // Veiligheidscheck: als de knop niet gevonden wordt, faal hier al met een duidelijke tekst
+    if (!groupsButton) {
+      throw new Error('Tab-knop "Groups" niet gevonden! Check of de tekst matcht met I18N_MOCK.');
+    }
 
     // Klik op de knop
-    groupsButton?.nativeElement.click();
+    groupsButton.nativeElement.click();
     fixture.detectChanges();
 
     // Check signal en storage
-    expect(component.currentSection()).toBe('USERS');
-    expect(sessionStorage.getItem('user-group-section')).toBe(null);
+    expect(component.currentSection()).toBe('GROUPS');
+    expect(sessionStorage.getItem('user-group-section')).toBe('GROUPS');
 
     // Check of UI is gewisseld
     const groupsSection = fixture.debugElement.query(By.directive(GroupsSection));
