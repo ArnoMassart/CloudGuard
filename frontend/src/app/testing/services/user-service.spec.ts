@@ -129,7 +129,7 @@ describe('UserService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.responseType).toBe('text');
 
-      expect(req.request.body).toEqual({ withCredentials: true });
+      expect(req.request.body).toEqual({});
       req.flush('OK');
     });
   });
