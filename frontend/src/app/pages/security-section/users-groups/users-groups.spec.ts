@@ -74,15 +74,23 @@ describe('UsersGroups', () => {
 
       expect(component.currentSection()).toBe('GROUPS');
       expect(setItemSpy).toHaveBeenCalledWith('user-group-section', 'GROUPS');
+
+      // Belangrijk: herstel de originele implementatie na de test
+      setItemSpy.mockRestore();
     });
 
     it('should not update or setItem if the section is already active', () => {
       fixture.detectChanges(); // Staat op USERS
       const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
 
+      // Zorg dat de teller op 0 staat voordat we de actie doen
+      setItemSpy.mockClear();
+
       component.togglePage('USERS');
 
       expect(setItemSpy).not.toHaveBeenCalled();
+
+      setItemSpy.mockRestore();
     });
   });
 
