@@ -43,7 +43,7 @@ export class DomainDns implements OnInit, OnDestroy {
   securityScore = signal<number>(0);
   securityScoreBreakdown = signal<SecurityScoreBreakdown | null>(null);
 
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   /** Controls sorted by severity */
   readonly securityControlsRows = computed(() => {
@@ -72,11 +72,11 @@ export class DomainDns implements OnInit, OnDestroy {
   readonly showDnsCriticalBanner = computed(() => this.hasCriticalProblems());
 
   readonly showDnsAttentionBanner = computed(
-    () => this.hasWarnings() && !this.showDnsCriticalBanner(),
+    () => this.hasWarnings() && !this.showDnsCriticalBanner()
   );
 
   ngOnInit() {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadDomains();
       if (this.selectedDnsDomain() !== null) {
         this.#loadDns(this.selectedDnsDomain()!);
@@ -85,8 +85,8 @@ export class DomainDns implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 

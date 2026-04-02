@@ -45,7 +45,7 @@ export class Home implements OnInit, OnDestroy {
 
   readonly #translocoService = inject(TranslocoService);
 
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
@@ -68,7 +68,7 @@ export class Home implements OnInit, OnDestroy {
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadDashboardData();
     });
 
@@ -76,8 +76,8 @@ export class Home implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 

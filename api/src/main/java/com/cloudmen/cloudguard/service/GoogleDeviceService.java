@@ -116,7 +116,7 @@ public class GoogleDeviceService {
         }
 
         List<String> sortedTypes = new ArrayList<>(uniqueTypes);
-        Collections.sort(sortedTypes);
+        sortedTypes.sort(String.CASE_INSENSITIVE_ORDER);
         return sortedTypes;
     }
 
@@ -383,19 +383,13 @@ public class GoogleDeviceService {
         String lowerOs = osName.toLowerCase();
 
         // Vang specifieke merknamen af
-        if (lowerOs.equals("macos") || lowerOs.equals("mac")) {
-            return "macOS";
-        }
-        if (lowerOs.equals("ios")) {
-            return "iOS";
-        }
-        if (lowerOs.equals("chromeos") || lowerOs.equals("chrome")) {
-            return "ChromeOS";
-        }
+        return switch (lowerOs) {
+            case "macos", "mac" -> "macOS";
+            case "ios" -> "iOS";
+            case "chromeos", "chrome" -> "ChromeOS";
+            default -> osName.substring(0, 1).toUpperCase() + osName.substring(1).toLowerCase();
+        };
 
-        // Voor de rest (Windows, Android, Linux):
-        // Eerste letter een hoofdletter, de rest kleine letters
-        return osName.substring(0, 1).toUpperCase() + osName.substring(1).toLowerCase();
     }
 
     private int calculateFactorScore(int total, int violations, boolean shouldIgnore) {

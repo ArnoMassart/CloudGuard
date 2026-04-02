@@ -120,21 +120,21 @@ export class AppAccess implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadPageOverview();
       this.loadApps();
     });
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 

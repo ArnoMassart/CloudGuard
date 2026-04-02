@@ -70,7 +70,9 @@ export class GroupsSection implements OnInit, OnDestroy {
   readonly isExpanded = signal(true);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
-  readonly hasMultipleWarnings = computed(() => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false);
+  readonly hasMultipleWarnings = computed(
+    () => this.pageOverview()?.warnings?.hasMultipleWarnings ?? false
+  );
   readonly groupPageWarnings = computed(() => {
     const items = this.pageOverview()?.warnings?.items ?? {};
     return {
@@ -83,7 +85,8 @@ export class GroupsSection implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.groupsWithExternal ?? 0,
       this.#preferencesFacade.isDisabled('users-groups', 'groupExternal'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertOrange,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertOrange
     )
   );
 
@@ -91,22 +94,23 @@ export class GroupsSection implements OnInit, OnDestroy {
     kpiColors(
       this.pageOverview()?.highRiskGroups ?? 0,
       this.#preferencesFacade.isDisabled('users-groups', 'groupExternal'),
-      KPI_COLORS.okBlue, KPI_COLORS.alertRedDark,
+      KPI_COLORS.okBlue,
+      KPI_COLORS.alertRedDark
     )
   );
 
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   ngOnInit(): void {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.loadGroupsOverview();
       this.loadGroups(null);
     });
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 
@@ -192,19 +196,21 @@ export class GroupsSection implements OnInit, OnDestroy {
     this.loading.set(true);
     this.apiError.set(false);
 
-    this.#groupService.getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize).subscribe({
-      next: (res) => {
-        this.groups.set(this.mapToGroupSummary(res.groups));
-        this.nextPageToken.set(res.nextPageToken ?? null);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error fetching groups:', error);
-        this.groups.set([]);
-        this.loading.set(false);
-        this.apiError.set(true);
-      },
-    });
+    this.#groupService
+      .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)
+      .subscribe({
+        next: (res) => {
+          this.groups.set(this.mapToGroupSummary(res.groups));
+          this.nextPageToken.set(res.nextPageToken ?? null);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('Error fetching groups:', error);
+          this.groups.set([]);
+          this.loading.set(false);
+          this.apiError.set(true);
+        },
+      });
   }
 
   private mapToGroupSummary(groups: GroupOrgDetail[]): GroupSummary[] {
@@ -228,5 +234,4 @@ export class GroupsSection implements OnInit, OnDestroy {
     }
     return `https://admin.google.com/u/1/ac/groups/${encodeURIComponent(id)}/settings`;
   }
-
 }

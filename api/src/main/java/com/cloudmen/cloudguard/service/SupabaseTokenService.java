@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.TeamleaderTokens;
+import com.cloudmen.cloudguard.exception.TokensNotFoundException;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +27,6 @@ public class SupabaseTokenService {
     private final String supabaseUrl;
     private final String supabaseKey;
     private final MessageSource messageSource;
-
-    public record TeamleaderTokens(String accessToken, String refreshToken) {}
 
     public SupabaseTokenService(
             @Value("${supabase.url}") String supabaseUrl,

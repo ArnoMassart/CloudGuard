@@ -95,22 +95,22 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.#loadDeviceTypes();
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.loadDeviceTypes();
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#loadPageOverview();
       this.loadDevices();
     });
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 
@@ -246,7 +246,7 @@ export class Devices implements OnInit, OnDestroy {
     });
   }
 
-  #loadDeviceTypes() {
+  private loadDeviceTypes() {
     this.#deviceService.getUniqueDeviceTypes().subscribe({
       next: (types) => {
         this.uniqueDeviceTypes.set(['all', ...types]);

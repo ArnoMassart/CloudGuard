@@ -52,39 +52,41 @@ export class PasswordSettings implements OnInit, OnDestroy {
   readonly warningsExpanded = signal(true);
   readonly criticalWarningsExpanded = signal(true);
 
-  readonly hasAdminsWithoutSecurityKeys = computed(() =>
-    (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0 &&
-    !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')
+  readonly hasAdminsWithoutSecurityKeys = computed(
+    () =>
+      (this.data()?.adminsWithoutSecurityKeys.length ?? 0) > 0 &&
+      !this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys')
   );
 
   readonly kpiAdminsSecurityKeysColors = computed(() =>
     kpiColors(
       this.data()?.adminsWithoutSecurityKeys.length ?? 0,
       this.#preferencesFacade.isDisabled('password-settings', 'adminsSecurityKeys'),
-      KPI_COLORS.okGreenDark, KPI_COLORS.alertOrange,
+      KPI_COLORS.okGreenDark,
+      KPI_COLORS.alertOrange
     )
   );
-  readonly hasPasswordLengthWeak = computed(() =>
-    !this.#preferencesFacade.isDisabled('password-settings', 'length') &&
-    (this.data()?.passwordPoliciesByOu ?? []).some(
-      (p) => p.minLength != null && p.minLength < 12
-    )
+  readonly hasPasswordLengthWeak = computed(
+    () =>
+      !this.#preferencesFacade.isDisabled('password-settings', 'length') &&
+      (this.data()?.passwordPoliciesByOu ?? []).some((p) => p.minLength != null && p.minLength < 12)
   );
-  readonly hasStrongPasswordNotRequired = computed(() =>
-    !this.#preferencesFacade.isDisabled('password-settings', 'strongPassword') &&
-    (this.data()?.passwordPoliciesByOu ?? []).some(
-      (p) => p.strongPasswordRequired === false
-    )
+  readonly hasStrongPasswordNotRequired = computed(
+    () =>
+      !this.#preferencesFacade.isDisabled('password-settings', 'strongPassword') &&
+      (this.data()?.passwordPoliciesByOu ?? []).some((p) => p.strongPasswordRequired === false)
   );
-  readonly hasPasswordNeverExpires = computed(() =>
-    !this.#preferencesFacade.isDisabled('password-settings', 'expiration') &&
-    (this.data()?.passwordPoliciesByOu ?? []).some(
-      (p) => p.expirationDays == null || p.expirationDays === 0
-    )
+  readonly hasPasswordNeverExpires = computed(
+    () =>
+      !this.#preferencesFacade.isDisabled('password-settings', 'expiration') &&
+      (this.data()?.passwordPoliciesByOu ?? []).some(
+        (p) => p.expirationDays == null || p.expirationDays === 0
+      )
   );
-  readonly has2SvNotEnforced = computed(() =>
-    !this.#preferencesFacade.isDisabled('password-settings', '2sv') &&
-    (this.data()?.twoStepVerification.byOrgUnit ?? []).some((ou) => !ou.enforced)
+  readonly has2SvNotEnforced = computed(
+    () =>
+      !this.#preferencesFacade.isDisabled('password-settings', '2sv') &&
+      (this.data()?.twoStepVerification.byOrgUnit ?? []).some((ou) => !ou.enforced)
   );
 
   readonly hasWarnings = computed(
@@ -105,10 +107,10 @@ export class PasswordSettings implements OnInit, OnDestroy {
       ].filter(Boolean).length > 1
   );
 
-  #langSubscription?: Subscription;
+  private langSubscription?: Subscription;
 
   isPasswordPrefDisabled(
-    key: '2sv' | 'length' | 'strongPassword' | 'expiration' | 'adminsSecurityKeys',
+    key: '2sv' | 'length' | 'strongPassword' | 'expiration' | 'adminsSecurityKeys'
   ): boolean {
     return this.#preferencesFacade.isDisabled('password-settings', key);
   }
@@ -120,16 +122,26 @@ export class PasswordSettings implements OnInit, OnDestroy {
   effectivePolicyProblemCount(policy: OuPasswordPolicy): number {
     const f = this.#preferencesFacade;
     let p = 0;
-    if (!f.isDisabled('password-settings', 'strongPassword') && policy.strongPasswordRequired === false) {
+    if (
+      !f.isDisabled('password-settings', 'strongPassword') &&
+      policy.strongPasswordRequired === false
+    ) {
       p++;
     }
-    if (!f.isDisabled('password-settings', 'expiration') && (policy.expirationDays == null || policy.expirationDays === 0)) {
+    if (
+      !f.isDisabled('password-settings', 'expiration') &&
+      (policy.expirationDays == null || policy.expirationDays === 0)
+    ) {
       p++;
     }
     if (policy.reusePreventionCount != null && policy.reusePreventionCount === 0) {
       p++;
     }
-    if (!f.isDisabled('password-settings', 'length') && policy.minLength != null && policy.minLength < 12) {
+    if (
+      !f.isDisabled('password-settings', 'length') &&
+      policy.minLength != null &&
+      policy.minLength < 12
+    ) {
       p++;
     }
     return p;
@@ -152,14 +164,14 @@ export class PasswordSettings implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.#langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.#load();
     });
   }
 
   ngOnDestroy(): void {
-    if (this.#langSubscription) {
-      this.#langSubscription.unsubscribe();
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
     }
   }
 
@@ -168,21 +180,25 @@ export class PasswordSettings implements OnInit, OnDestroy {
       this.loading.set(true);
     }
     this.error.set(null);
-    this.#preferencesFacade.loadWithPrefs$(this.#passwordSettingsService.getPasswordSettings()).subscribe({
-      next: (settings) => {
-        this.data.set(settings);
-        this.refreshError.set(null);
-        this.loading.set(false);
-        onComplete?.();
-      },
-      error: (err) => {
-        console.error('Password settings load failed: ', err);
-        const msg = this.#httpErrorDetail(err);
-        this.error.set(msg || this.#translocoService.translate('password-settings.error.load-failed'));
-        this.loading.set(false);
-        onComplete?.();
-      },
-    });
+    this.#preferencesFacade
+      .loadWithPrefs$(this.#passwordSettingsService.getPasswordSettings())
+      .subscribe({
+        next: (settings) => {
+          this.data.set(settings);
+          this.refreshError.set(null);
+          this.loading.set(false);
+          onComplete?.();
+        },
+        error: (err) => {
+          console.error('Password settings load failed: ', err);
+          const msg = this.#httpErrorDetail(err);
+          this.error.set(
+            msg || this.#translocoService.translate('password-settings.error.load-failed')
+          );
+          this.loading.set(false);
+          onComplete?.();
+        },
+      });
   }
 
   retry(): void {
@@ -198,7 +214,9 @@ export class PasswordSettings implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
         const msg = this.#httpErrorDetail(err);
-        this.refreshError.set(msg || this.#translocoService.translate('password-settings.error.refresh-failed'));
+        this.refreshError.set(
+          msg || this.#translocoService.translate('password-settings.error.refresh-failed')
+        );
         this.isRefreshing.set(false);
       },
     });
