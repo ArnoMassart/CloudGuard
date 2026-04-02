@@ -197,4 +197,35 @@ class UserSecurityPreferenceControllerIT {
                         argThat(m -> m.size() == 1 && Boolean.TRUE.equals(m.get("k"))));
         verify(passwordSettingsService).forceRefreshCache("user-1");
     }
+
+    @Test
+    void setSectionPreferences_otherSection_doesNotRefreshPasswordCache() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("user-1");
+
+        mockMvc.perform(
+                        put("/api/user/preferences/section")
+                                .contextPath("/api")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"section\":\"domain-dns\",\"preferences\":{\"impMx\":false}}")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isOk());
+
+        verify(preferenceService)
+                .setSectionPreferences(
+                        eq("user-1"),
+                        eq("domain-dns"),
+                        argThat(m -> m.size() == 1 && Boolean.FALSE.equals(m.get("impMx"))));
+        verifyNoInteractions(passwordSettingsService);
+    }
+
+    @Test
+    void setPreference_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(
+                        put("/api/user/preferences")
+                                .contextPath("/api")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"section\":\"domain-dns\",\"preferenceKey\":\"k\",\"enabled\":true}")
+                )
+                .andExpect(status().isUnauthorized());
+    }
 }

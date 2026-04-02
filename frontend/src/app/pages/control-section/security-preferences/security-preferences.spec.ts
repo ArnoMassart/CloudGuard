@@ -208,4 +208,76 @@ describe('SecurityPreferences', () => {
     expect(component.loading()).toBe(false);
     expect(component.loadError()).toBe('Server error');
   });
+
+  it('uses translated message when load fails without HTTP string body', async () => {
+    serviceMock.getAllPreferences.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, error: { code: 'x' } })),
+    );
+    fixture = TestBed.createComponent(SecurityPreferences);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.loadError()).toBe('Load failed');
+  });
+
+  it('retryLoad triggers another getAllPreferences', async () => {
+    const calls = serviceMock.getAllPreferences.mock.calls.length;
+    component.retryLoad();
+    await fixture.whenStable();
+    expect(serviceMock.getAllPreferences.mock.calls.length).toBeGreaterThan(calls);
+    expect(component.loading()).toBe(false);
+  });
+
+  it('dismissLoadError and dismissSaveError clear error signals', () => {
+    component.loadError.set('e');
+    component.saveError.set('s');
+    component.dismissLoadError();
+    component.dismissSaveError();
+    expect(component.loadError()).toBe(null);
+    expect(component.saveError()).toBe(null);
+  });
+
+  it('dismissSyncWarning clears facade.disabledKeysRefreshFailed', () => {
+    facadeMock.disabledKeysRefreshFailed.set(true);
+    component.dismissSyncWarning();
+    expect(facadeMock.disabledKeysRefreshFailed()).toBe(false);
+  });
+
+  it('setDnsImportance on error reloads preferences and sets saveError', async () => {
+    serviceMock.setPreference.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: 'DNS save invalid',
+          }),
+      ),
+    );
+    const calls = serviceMock.getAllPreferences.mock.calls.length;
+    component.setDnsImportance('domain-dns', 'impSpf', 'SPF', 'OPTIONAL');
+    await fixture.whenStable();
+
+    expect(component.saveError()).toBe('DNS save invalid');
+    expect(serviceMock.getAllPreferences.mock.calls.length).toBeGreaterThan(calls);
+    expect(component.saving()).toBe(null);
+  });
+
+  it('setDnsImportance uses i18n save message when error has no string body', async () => {
+    serviceMock.setPreference.mockReturnValueOnce(
+      throwError(() => new HttpErrorResponse({ status: 500 })),
+    );
+    component.setDnsImportance('domain-dns', 'impSpf', 'SPF', 'OPTIONAL');
+    await fixture.whenStable();
+
+    expect(component.saveError()).toBe('Save failed');
+  });
+
+  it('toggle uses translated save error when setPreference fails with non-HTTP error', async () => {
+    serviceMock.setPreference.mockReturnValueOnce(throwError(() => new Error('offline')));
+    component.toggle('users-groups', '2fa');
+    await fixture.whenStable();
+
+    expect(component.saveError()).toBe('Save failed');
+  });
 });

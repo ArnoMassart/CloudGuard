@@ -120,6 +120,17 @@ class NotificationFeedbackControllerIT {
     }
 
     @Test
+    void submitFeedback_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(
+                        post("/api/notifications/feedback")
+                                .contextPath("/api")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"source\":\"a\",\"notificationType\":\"b\",\"feedbackText\":\"c\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void submitFeedback_withCookie_returns200AndCallsService() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("user-1");
 

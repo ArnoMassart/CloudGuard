@@ -86,7 +86,14 @@ export class NotificationService {
             if (notification.notificationType === 'drive-external') {
               return r.drives
                 .filter((d) => d.externalMembers > 0)
-                .map((d) => `${d.name} (${d.externalMembers} this.#translocoService.translate('external-members')`);
+                .map(
+                  (d) =>
+                    `${d.name} (${d.externalMembers} ${
+                      d.externalMembers > 1
+                        ? this.#translocoService.translate('external-members')
+                        : this.#translocoService.translate('external-member')
+                    })`,
+                );
             }
             if (notification.notificationType === 'drive-outside-domain') {
               return r.drives.filter((d) => !d.onlyDomainUsersAllowed).map((d) => d.name);

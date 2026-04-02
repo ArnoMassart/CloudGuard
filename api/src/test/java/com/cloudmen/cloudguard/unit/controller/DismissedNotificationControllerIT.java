@@ -106,6 +106,16 @@ class DismissedNotificationControllerIT {
     }
 
     @Test
+    void unDismiss_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(
+                        delete("/api/notifications/dismissed")
+                                .contextPath("/api")
+                                .param("source", "a")
+                                .param("notificationType", "b"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void unDismiss_removed_returns200() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("user-1");
         when(dismissedNotificationService.unDismiss("user-1", "domain-dns", "dns-critical"))
