@@ -1,23 +1,23 @@
-<div class="w-full flex flex-col gap-5">
+<div class="w-full flex flex-col gap-4 sm:gap-5 min-w-0">
   <!-- KPI cards -->
-  <div class="w-full flex gap-4">
-    <app-section-top-card class="flex-1" Title="{{ 'groups.total-groups' | transloco }}"
+  <div class="w-full grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-2 min-w-0">
+    <app-section-top-card class="min-w-0" Title="{{ 'groups.total-groups' | transloco }}"
       [Value]="pageOverview()?.totalGroups" [Icon]="Icons.Users" />
 
-    <app-section-top-card class="flex-1" Title="{{ 'groups.withExternal' | transloco }}" [Value]="pageOverview()?.groupsWithExternal"
+    <app-section-top-card class="min-w-0" Title="{{ 'groups.withExternal' | transloco }}" [Value]="pageOverview()?.groupsWithExternal"
       [BackgroundColor]="kpiGroupsExternalColors().bg"
       [IconColor]="kpiGroupsExternalColors().icon"
       [TextColor]="kpiGroupsExternalColors().text"
       [Icon]="(pageOverview()?.groupsWithExternal ?? 0) > 0 ? Icons.ShieldAlert : Icons.Users" />
 
-    <app-section-top-card class="flex-1" Title="{{ 'groups.high-risk' | transloco }}" [Value]="pageOverview()?.highRiskGroups"
+    <app-section-top-card class="min-w-0" Title="{{ 'groups.high-risk' | transloco }}" [Value]="pageOverview()?.highRiskGroups"
       [BackgroundColor]="kpiGroupsHighRiskColors().bg"
       [Icon]="(pageOverview()?.highRiskGroups ?? 0) > 0 ? Icons.TriangleAlert : Icons.Users"
       [IconColor]="kpiGroupsHighRiskColors().icon"
       [TextColor]="kpiGroupsHighRiskColors().text" />
 
     <div
-      class="flex-1 cursor-pointer transition-opacity hover:opacity-90"
+      class="min-w-0 cursor-pointer transition-opacity hover:opacity-90"
       (click)="openSecurityScoreDetail()"
       role="button"
       tabindex="0"
@@ -25,6 +25,7 @@
       (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()"
     >
       <app-section-top-card
+        class="min-w-0"
         Title="Security Score"
         [Value]="pageOverview()?.securityScore"
         [IsPercentage]="true"
@@ -64,11 +65,14 @@
     (searchChange)="onSearch($event)" />
 
   <!-- Groups list -->
-  <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-5">
-    <div class="flex justify-between items-center mx-6 pb-5">
-      <span class="font-medium text-lg">{{ 'groups.all' | transloco }}</span>
+  <div class="bg-white rounded-lg pt-4 sm:pt-6 border-2 border-muted/50 mt-4 sm:mt-5 overflow-hidden">
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mx-4 sm:mx-6 pb-4 sm:pb-5"
+    >
+      <span class="font-medium text-base sm:text-lg shrink-0">{{ 'groups.all' | transloco }}</span>
       <button (click)="refreshData()" [disabled]="isRefreshing()"
-        class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+        class="flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+      >
         <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
         </i-lucide>
 
@@ -91,7 +95,7 @@
         </div>
       </div>
     }@else if (apiError()) {
-      <div class="flex flex-col items-center justify-center p-10 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
+      <div class="flex flex-col items-center justify-center p-6 sm:p-10 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg px-4">
         <div class="bg-red-100 p-3 rounded-full mb-3">
           <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
         </div>
@@ -101,12 +105,11 @@
         </span>
       </div>
     } @else {
-    <div class="space-y-4 mt-1 px-6">
+    <div class="space-y-4 mt-1 px-4 sm:px-6 pb-1">
       @for (group of groups(); track group.name) {
-      <article class="rounded-lg border border-muted bg-white p-5 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0 flex-1">
-            <div class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0">
+      <article class="rounded-lg border border-muted bg-white p-4 sm:p-5 shadow-sm">
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div class="flex items-center gap-3 min-w-0 w-full sm:flex-1">            <div class="h-12 w-12 rounded-full bg-[#dbeafe] flex items-center justify-center shrink-0">
               <i-lucide [img]="Icons.Users" size="24" class="text-[#155dfc]" />
             </div>
             <p class="font-medium text-slate-900 text-base truncate">
@@ -204,18 +207,22 @@
       <p class="text-sm text-slate-500">{{ 'groups.no-found' | transloco }}.</p>
       }
 
-      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-        <span class="text-sm text-gray-500">
+      <div
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl"
+      >
+        <span class="text-sm text-gray-500 text-center sm:text-left">
           {{ 'page' | transloco }} <span class="font-medium text-slate-900">{{ currentPage() }}</span>
         </span>
-        <div class="flex gap-2">
+        <div class="flex gap-2 justify-stretch sm:justify-end w-full sm:w-auto">
           <button (click)="prevPage()" [disabled]="currentPage() === 1"
-            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="flex flex-1 sm:flex-initial items-center justify-center gap-1 px-3 py-2 sm:py-1 min-h-[2.5rem] sm:min-h-0 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          >
             <i-lucide [img]="Icons.ChevronLeft" size="16" />
             {{ 'previous' | transloco }}
           </button>
           <button (click)="nextPage()" [disabled]="!nextPageToken()"
-            class="flex items-center gap-1 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            class="flex flex-1 sm:flex-initial items-center justify-center gap-1 px-3 py-2 sm:py-1 min-h-[2.5rem] sm:min-h-0 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          >
             {{ 'next' | transloco }}
             <i-lucide [img]="Icons.ChevronRight" size="16" />
           </button>

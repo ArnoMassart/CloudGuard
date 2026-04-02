@@ -1,18 +1,18 @@
-<div class="flex flex-wrap items-center gap-3">
-  <div class="flex items-center gap-2 text-sm text-gray-600">
+<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+  <div class="flex items-center gap-2 text-sm text-gray-600 shrink-0">
     <i-lucide [img]="Icons.Funnel" size="18" />
     <span>{{ label }}</span>
   </div>
-  <div class="flex flex-wrap gap-2">
+  <div class="flex flex-wrap gap-2 min-w-0 flex-1">
     @for (opt of options; track opt.value) {
-    <button (click)="selectFilter(opt.value)" [class]="getButtonClass(opt)">
+    <button type="button" (click)="selectFilter(opt.value)" [class]="getButtonClass(opt)">
       {{ opt.label | transloco }} ({{ opt.count }})
     </button>
     }
   </div>
   @if (showRefresh) {
-  <button (click)="onRefresh()" [disabled]="isRefreshing"
-    class="ml-auto flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+  <button type="button" (click)="onRefresh()" [disabled]="isRefreshing"
+    class="flex w-full sm:w-auto justify-center sm:ml-auto items-center gap-2 px-4 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shrink-0">
     <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing" />
     {{ isRefreshing ? ('refreshing' | transloco)+'...' : ('refresh' | transloco) }}
   </button>

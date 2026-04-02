@@ -151,8 +151,8 @@
       </div>
       }
       @else if (devices().length > 0) {
-      <table class="w-full text-left border-collapse mt-6 block sm:table">
-        <thead class="hidden sm:table-header-group">
+      <table class="w-full text-left border-collapse mt-6 block xl:table">
+        <thead class="hidden xl:table-header-group">
           <tr class="border-b border-t border-gray-200 bg-gray-50/50">
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase"></th>
             <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'user-cap' | transloco }}</th>
@@ -164,24 +164,24 @@
           </tr>
         </thead>
 
-        <tbody class="block sm:table-row-group">
+        <tbody class="block xl:table-row-group">
           @for (device of devices(); track device.resourceId) {
 
           <tr
-            class="block sm:table-row bg-white sm:bg-transparent border border-gray-200 sm:border-0 sm:border-b sm:border-gray-200 overflow-hidden relative hover:bg-gray-50 transition-colors cursor-pointer sm:mb-0"
+            class="block xl:table-row bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-200 overflow-hidden relative hover:bg-gray-50 transition-colors cursor-pointer xl:mb-0"
             [class.rounded-t-lg]="expandedDevice() === device.resourceId"
             [class.border-b-0]="expandedDevice() === device.resourceId"
             [class.rounded-lg]="expandedDevice() !== device.resourceId"
             [class.mb-4]="expandedDevice() !== device.resourceId" (click)="toggleExpand(device.resourceId)">
 
             <td
-              class="block sm:table-cell absolute right-4 top-4 sm:static sm:right-auto sm:top-auto px-0 py-0 sm:px-6 sm:py-4 border-none">
+              class="block xl:table-cell absolute right-4 top-4 xl:static xl:right-auto xl:top-auto px-0 py-0 xl:px-6 xl:py-4 border-none">
               <i-lucide [img]="expandedDevice() === device.resourceId ? Icons.ChevronDown : Icons.ChevronRight"
                 class="text-gray-500 transition-transform" size="20" />
             </td>
 
             <td
-              class="block sm:table-cell px-4 sm:px-6 py-4 border-b sm:border-none border-gray-200 bg-gray-50/30 sm:bg-transparent pr-12 sm:pr-6">
+              class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-200 bg-gray-50/30 xl:bg-transparent pr-12 xl:pr-6">
               <div class="flex flex-col">
                 <span class="font-medium text-slate-900 text-sm">{{ device.userName }}</span>
                 <span class="text-xs text-gray-500">{{ device.userEmail }}</span>
@@ -189,17 +189,17 @@
             </td>
 
             <td
-              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'device-cap' | transloco }}</span>
-              <span class="text-[13px] text-right sm:text-left">{{ device.deviceName }}</span>
+              class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+              <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'device-cap' | transloco }}</span>
+              <span class="text-[13px] text-right xl:text-left">{{ device.deviceName }}</span>
             </td>
 
             <td
-              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">OS & Model</span>
-              <div class="flex gap-2 items-center justify-end sm:justify-start">
-                <i-lucide [img]="Icons.SmartPhone" class="text-primary hidden sm:block" size="20" />
-                <div class="flex flex-col text-right sm:text-left">
+              class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+              <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">OS & Model</span>
+              <div class="flex gap-2 items-center justify-end xl:justify-start">
+                <i-lucide [img]="Icons.SmartPhone" class="text-primary hidden xl:block" size="20" />
+                <div class="flex flex-col text-right xl:text-left">
                   <span class="text-[13px] font-medium">{{ device.os }}</span>
                   <span class="text-[13px] text-muted-foreground">{{ device.model }}</span>
                 </div>
@@ -207,8 +207,8 @@
             </td>
 
             <td
-              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'devices.last-sync' | transloco
+              class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+              <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'devices.last-sync' | transloco
                 }}</span>
               <div class="flex gap-1 items-center">
                 <i-lucide [img]="Icons.Clock" class="text-muted-foreground" size="16" />
@@ -217,8 +217,8 @@
             </td>
 
             <td
-              class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">Compliance</span>
+              class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+              <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">Compliance</span>
               <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                 [class.text-emerald-600]="device.complianceScore >= 75"
                 [class.bg-[#dbfce7]]="device.complianceScore >= 75" [class.text-[#d69518]]="
@@ -233,8 +233,8 @@
               </div>
             </td>
 
-            <td class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4">
-              <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">Status</span>
+            <td class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4">
+              <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">Status</span>
               <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                 [class.text-emerald-600]="device.status === 'Approved'"
                 [class.bg-[#dbfce7]]="device.status === 'Approved'" [class.text-[#d69518]]="device.status === 'Pending'"
@@ -260,8 +260,8 @@
 
           @if (expandedDevice() === device.resourceId) {
           <tr
-            class="block sm:table-row bg-[#f9fafb] border-x border-b border-t-0 border-gray-200 sm:border-x-0 sm:border-b sm:border-t-auto rounded-b-lg sm:rounded-none mb-4 sm:mb-0">
-            <td colspan="7" class="block sm:table-cell px-4 py-4 sm:px-12 sm:py-6">
+            class="block xl:table-row bg-[#f9fafb] border-x border-b border-t-0 border-gray-200 xl:border-x-0 xl:border-b xl:border-t-auto rounded-b-lg xl:rounded-none mb-4 xl:mb-0">
+            <td colspan="7" class="block xl:table-cell px-4 py-4 xl:px-12 xl:py-6">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 @for (f of getDeviceFactors(device); track f.key) {
                 <div class="p-4 rounded-xl border flex items-center gap-4 shadow-sm"

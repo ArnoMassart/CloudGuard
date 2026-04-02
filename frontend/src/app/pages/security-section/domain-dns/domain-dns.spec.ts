@@ -20,6 +20,7 @@ const DOMAIN_DNS_I18N: Record<string, string> = {
   refreshing: 'Refreshing',
   'renew-data': 'Refresh',
   'domain.domain-name': 'Domain',
+  'domain.record-type': 'Type',
   'domain.verification-status': 'Status',
   'domain.number-users': 'Users',
   verified: 'Verified',

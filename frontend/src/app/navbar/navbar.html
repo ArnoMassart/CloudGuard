@@ -1,6 +1,6 @@
 <div>
-  <div class="md:hidden fixed z-40 p-4 bg-navbar-background text-white w-full flex justify-between">
-    <button (click)="toggleMobileMenu()" class="top-4 left-4">
+  <div class="lg:hidden fixed z-40 p-4 bg-navbar-background text-white w-full flex justify-between">
+    <button type="button" (click)="toggleMobileMenu()" class="top-4 left-4">
       <i-lucide [img]="Icons.Menu" size="24" />
     </button>
     <h2 class="text-white font-bold text-2xl cursor-pointer" (click)="navigateToHome()">CloudGuard</h2>
@@ -9,13 +9,13 @@
 </div>
 
 @if (isMobileMenuOpen()) {
-<div class="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity" (click)="closeMobileMenu()">
+<div class="fixed inset-0 bg-black/60 z-40 lg:hidden transition-opacity" (click)="closeMobileMenu()">
 </div>
 }
 
 <nav class="h-dvh min-h-0 flex flex-col bg-navbar-background p-5
          fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out
-         md:relative md:translate-x-0" [class.-translate-x-full]="!isMobileMenuOpen()"
+         lg:relative lg:translate-x-0" [class.-translate-x-full]="!isMobileMenuOpen()"
   [class.translate-x-0]="isMobileMenuOpen()">
 
   <div class="flex items-center justify-between gap-4 pb-4 px-4 shrink-0">
@@ -24,7 +24,7 @@
       <h2 class="text-white font-bold text-2xl cursor-pointer" (click)="navigateToHome()">CloudGuard</h2>
     </div>
 
-    <button (click)="closeMobileMenu()" class="md:hidden text-muted-foreground hover:text-white">
+    <button type="button" (click)="closeMobileMenu()" class="lg:hidden text-muted-foreground hover:text-white">
       <i-lucide [img]="Icons.X" size="24" />
     </button>
   </div>

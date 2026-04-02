@@ -1,4 +1,4 @@
-<div class="px-10 py-6">
+<div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
   <app-page-header Title="{{ 'organisational-units' | transloco }}"
     Description="{{ 'organisational-units.description' | transloco }}" AdminLink="orgunits" />
   <!-- Left card: Structuur -->
@@ -19,15 +19,15 @@
     {{ error() }}
   </div>
   } @else if (tree(); as root) {
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-6">
-    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5 h-[80vh] flex flex-col">
-      <div class="flex justify-between items-center pb-2">
-        <div class="flex items-center gap-2 mb-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 pt-4 sm:pt-6">
+    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-4 sm:p-5 h-[70vh] sm:h-[80vh] flex flex-col">
+      <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center pb-2">
+        <div class="flex items-center gap-2 mb-1 sm:mb-4">
           <i-lucide [img]="Icons.FolderTree" size="20" class="text-slate-600" />
           <h2 class="font-medium text-slate-900">{{ 'structure' | transloco }}</h2>
         </div>
         <button (click)="refreshData()" [disabled]="isRefreshing()"
-          class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
+          class="flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
           <i-lucide [img]="Icons.RefreshCw" size="16" [class.animate-spin]="isRefreshing()">
           </i-lucide>
 
@@ -79,15 +79,15 @@
     </div>
 
     <!-- Right card: Selected unit details -->
-    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-5">
+    <div class="bg-white rounded-xl border-2 border-muted/50 shadow-sm p-4 sm:p-5">
       @if (selectedOrgUnit(); as unit) {
-      <div class="flex items-center gap-2 mb-5">
+      <div class="flex items-center gap-2 mb-4 sm:mb-5">
         <i-lucide [img]="Icons.Building2" size="20" class="text-slate-600" />
-        <h2 class="font-medium text-slate-900">{{ unit.name }}</h2>
+        <h2 class="font-medium text-slate-900 truncate">{{ unit.name }}</h2>
       </div>
 
       <!-- KPI boxes -->
-      <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-5 sm:mb-6">
         <div class="bg-slate-50 rounded-lg border border-slate-200/80 p-3 text-center">
           <i-lucide [img]="Icons.Users" size="20" class="text-slate-600 mx-auto mb-1" />
           <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -126,14 +126,14 @@
         @for (policy of policies(); track policy.key) {
         <li class="rounded-lg border border-slate-200/80 overflow-hidden">
           <button type="button" (click)="togglePolicyExpanded(policy.key)"
-            class="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50/80 transition-colors">
+            class="w-full flex items-start gap-2 sm:gap-3 p-3 text-left hover:bg-slate-50/80 transition-colors">
             <i-lucide [img]="isPolicyExpanded(policy.key) ? Icons.ChevronDown : Icons.ChevronRight" size="18"
               class="text-slate-400 mt-0.5 shrink-0" />
             <div class="flex-1 min-w-0">
               <p class="font-medium text-slate-900 text-sm">{{ policy.title }}</p>
               <p class="text-xs text-slate-500 mt-0.5">{{ policy.description }}</p>
             </div>
-            <span class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center"
+            <span class="shrink-0 text-[11px] sm:text-xs font-medium px-2 py-1 rounded-full inline-flex items-center"
               [class.bg-green-100]="isStatusGreen(policy.statusClass)"
               [class.text-green-800]="isStatusGreen(policy.statusClass)"
               [class.bg-amber-100]="isStatusAmber(policy.statusClass)"
@@ -144,7 +144,7 @@
             </span>
           </button>
           @if (isPolicyExpanded(policy.key)) {
-          <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-11">
+          <div class="border-t border-slate-200/80 px-3 pb-3 pt-2 pl-9 sm:pl-11">
             <div class="text-sm text-slate-600 mb-3 space-y-2">
               @if (policy.baseExplanation) {
               <p>{{ policy.baseExplanation }}</p>
@@ -162,7 +162,7 @@
               </button>
               @if (policy.adminLink) {
               <button type="button" (click)="openPolicyAdmin(policy.adminLink); $event.stopPropagation()"
-                class="cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex gap-2 items-center">
+                class="w-full sm:w-auto cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 px-4 rounded-lg flex justify-center gap-2 items-center">
                 <span>{{ 'to-admin-console' | transloco }}</span>
                 <i-lucide [img]="Icons.ExternalLink" size="16" />
               </button>

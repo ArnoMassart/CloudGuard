@@ -1,17 +1,18 @@
-<div class="flex items-center justify-between px-3 md:px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
-    <span class="text-sm text-gray-500">
+<div
+    class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4 border-t border-gray-200 bg-white rounded-b-xl">
+    <span class="text-sm text-gray-500 text-center sm:text-left">
         {{ 'page' | transloco }} <span class="font-medium text-gray-900">{{ currentPage() }}</span>
     </span>
 
-    <div class="flex gap-2">
+    <div class="flex gap-2 justify-stretch sm:justify-end w-full sm:w-auto">
         <button (click)="prevPage()" [disabled]="currentPage() === 1"
-            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
+            class="flex flex-1 sm:flex-initial items-center justify-center gap-1 px-3 py-2 sm:py-1 min-h-[2.5rem] sm:min-h-0 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer text-sm">
             <lucide-icon [img]="Icons.ChevronLeft" size="16"></lucide-icon>
             {{ 'previous' | transloco }}
         </button>
 
         <button (click)="nextPage()" [disabled]="!nextPageToken()"
-            class="flex items-center gap-1 px-3 py-1 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer">
+            class="flex flex-1 sm:flex-initial items-center justify-center gap-1 px-3 py-2 sm:py-1 min-h-[2.5rem] sm:min-h-0 border rounded-md not-disabled:hover:bg-muted/30 disabled:opacity-50 not-disabled:cursor-pointer text-sm">
             {{ 'next' | transloco }}
             <lucide-icon [img]="Icons.ChevronRight" size="16"></lucide-icon>
         </button>

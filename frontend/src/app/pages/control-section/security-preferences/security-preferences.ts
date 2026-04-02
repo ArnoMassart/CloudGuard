@@ -92,7 +92,6 @@ export class SecurityPreferences implements OnInit {
     this.preferences.set(res.preferences ?? {});
     this.dnsImportance.set(res.dnsImportance ?? {});
     this.dnsOverrideTypes.set(new Set(res.dnsImportanceOverrideTypes ?? []));
-    this.saveError.set(null);
   }
 
   isEnabled(section: string, key: string): boolean {

@@ -1,17 +1,17 @@
-<div class="px-10 py-6">
+<div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
     <app-page-header Title="notifications-feedback" Description="{{ 'feedback.description' | transloco }}"
         [NeedAdminLink]="false" />
 
-    <div class="w-full flex flex-col gap-5 pt-6">
+    <div class="w-full flex flex-col gap-4 sm:gap-5 pt-4 sm:pt-6">
         <!-- Summary cards -->
-        <div class="w-full flex gap-4">
-            <app-section-top-card class="flex-1" Title="{{ 'total' | transloco }}" [Value]="totalCount()"
+        <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 min-w-0">
+            <app-section-top-card class="min-w-0" Title="{{ 'total' | transloco }}" [Value]="totalCount()"
                 [Icon]="Icons.Bell" BackgroundColor="#dbeafe" IconColor="#155dfc" />
-            <app-section-top-card class="flex-1" Title="{{ 'feedback.new' | transloco }}" [Value]="0"
+            <app-section-top-card class="min-w-0" Title="{{ 'feedback.new' | transloco }}" [Value]="0"
                 [Icon]="Icons.CircleQuestionMark" BackgroundColor="#dbeafe" IconColor="#155dfc" />
-            <app-section-top-card class="flex-1" Title="{{ 'feedback.critical' | transloco }}" [Value]="criticalCount()"
+            <app-section-top-card class="min-w-0" Title="{{ 'feedback.critical' | transloco }}" [Value]="criticalCount()"
                 [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
-            <app-section-top-card class="flex-1" Title="{{ 'feedback.processing' | transloco }}"
+            <app-section-top-card class="min-w-0" Title="{{ 'feedback.processing' | transloco }}"
                 [Value]="inBehandelingCount()" [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad"
                 TextColor="#3abfad" />
         </div>
@@ -20,7 +20,6 @@
         @if (criticalCount() > 0) {
         <app-page-warnings [isCritical]="true" [isExpanded]="isWarningExpanded()" (toggle)="toggleExpanded()"
             title="{{ criticalCount() }} {{ ( criticalCount() ? 'critical-warning' : 'critical-warnings') | transloco }}">
-            >
             <app-page-warnings-item [isCritical]="true" body>
                 {{ 'feedback.warning' | transloco }}
             </app-page-warnings-item>
@@ -39,21 +38,21 @@
             }
 
         @if (isLoading()) {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
             <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <span class="text-sm text-gray-500 mt-3">{{ 'feedback.loading' | transloco }}...</span>
+            <span class="text-sm text-gray-500 mt-3 text-center">{{ 'feedback.loading' | transloco }}...</span>
         </div>
         } @else if (listLoadError()) {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
-            <p class="text-sm text-red-600">{{listLoadError()}}</p>
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
+            <p class="text-sm text-red-600 text-center">{{listLoadError()}}</p>
         </div>
         } @else if (filteredNotifications().length === 0) {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center p-12">
+        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
             <div class="w-16 h-16 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-4">
                 <i-lucide [img]="Icons.CircleCheck" size="32" />
             </div>
-            <h3 class="text-lg font-medium text-gray-900">{{ 'feedback.none' | transloco }}</h3>
-            <p class="text-sm text-gray-500 mt-1 text-center max-w-md">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 text-center">{{ 'feedback.none' | transloco }}</h3>
+            <p class="text-sm text-gray-500 mt-1 text-center max-w-md px-2">
                 @if (filterSeverity() === 'all') {
                 {{ 'feedback.severity.all' | transloco }} }
                 @else if (filterSeverity()==='dismissed' ) {
@@ -108,8 +107,8 @@
                             </span>
                             }
                         </div>
-                        <h3 class="font-medium text-gray-900 text-lg">{{ n.title }}</h3>
-                        <p class="text-sm text-gray-600 mt-1">{{ n.description }}</p>
+                        <h3 class="font-medium text-gray-900 text-base sm:text-lg break-words">{{ n.title }}</h3>
+                        <p class="text-sm text-gray-600 mt-1 break-words">{{ n.description }}</p>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i-lucide [img]="Icons.Clock" size="12" />
                             {{
@@ -174,15 +173,15 @@
                                 (input)="setFeedbackText(n.id, $any($event.target).value)" rows="4"
                                 class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                                 placeholder="{{ 'feedback.describe-feedback' | transloco }}"></textarea>
-                            <div class="flex gap-2 mt-3">
+                            <div class="flex flex-col sm:flex-row gap-2 mt-3">
                                 <button type="button" (click)="submitFeedback(n)"
                                     [disabled]="isSubmittingFeedback(n.id) || !getFeedbackText(n.id).trim()"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                     <i-lucide [img]="Icons.Send" size="16" class="text-white" />
                                     {{ isSubmittingFeedback(n.id) ? ('send' | transloco)+'...' : ('sent' | transloco) }}
                                 </button>
                                 <button type="button" (click)="closeFeedbackForm(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
                                     {{ 'cancel' | transloco }}
                                 </button>
                             </div>
@@ -190,14 +189,14 @@
                                 {{ 'feedback.automatic' | transloco }}
                             </p>
                             } @else {
-                            <div class="flex flex-wrap gap-2">
+                            <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                                 <button type="button" (click)="openFeedbackForm(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors">
+                                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors">
                                     <i-lucide [img]="Icons.MessageCircle" size="16" />
                                     {{ 'feedback.send' | transloco }}
                                 </button>
                                 <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                     <i-lucide [img]="Icons.EyeOff" size="16" />
                                     {{ isDismissing(n) ? ('busy' | transloco)+'...' : ('ignore-30-days' | transloco) }}
 
@@ -206,15 +205,15 @@
                             }
                         </div>
                         } @else {
-                        <div class="mt-4">
+                        <div class="mt-4 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
                             <span
-                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                                class="inline-flex w-fit items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
                                 <i-lucide [img]="Icons.CircleCheck" size="16" />
                                 {{ 'resolved' | transloco }}
                             </span>
 
                             <button type="button" (click)="unDismiss(n)" [disabled]="isUnDismissing(n)"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 <i-lucide [img]="Icons.RefreshCw" size="16" />
                                 {{ isUnDismissing(n) ? ('busy' | transloco)+'...' : ('repairing' | transloco) }}
                             </button>
@@ -222,9 +221,9 @@
                         </div>
                         }
                         @if (filterSeverity() !== 'dismissed' && n.hasReported) {
-                        <div class="flex flex-wrap gap-2 mt-6">
+                        <div class="flex flex-col sm:flex-row gap-2 mt-6">
                             <button type="button" (click)="markAsDismissed(n)" [disabled]="isDismissing(n)"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 <i-lucide [img]="Icons.EyeOff" size="16" />
                                 {{ isDismissing(n) ? ('busy' | transloco)+'...' : ('ignore-30-days' | transloco) }}
                             </button>
