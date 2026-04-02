@@ -59,9 +59,7 @@ public class SecurityReportEmailService {
                 helper.addAttachment(fileName, new ByteArrayResource(pdfBytes));
             }
             mailSender.send(message);
-        } catch (MessagingException e) {
-            throwReportEmailFailed(locale, e);
-        } catch (MailException e) {
+        } catch (MessagingException | MailException e) {
             throwReportEmailFailed(locale, e);
         }
     }

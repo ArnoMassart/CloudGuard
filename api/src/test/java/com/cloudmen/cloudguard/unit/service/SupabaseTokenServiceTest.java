@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.TeamleaderTokens;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.exception.TokensNotFoundException;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
 import com.cloudmen.cloudguard.unit.helper.SupabaseTokenTestHelper;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -17,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +37,7 @@ public class SupabaseTokenServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    private ResourceBundleMessageSource messageSource;
     private SupabaseTokenService service;
 
     private static final String MOCK_URL = "https://mock.supabase.co";
@@ -39,7 +45,12 @@ public class SupabaseTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new SupabaseTokenService(MOCK_URL, MOCK_KEY);
+        messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasenames("messages");
+        messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
+        messageSource.setFallbackToSystemLocale(false);
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
+        service = new SupabaseTokenService(MOCK_URL, MOCK_KEY, messageSource);
         ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
     }
 
@@ -67,8 +78,9 @@ public class SupabaseTokenServiceTest {
                 anyString(), eq(HttpMethod.GET),any(HttpEntity.class), any(ParameterizedTypeReference.class)
         )).thenReturn(mockResponse);
 
-        TokensNotFoundException exception = assertThrows(TokensNotFoundException.class, () -> service.getTokens());
-        assertTrue(exception.getMessage().contains("Geen Teamleader tokens gevonden in Supabase"));
+        GoogleWorkspaceSyncException exception = assertThrows(GoogleWorkspaceSyncException.class, () -> service.getTokens());
+        assertTrue(exception.getMessage().contains(messageSource.getMessage(
+                "api.teamleader.tokens_not_configured", null, LocaleContextHolder.getLocale())));
     }
 
     @Test
@@ -81,8 +93,9 @@ public class SupabaseTokenServiceTest {
                 any(ParameterizedTypeReference.class)
         )).thenReturn(mockResponse);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> service.getTokens());
-        assertTrue(exception.getMessage().contains("Geen Teamleader tokens gevonden in Supabase"));
+        GoogleWorkspaceSyncException exception = assertThrows(GoogleWorkspaceSyncException.class, () -> service.getTokens());
+        assertTrue(exception.getMessage().contains(messageSource.getMessage(
+                "api.teamleader.tokens_not_configured", null, LocaleContextHolder.getLocale())));
     }
 
     @Test

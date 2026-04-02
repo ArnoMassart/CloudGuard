@@ -1,17 +1,14 @@
-package com.cloudmen.cloudguard.unit.service;
+package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminSecurityKeysResponse;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
-import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
-import com.cloudmen.cloudguard.service.PasswordSettingsService;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
-import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.UserName;
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +28,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PasswordSettingsServiceTest {
+
+    private static final String ADMIN = "admin@example.com";
 
     @Mock
     PolicyApiCacheService policyCache;
@@ -64,37 +63,37 @@ class PasswordSettingsServiceTest {
 
     @Test
     void forceRefreshCache_invalidatesInternalCacheAndRefreshesDependencies() {
-        service.forceRefreshCache(GlobalTestHelper.ADMIN);
+        service.forceRefreshCache(ADMIN);
 
         verify(policyCache).forceRefreshCache();
-        verify(usersCache).forceRefreshCache(GlobalTestHelper.ADMIN);
-        verify(orgUnitCache).forceRefreshCache(GlobalTestHelper.ADMIN);
-        verify(adminSecurityKeysService).forceRefreshCache(GlobalTestHelper.ADMIN);
+        verify(usersCache).forceRefreshCache(ADMIN);
+        verify(orgUnitCache).forceRefreshCache(ADMIN);
+        verify(adminSecurityKeysService).forceRefreshCache(ADMIN);
     }
 
     @Test
     void getPasswordSettings_secondCallDoesNotRefetchUsersFromCacheService() throws Exception {
         stubMinimalTenant();
 
-        when(adminSecurityKeysService.getAdminsWithSecurityKeys(GlobalTestHelper.ADMIN))
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        service.getPasswordSettings(GlobalTestHelper.ADMIN);
-        service.getPasswordSettings(GlobalTestHelper.ADMIN);
+        service.getPasswordSettings(ADMIN);
+        service.getPasswordSettings(ADMIN);
 
-        verify(usersCache, times(1)).getOrFetchUsersData(GlobalTestHelper.ADMIN);
+        verify(usersCache, times(1)).getOrFetchUsersData(ADMIN);
     }
 
     @Test
     void getPasswordSettings_emptyUsers_summaryAndScoreStillCoherent() throws Exception {
         stubMinimalTenant();
 
-        when(adminSecurityKeysService.getAdminsWithSecurityKeys(GlobalTestHelper.ADMIN))
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(GlobalTestHelper.ADMIN);
+        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(0, dto.summary().totalUsers());
         assertEquals(100, dto.securityScore());
@@ -119,20 +118,20 @@ class PasswordSettingsServiceTest {
         ok.setIsEnrolledIn2Sv(true);
         ok.setIsEnforcedIn2Sv(true);
 
-        when(usersCache.getOrFetchUsersData(GlobalTestHelper.ADMIN)).thenReturn(
+        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
                 new UserCacheEntry(List.of(forced, ok), Map.of(), Map.of(), 0L));
-        when(orgUnitCache.getOrFetchOrgUnitData(GlobalTestHelper.ADMIN)).thenReturn(
+        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
                 new OrgUnitCacheEntry(List.of(), Map.of("/", 2), 0L));
-        when(policyCache.getOuIdToPathMap(GlobalTestHelper.ADMIN)).thenReturn(Collections.emptyMap());
-        when(policyCache.getAllPolicies(GlobalTestHelper.ADMIN)).thenReturn(Collections.emptyList());
+        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
+        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
 
         var missingKeyAdmin = new AdminWithSecurityKeyDto(
                 "a1", "Admin One", "admin1@example.com", "Admin", "/", true, 0);
-        when(adminSecurityKeysService.getAdminsWithSecurityKeys(GlobalTestHelper.ADMIN))
+        when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(List.of(missingKeyAdmin), 2, null));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
+        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(GlobalTestHelper.ADMIN);
+        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(1, dto.usersWithForcedChange().size());
         assertEquals(1, dto.summary().usersWithForcedChange());
@@ -312,12 +311,12 @@ class PasswordSettingsServiceTest {
     }
 
     private void stubMinimalTenant() throws Exception {
-        when(usersCache.getOrFetchUsersData(GlobalTestHelper.ADMIN)).thenReturn(
+        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
                 new UserCacheEntry(List.of(), Map.of(), Map.of(), 0L));
-        when(orgUnitCache.getOrFetchOrgUnitData(GlobalTestHelper.ADMIN)).thenReturn(
+        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
                 new OrgUnitCacheEntry(List.of(), Map.of("/", 0), 0L));
-        when(policyCache.getOuIdToPathMap(GlobalTestHelper.ADMIN)).thenReturn(Collections.emptyMap());
-        when(policyCache.getAllPolicies(GlobalTestHelper.ADMIN)).thenReturn(Collections.emptyList());
+        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
+        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
     }
 
     private static OuPasswordPolicyDto ouPolicy(

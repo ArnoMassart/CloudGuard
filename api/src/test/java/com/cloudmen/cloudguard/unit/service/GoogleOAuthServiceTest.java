@@ -66,6 +66,8 @@ public class GoogleOAuthServiceTest {
 
         assertEquals(2, page.apps().size());
 
+        System.out.println("DE APPS IN DE LIJST ZIJN: " + page.apps());
+
         var testApp = page.apps().stream().filter(a -> a.id().equals("client1")).findFirst().get();
         assertEquals(2, testApp.totalUsers());
         assertEquals(50, testApp.exposurePercentage());

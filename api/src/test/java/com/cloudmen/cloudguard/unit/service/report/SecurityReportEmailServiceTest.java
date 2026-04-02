@@ -132,7 +132,7 @@ public class SecurityReportEmailServiceTest {
             service.sendSecurityReportEmail("admin@example.com", "Test", null, Locale.ENGLISH);
         });
 
-        assertEquals("Failed to send feedback email", exception.getMessage());
+        assertEquals(messageSource.getMessage("api.email.send_failed", null, Locale.ENGLISH), exception.getMessage());
         verify(mailSender, never()).send(any(MimeMessage.class));
     }
 

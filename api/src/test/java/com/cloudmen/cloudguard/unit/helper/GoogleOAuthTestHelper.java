@@ -20,7 +20,7 @@ public class GoogleOAuthTestHelper {
             boolean isAnonymous) {
 
         // Let op: als RawUserToken geen record is maar een class met setters, pas dit dan even aan naar getters/setters.
-        return new RawUserToken(clientId, displayText, userEmail, scopes, isNativeApp, isAnonymous);
+        return new RawUserToken(userEmail, clientId, displayText, scopes, isNativeApp, isAnonymous);
     }
 
     public static void mockCacheEntry(GoogleOAuthCacheService cacheService, List<RawUserToken> tokens, int totalDomainUsers) {
