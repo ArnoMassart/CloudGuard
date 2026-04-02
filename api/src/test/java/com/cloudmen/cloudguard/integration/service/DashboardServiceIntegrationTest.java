@@ -15,6 +15,7 @@ import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {DashboardService.class})
 public class DashboardServiceIntegrationTest {
 
     @Autowired
@@ -51,6 +52,11 @@ public class DashboardServiceIntegrationTest {
     @MockitoBean private NotificationAggregationService notificationService;
     @MockitoBean private PasswordSettingsService passwordSettingsService;
     @MockitoBean private UserSecurityPreferenceService userSecurityPreferenceService;
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private static final String EMAIL = "admin@cloudmen.com";
 

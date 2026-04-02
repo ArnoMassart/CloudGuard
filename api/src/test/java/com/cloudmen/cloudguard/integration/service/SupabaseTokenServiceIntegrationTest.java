@@ -2,7 +2,10 @@ package com.cloudmen.cloudguard.integration.service;
 
 import com.cloudmen.cloudguard.dto.TeamleaderTokens;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
+import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -29,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {SupabaseTokenService.class})
 @TestPropertySource(properties = {
         "supabase.url=https://mock.supabase.co",
         "supabase.key=mock-key"
@@ -41,6 +44,12 @@ public class SupabaseTokenServiceIntegrationTest {
 
     @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     @Mock
     private RestTemplate restTemplate;

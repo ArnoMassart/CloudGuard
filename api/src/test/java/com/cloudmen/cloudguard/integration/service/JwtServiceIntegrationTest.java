@@ -3,7 +3,10 @@ package com.cloudmen.cloudguard.integration.service;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.exception.InvalidExternalTokenException;
 import com.cloudmen.cloudguard.exception.UnauthorizedException;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +30,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {JwtService.class})
 @TestPropertySource(properties = {
         "application.security.jwt.secret-key=thisisaverylongsecretkeythatisatleast32byteslong",
         "application.security.jwt.expiration=3600000"
@@ -39,6 +42,12 @@ public class JwtServiceIntegrationTest {
 
     @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private JwtDecoder jwtDecoder;
 

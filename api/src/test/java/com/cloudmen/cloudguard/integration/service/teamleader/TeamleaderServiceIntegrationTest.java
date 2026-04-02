@@ -3,7 +3,10 @@ package com.cloudmen.cloudguard.integration.service.teamleader;
 import com.cloudmen.cloudguard.dto.TeamleaderTokens;
 import com.cloudmen.cloudguard.exception.AccessTokenEmptyException;
 import com.cloudmen.cloudguard.exception.RefreshTokenEmptyException;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
+import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +30,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {TeamleaderService.class})
 @TestPropertySource(properties = {
         "teamleader.client.id=test-client-id",
         "teamleader.client.secret=test-client-secret"
@@ -39,6 +42,12 @@ public class TeamleaderServiceIntegrationTest {
 
     @MockitoBean
     private SupabaseTokenService supabaseTokenService;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     @Mock
     private RestTemplate restTemplate;

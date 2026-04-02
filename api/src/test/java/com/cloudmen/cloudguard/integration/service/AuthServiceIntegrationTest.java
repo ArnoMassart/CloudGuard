@@ -4,10 +4,12 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.AuthService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.*;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -26,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {AuthService.class})
 public class AuthServiceIntegrationTest {
 
     @Autowired
@@ -43,6 +45,12 @@ public class AuthServiceIntegrationTest {
 
     @MockitoBean
     private GoogleUsersCacheService usersCacheService;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private static final String EMAIL = "admin@cloudmen.com";
     private static final String EXTERNAL_TOKEN = "external-google-id-token";
@@ -107,7 +115,7 @@ public class AuthServiceIntegrationTest {
         assertNotNull(result);
         assertEquals(INTERNAL_TOKEN, result.cookie().getValue());
         assertEquals(testUserDto, result.userDto());
-        verify(userService, times(1)).save(any(User.class));
+        verify(userService, times(2)).save(any(User.class));
     }
 
     @Test

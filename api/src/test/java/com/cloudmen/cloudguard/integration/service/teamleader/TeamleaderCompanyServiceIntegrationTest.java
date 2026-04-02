@@ -1,7 +1,10 @@
 package com.cloudmen.cloudguard.integration.service.teamleader;
 
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -25,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {TeamleaderCompanyService.class})
 @TestPropertySource(properties = {
         "teamleader.api.base=https://api.teamleader.eu"
 })
@@ -35,6 +38,12 @@ public class TeamleaderCompanyServiceIntegrationTest {
 
     @MockitoBean
     private TeamleaderService teamleaderService;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     @Mock
     private RestTemplate restTemplate;

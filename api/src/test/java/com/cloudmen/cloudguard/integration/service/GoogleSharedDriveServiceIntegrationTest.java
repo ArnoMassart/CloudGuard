@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
 import com.google.api.client.util.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +30,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {GoogleSharedDriveService.class})
 public class GoogleSharedDriveServiceIntegrationTest {
 
     @Autowired
@@ -130,7 +131,7 @@ public class GoogleSharedDriveServiceIntegrationTest {
 
     @Test
     void getDrivesPageOverview_emptyDrives_returnsPerfectScores() {
-        SharedDriveCacheEntry cacheEntry = new SharedDriveCacheEntry(Collections.emptyList());
+        SharedDriveCacheEntry cacheEntry = new SharedDriveCacheEntry(Collections.emptyList(), System.currentTimeMillis());
         when(sharedDriveCacheService.getOrFetchDriveData(EMAIL)).thenReturn(cacheEntry);
 
         SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(EMAIL, Set.of());

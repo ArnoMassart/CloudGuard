@@ -1,8 +1,11 @@
 package com.cloudmen.cloudguard.integration.service.teamleader;
 
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {TeamleaderAccessService.class})
 @TestPropertySource(properties = {
         "teamleader.customfield.cloudguard.id=custom-field-123"
 })
@@ -36,6 +39,12 @@ public class TeamleaderAccessServiceIntegrationTest {
 
     @MockitoBean
     private TeamleaderCompanyService teamleaderCompanyService;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private HttpHeaders mockHeaders;
     private static final String EMAIL = "admin@cloudmen.com";

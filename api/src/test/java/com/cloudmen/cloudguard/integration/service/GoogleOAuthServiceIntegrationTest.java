@@ -4,8 +4,11 @@ import com.cloudmen.cloudguard.dto.oauth.OAuthCacheEntry;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthPagedResponse;
 import com.cloudmen.cloudguard.dto.oauth.RawUserToken;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleOAuthService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +30,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {GoogleOAuthService.class})
 public class GoogleOAuthServiceIntegrationTest {
 
     @Autowired
@@ -38,6 +41,12 @@ public class GoogleOAuthServiceIntegrationTest {
 
     @MockitoBean
     private MessageSource messageSource;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private static final String EMAIL = "admin@cloudmen.com";
 

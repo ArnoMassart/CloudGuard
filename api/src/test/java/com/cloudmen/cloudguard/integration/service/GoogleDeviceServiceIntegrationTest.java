@@ -3,8 +3,11 @@ package com.cloudmen.cloudguard.integration.service;
 import com.cloudmen.cloudguard.dto.devices.DeviceCacheEntry;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.DevicePageResponse;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleDeviceService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.model.ChromeOsDevice;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Collections;
@@ -19,12 +23,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static com.cloudmen.cloudguard.unit.helper.GlobalTestHelper.getMessageSource;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {GoogleDeviceService.class})
 public class GoogleDeviceServiceIntegrationTest {
 
     @Autowired
@@ -40,8 +45,11 @@ public class GoogleDeviceServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
+
+        // Gebruik lenient() om te voorkomen dat Mockito klaagt over ongebruikte stubs,
+        // en match alle mogelijke getMessage signaturen.
+        when(messageSource.getMessage(any(), any(), any())).thenAnswer(inv -> inv.getArgument(0));
 
         MobileDevice compliantMobile = new MobileDevice();
         compliantMobile.setResourceId("mob-1");

@@ -1,7 +1,10 @@
 package com.cloudmen.cloudguard.integration.service.report;
 
 import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.report.SecurityReportEmailService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {SecurityReportEmailService.class})
 public class SecurityReportEmailServiceIntegrationTest {
 
     @Autowired
@@ -30,6 +33,12 @@ public class SecurityReportEmailServiceIntegrationTest {
 
     @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     @BeforeEach
     void setUp() {

@@ -5,9 +5,12 @@ import com.cloudmen.cloudguard.dto.licenses.LicenseOverviewResponse;
 import com.cloudmen.cloudguard.dto.licenses.LicensePageResponse;
 import com.cloudmen.cloudguard.dto.licenses.LicenseType;
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleLicenseService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleLicenseCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {GoogleLicenseService.class})
 public class GoogleLicenseServiceIntegrationTest {
 
     @Autowired
@@ -33,6 +36,12 @@ public class GoogleLicenseServiceIntegrationTest {
 
     @MockitoBean
     private GoogleUsersCacheService usersCacheService;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private static final String EMAIL = "admin@cloudmen.com";
 

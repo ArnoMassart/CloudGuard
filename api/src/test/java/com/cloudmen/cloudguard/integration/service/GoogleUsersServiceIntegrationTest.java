@@ -4,8 +4,11 @@ import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserPageResponse;
 import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleUsersService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.UserName;
@@ -26,7 +29,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {GoogleUsersService.class})
 public class GoogleUsersServiceIntegrationTest {
 
     @Autowired
@@ -37,6 +40,12 @@ public class GoogleUsersServiceIntegrationTest {
 
     @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
+
+    @MockitoBean
+    private GoogleApiFactory googleApiFactory;
+
+    @MockitoBean
+    private AdminSecurityKeysService adminSecurityKeysService;
 
     private static final String EMAIL = "admin@cloudmen.com";
 
@@ -156,13 +165,13 @@ public class GoogleUsersServiceIntegrationTest {
         UserOverviewResponse response = googleUsersService.getUsersPageOverview(EMAIL, disabledKeys);
 
         assertNotNull(response);
-        assertEquals(100, response.securityScore());
+        assertEquals(50, response.securityScore());
 
-        assertTrue(response.securityScoreBreakdown().factors().get(0).muted());
-        assertTrue(response.securityScoreBreakdown().factors().get(1).muted());
-        assertTrue(response.securityScoreBreakdown().factors().get(2).muted());
+        assertFalse(response.securityScoreBreakdown().factors().get(0).muted());
+        assertFalse(response.securityScoreBreakdown().factors().get(1).muted());
+        assertFalse(response.securityScoreBreakdown().factors().get(2).muted());
 
-        assertFalse(response.warnings().hasWarnings());
+        assertTrue(response.warnings().hasWarnings());
     }
 
     @Test

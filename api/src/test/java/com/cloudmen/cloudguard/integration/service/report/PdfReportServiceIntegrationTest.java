@@ -20,12 +20,15 @@ import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.report.PdfReportService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +41,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@SpringBootTest(classes = {PdfReportService.class})
 public class PdfReportServiceIntegrationTest {
 
     @Autowired
@@ -58,13 +61,18 @@ public class PdfReportServiceIntegrationTest {
     @MockitoBean private TeamleaderCompanyService teamleaderCompanyService;
     @MockitoBean private TeamleaderService teamleaderService;
     @MockitoBean private UserSecurityPreferenceService userSecurityPreferenceService;
+    @MockitoBean private TemplateEngine templateEngine;
 
     @BeforeEach
     void setUp() {
         // Basis setup voor Teamleader (wordt buiten de try-catches aangeroepen)
+
+        when(templateEngine.process(anyString(), any(Context.class)))
+                .thenReturn("<html><body><h1>Test Report</h1></body></html>");
+
         when(teamleaderService.createHeaders()).thenReturn(new HttpHeaders());
         when(teamleaderCompanyService.getCompanyNameByEmail(anyString(), any()))
-                .thenReturn("Cloudmen Test Company");
+                .thenReturn("Cloudmen BV");
 
         // Mock Preferences (leeg setje disabled keys)
         when(userSecurityPreferenceService.getDisabledPreferenceKeys(anyString()))
