@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.dto.apppasswords.*;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
@@ -178,7 +179,8 @@ public class AppPasswordsService {
             return new AppPasswordCacheEntry(result, totalUserCount);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch app passwords", e);
+            throw new GoogleWorkspaceSyncException(
+                    "Fout bij ophalen app-wachtwoorden: " + e.getMessage());
         }
     }
 

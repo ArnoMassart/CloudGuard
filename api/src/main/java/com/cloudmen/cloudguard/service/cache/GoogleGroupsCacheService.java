@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.dto.groups.CachedGroupItem;
 import com.cloudmen.cloudguard.dto.groups.GroupCacheEntry;
 import com.cloudmen.cloudguard.dto.groups.GroupOrgDetail;
@@ -95,7 +96,7 @@ public class GoogleGroupsCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            throw new RuntimeException("Fout bij ophalen Google Groups, en geen cache beschikbaar: " + e.getMessage());
+            throw new GoogleWorkspaceSyncException("Fout bij ophalen Google Groups, en geen cache beschikbaar: " + e.getMessage());
         }
     }
 
@@ -172,7 +173,9 @@ public class GoogleGroupsCacheService {
                 }
                 memberPageToken = members.getNextPageToken();
             } while (memberPageToken != null);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            log.warn("Could not list members for {}: {}", groupEmail, e.getMessage());
+        }
         return new int[]{total, external};
     }
 

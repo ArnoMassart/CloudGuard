@@ -2,9 +2,13 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.TeamleaderTokens;
 import com.cloudmen.cloudguard.exception.TokensNotFoundException;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -22,14 +26,17 @@ public class SupabaseTokenService {
     private final RestTemplate restTemplate;
     private final String supabaseUrl;
     private final String supabaseKey;
+    private final MessageSource messageSource;
 
     public SupabaseTokenService(
             @Value("${supabase.url}") String supabaseUrl,
-            @Value("${supabase.key}") String supabaseKey) {
+            @Value("${supabase.key}") String supabaseKey,
+            @Qualifier("messageSource") MessageSource messageSource) {
         this.restTemplate = new RestTemplate();
         this.restTemplate.setRequestFactory(new JdkClientHttpRequestFactory());
         this.supabaseUrl = supabaseUrl;
         this.supabaseKey = supabaseKey;
+        this.messageSource = messageSource;
     }
 
     private HttpHeaders getSupabaseHeaders() {
@@ -57,7 +64,10 @@ public class SupabaseTokenService {
             Map<String, String> row = body.get(0);
             return new TeamleaderTokens(row.get("access_token"), row.get("refresh_token"));
         }
-        throw new TokensNotFoundException("Geen Teamleader tokens gevonden in Supabase! Voer de initiële setup uit.");
+        log.warn("No Teamleader token row returned from Supabase");
+        throw new GoogleWorkspaceSyncException(
+                messageSource.getMessage(
+                        "api.teamleader.tokens_not_configured", null, LocaleContextHolder.getLocale()));
     }
 
     public void updateTokens(String accessToken, String refreshToken) {

@@ -1,3 +1,5 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
@@ -14,6 +16,9 @@ const PREFS_I18N: Record<string, string> = {
   'preferences.info.title': 'Info title',
   'preferences.info.description': 'Info body',
   'preferences.loading': 'Loading',
+  'preferences.error.load': 'Load failed',
+  'preferences.error.save': 'Save failed',
+  'preferences.error.sync': 'Sync failed',
   'preferences.dns.standard': 'Std',
   'preferences.dns.required': 'Req',
   'preferences.dns.recommended': 'Rec',
@@ -71,7 +76,7 @@ describe('SecurityPreferences', () => {
     getAllPreferences: ReturnType<typeof vi.fn>;
     setPreference: ReturnType<typeof vi.fn>;
   };
-  let facadeMock: { refresh: ReturnType<typeof vi.fn> };
+  let facadeMock: { refresh: ReturnType<typeof vi.fn>; disabledKeysRefreshFailed: ReturnType<typeof signal> };
 
   const payload: PreferencesResponse = {
     preferences: { 'users-groups:2fa': true, 'users-groups:activity': false },
@@ -84,7 +89,7 @@ describe('SecurityPreferences', () => {
       getAllPreferences: vi.fn(() => of(payload)),
       setPreference: vi.fn(() => of(void 0)),
     };
-    facadeMock = { refresh: vi.fn() };
+    facadeMock = { refresh: vi.fn(), disabledKeysRefreshFailed: signal(false) };
 
     await TestBed.configureTestingModule({
       imports: [SecurityPreferences],
@@ -149,14 +154,23 @@ describe('SecurityPreferences', () => {
     expect(component.saving()).toBe(null);
   });
 
-  it('toggle on error reloads preferences but does not clear saving', async () => {
-    serviceMock.setPreference.mockReturnValueOnce(throwError(() => new Error('x')));
+  it('toggle on error reloads preferences, clears saving, and sets saveError', async () => {
+    serviceMock.setPreference.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 400,
+            error: 'Preference key is required.',
+          }),
+      ),
+    );
     const calls = serviceMock.getAllPreferences.mock.calls.length;
     component.toggle('users-groups', '2fa');
     await fixture.whenStable();
 
     expect(serviceMock.getAllPreferences.mock.calls.length).toBeGreaterThan(calls);
-    expect(component.saving()).toBe('users-groups:2fa');
+    expect(component.saving()).toBe(null);
+    expect(component.saveError()).toBe('Preference key is required.');
   });
 
   it('setDnsImportance no-ops when value unchanged', () => {
@@ -177,7 +191,9 @@ describe('SecurityPreferences', () => {
   });
 
   it('clears state when load fails', async () => {
-    serviceMock.getAllPreferences.mockReturnValue(throwError(() => new Error('load')));
+    serviceMock.getAllPreferences.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, error: 'Server error' })),
+    );
     fixture = TestBed.createComponent(SecurityPreferences);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -188,5 +204,6 @@ describe('SecurityPreferences', () => {
     expect(component.dnsImportance()).toEqual({});
     expect(component.dnsOverrideTypes().size).toBe(0);
     expect(component.loading()).toBe(false);
+    expect(component.loadError()).toBe('Server error');
   });
 });

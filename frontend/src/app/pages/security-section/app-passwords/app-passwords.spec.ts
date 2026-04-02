@@ -26,6 +26,9 @@ const APP_PASSWORDS_I18N: Record<string, string> = {
   previous: 'Previous',
   next: 'Next',
   'app-passwords.load-error': 'Error',
+  'app-passwords.error.overview-failed': 'Overview failed',
+  'app-passwords.error.list-failed': 'List failed',
+  'app-passwords.error.refresh-failed': 'Refresh failed',
   'app-passwords.no-users': 'No users',
   'try-again': 'Retry',
   'app-passwords.loading': 'Loading',
@@ -251,7 +254,8 @@ describe('AppPasswords', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.loadError()).toBe(true);
+    expect(component.listLoadError()).toBeTruthy();
+    expect(component.listLoadError() ?? '').toContain('fail');
     expect(component.userAppPasswords()).toEqual([]);
   });
 

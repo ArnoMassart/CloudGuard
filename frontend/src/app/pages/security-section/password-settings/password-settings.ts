@@ -17,9 +17,9 @@ import { UtilityMethods } from '../../../shared/UtilityMethods';
 import { LucideAngularModule } from 'lucide-angular';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
-import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-password-settings',
@@ -44,6 +44,7 @@ export class PasswordSettings implements OnInit, OnDestroy {
   readonly data = signal<PasswordSettingsData | null>(null);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly refreshError = signal<string | null>(null);
   readonly expandedOu = signal<string | null>(null);
   readonly securityKeysExpanded = signal(true);
   readonly forcedChangeExpanded = signal(true);
@@ -170,11 +171,14 @@ export class PasswordSettings implements OnInit, OnDestroy {
     this.#preferencesFacade.loadWithPrefs$(this.#passwordSettingsService.getPasswordSettings()).subscribe({
       next: (settings) => {
         this.data.set(settings);
+        this.refreshError.set(null);
         this.loading.set(false);
         onComplete?.();
       },
       error: (err) => {
-        this.error.set(err?.message || 'Kon gegevens niet laden.');
+        console.error('Password settings load failed: ', err);
+        const msg = this.#httpErrorDetail(err);
+        this.error.set(msg || this.#translocoService.translate('password-settings.error.load-failed'));
         this.loading.set(false);
         onComplete?.();
       },
@@ -188,10 +192,13 @@ export class PasswordSettings implements OnInit, OnDestroy {
   refreshData(): void {
     if (this.isRefreshing()) return;
     this.isRefreshing.set(true);
+    this.refreshError.set(null);
     this.#passwordSettingsService.refreshCache().subscribe({
       next: () => this.#load(false, () => this.isRefreshing.set(false)),
       error: (err) => {
         console.error('Kon cache niet vernieuwen:', err);
+        const msg = this.#httpErrorDetail(err);
+        this.refreshError.set(msg || this.#translocoService.translate('password-settings.error.refresh-failed'));
         this.isRefreshing.set(false);
       },
     });
@@ -248,5 +255,17 @@ export class PasswordSettings implements OnInit, OnDestroy {
         'security-score.password-settings'
       );
     this.#securityScoreDetail.open(breakdown, 'security-score.password-settings');
+  }
+
+  #httpErrorDetail(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (typeof err.error === 'string' && err.error.trim()) {
+        return err.error.trim();
+      }
+    }
+    if (err instanceof Error && err.message) {
+      return err.message;
+    }
+    return '';
   }
 }

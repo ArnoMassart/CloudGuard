@@ -13,6 +13,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -38,6 +39,8 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly notifications = signal<Notification[]>([]);
   readonly dismissedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
+  readonly listLoadError = signal<string | null>(null);
+  readonly actionError = signal<string | null>(null);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'>(
     'all'
   );
@@ -175,6 +178,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
   }
 
   #loadNotifications() {
+    this.listLoadError.set(null);
     this.isLoading.set(true);
     this.expandedIds.set(new Set());
     this.detailsCache.set({});
@@ -186,10 +190,14 @@ export class ReportsReactions implements OnInit, OnDestroy {
         this.notifications.set(active);
         this.dismissedNotifications.set(dismissed);
         this.isLoading.set(false);
+        this.listLoadError.set(null);
       },
-      error: () => {
+      error: (err) => {
+        console.error("Notifications load failed: ", err);
         this.notifications.set([]);
         this.dismissedNotifications.set([]);
+        const msg = this.#httpErrorDetail(err);
+        this.listLoadError.set(msg || this.#translocoService.translate('reports-reactions.error.load-failed'));
         this.isLoading.set(false);
       },
     });
@@ -217,9 +225,13 @@ export class ReportsReactions implements OnInit, OnDestroy {
             next.delete(key);
             return next;
           });
+          this.actionError.set(null);
           this.refresh();
         },
-        error: () => {
+        error: (err) => {
+          console.error("Mark as dismissed failed: ", err);
+          const msg = this.#httpErrorDetail(err);
+          this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.dismiss-failed'));
           this.dismissingIds.update((s) => {
             const next = new Set(s);
             next.delete(key);
@@ -244,9 +256,13 @@ export class ReportsReactions implements OnInit, OnDestroy {
           next.delete(key);
           return next;
         });
+        this.actionError.set(null);
         this.refresh();
       },
-      error: () => {
+      error: (err) => {
+        console.error("Un dismiss failed: ", err);
+        const msg = this.#httpErrorDetail(err);
+        this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.un-dismiss-failed'));
         this.unDismissingIds.update((s) => {
           const next = new Set(s);
           next.delete(key);
@@ -296,8 +312,12 @@ export class ReportsReactions implements OnInit, OnDestroy {
               next.delete(id);
               return next;
             });
+            this.actionError.set(null);
           },
-          error: () => {
+          error: (err) => {
+            console.error("Get details failed: ", err);
+            const msg = this.#httpErrorDetail(err);
+            this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.get-details-failed'));
             this.loadingDetailsIds.update((s) => {
               const next = new Set(s);
               next.delete(id);
@@ -347,8 +367,12 @@ export class ReportsReactions implements OnInit, OnDestroy {
           next.delete(n.id);
           return next;
         });
+        this.actionError.set(null);
       },
-      error: () => {
+      error: (err) => {
+        console.error("Submit feedback failed: ", err);
+        const msg = this.#httpErrorDetail(err);
+        this.actionError.set(msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed'));
         this.submittingIds.update((s) => {
           const next = new Set(s);
           next.delete(n.id);
@@ -356,5 +380,17 @@ export class ReportsReactions implements OnInit, OnDestroy {
         });
       },
     });
+  }
+
+  #httpErrorDetail(err:unknown): string{
+    if( err instanceof HttpErrorResponse){
+      if(typeof err.error==='string'&& err.error.trim()){
+        return err.error.trim();
+      }
+    }
+    if(err instanceof Error && err.message){
+      return err.message;
+    }
+    return '';
   }
 }

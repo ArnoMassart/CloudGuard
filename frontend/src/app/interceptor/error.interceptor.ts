@@ -1,4 +1,8 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpInterceptorFn,
+  HttpStatusCode,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
@@ -8,8 +12,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // 0 (Server down/Cors fout) of 5xx (Interne Server Crash)
-      if (error.status === 0 || error.status >= 500) {
+      // 502/503: upstream or temporary unavailability — let callers show a message / retry instead of leaving the page
+      const isUpstreamOrTemp =
+        error.status === HttpStatusCode.BadGateway || error.status === HttpStatusCode.ServiceUnavailable;
+      // 0 (offline/CORS) or other 5xx (e.g. 500 internal error)
+      if (error.status === 0 || (error.status >= 500 && !isUpstreamOrTemp)) {
         router.navigate(['/server-error']);
       }
 
