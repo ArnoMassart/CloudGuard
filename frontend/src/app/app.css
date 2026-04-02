@@ -31,11 +31,12 @@ app-navbar {
   z-index: 50;
 }
 
-@media (min-width: 768px) {
+/* Match Tailwind lg (1024px): keep drawer + top bar until then; fixed sidebar from lg up */
+@media (min-width: 1024px) {
   app-navbar {
     position: relative;
     height: 100%;
     flex-shrink: 0;
-    width: 270px;
+    width: 18rem;
   }
 }

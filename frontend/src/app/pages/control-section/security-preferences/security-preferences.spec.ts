@@ -19,6 +19,8 @@ const PREFS_I18N: Record<string, string> = {
   'preferences.error.load': 'Load failed',
   'preferences.error.save': 'Save failed',
   'preferences.error.sync': 'Sync failed',
+  'try-again': 'Retry',
+  cancel: 'Cancel',
   'preferences.dns.standard': 'Std',
   'preferences.dns.required': 'Req',
   'preferences.dns.recommended': 'Rec',

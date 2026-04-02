@@ -31,7 +31,8 @@ export class FilterChips {
   }
 
   getButtonClass(opt: FilterOption): string {
-    const base = 'px-4 py-2 rounded-full text-sm font-medium transition-colors';
+    const base =
+      'px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[2.5rem] sm:min-h-0 inline-flex items-center justify-center';
     const isActive = this.selectedValue === opt.value;
     const inactiveClass = this.variant === 'pilled' ? this.pilledInactiveClass : opt.inactiveClass;
     return `${base} ${isActive ? opt.activeClass : inactiveClass}`;

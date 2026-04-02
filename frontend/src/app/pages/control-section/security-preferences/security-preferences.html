@@ -1,4 +1,4 @@
-<div class="px-10 py-6">
+<div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
   <app-page-header
     Title="{{ 'preferences.title' | transloco }}"
     Description="{{ 'preferences.description' | transloco }}"
@@ -7,7 +7,7 @@
 
   @if (loadError()) {
   <div
-    class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    class="mt-4 sm:mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     role="alert"
   >
     <span>{{ loadError() }}</span>
@@ -51,7 +51,7 @@
   </div>
   }
 
-  <div class="mt-6" role="note" aria-label="{{ 'preferences.info.label' | transloco }}">
+  <div class="mt-4 sm:mt-6" role="note" aria-label="{{ 'preferences.info.label' | transloco }}">
     <app-page-warnings [isInfo]="true" title="{{ 'preferences.info.title' | transloco }}">
       <app-page-warnings-item body [isInfo]="true">
         {{ 'preferences.info.description' | transloco }}      
@@ -60,28 +60,28 @@
   </div>
 
   @if (loading()) {
-  <div class="flex flex-col items-center py-16">
+  <div class="flex flex-col items-center px-4 py-12 sm:py-16">
     <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-    <span class="mt-4 text-sm text-slate-600">{{'preferences.loading' | transloco}}</span>
+    <span class="mt-4 text-sm text-slate-600 text-center">{{'preferences.loading' | transloco}}</span>
   </div>
   } @else {
-  <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <div class="mt-6 sm:mt-8 grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 min-w-0">
     @for (section of sections; track section.section) {
-    <div class="rounded-xl border-2 border-slate-200/80 bg-white p-6 shadow-sm">
-      <div class="flex items-center gap-2.5 border-b border-slate-200 pb-3">
+    <div class="rounded-xl border-2 border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm min-w-0">
+      <div class="flex items-start sm:items-center gap-2.5 border-b border-slate-200 pb-3">
         <i-lucide
           [img]="sectionNavIcon(section.route)"
           size="20"
-          class="shrink-0 text-slate-600"
+          class="shrink-0 text-slate-600 mt-0.5 sm:mt-0"
           aria-hidden="true"
         />
-        <h3 class="m-0 font-medium text-slate-900">{{ section.label  | transloco}}</h3>
+        <h3 class="m-0 font-medium text-slate-900 text-sm sm:text-base min-w-0 break-words">{{ section.label  | transloco}}</h3>
       </div>
-      <ul class="mt-4 space-y-3">
+      <ul class="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
         @for (pref of section.preferences; track pref.key) {
-        <li class="flex items-center justify-between gap-4">
+        <li class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <label
-            class="flex-1 cursor-pointer text-sm text-slate-700"
+            class="min-w-0 flex-1 cursor-pointer text-sm text-slate-700 leading-snug"
             [for]="section.section + '-' + pref.key"
           >
             {{ pref.label | transloco}}
@@ -90,7 +90,7 @@
           <select
             [id]="section.section + '-' + pref.key"
             [disabled]="saving() !== null"
-            class="max-w-[11rem] shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
+            class="w-full sm:w-auto sm:max-w-[11rem] shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-2 sm:py-1.5 text-sm text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70"
             [value]="dnsSelectValue(pref.dnsType)"
             (change)="setDnsImportance(section.section, pref.key, pref.dnsType, $any($event.target).value)"
           >
@@ -108,7 +108,7 @@
             [id]="section.section + '-' + pref.key"
             [disabled]="saving() !== null"
             (click)="toggle(section.section, pref.key)"
-            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 self-start sm:self-center"
             [class.bg-primary]="isEnabled(section.section, pref.key)"
             [class.bg-slate-300]="!isEnabled(section.section, pref.key)"
           >

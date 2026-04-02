@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { LogOutDialog } from '../components/log-out-dialog/log-out-dialog';
 import { UserService } from '../services/user-service';
 import { AppIcons } from '../shared/AppIcons';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../components/language-bar/language-bar';
 
 @Component({

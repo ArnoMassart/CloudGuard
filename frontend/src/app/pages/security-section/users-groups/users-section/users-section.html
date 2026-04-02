@@ -98,8 +98,8 @@
     </div>
     }
     @else if (orgUsers().length > 0) {
-    <table class="w-full text-left border-collapse mt-6 block sm:table">
-      <thead class="hidden sm:table-header-group">
+    <table class="w-full text-left border-collapse mt-6 block xl:table">
+      <thead class="hidden xl:table-header-group">
         <tr class="border-b border-t border-gray-200 bg-gray-50/50">
           <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'user-cap' | transloco }}</th>
           <th class="px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'role' | transloco }}</th>
@@ -110,14 +110,14 @@
         </tr>
       </thead>
 
-      <tbody class="block sm:table-row-group">
+      <tbody class="block xl:table-row-group">
         @for (user of orgUsers(); track user.email) {
 
         <tr
-          class="block sm:table-row mb-4 sm:mb-0 bg-white sm:bg-transparent border border-gray-200 sm:border-0 sm:border-b sm:border-gray-200 rounded-lg sm:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
+          class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-200 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
 
           <td
-            class="block sm:table-cell px-4 sm:px-6 py-4 border-b sm:border-none border-gray-200 bg-gray-50/30 sm:bg-transparent">
+            class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-200 bg-gray-50/30 xl:bg-transparent">
             <div class="flex flex-col">
               <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
               <span class="text-xs text-gray-500">{{ user.email }}</span>
@@ -125,8 +125,8 @@
           </td>
 
           <td
-            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'role' | transloco }}</span>
+            class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+            <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'role' | transloco }}</span>
             <span class="px-3 py-1 inline-flex justify-center text-center gap-1.5 rounded-md text-xs font-medium"
               [ngClass]="getRoleClass(user.role)">
               @if (user.role === 'Super Admin') {
@@ -137,8 +137,8 @@
           </td>
 
           <td
-            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'state' | transloco }}</span>
+            class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+            <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'state' | transloco }}</span>
             <div class="px-3 py-1 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
               [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
               [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
@@ -148,8 +148,8 @@
           </td>
 
           <td
-            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100 text-sm">
-            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">{{ 'last-login' | transloco }}</span>
+            class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100 text-sm">
+            <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'last-login' | transloco }}</span>
             <div class="flex items-center gap-2" [class.text-gray-500]="!lastLoginCellMuted(user)"
               [class.text-[#6b7280]]="lastLoginCellMuted(user)">
               <lucide-icon [img]="Icons.Clock" size="14"></lucide-icon>
@@ -158,8 +158,8 @@
           </td>
 
           <td
-            class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b sm:border-none border-gray-100">
-            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">2FA</span>
+            class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
+            <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">2FA</span>
             <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFactorEnabled"
               [class.text-destructive]="!user.twoFactorEnabled && !twoFactorCellMuted(user)"
               [class.text-[#6b7280]]="twoFactorCellMuted(user)">
@@ -168,8 +168,8 @@
             </div>
           </td>
 
-          <td class="flex sm:table-cell justify-between items-center px-4 sm:px-6 py-3 sm:py-4">
-            <span class="sm:hidden text-xs font-medium text-gray-500 uppercase">Security</span>
+          <td class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4">
+            <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">Security</span>
             <div class="flex items-center gap-1.5 text-xs font-medium"
               [class.text-emerald-400]="effectiveSecurityConform(user)"
               [class.text-destructive]="!effectiveSecurityConform(user)">
