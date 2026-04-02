@@ -2,16 +2,15 @@ package com.cloudmen.cloudguard.unit.controller;
 
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
-import com.cloudmen.cloudguard.controller.GoogleGroupsController;
-import com.cloudmen.cloudguard.dto.groups.GroupOrgDetail;
-import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
-import com.cloudmen.cloudguard.dto.groups.GroupPageResponse;
+import com.cloudmen.cloudguard.controller.AppPasswordController;
+import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
+import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordPageResponse;
+import com.cloudmen.cloudguard.dto.apppasswords.UserAppPasswordsDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
-import com.cloudmen.cloudguard.service.GoogleGroupsService;
+import com.cloudmen.cloudguard.service.AppPasswordsService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import jakarta.servlet.http.Cookie;
@@ -29,7 +28,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** HTTP integration tests: {@link AuthInterceptor}, controller wiring, and exception mapping. */
 @WebMvcTest(
-        controllers = GoogleGroupsController.class,
+        controllers = AppPasswordController.class,
         excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
 @TestPropertySource(
         properties = {
@@ -56,18 +54,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     WebConfig.class,
     AuthInterceptor.class,
     GlobalExceptionHandler.class,
-    GoogleGroupsControllerIT.MessageSourceTestConfig.class
+    AppPasswordControllerIT.MessageSourceTestConfig.class
 })
-class GoogleGroupsControllerIT {
+class AppPasswordControllerIT {
 
     private static final String AUTH_COOKIE = "AuthToken";
     private static final String VALID_TOKEN = "internal-jwt";
+
+    /** Matches {@link AppPasswordController} {@code IS_TESTMODE}. */
+    private static final boolean TEST_MODE = true;
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private GoogleGroupsService googleGroupsService;
+    private AppPasswordsService appPasswordsService;
 
     @MockitoBean
     private JwtService jwtService;
@@ -87,84 +88,76 @@ class GoogleGroupsControllerIT {
     }
 
     @Test
-    void getGroups_withoutCookie_returns401() throws Exception {
-        mockMvc.perform(get("/api/google/groups").contextPath("/api"))
+    void getAppPasswords_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(get("/api/google/app-passwords").contextPath("/api"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
     }
 
     @Test
-    void getGroups_withValidCookie_returnsPageJson() throws Exception {
+    void getAppPasswords_withCookie_returnsPageJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
-        var group =
-                new GroupOrgDetail(
-                        "g1",
-                        "admin",
-                        "low",
-                        List.of("t1"),
-                        10,
-                        0,
-                        false,
-                        "ALL",
-                        "ALL");
-        when(googleGroupsService.getGroupsPaged(
-                        eq("admin@acme.com"), isNull(), isNull(), eq(5)))
-                .thenReturn(new GroupPageResponse(List.of(group), "next-token"));
+        var user =
+                new UserAppPasswordsDto(
+                        "u1", "Alice", "alice@acme.com", "USER", true, List.of());
+        when(appPasswordsService.getAppPasswordsPaged(
+                        eq("admin@acme.com"), isNull(), eq(10), isNull(), eq(TEST_MODE)))
+                .thenReturn(new AppPasswordPageResponse(List.of(user), "next"));
 
         mockMvc.perform(
-                        get("/api/google/groups")
+                        get("/api/google/app-passwords")
                                 .contextPath("/api")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.groups[0].name").value("g1"))
-                .andExpect(jsonPath("$.nextPageToken").value("next-token"));
+                .andExpect(jsonPath("$.users[0].email").value("alice@acme.com"))
+                .andExpect(jsonPath("$.nextPageToken").value("next"));
     }
 
     @Test
-    void getGroups_passesQueryAndPageTokenAndSize() throws Exception {
+    void getAppPasswords_passesPageTokenSizeAndQuery() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
-        when(googleGroupsService.getGroupsPaged(
-                        "admin@acme.com", "q", "pt", 20))
-                .thenReturn(new GroupPageResponse(List.of(), null));
+        when(appPasswordsService.getAppPasswordsPaged(
+                        "admin@acme.com", "pt-1", 20, "mail", TEST_MODE))
+                .thenReturn(new AppPasswordPageResponse(List.of(), null));
 
         mockMvc.perform(
-                        get("/api/google/groups")
+                        get("/api/google/app-passwords")
                                 .contextPath("/api")
-                                .param("query", "q")
-                                .param("pageToken", "pt")
+                                .param("pageToken", "pt-1")
                                 .param("size", "20")
+                                .param("query", "mail")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk());
 
-        verify(googleGroupsService)
-                .getGroupsPaged("admin@acme.com", "q", "pt", 20);
+        verify(appPasswordsService)
+                .getAppPasswordsPaged("admin@acme.com", "pt-1", 20, "mail", TEST_MODE);
     }
 
     @Test
     void getOverview_callsPreferencesAndReturnsJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
         when(preferenceService.getDisabledPreferenceKeys("admin@acme.com"))
-                .thenReturn(Set.of());
+                .thenReturn(Set.of("pref-a"));
         var breakdown =
                 new SecurityScoreBreakdownDto(
-                        80,
+                        75,
                         "ok",
                         List.of(
                                 new SecurityScoreFactorDto(
                                         "t", "d", 10, 20, "low")));
-        var warnings = new SectionWarningsDto(Map.of(), false, false);
-        when(googleGroupsService.getGroupsOverview("admin@acme.com", Set.of()))
-                .thenReturn(
-                        new GroupOverviewResponse(1, 0, 0, 0, 0, 80, breakdown, warnings));
+        when(appPasswordsService.getOverview(
+                        "admin@acme.com", TEST_MODE, Set.of("pref-a")))
+                .thenReturn(new AppPasswordOverviewResponse(true, 5, 2, 75, breakdown));
 
         mockMvc.perform(
-                        get("/api/google/groups/overview")
+                        get("/api/google/app-passwords/overview")
                                 .contextPath("/api")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalGroups").value(1))
-                .andExpect(jsonPath("$.securityScore").value(80));
+                .andExpect(jsonPath("$.allowed").value(true))
+                .andExpect(jsonPath("$.totalAppPasswords").value(5))
+                .andExpect(jsonPath("$.securityScore").value(75));
 
         verify(preferenceService).getDisabledPreferenceKeys("admin@acme.com");
     }
@@ -174,12 +167,12 @@ class GoogleGroupsControllerIT {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
 
         mockMvc.perform(
-                        post("/api/google/groups/refresh")
+                        post("/api/google/app-passwords/refresh")
                                 .contextPath("/api")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Cache is succesvol vernieuwd!"));
 
-        verify(googleGroupsService).forceRefreshCache("admin@acme.com");
+        verify(appPasswordsService).forceRefreshCache("admin@acme.com");
     }
 }
