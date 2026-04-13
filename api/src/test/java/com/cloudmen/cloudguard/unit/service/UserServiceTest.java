@@ -12,12 +12,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 
 import java.util.*;
 
 import static com.cloudmen.cloudguard.unit.helper.GlobalTestHelper.*;
 import static com.cloudmen.cloudguard.unit.helper.UserTestHelper.createDbUser;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,11 +31,14 @@ public class UserServiceTest {
     @Mock
     private OrganizationRepository organizationRepository;
 
+    @Mock
+    private MessageSource messageSource;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, organizationRepository);
+        userService = new UserService(userRepository, organizationRepository, messageSource);
     }
 
     @Test
@@ -56,12 +61,35 @@ public class UserServiceTest {
         user.setOrganizationId(42L);
         Organization org = new Organization();
         org.setId(42L);
+        org.setCustomerId("C-acme");
         org.setName("Acme Workspace");
         when(organizationRepository.findById(42L)).thenReturn(Optional.of(org));
 
         UserDto dto = userService.convertToDto(user);
 
         assertEquals("Acme Workspace", dto.getOrganizationName());
+        verifyNoInteractions(messageSource);
+    }
+
+    @Test
+    void convertToDto_fallbackOrganization_usesMessageBundle() {
+        User user = createDbUser(ADMIN, "John", "Doe", "en");
+        user.setOrganizationId(42L);
+        Organization org = new Organization();
+        org.setId(42L);
+        org.setCustomerId(null);
+        org.setName("Organization (workspace customer id unavailable)");
+        when(organizationRepository.findById(42L)).thenReturn(Optional.of(org));
+        when(messageSource.getMessage(
+                        eq("api.organization.fallback_display_name"),
+                        isNull(),
+                        eq("Organization (workspace customer could not be resolved)"),
+                        any(Locale.class)))
+                .thenReturn("Vertaalde fallback");
+
+        UserDto dto = userService.convertToDto(user);
+
+        assertEquals("Vertaalde fallback", dto.getOrganizationName());
     }
 
     @Test

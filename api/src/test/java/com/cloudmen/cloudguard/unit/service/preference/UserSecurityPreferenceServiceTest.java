@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.unit.service.preference;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference;
+import com.cloudmen.cloudguard.dto.preferences.PreferencesResponse;
 import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
@@ -56,6 +57,35 @@ class UserSecurityPreferenceServiceTest {
         u.setEmail(USER_EMAIL);
         u.setOrganizationId(ORG_ID);
         lenient().when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(u));
+    }
+
+    @Test
+    void twoAdminsInSameOrganization_seeIdenticalPreferences() {
+        String adminA = "admin-a@tenant.example";
+        String adminB = "admin-b@tenant.example";
+        User userA = new User();
+        userA.setEmail(adminA);
+        userA.setOrganizationId(ORG_ID);
+        User userB = new User();
+        userB.setEmail(adminB);
+        userB.setOrganizationId(ORG_ID);
+        when(userRepository.findByEmail(adminA)).thenReturn(Optional.of(userA));
+        when(userRepository.findByEmail(adminB)).thenReturn(Optional.of(userB));
+
+        List<UserSecurityPreference> orgRows =
+                List.of(row("x", "users-groups", "2fa", false, null));
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(orgRows);
+        when(repository.findByOrganizationIdAndSection(ORG_ID, "domain-dns")).thenReturn(List.of());
+
+        PreferencesResponse responseA = service.getPreferencesResponse(adminA);
+        PreferencesResponse responseB = service.getPreferencesResponse(adminB);
+
+        assertEquals(responseA.preferences(), responseB.preferences());
+        assertEquals(responseA.dnsImportance(), responseB.dnsImportance());
+        assertEquals(responseA.dnsImportanceOverrideTypes(), responseB.dnsImportanceOverrideTypes());
+
+        verify(repository, times(2)).findByOrganizationId(ORG_ID);
+        verify(repository, times(4)).findByOrganizationIdAndSection(ORG_ID, "domain-dns");
     }
 
     @Test

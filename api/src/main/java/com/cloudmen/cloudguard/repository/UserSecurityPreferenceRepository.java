@@ -13,4 +13,6 @@ public interface UserSecurityPreferenceRepository extends JpaRepository<UserSecu
     List<UserSecurityPreference> findByOrganizationIdAndSection(Long organizationId, String section);
 
     Optional<UserSecurityPreference> findByOrganizationIdAndSectionAndPreferenceKey(Long organizationId, String section, String preferenceKey);
+
+    void deleteByOrganizationId(Long organizationId);
 }
