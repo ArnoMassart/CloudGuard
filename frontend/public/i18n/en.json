@@ -113,6 +113,8 @@
   "profile": "Profile",
   "profile.header": "View your profile information and account settings.",
   "profile.manage-account": "Manage my Google Account",
+  "profile.organization": "ORGANIZATION",
+  "profile.organization-unavailable": "Not linked yet",
   "organisational-units.description": "Monitor your organization's structure and policies",
   "organisational-units.loading": "Organizational units are loading",
   "security-rules": "Policies",

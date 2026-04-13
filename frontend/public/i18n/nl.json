@@ -112,6 +112,8 @@
   "profile.header": "Bekijk uw profielinformatie en account instellingen.",
   "email": "E-MAILADRES",
   "profile.manage-account": "Mijn Google Account beheren",
+  "profile.organization": "ORGANISATIE",
+  "profile.organization-unavailable": "Nog niet gekoppeld",
   "loading": "Bezig met laden",
   "organisational-units.description": "Monitor de structuur en beleidsregels van je organisatie",
   "organisational-units.loading": "Organisatie-eenheden worden geladen",

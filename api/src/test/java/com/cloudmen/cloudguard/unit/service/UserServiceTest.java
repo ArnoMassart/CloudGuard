@@ -1,7 +1,9 @@
 package com.cloudmen.cloudguard.unit.service;
 
+import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.users.UserDto;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,11 +26,14 @@ public class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private OrganizationRepository organizationRepository;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository);
+        userService = new UserService(userRepository, organizationRepository);
     }
 
     @Test
@@ -42,6 +47,21 @@ public class UserServiceTest {
         assertEquals("Doe", dto.getLastName());
         assertEquals("https://example.com/avatar.jpg", dto.getPictureUrl());
         assertEquals(user.getCreatedAt(), dto.getCreatedAt());
+        assertNull(dto.getOrganizationName());
+    }
+
+    @Test
+    void convertToDto_resolvesOrganizationNameWhenLinked() {
+        User user = createDbUser(ADMIN, "John", "Doe", "en");
+        user.setOrganizationId(42L);
+        Organization org = new Organization();
+        org.setId(42L);
+        org.setName("Acme Workspace");
+        when(organizationRepository.findById(42L)).thenReturn(Optional.of(org));
+
+        UserDto dto = userService.convertToDto(user);
+
+        assertEquals("Acme Workspace", dto.getOrganizationName());
     }
 
     @Test
