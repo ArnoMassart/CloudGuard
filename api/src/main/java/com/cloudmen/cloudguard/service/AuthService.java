@@ -20,12 +20,14 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final GoogleUsersCacheService usersCacheService;
+    private final OrganizationService organizationService;
 
-    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleUsersCacheService usersCacheService) {
+    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleUsersCacheService usersCacheService, OrganizationService organizationService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.usersCacheService = usersCacheService;
+        this.organizationService = organizationService;
     }
 
     public LoginResult processLogin(String externalIdToken) {
@@ -40,7 +42,8 @@ public class AuthService {
 
         // 2. Try to find user, OR create a new one if missing
         User user = userService.findByEmail(email)
-                .orElseGet(() -> registerNewUser(jwt)); // <--- The Magic Logic
+                .orElseGet(() -> registerNewUser(jwt));
+        organizationService.ensureUserLinkedToOrganization(user, jwt);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");

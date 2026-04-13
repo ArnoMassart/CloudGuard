@@ -8,7 +8,7 @@ import lombok.Setter;
 @Entity
 @Table(
         name = "user_security_preference",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "section", "preference_key"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"organization_id", "section", "preference_key"})
 )
 @Getter
 @Setter
@@ -18,6 +18,9 @@ public class UserSecurityPreference {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "organization_id", nullable = false)
+    private Long organizationId;
 
     @Column(name = "user_id")
     private String userId;
