@@ -39,7 +39,7 @@ public class GoogleSharedDriveServiceIntegrationTest {
     @MockitoBean
     private GoogleSharedDriveCacheService sharedDriveCacheService;
 
-    @MockitoBean
+    @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
 
     private static final String EMAIL = "admin@cloudmen.com";
@@ -94,8 +94,7 @@ public class GoogleSharedDriveServiceIntegrationTest {
                 "d3", "External Project", 20, 10, 0, now, "Just now", false, false, "high"
         );
 
-        SharedDriveCacheEntry cacheEntry = new SharedDriveCacheEntry(List.of(safeDrive, mediumDrive, riskyOrphanDrive), now.getValue());
-        return cacheEntry;
+        return new SharedDriveCacheEntry(List.of(safeDrive, mediumDrive, riskyOrphanDrive), now.getValue());
     }
 
     @Test
@@ -110,10 +109,10 @@ public class GoogleSharedDriveServiceIntegrationTest {
         when(sharedDriveCacheService.getOrFetchDriveData(EMAIL)).thenReturn(cacheEntry);
 
         Set<String> disabledKeys = Set.of(
-                "shared-drives.orphan",
-                "shared-drives.outsideDomain",
-                "shared-drives.nonMemberAccess",
-                "shared-drives.external"
+                "shared-drives:orphan",
+                "shared-drives:outsideDomain",
+                "shared-drives:nonMemberAccess",
+                "shared-drives:external"
         );
 
         SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(EMAIL, disabledKeys);

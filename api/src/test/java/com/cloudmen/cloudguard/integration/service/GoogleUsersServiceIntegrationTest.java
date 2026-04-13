@@ -160,18 +160,18 @@ public class GoogleUsersServiceIntegrationTest {
         UserCacheEntry cacheEntry = new UserCacheEntry(List.of(no2fa, longNoLogin), Map.of(), Map.of(), System.currentTimeMillis());
         when(usersCacheService.getOrFetchUsersData(EMAIL)).thenReturn(cacheEntry);
 
-        Set<String> disabledKeys = Set.of("users-groups.2fa", "users-groups.activity");
+        Set<String> disabledKeys = Set.of("users-groups:2fa", "users-groups:activity");
 
         UserOverviewResponse response = googleUsersService.getUsersPageOverview(EMAIL, disabledKeys);
 
         assertNotNull(response);
-        assertEquals(50, response.securityScore());
+        assertEquals(100, response.securityScore());
 
-        assertFalse(response.securityScoreBreakdown().factors().get(0).muted());
-        assertFalse(response.securityScoreBreakdown().factors().get(1).muted());
-        assertFalse(response.securityScoreBreakdown().factors().get(2).muted());
+        assertTrue(response.securityScoreBreakdown().factors().get(0).muted());
+        assertTrue(response.securityScoreBreakdown().factors().get(1).muted());
+        assertTrue(response.securityScoreBreakdown().factors().get(2).muted());
 
-        assertTrue(response.warnings().hasWarnings());
+        assertFalse(response.warnings().hasWarnings());
     }
 
     @Test

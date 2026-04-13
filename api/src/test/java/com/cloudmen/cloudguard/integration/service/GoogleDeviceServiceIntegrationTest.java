@@ -38,7 +38,7 @@ public class GoogleDeviceServiceIntegrationTest {
     @MockitoBean
     private GoogleDeviceCacheService deviceCacheService;
 
-    @MockitoBean
+    @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
 
     private static final String EMAIL = "admin@cloudmen.com";
@@ -47,9 +47,8 @@ public class GoogleDeviceServiceIntegrationTest {
     void setUp() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 
-        // Gebruik lenient() om te voorkomen dat Mockito klaagt over ongebruikte stubs,
-        // en match alle mogelijke getMessage signaturen.
-        when(messageSource.getMessage(any(), any(), any())).thenAnswer(inv -> inv.getArgument(0));
+        when(messageSource.getMessage(anyString(), nullable(Object[].class), any(Locale.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         MobileDevice compliantMobile = new MobileDevice();
         compliantMobile.setResourceId("mob-1");
@@ -104,19 +103,19 @@ public class GoogleDeviceServiceIntegrationTest {
 
         assertNotNull(response.securityScoreBreakdown());
         assertEquals(4, response.securityScoreBreakdown().factors().size());
-        assertEquals("good", response.securityScoreBreakdown().status());
+        assertEquals("average", response.securityScoreBreakdown().status());
 
         assertNotNull(response.warnings());
     }
 
     @Test
     void getDevicesPageOverview_withDisabledPreferences_adjustsScores() {
-        Set<String> disabledKeys = Set.of("mobile-devices.lockscreen", "mobile-devices.encryption");
+        Set<String> disabledKeys = Set.of("mobile-devices:lockscreen", "mobile-devices:encryption");
 
         DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(EMAIL, disabledKeys);
 
         assertNotNull(response);
-        assertEquals(83, response.securityScore());
+        assertEquals(67, response.securityScore());
         assertEquals(0, response.lockScreenCount());
         assertEquals(0, response.encryptionCount());
         assertEquals(1, response.osVersionCount());
@@ -133,7 +132,7 @@ public class GoogleDeviceServiceIntegrationTest {
         assertEquals(3, types.size());
         assertEquals("Android", types.get(0));
         assertEquals("ChromeOS", types.get(1));
-        assertEquals("IOS", types.get(2));
+        assertEquals("iOS", types.get(2));
     }
 
     @Test

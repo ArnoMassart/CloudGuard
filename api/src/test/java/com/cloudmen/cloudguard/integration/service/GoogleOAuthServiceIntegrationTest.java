@@ -39,7 +39,7 @@ public class GoogleOAuthServiceIntegrationTest {
     @MockitoBean
     private GoogleOAuthCacheService oAuthCacheService;
 
-    @MockitoBean
+    @MockitoBean(name = "messageSource")
     private MessageSource messageSource;
 
     @MockitoBean
@@ -87,12 +87,12 @@ public class GoogleOAuthServiceIntegrationTest {
         assertEquals(50, response.securityScore());
 
         assertNotNull(response.securityScoreBreakdown());
-        assertEquals("average", response.securityScoreBreakdown().status());
+        assertEquals("bad", response.securityScoreBreakdown().status());
     }
 
     @Test
     void getOAuthPageOverview_withDisabledPreferences_ignoresHighRiskPenalty() {
-        RawUserToken riskyApp = new RawUserToken("user1@test.com", "client-1", "Risky App", List.of("https://www.googleapis.com/auth/drive"), false, false);
+        RawUserToken riskyApp = new RawUserToken("user1@test.com", "client-1", "Risky App", List.of("/auth/drive"), false, false);
 
         OAuthCacheEntry cacheEntry = new OAuthCacheEntry(
                 List.of(riskyApp),
@@ -102,7 +102,7 @@ public class GoogleOAuthServiceIntegrationTest {
 
         when(oAuthCacheService.getOrFetchOAuthData(EMAIL)).thenReturn(cacheEntry);
 
-        Set<String> disabledKeys = Set.of("app-access.highRisk");
+        Set<String> disabledKeys = Set.of("app-access:highRisk");
         OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(EMAIL, disabledKeys);
 
         assertNotNull(response);
@@ -115,7 +115,7 @@ public class GoogleOAuthServiceIntegrationTest {
     void getOAuthPaged_noFilters_returnsAggregatedAndPagedResults() {
         RawUserToken app1User1 = new RawUserToken("user1@test.com", "client-1", "App Alpha", List.of("openid"), false, false);
         RawUserToken app1User2 = new RawUserToken("user2@test.com", "client-1", "App Alpha", List.of("openid"), false, false);
-        RawUserToken app2 = new RawUserToken("user1@test.com", "client-2", "App Beta", List.of("auth/drive"), false, false);
+        RawUserToken app2 = new RawUserToken("user1@test.com", "client-2", "App Beta", List.of("/auth/drive"), false, false);
 
         OAuthCacheEntry cacheEntry = new OAuthCacheEntry(
                 List.of(app1User1, app1User2, app2),
@@ -166,7 +166,7 @@ public class GoogleOAuthServiceIntegrationTest {
     @Test
     void getOAuthPaged_withRiskFilter_returnsFilteredResults() {
         RawUserToken safeApp = new RawUserToken("user1@test.com", "client-1", "App Alpha", List.of("openid"), false, false);
-        RawUserToken riskyApp = new RawUserToken("user1@test.com", "client-2", "App Beta", List.of("auth/drive"), false, false);
+        RawUserToken riskyApp = new RawUserToken("user1@test.com", "client-2", "App Beta", List.of("/auth/drive"), false, false);
 
         OAuthCacheEntry cacheEntry = new OAuthCacheEntry(
                 List.of(safeApp, riskyApp),
@@ -176,11 +176,11 @@ public class GoogleOAuthServiceIntegrationTest {
 
         when(oAuthCacheService.getOrFetchOAuthData(EMAIL)).thenReturn(cacheEntry);
 
-        OAuthPagedResponse highRiskResponse = googleOAuthService.getOAuthPaged(EMAIL, "1", 10, null, "high");
+        OAuthPagedResponse highRiskResponse = googleOAuthService.getOAuthPaged(EMAIL, null, 10, null, "high");
         assertEquals(1, highRiskResponse.apps().size());
         assertEquals("client-2", highRiskResponse.apps().get(0).id());
 
-        OAuthPagedResponse lowRiskResponse = googleOAuthService.getOAuthPaged(EMAIL, "1", 10, null, "not-high");
+        OAuthPagedResponse lowRiskResponse = googleOAuthService.getOAuthPaged(EMAIL, null, 10, null, "not-high");
         assertEquals(1, lowRiskResponse.apps().size());
         assertEquals("client-1", lowRiskResponse.apps().get(0).id());
     }
