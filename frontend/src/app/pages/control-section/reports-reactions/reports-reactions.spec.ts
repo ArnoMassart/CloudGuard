@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
-import { of, throwError } from 'rxjs';
+import { provideTransloco, TranslocoLoader, TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom, Observable, of, Subject, throwError } from 'rxjs';
 import { Notification } from '../../../models/notification/Notification';
 import { DismissedNotificationService } from '../../../services/dismissed-notification-service';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
@@ -49,11 +50,11 @@ const FB_I18N: Record<string, string> = {
   'to-admin-console': 'Admin',
   info: 'Info',
   refresh: 'Refresh',
-  'notifications.error.load-failed': 'Load failed (stub)',
-  'notifications.error.dismiss-failed': 'Dismiss failed (stub)',
-  'notifications.error.undismiss-failed': 'Undismiss failed (stub)',
-  'notifications.error.feedback-failed': 'Feedback failed (stub)',
-  'notifications.error.details-failed': 'Details failed (stub)',
+  'reports-reactions.error.load-failed': 'Load failed (i18n)',
+  'reports-reactions.error.dismiss-failed': 'Dismiss failed (i18n)',
+  'reports-reactions.error.un-dismiss-failed': 'Un-dismiss failed (i18n)',
+  'reports-reactions.error.get-details-failed': 'Details failed (i18n)',
+  'reports-reactions.error.submit-feedback-failed': 'Feedback failed (i18n)',
   'try-again': 'Try again',
 };
 
@@ -119,7 +120,7 @@ describe('ReportsReactions', () => {
         { provide: NotificationFeedbackService, useValue: feedbackServiceMock },
         provideTransloco({
           config: {
-            availableLangs: ['en'],
+            availableLangs: ['en', 'nl'],
             defaultLang: 'en',
             reRenderOnLangChange: true,
           },
@@ -288,7 +289,7 @@ describe('ReportsReactions', () => {
     );
   });
 
-  it('clears lists and sets listLoadErrorwhen load fails', async () => {
+  it('clears lists and sets listLoadError when load fails', async () => {
     notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(throwError(() => new Error('boom')));
     fixture = TestBed.createComponent(ReportsReactions);
     component = fixture.componentInstance;
@@ -301,4 +302,158 @@ describe('ReportsReactions', () => {
     expect(component.listLoadError()).toBeTruthy();
     expect(component.listLoadError() ?? '').toContain('boom');
   });
+
+  it('uses API error body for list load when HttpErrorResponse has string error', async () => {
+    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 503,
+            error: ' maintenance ',
+          }),
+      ),
+    );
+    fixture = TestBed.createComponent(ReportsReactions);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.listLoadError()).toBe('maintenance');
+  });
+
+  it('falls back to i18n when list load HttpErrorResponse has no string body', async () => {
+    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, error: { code: 'x' } })),
+    );
+    fixture = TestBed.createComponent(ReportsReactions);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.listLoadError()).toBe('Load failed (i18n)');
+  });
+
+  it('reloads notifications when language changes', async () => {
+    const transloco = TestBed.inject(TranslocoService);
+    await firstValueFrom(transloco.load('nl'));
+    const callsAfterInit = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
+    transloco.setActiveLang('nl');
+    await fixture.whenStable();
+    expect(notificationServiceMock.getNotificationsAndDismissed.mock.calls.length).toBeGreaterThan(
+      callsAfterInit,
+    );
+  });
+
+  it('refresh collapses expanded row and refetches list', async () => {
+    const n = activeList[0];
+    component.toggleExpand(n);
+    await fixture.whenStable();
+    expect(component.isExpanded(n.id)).toBe(true);
+
+    const callsBefore = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
+    component.refresh();
+    await fixture.whenStable();
+
+    expect(component.isExpanded(n.id)).toBe(false);
+    expect(notificationServiceMock.getNotificationsAndDismissed.mock.calls.length).toBeGreaterThan(
+      callsBefore,
+    );
+  });
+
+  it('toggleExpand sets actionError when details request fails', async () => {
+    notificationServiceMock.getNotificationDetails.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 400, error: 'no details' })),
+    );
+    const n = activeList[0];
+    component.toggleExpand(n);
+    await fixture.whenStable();
+
+    expect(component.actionError()).toBe('no details');
+    expect(component.isExpanded(n.id)).toBe(true);
+    expect(component.isLoadingDetails(n.id)).toBe(false);
+  });
+
+  it('ignores second markAsDismissed while first request is still pending', () => {
+    const release = new Subject<void>();
+    dismissedServiceMock.markAsDismissed.mockImplementation(
+      () =>
+        new Observable<void>((subscriber) => {
+          const sub = release.subscribe({
+            next: () => {
+              subscriber.next();
+              subscriber.complete();
+            },
+          });
+          return () => sub.unsubscribe();
+        }),
+    );
+    const n = activeList[0];
+    component.markAsDismissed(n);
+    component.markAsDismissed(n);
+    expect(dismissedServiceMock.markAsDismissed).toHaveBeenCalledTimes(1);
+    release.next();
+    release.complete();
+  });
+
+  it('sets actionError on markAsDismissed failure', async () => {
+    dismissedServiceMock.markAsDismissed.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 400, error: 'cannot dismiss' })),
+    );
+    component.markAsDismissed(activeList[0]);
+    await fixture.whenStable();
+    expect(component.actionError()).toBe('cannot dismiss');
+    expect(component.isDismissing(activeList[0])).toBe(false);
+  });
+
+  it('uses i18n when dismiss failure has no HTTP string body', async () => {
+    dismissedServiceMock.markAsDismissed.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, error: {} })),
+    );
+    component.markAsDismissed(activeList[0]);
+    await fixture.whenStable();
+    expect(component.actionError()).toBe('Dismiss failed (i18n)');
+  });
+
+  it('sets actionError on unDismiss failure', async () => {
+    dismissedServiceMock.unDismiss.mockReturnValue(
+      throwError(() => new Error('undo failed')),
+    );
+    component.unDismiss(makeNotification());
+    await fixture.whenStable();
+    expect(component.actionError()).toContain('undo failed');
+    expect(component.isUnDismissing(makeNotification())).toBe(false);
+  });
+
+  it('maps isDismissing and isUnDismissing to source:notificationType key', () => {
+    const n = makeNotification({ source: 's1', notificationType: 't1' });
+    component.dismissingIds.set(new Set(['s1:t1']));
+    expect(component.isDismissing(n)).toBe(true);
+    component.unDismissingIds.set(new Set(['s1:t1']));
+    expect(component.isUnDismissing(n)).toBe(true);
+  });
+
+  it('submitFeedback surfaces HttpErrorResponse string body as actionError', async () => {
+    feedbackServiceMock.submitFeedback.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 400, error: 'bad feedback' })),
+    );
+    const n = makeNotification({ id: 'fb-http' });
+    component.notifications.set([n]);
+    component.setFeedbackText(n.id, 'ok');
+    component.submitFeedback(n);
+    await fixture.whenStable();
+    expect(component.actionError()).toBe('bad feedback');
+  });
+
+  it('falls back to i18n when submitFeedback error has no string body', async () => {
+    feedbackServiceMock.submitFeedback.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500, error: { x: 1 } })),
+    );
+    const n = makeNotification({ id: 'fb-i18n' });
+    component.notifications.set([n]);
+    component.setFeedbackText(n.id, 'ok');
+    component.submitFeedback(n);
+    await fixture.whenStable();
+    expect(component.actionError()).toBe('Feedback failed (i18n)');
+  });
 });
+
