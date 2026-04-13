@@ -52,4 +52,33 @@ describe('DismissedNotificationService', () => {
     expect(req.request.withCredentials).toBe(true);
     req.flush(null);
   });
+
+  it('markAsDismissed propagates HTTP errors', () => {
+    const errSpy = vi.fn();
+    const request: DismissNotificationRequest = {
+      source: 's',
+      notificationType: 't',
+      sourceLabel: '',
+      sourceRoute: '',
+      title: '',
+      description: '',
+      severity: 'info',
+    };
+    service.markAsDismissed(request).subscribe({ error: errSpy });
+
+    const req = httpMock.expectOne((r) => r.url === '/api/notifications/dismissed');
+    req.flush('nope', { status: 400, statusText: 'Bad Request' });
+
+    expect(errSpy).toHaveBeenCalled();
+  });
+
+  it('unDismiss propagates HTTP errors', () => {
+    const errSpy = vi.fn();
+    service.unDismiss('s', 't').subscribe({ error: errSpy });
+
+    const req = httpMock.expectOne((r) => r.url === '/api/notifications/dismissed');
+    req.error(new ProgressEvent('Network error'));
+
+    expect(errSpy).toHaveBeenCalled();
+  });
 });
