@@ -116,7 +116,7 @@ public class TeamleaderCompanyServiceTest {
     }
 
     @Test
-    void getCompanyIdByEmail_successWithData_returnsFirstId() {
+    void getCompanyIdByDomain_successWithData_returnsFirstId() {
         HttpHeaders headers = new HttpHeaders();
         List<Map<String, Object>> dataList = List.of(
                 Map.of("id", COMPANY_ID),
@@ -130,13 +130,13 @@ public class TeamleaderCompanyServiceTest {
                 any(ParameterizedTypeReference.class)
         )).thenReturn(TeamleaderTestHelper.createCompanyListResponse(dataList));
 
-        String result = teamleaderCompanyService.getCompanyIdByEmail(GlobalTestHelper.ADMIN, headers);
+        String result = teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers);
 
         assertEquals(COMPANY_ID, result);
     }
 
     @Test
-    void getCompanyIdByEmail_successWithEmptyData_returnsNull() {
+    void getCompanyIdByDomain_successWithEmptyData_returnsNull() {
         HttpHeaders headers = new HttpHeaders();
 
         when(restTemplate.exchange(
@@ -146,13 +146,13 @@ public class TeamleaderCompanyServiceTest {
                 any(ParameterizedTypeReference.class)
         )).thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of()));
 
-        String result = teamleaderCompanyService.getCompanyIdByEmail(GlobalTestHelper.ADMIN, headers);
+        String result = teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers);
 
         assertNull(result);
     }
 
     @Test
-    void getCompanyIdByEmail_unauthorizedAndRefreshSucceeds_retriesAndReturnsId() {
+    void getCompanyIdByDomain_unauthorizedAndRefreshSucceeds_retriesAndReturnsId() {
         HttpHeaders oldHeaders = new HttpHeaders();
         HttpHeaders newHeaders = new HttpHeaders();
         newHeaders.setBearerAuth("new-token");
@@ -174,14 +174,14 @@ public class TeamleaderCompanyServiceTest {
                 any(ParameterizedTypeReference.class)
         )).thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of(Map.of("id", COMPANY_ID))));
 
-        String result = teamleaderCompanyService.getCompanyIdByEmail(GlobalTestHelper.ADMIN, oldHeaders);
+        String result = teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, oldHeaders);
 
         assertEquals(COMPANY_ID, result);
         verify(teamleaderService).refreshTokens();
     }
 
     @Test
-    void getCompanyIdByEmail_unauthorizedAndRefreshFails_throwsException() {
+    void getCompanyIdByDomain_unauthorizedAndRefreshFails_throwsException() {
         HttpHeaders headers = new HttpHeaders();
 
         when(restTemplate.exchange(
@@ -193,7 +193,7 @@ public class TeamleaderCompanyServiceTest {
 
         when(teamleaderService.refreshTokens()).thenReturn(false);
 
-        assertThrows(HttpClientErrorException.Unauthorized.class, () -> teamleaderCompanyService.getCompanyIdByEmail(GlobalTestHelper.ADMIN, headers));
+        assertThrows(HttpClientErrorException.Unauthorized.class, () -> teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers));
         verify(teamleaderService).refreshTokens();
     }
 

@@ -430,9 +430,7 @@
   "home.loading": "Dashboard data is loading",
   "back-to-login": "Back to login",
   "forbidden.access-denied": "Access denied",
-  "forbidden.no-access": "You do not have admin rights to access this dashboard. \nContact your administrator for access.",
   "forbidden.note": "Note",
-  "forbidden.note.description": "Only authorized admin accounts have access to CloudGuard",
   "access-denied.description": "Your organization does not currently have active access to CloudGuard. \nPlease contact your CLOUDMEN account manager to activate this.",
   "access-denied.note.description": "Access to this security dashboard requires an active CloudGuard license in our system.",
   "server-error.description": "We are currently unable to connect to the CloudGuard servers. \nThe system may be under maintenance or temporarily offline.",
@@ -510,5 +508,7 @@
   "notifications.error.dismiss-failed": "Could not ignore this notification.",
   "notifications.error.undismiss-failed": "Could not restore this notification.",
   "notifications.error.feedback-failed": "Could not send feedback.",
-  "notifications.error.details-failed": "Could not load details."
+  "notifications.error.details-failed": "Could not load details.",
+  "forbidden.no-access": "You have not logged in with a valid account. \nLog in with a Google Workspace Account to access the application.",
+  "forbidden.note.description": "Only Google Workspace accounts have access to CloudGuard"
 }

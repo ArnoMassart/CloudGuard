@@ -62,7 +62,7 @@ public class TeamleaderAccessService {
     private boolean executeAccessCheckFlow(String domainEmail) {
         HttpHeaders headers = teamleaderService.createHeaders();
 
-        String companyId = teamleaderCompanyService.getCompanyIdByEmail(domainEmail, headers);
+        String companyId = teamleaderCompanyService.getCompanyIdByDomain(domainEmail, headers);
         if (companyId == null) {
             log.info("Geen bedrijf gevonden voor domein: {}", domainEmail);
             return false;
