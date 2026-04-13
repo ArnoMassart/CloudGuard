@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
+import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
@@ -53,14 +54,17 @@ public class AuthService {
         User user = userService.findByEmail(email)
                 .orElseGet(() -> registerNewUser(jwt));
 
-        String workspaceCustomerId = workspaceCustomerIdResolver
-                .resolveForDelegatingUser(email)
-                .filter(s -> s != null && !s.isBlank())
-                .orElseGet(() -> jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID));
-        if (workspaceCustomerId == null || workspaceCustomerId.isBlank()) {
-            workspaceCustomerId = null;
-        }
-        organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId);
+        Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
+        String workspaceCustomerId = resolved
+                .map(WorkspaceCustomer::id)
+                .or(() -> Optional.ofNullable(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID))
+                        .filter(s -> !s.isBlank())
+                        .map(String::trim))
+                .orElse(null);
+        String workspaceDisplayName = resolved
+                .map(WorkspaceCustomer::displayName)
+                .orElse(null);
+        organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");

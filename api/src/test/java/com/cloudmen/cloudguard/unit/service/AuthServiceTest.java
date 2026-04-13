@@ -9,6 +9,7 @@ import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.WorkspaceCustomerIdResolver;
+import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.unit.helper.AuthTestHelper;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
@@ -63,7 +64,7 @@ public class AuthServiceTest {
                 usersCacheService,
                 organizationService,
                 workspaceCustomerIdResolver);
-        lenient().when(workspaceCustomerIdResolver.resolveForDelegatingUser(any())).thenReturn(Optional.empty());
+        lenient().when(workspaceCustomerIdResolver.resolveWorkspaceCustomer(any())).thenReturn(Optional.empty());
     }
 
     @Test
@@ -114,7 +115,7 @@ public class AuthServiceTest {
 
         assertEquals("new-pic.jpg", existingUser.getPictureUrl());
         verify(userService).save(existingUser);
-        verify(organizationService).ensureUserLinkedToOrganization(eq(existingUser), isNull());
+        verify(organizationService).ensureUserLinkedToOrganization(eq(existingUser), isNull(), isNull());
     }
 
     @Test
@@ -141,7 +142,26 @@ public class AuthServiceTest {
         assertEquals("Smith", capturedUser.getLastName());
         assertEquals("pic.jpg", capturedUser.getPictureUrl());
         assertNotNull(capturedUser.getCreatedAt());
-        verify(organizationService).ensureUserLinkedToOrganization(eq(savedUser), isNull());
+        verify(organizationService).ensureUserLinkedToOrganization(eq(savedUser), isNull(), isNull());
+    }
+
+    @Test
+    void processLogin_resolvedWorkspaceCustomer_passesIdAndDisplayName() {
+        Jwt mockJwt = AuthTestHelper.mockGoogleJwt(GlobalTestHelper.ADMIN, "John", "Doe", "pic.jpg");
+        User existingUser = AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "pic.jpg");
+        UserDto dto = AuthTestHelper.mockUserDto();
+
+        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(true);
+        when(userService.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
+        when(workspaceCustomerIdResolver.resolveWorkspaceCustomer(GlobalTestHelper.ADMIN))
+                .thenReturn(Optional.of(new WorkspaceCustomer("C-123", "Acme Corp")));
+        when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
+        when(userService.convertToDto(existingUser)).thenReturn(dto);
+
+        authService.processLogin("ext-token");
+
+        verify(organizationService).ensureUserLinkedToOrganization(existingUser, "C-123", "Acme Corp");
     }
 
     @Test

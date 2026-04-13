@@ -1,10 +1,12 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.Customer;
+import com.google.api.services.admin.directory.model.CustomerPostalAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +17,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Resolves the Google Workspace customer id for the tenant the delegating admin belongs to,
- * using the Admin SDK Directory API ({@code customers.get(my_customer)}) with domain-wide delegation.
+ * Resolves the Google Workspace customer id and a display name for the tenant the delegating admin belongs to,
+ * using {@code customers.get(my_customer)} with domain-wide delegation. The display name prefers
+ * {@link CustomerPostalAddress#getOrganizationName()} (company name in Admin account details), then
+ * {@link Customer#getCustomerDomain()}, then {@code Workspace {id}}.
  * <p>
  * Each Workspace customer must authorize the CloudGuard service account with scope
  * {@link DirectoryScopes#ADMIN_DIRECTORY_CUSTOMER_READONLY}.
@@ -39,9 +43,9 @@ public class WorkspaceCustomerIdResolver {
 
     /**
      * @param delegatingAdminEmail the Google admin user to impersonate (typically the user signing in)
-     * @return customer id (e.g. {@code Cxxxxx}) or empty if disabled, missing email, or API failure
+     * @return customer id and display name, or empty if disabled, missing email, or API failure
      */
-    public Optional<String> resolveForDelegatingUser(String delegatingAdminEmail) {
+    public Optional<WorkspaceCustomer> resolveWorkspaceCustomer(String delegatingAdminEmail) {
         if (!resolveOnLogin) {
             if (LOGGED_RESOLVER_DISABLED.compareAndSet(false, true)) {
                 log.info(
@@ -65,7 +69,7 @@ public class WorkspaceCustomerIdResolver {
                         delegatingAdminEmail);
                 return Optional.empty();
             }
-            return Optional.of(customer.getId().trim());
+            return Optional.of(toWorkspaceCustomer(customer));
         } catch (GoogleJsonResponseException e) {
             log.warn(
                     "Directory customers.get failed for {}: HTTP {} — {} (add scope {} in domain-wide delegation if missing)",
@@ -81,5 +85,20 @@ public class WorkspaceCustomerIdResolver {
                     e.getMessage());
             return Optional.empty();
         }
+    }
+
+    public static WorkspaceCustomer toWorkspaceCustomer(Customer customer) {
+        String id = customer.getId().trim();
+        CustomerPostalAddress address = customer.getPostalAddress();
+        if (address != null
+                && address.getOrganizationName() != null
+                && !address.getOrganizationName().isBlank()) {
+            return new WorkspaceCustomer(id, address.getOrganizationName().trim());
+        }
+        String domain = customer.getCustomerDomain();
+        if (domain != null && !domain.isBlank()) {
+            return new WorkspaceCustomer(id, domain.trim());
+        }
+        return new WorkspaceCustomer(id, "Workspace " + id);
     }
 }

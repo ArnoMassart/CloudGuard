@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference;
 import com.cloudmen.cloudguard.dto.preferences.PreferencesResponse;
+import com.cloudmen.cloudguard.exception.OrganizationRequiredException;
 import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
 import com.cloudmen.cloudguard.exception.UnauthorizedException;
 import com.cloudmen.cloudguard.repository.UserRepository;
@@ -15,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,37 +40,69 @@ public class UserSecurityPreferenceService {
         this.messageSource = messageSource;
     }
 
-    private Long requireOrganizationId(String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
+    private User requireUser(String userEmail) {
+        return userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UnauthorizedException(
                         messageSource.getMessage(
                                 "api.auth.session_invalid", null, LocaleContextHolder.getLocale())));
+    }
 
+    private Long requireOrganizationId(String userEmail) {
+        User user = requireUser(userEmail);
         if (user.getOrganizationId() == null) {
-            throw new SecurityPreferenceValidationException(
+            throw new OrganizationRequiredException(
                     messageSource.getMessage(
                             "api.preferences.organization_required", null, LocaleContextHolder.getLocale()));
         }
-
         return user.getOrganizationId();
+    }
+
+    private Optional<Long> organizationIdForRead(String userEmail) {
+        Long orgId = requireUser(userEmail).getOrganizationId();
+        return orgId != null ? Optional.of(orgId) : Optional.empty();
+    }
+
+    /**
+     * Defaults when the user is not yet linked to a Workspace organization: all toggles on, system DNS
+     * importance only (no org-scoped rows).
+     */
+    private PreferencesResponse preferencesResponseWithoutOrganization() {
+        Map<String, Boolean> bools = new LinkedHashMap<>();
+        for (String key : PreferenceToNotificationMapping.getAllPreferenceKeys()) {
+            bools.put(key, true);
+        }
+        Map<String, String> dns = new LinkedHashMap<>();
+        for (String type : DnsImportancePreferenceSupport.DNS_TYPES) {
+            dns.put(type, DnsImportancePreferenceSupport.systemDefaultImportance(type).name());
+        }
+        return new PreferencesResponse(bools, dns, Set.of());
     }
 
     /**
      * Returns the set of "section:preferenceKey" that are disabled for the signed-in user's organization.
-     * Default is enabled when no row exists.
+     * Default is enabled when no row exists. When the user has no organization yet, returns an empty set
+     * so dashboards use defaults.
      */
     public Set<String> getDisabledPreferenceKeys(String userEmail) {
-        return repository.findByOrganizationId(requireOrganizationId(userEmail)).stream()
-                .filter(p -> !p.isEnabled())
-                .map(p -> p.getSection() + ":" + p.getPreferenceKey())
-                .collect(Collectors.toSet());
+        return organizationIdForRead(userEmail)
+                .map(
+                        orgId ->
+                                repository.findByOrganizationId(orgId).stream()
+                                        .filter(p -> !p.isEnabled())
+                                        .map(p -> p.getSection() + ":" + p.getPreferenceKey())
+                                        .collect(Collectors.toSet()))
+                .orElseGet(Set::of);
     }
 
     /**
      * Boolean toggles plus effective DNS importance per record type (for UI and API).
      */
     public PreferencesResponse getPreferencesResponse(String userEmail) {
-        Long orgId = requireOrganizationId(userEmail);
+        Optional<Long> orgIdOpt = organizationIdForRead(userEmail);
+        if (orgIdOpt.isEmpty()) {
+            return preferencesResponseWithoutOrganization();
+        }
+        Long orgId = orgIdOpt.get();
         Map<String, Boolean> bools = new LinkedHashMap<>();
         for (String key : PreferenceToNotificationMapping.getAllPreferenceKeys()) {
             bools.put(key, true);
@@ -106,7 +141,18 @@ public class UserSecurityPreferenceService {
      * Effective importance per DNS type (merge organization override with system default).
      */
     public Map<String, String> effectiveDnsImportanceDisplay(String userEmail) {
-        return effectiveDnsImportanceDisplay(requireOrganizationId(userEmail));
+        return organizationIdForRead(userEmail)
+                .map(this::effectiveDnsImportanceDisplay)
+                .orElseGet(
+                        () -> {
+                            Map<String, String> dns = new LinkedHashMap<>();
+                            for (String type : DnsImportancePreferenceSupport.DNS_TYPES) {
+                                dns.put(
+                                        type,
+                                        DnsImportancePreferenceSupport.systemDefaultImportance(type).name());
+                            }
+                            return dns;
+                        });
     }
 
     private Map<String, String> effectiveDnsImportanceDisplay(Long organizationId) {
@@ -123,7 +169,9 @@ public class UserSecurityPreferenceService {
      * Map DNS record type → organization override only (empty if no row). Used when building DNS responses.
      */
     public Map<String, DnsRecordImportance> getDnsImportanceOverrides(String userEmail) {
-        return getDnsImportanceOverrides(requireOrganizationId(userEmail));
+        return organizationIdForRead(userEmail)
+                .map(this::getDnsImportanceOverrides)
+                .orElseGet(Collections::emptyMap);
     }
 
     private Map<String, DnsRecordImportance> getDnsImportanceOverrides(Long organizationId) {
@@ -143,7 +191,11 @@ public class UserSecurityPreferenceService {
      * Returns preferences for a specific section.
      */
     public Map<String, Boolean> getPreferencesForSection(String userEmail, String section) {
-        Long orgId = requireOrganizationId(userEmail);
+        Optional<Long> orgIdOpt = organizationIdForRead(userEmail);
+        if (orgIdOpt.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+        Long orgId = orgIdOpt.get();
         Map<String, Boolean> result = new LinkedHashMap<>();
         for (UserSecurityPreference p : repository.findByOrganizationIdAndSection(orgId, section)) {
             if (DnsImportancePreferenceSupport.isDnsImportancePreferenceKey(p.getPreferenceKey())) {

@@ -16,6 +16,6 @@ google:
   workspace:
     # Needs domain-wide delegation: https://www.googleapis.com/auth/admin.directory.customer.readonly
     # Set false only if your local SA cannot call customers.get(my_customer).
-    resolve-customer-id-on-login: true
+    resolve-customer-id-on-login: false
   gcp:
     project-id: cloudguard-487215

@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.exception.InvalidExternalTokenException;
 import com.cloudmen.cloudguard.exception.NotificationFeedbackValidationException;
+import com.cloudmen.cloudguard.exception.OrganizationRequiredException;
 import com.cloudmen.cloudguard.exception.PdfGenerationException;
 import com.cloudmen.cloudguard.exception.RefreshTokenEmptyException;
 import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
@@ -73,6 +74,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleSecurityPreferenceValidationException(
             SecurityPreferenceValidationException ex) {
         return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrganizationRequiredException.class)
+    public ResponseEntity<String> handleOrganizationRequiredException(OrganizationRequiredException ex) {
+        return plainText(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(AccessTokenEmptyException.class)

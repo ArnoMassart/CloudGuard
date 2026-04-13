@@ -29,14 +29,10 @@ public class OrganizationService {
     }
 
     @Transactional
-    public void ensureUserLinkedToOrganization(User user, String workspaceCustomerId) {
-        String trimmed =
-                workspaceCustomerId != null && !workspaceCustomerId.isBlank()
-                        ? workspaceCustomerId.trim()
-                        : null;
-
-        if (trimmed != null) {
-            Organization targetOrg = findOrCreateForCustomerId(trimmed);
+    public void ensureUserLinkedToOrganization(
+            User user, String workspaceCustomerId, String workspaceDisplayName) {
+        if (workspaceCustomerId != null && !workspaceCustomerId.isBlank()) {
+            Organization targetOrg = findOrCreateForCustomerId(workspaceCustomerId, workspaceDisplayName);
             Long currentOrgId = user.getOrganizationId();
             if (currentOrgId == null || !currentOrgId.equals(targetOrg.getId())) {
                 Long previousOrgId = currentOrgId;
@@ -48,34 +44,31 @@ public class OrganizationService {
                 }
             }
             deleteAllUnusedFallbackOrganizationsWithoutCustomerId();
-            return;
-        }
-
-        if (user.getOrganizationId() == null) {
-            Organization org = findOrCreateForCustomerId(null);
-            user.setOrganizationId(org.getId());
-            userRepository.save(user);
         }
     }
 
-    @Transactional
-    public Organization findOrCreateForCustomerId(String customerId) {
-        if(customerId != null && !customerId.isEmpty()) {
-            String key = customerId.trim();
-            return organizationRepository.findByCustomerId(key)
-                    .orElseGet(
-                            () -> {
-                                Organization o = new Organization();
-                                o.setCustomerId(key);
-                                o.setName("Workspace " + key);
-                                o.setCreatedAt(LocalDateTime.now());
-                                return organizationRepository.save(o);
-                            });
+    private Organization findOrCreateForCustomerId(String customerId, String googleDerivedDisplayName) {
+        return organizationRepository
+                .findByCustomerId(customerId)
+                .map(org -> refreshDisplayNameIfChanged(org, googleDerivedDisplayName))
+                .orElseGet(
+                        () -> {
+                            Organization o = new Organization();
+                            o.setCustomerId(customerId);
+                            o.setName(googleDerivedDisplayName != null
+                                    ? googleDerivedDisplayName
+                                    : "Workspace " + customerId);
+                            o.setCreatedAt(LocalDateTime.now());
+                            return organizationRepository.save(o);
+                        });
+    }
+
+    private Organization refreshDisplayNameIfChanged(Organization org, String googleDerivedDisplayName) {
+        if (googleDerivedDisplayName == null || googleDerivedDisplayName.equals(org.getName())) {
+            return org;
         }
-        Organization o = new Organization();
-        o.setName("Organization (workspace customer id unavailable)");
-        o.setCreatedAt(LocalDateTime.now());
-        return organizationRepository.save(o);
+        org.setName(googleDerivedDisplayName);
+        return organizationRepository.save(org);
     }
 
     /**

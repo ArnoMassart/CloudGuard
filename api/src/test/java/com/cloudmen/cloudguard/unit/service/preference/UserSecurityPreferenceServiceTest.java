@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.unit.service.preference;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference;
 import com.cloudmen.cloudguard.dto.preferences.PreferencesResponse;
+import com.cloudmen.cloudguard.exception.OrganizationRequiredException;
 import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
@@ -86,6 +87,46 @@ class UserSecurityPreferenceServiceTest {
 
         verify(repository, times(2)).findByOrganizationId(ORG_ID);
         verify(repository, times(4)).findByOrganizationIdAndSection(ORG_ID, "domain-dns");
+    }
+
+    @Test
+    void whenUserHasNoOrganization_disabledKeysEmpty_preferencesAndDnsDefault_noRepositoryReads() {
+        String email = "pending-org@example.com";
+        User u = new User();
+        u.setEmail(email);
+        u.setOrganizationId(null);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(u));
+
+        assertTrue(service.getDisabledPreferenceKeys(email).isEmpty());
+
+        PreferencesResponse r = service.getPreferencesResponse(email);
+        assertTrue(r.preferences().get("users-groups:2fa"));
+        assertEquals("REQUIRED", r.dnsImportance().get("SPF"));
+        assertTrue(r.dnsImportanceOverrideTypes().isEmpty());
+
+        assertTrue(service.getDnsImportanceOverrides(email).isEmpty());
+        assertEquals("REQUIRED", service.effectiveDnsImportanceDisplay(email).get("MX"));
+        assertTrue(service.getPreferencesForSection(email, "users-groups").isEmpty());
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void whenUserHasNoOrganization_setPreference_throwsOrganizationRequired() {
+        String email = "pending-org@example.com";
+        User u = new User();
+        u.setEmail(email);
+        u.setOrganizationId(null);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(u));
+        when(messageSource.getMessage(eq("api.preferences.organization_required"), isNull(), any()))
+                .thenReturn("Organization required");
+
+        OrganizationRequiredException ex =
+                assertThrows(
+                        OrganizationRequiredException.class,
+                        () -> service.setPreference(email, "users-groups", "2fa", true, null));
+        assertEquals("Organization required", ex.getMessage());
+        verifyNoInteractions(repository);
     }
 
     @Test
