@@ -4,8 +4,6 @@ import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
-import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,14 +22,27 @@ public class OrganizationService {
     }
 
     @Transactional
-    public void ensureUserLinkedToOrganization(User user, Jwt jwt){
-        if(user.getOrganizationId()!=null){
+    public void ensureUserLinkedToOrganization(User user, String workspaceCustomerId) {
+        String trimmed =
+                workspaceCustomerId != null && !workspaceCustomerId.isBlank()
+                        ? workspaceCustomerId.trim()
+                        : null;
+
+        if (trimmed != null) {
+            Organization targetOrg = findOrCreateForCustomerId(trimmed);
+            Long currentOrgId = user.getOrganizationId();
+            if (currentOrgId == null || !currentOrgId.equals(targetOrg.getId())) {
+                user.setOrganizationId(targetOrg.getId());
+                userRepository.save(user);
+            }
             return;
         }
 
-        Organization org = findOrCreateForCustomerId(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID));
-        user.setOrganizationId(org.getId());
-        userRepository.save(user);
+        if (user.getOrganizationId() == null) {
+            Organization org = findOrCreateForCustomerId(null);
+            user.setOrganizationId(org.getId());
+            userRepository.save(user);
+        }
     }
 
     @Transactional
@@ -49,7 +60,7 @@ public class OrganizationService {
                             });
         }
         Organization o = new Organization();
-        o.setName("Organization (no workspace customer id in token)");
+        o.setName("Organization (workspace customer id unavailable)");
         o.setCreatedAt(LocalDateTime.now());
         return organizationRepository.save(o);
     }

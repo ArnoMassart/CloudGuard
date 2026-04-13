@@ -1,7 +1,9 @@
 package com.cloudmen.cloudguard.unit.service.preference;
 
+import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference;
 import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,8 +35,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class UserSecurityPreferenceServiceTest {
 
+    private static final long ORG_ID = 99L;
+    private static final String USER_EMAIL = "u1";
+
     @Mock
     UserSecurityPreferenceRepository repository;
+
+    @Mock
+    UserRepository userRepository;
+
     @Mock
     MessageSource messageSource;
 
@@ -41,25 +51,29 @@ class UserSecurityPreferenceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserSecurityPreferenceService(repository, messageSource);
+        service = new UserSecurityPreferenceService(repository, userRepository, messageSource);
+        User u = new User();
+        u.setEmail(USER_EMAIL);
+        u.setOrganizationId(ORG_ID);
+        lenient().when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(u));
     }
 
     @Test
     void getDisabledPreferenceKeys_onlyDisabledRows() {
         UserSecurityPreference on = row("u1", "users-groups", "2fa", true, null);
         UserSecurityPreference off = row("u1", "users-groups", "activity", false, null);
-        when(repository.findByUserId("u1")).thenReturn(List.of(on, off));
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of(on, off));
 
-        Set<String> disabled = service.getDisabledPreferenceKeys("u1");
+        Set<String> disabled = service.getDisabledPreferenceKeys(USER_EMAIL);
         assertEquals(Set.of("users-groups:activity"), disabled);
     }
 
     @Test
     void effectiveDnsImportanceDisplay_mergesOverridesWithDefaults() {
         UserSecurityPreference spfOverride = row("u1", "domain-dns", "impSpf", true, "OPTIONAL");
-        when(repository.findByUserIdAndSection("u1", "domain-dns")).thenReturn(List.of(spfOverride));
+        when(repository.findByOrganizationIdAndSection(ORG_ID, "domain-dns")).thenReturn(List.of(spfOverride));
 
-        Map<String, String> display = service.effectiveDnsImportanceDisplay("u1");
+        Map<String, String> display = service.effectiveDnsImportanceDisplay(USER_EMAIL);
         assertEquals("OPTIONAL", display.get("SPF"));
         assertEquals("REQUIRED", display.get("MX"));
         assertEquals("OPTIONAL", display.get("TXT"));
@@ -67,33 +81,33 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void getPreferencesForSection_skipsDnsImpKeys() {
-        when(repository.findByUserIdAndSection("u1", "domain-dns")).thenReturn(List.of(
+        when(repository.findByOrganizationIdAndSection(ORG_ID, "domain-dns")).thenReturn(List.of(
                 row("u1", "domain-dns", "impSpf", true, "REQUIRED"),
                 row("u1", "domain-dns", "someToggle", false, null)
         ));
 
-        Map<String, Boolean> section = service.getPreferencesForSection("u1", "domain-dns");
+        Map<String, Boolean> section = service.getPreferencesForSection(USER_EMAIL, "domain-dns");
         assertEquals(Map.of("someToggle", false), section);
     }
 
     @Test
     void isNotificationHiddenByPreference_tracksDisabledMapping() {
-        when(repository.findByUserId("u1")).thenReturn(List.of(
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of(
                 row("u1", "password-settings", "2sv", false, null)
         ));
 
         assertTrue(service.isNotificationHiddenByPreference(
-                "u1", "password-settings", "password-2sv-not-enforced"));
+                USER_EMAIL, "password-settings", "password-2sv-not-enforced"));
         assertFalse(service.isNotificationHiddenByPreference(
-                "u1", "password-settings", "password-weak-length"));
+                USER_EMAIL, "password-settings", "password-weak-length"));
     }
 
     @Test
     void setPreference_dnsBlankValue_deletesRow() {
-        when(repository.findByUserIdAndSectionAndPreferenceKey("u1", "domain-dns", "impSpf"))
+        when(repository.findByOrganizationIdAndSectionAndPreferenceKey(ORG_ID, "domain-dns", "impSpf"))
                 .thenReturn(Optional.of(row("u1", "domain-dns", "impSpf", true, "REQUIRED")));
 
-        service.setPreference("u1", "domain-dns", "impSpf", true, "  ");
+        service.setPreference(USER_EMAIL, "domain-dns", "impSpf", true, "  ");
 
         verify(repository).delete(any(UserSecurityPreference.class));
         verify(repository, never()).save(any());
@@ -101,19 +115,19 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void setPreference_dnsValue_savesPreferenceValue() {
-        when(repository.findByUserIdAndSectionAndPreferenceKey("u1", "domain-dns", "impMx"))
+        when(repository.findByOrganizationIdAndSectionAndPreferenceKey(ORG_ID, "domain-dns", "impMx"))
                 .thenReturn(Optional.empty());
 
-        service.setPreference("u1", "domain-dns", "impMx", true, " RECOMMENDED ");
+        service.setPreference(USER_EMAIL, "domain-dns", "impMx", true, " RECOMMENDED ");
 
         verify(repository).save(any(UserSecurityPreference.class));
     }
 
     @Test
     void getPreferencesResponse_emptyRepo_allTogglesTrue() {
-        when(repository.findByUserId("u1")).thenReturn(List.of());
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of());
 
-        var response = service.getPreferencesResponse("u1");
+        var response = service.getPreferencesResponse(USER_EMAIL);
 
         assertTrue(response.preferences().get("users-groups:2fa"));
         assertTrue(response.preferences().get("password-settings:2sv"));
@@ -123,12 +137,12 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void getPreferencesResponse_knownRowsOverrideDefaults_unknownRowsIgnored() {
-        when(repository.findByUserId("u1")).thenReturn(List.of(
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of(
                 row("u1", "users-groups", "2fa", false, null),
                 row("u1", "custom-section", "customKey", false, null)
         ));
 
-        var response = service.getPreferencesResponse("u1");
+        var response = service.getPreferencesResponse(USER_EMAIL);
 
         assertFalse(response.preferences().get("users-groups:2fa"));
         assertTrue(response.preferences().get("password-settings:2sv"));
@@ -137,14 +151,14 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void getPreferencesResponse_dnsImportanceOverrideTypes_listsTypesWithStoredValue() {
-        when(repository.findByUserId("u1")).thenReturn(List.of());
-        when(repository.findByUserIdAndSection("u1", "domain-dns")).thenReturn(List.of(
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of());
+        when(repository.findByOrganizationIdAndSection(ORG_ID, "domain-dns")).thenReturn(List.of(
                 row("u1", "domain-dns", "impMx", true, "RECOMMENDED"),
                 row("u1", "domain-dns", "impSpf", true, "  "),
                 row("u1", "domain-dns", "impDkim", true, "OPTIONAL")
         ));
 
-        var response = service.getPreferencesResponse("u1");
+        var response = service.getPreferencesResponse(USER_EMAIL);
 
         assertEquals(Set.of("MX", "DKIM"), response.dnsImportanceOverrideTypes());
         assertEquals("RECOMMENDED", response.dnsImportance().get("MX"));
@@ -153,27 +167,27 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void getDisabledPreferenceKeys_includesDisabledDnsImportanceRows() {
-        when(repository.findByUserId("u1")).thenReturn(List.of(
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of(
                 row("u1", "domain-dns", "impSpf", false, "REQUIRED")
         ));
 
-        assertEquals(Set.of("domain-dns:impSpf"), service.getDisabledPreferenceKeys("u1"));
+        assertEquals(Set.of("domain-dns:impSpf"), service.getDisabledPreferenceKeys(USER_EMAIL));
     }
 
     @Test
     void isNotificationHiddenByPreference_unmappedNotification_neverHidden() {
-        when(repository.findByUserId("u1")).thenReturn(List.of(
+        when(repository.findByOrganizationId(ORG_ID)).thenReturn(List.of(
                 row("u1", "password-settings", "2sv", false, null)
         ));
 
         assertFalse(service.isNotificationHiddenByPreference(
-                "u1", "password-settings", "nonexistent-type"));
+                USER_EMAIL, "password-settings", "nonexistent-type"));
     }
 
     @Test
     void setPreference_booleanOverload_returnsPersistedEntity() {
         final UserSecurityPreference[] holder = new UserSecurityPreference[1];
-        when(repository.findByUserIdAndSectionAndPreferenceKey("u1", "users-groups", "2fa"))
+        when(repository.findByOrganizationIdAndSectionAndPreferenceKey(ORG_ID, "users-groups", "2fa"))
                 .thenReturn(Optional.empty())
                 .thenAnswer(inv -> Optional.of(holder[0]));
         when(repository.save(any(UserSecurityPreference.class))).thenAnswer(inv -> {
@@ -181,10 +195,10 @@ class UserSecurityPreferenceServiceTest {
             return holder[0];
         });
 
-        UserSecurityPreference out = service.setPreference("u1", "users-groups", "2fa", true);
+        UserSecurityPreference out = service.setPreference(USER_EMAIL, "users-groups", "2fa", true);
 
         assertTrue(out.isEnabled());
-        assertEquals("u1", out.getUserId());
+        assertEquals(ORG_ID, out.getOrganizationId());
         assertEquals("users-groups", out.getSection());
         assertEquals("2fa", out.getPreferenceKey());
         verify(repository).save(any(UserSecurityPreference.class));
@@ -193,11 +207,11 @@ class UserSecurityPreferenceServiceTest {
     @Test
     void setPreference_booleanBranch_clearsPreferenceValueForNonDns() {
         UserSecurityPreference existing = row("u1", "users-groups", "activity", true, "legacy");
-        when(repository.findByUserIdAndSectionAndPreferenceKey("u1", "users-groups", "activity"))
+        when(repository.findByOrganizationIdAndSectionAndPreferenceKey(ORG_ID, "users-groups", "activity"))
                 .thenReturn(Optional.of(existing));
         when(repository.save(any(UserSecurityPreference.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.setPreference("u1", "users-groups", "activity", false);
+        service.setPreference(USER_EMAIL, "users-groups", "activity", false);
 
         assertFalse(existing.isEnabled());
         assertEquals(null, existing.getPreferenceValue());
@@ -206,11 +220,11 @@ class UserSecurityPreferenceServiceTest {
 
     @Test
     void setSectionPreferences_appliesEachKey() {
-        when(repository.findByUserIdAndSectionAndPreferenceKey(any(), any(), any()))
+        when(repository.findByOrganizationIdAndSectionAndPreferenceKey(eq(ORG_ID), any(), any()))
                 .thenReturn(Optional.empty());
         when(repository.save(any(UserSecurityPreference.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.setSectionPreferences("u1", "app-access",
+        service.setSectionPreferences(USER_EMAIL, "app-access",
                 Map.of("highRisk", false, "unknownKeyInSection", true));
 
         verify(repository, times(2)).save(any(UserSecurityPreference.class));
@@ -225,7 +239,7 @@ class UserSecurityPreferenceServiceTest {
         SecurityPreferenceValidationException ex =
                 assertThrows(
                         SecurityPreferenceValidationException.class,
-                        () -> service.setPreference("u1", "domain-dns", "impMx", true, "NOT_AN_ENUM"));
+                        () -> service.setPreference(USER_EMAIL, "domain-dns", "impMx", true, "NOT_AN_ENUM"));
         assertEquals("Invalid DNS importance", ex.getMessage());
         verify(repository, never()).save(any());
     }
@@ -237,7 +251,7 @@ class UserSecurityPreferenceServiceTest {
 
         assertThrows(
                 SecurityPreferenceValidationException.class,
-                () -> service.setPreference("u1", " ", "2fa", true, null));
+                () -> service.setPreference(USER_EMAIL, " ", "2fa", true, null));
         verifyNoInteractions(repository);
     }
 
@@ -248,7 +262,7 @@ class UserSecurityPreferenceServiceTest {
 
         assertThrows(
                 SecurityPreferenceValidationException.class,
-                () -> service.setPreference("u1", "users-groups", "  ", true, null));
+                () -> service.setPreference(USER_EMAIL, "users-groups", "  ", true, null));
         verifyNoInteractions(repository);
     }
 
@@ -256,6 +270,7 @@ class UserSecurityPreferenceServiceTest {
             String userId, String section, String key, boolean enabled, String value) {
         UserSecurityPreference p = new UserSecurityPreference();
         p.setUserId(userId);
+        p.setOrganizationId(ORG_ID);
         p.setSection(section);
         p.setPreferenceKey(key);
         p.setEnabled(enabled);

@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -21,13 +22,21 @@ public class AuthService {
     private final UserRepository userRepository;
     private final GoogleUsersCacheService usersCacheService;
     private final OrganizationService organizationService;
+    private final WorkspaceCustomerIdResolver workspaceCustomerIdResolver;
 
-    public AuthService(UserService userService, JwtService jwtService, UserRepository userRepository, GoogleUsersCacheService usersCacheService, OrganizationService organizationService) {
+    public AuthService(
+            UserService userService,
+            JwtService jwtService,
+            UserRepository userRepository,
+            GoogleUsersCacheService usersCacheService,
+            OrganizationService organizationService,
+            WorkspaceCustomerIdResolver workspaceCustomerIdResolver) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.usersCacheService = usersCacheService;
         this.organizationService = organizationService;
+        this.workspaceCustomerIdResolver = workspaceCustomerIdResolver;
     }
 
     public LoginResult processLogin(String externalIdToken) {
@@ -43,7 +52,15 @@ public class AuthService {
         // 2. Try to find user, OR create a new one if missing
         User user = userService.findByEmail(email)
                 .orElseGet(() -> registerNewUser(jwt));
-        organizationService.ensureUserLinkedToOrganization(user, jwt);
+
+        String workspaceCustomerId = workspaceCustomerIdResolver
+                .resolveForDelegatingUser(email)
+                .filter(s -> s != null && !s.isBlank())
+                .orElseGet(() -> jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID));
+        if (workspaceCustomerId == null || workspaceCustomerId.isBlank()) {
+            workspaceCustomerId = null;
+        }
+        organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");

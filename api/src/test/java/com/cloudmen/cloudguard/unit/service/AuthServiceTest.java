@@ -6,7 +6,9 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.AuthService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.WorkspaceCustomerIdResolver;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.unit.helper.AuthTestHelper;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
@@ -26,6 +28,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,11 +46,24 @@ public class AuthServiceTest {
     @Mock
     private GoogleUsersCacheService usersCacheService;
 
+    @Mock
+    private OrganizationService organizationService;
+
+    @Mock
+    private WorkspaceCustomerIdResolver workspaceCustomerIdResolver;
+
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userService, jwtService, userRepository, usersCacheService);
+        authService = new AuthService(
+                userService,
+                jwtService,
+                userRepository,
+                usersCacheService,
+                organizationService,
+                workspaceCustomerIdResolver);
+        lenient().when(workspaceCustomerIdResolver.resolveForDelegatingUser(any())).thenReturn(Optional.empty());
     }
 
     @Test
@@ -98,6 +114,7 @@ public class AuthServiceTest {
 
         assertEquals("new-pic.jpg", existingUser.getPictureUrl());
         verify(userService).save(existingUser);
+        verify(organizationService).ensureUserLinkedToOrganization(eq(existingUser), isNull());
     }
 
     @Test
@@ -124,6 +141,7 @@ public class AuthServiceTest {
         assertEquals("Smith", capturedUser.getLastName());
         assertEquals("pic.jpg", capturedUser.getPictureUrl());
         assertNotNull(capturedUser.getCreatedAt());
+        verify(organizationService).ensureUserLinkedToOrganization(eq(savedUser), isNull());
     }
 
     @Test
