@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,9 +22,14 @@ public class User {
     private String firstName;
     private String lastName;
     private String pictureUrl;
-
     private LocalDateTime createdAt;
 
     private String language = "nl";
+    private boolean roleRequested = false;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "tbl_user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private List<UserRole> roles = new ArrayList<>(List.of(UserRole.UNASSIGNED));
 }
