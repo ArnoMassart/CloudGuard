@@ -1,12 +1,12 @@
-package com.cloudmen.cloudguard.unit.controller;
+package com.cloudmen.cloudguard.integration.controller;
 
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
-import com.cloudmen.cloudguard.controller.DismissedNotificationController;
+import com.cloudmen.cloudguard.controller.NotificationFeedbackController;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
+import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +21,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
-        controllers = DismissedNotificationController.class,
+        controllers = NotificationFeedbackController.class,
         excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
 @TestPropertySource(
         properties = {
@@ -43,9 +44,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     WebConfig.class,
     AuthInterceptor.class,
     GlobalExceptionHandler.class,
-    DismissedNotificationControllerIT.MessageSourceTestConfig.class
+    NotificationFeedbackControllerIT.MessageSourceTestConfig.class
 })
-class DismissedNotificationControllerIT {
+class NotificationFeedbackControllerIT {
 
     private static final String AUTH_COOKIE = "AuthToken";
     private static final String VALID_TOKEN = "internal-jwt";
@@ -54,7 +55,7 @@ class DismissedNotificationControllerIT {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private DismissedNotificationService dismissedNotificationService;
+    private NotificationFeedbackService notificationFeedbackService;
 
     @MockitoBean
     private JwtService jwtService;
@@ -71,79 +72,80 @@ class DismissedNotificationControllerIT {
     }
 
     @Test
-    void markAsDismissed_withoutCookie_returns401() throws Exception {
-        mockMvc.perform(
-                        post("/api/notifications/dismissed")
-                                .contextPath("/api")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("{}"))
-                .andExpect(status().isUnauthorized());
+    void getFeedbackKeys_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(get("/api/notifications/feedback/keys").contextPath("/api"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
     }
 
     @Test
-    void markAsDismissed_withCookie_returns200() throws Exception {
+    void getFeedbackKeys_withCookie_returnsJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("user-1");
+        when(notificationFeedbackService.getFeedbackKeysForUser("user-1"))
+                .thenReturn(Set.of("users-groups:alert"));
 
         mockMvc.perform(
-                        post("/api/notifications/dismissed")
+                        get("/api/notifications/feedback/keys")
                                 .contextPath("/api")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        "{\"source\":\"domain-dns\",\"notificationType\":\"dns-critical\","
-                                                + "\"sourceLabel\":\"DNS\",\"sourceRoute\":\"/domain-dns\","
-                                                + "\"title\":\"t\",\"description\":\"d\",\"severity\":\"HIGH\","
-                                                + "\"recommendedActions\":[\"a\"]}")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
-                .andExpect(status().isOk());
-
-        verify(dismissedNotificationService)
-                .markAsDismissed(
-                        eq("user-1"),
-                        argThat(
-                                req ->
-                                        "domain-dns".equals(req.source())
-                                                && "dns-critical".equals(req.notificationType())));
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0]").value("users-groups:alert"));
     }
 
     @Test
-    void unDismiss_withoutCookie_returns401() throws Exception {
+    void hasFeedback_withoutCookie_returns401() throws Exception {
         mockMvc.perform(
-                        delete("/api/notifications/dismissed")
+                        get("/api/notifications/feedback")
                                 .contextPath("/api")
-                                .param("source", "a")
-                                .param("notificationType", "b"))
+                                .param("source", "s")
+                                .param("notificationType", "t"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void unDismiss_removed_returns200() throws Exception {
+    void hasFeedback_withCookie_returnsBoolean() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("user-1");
-        when(dismissedNotificationService.unDismiss("user-1", "domain-dns", "dns-critical"))
+        when(notificationFeedbackService.hasFeedback("user-1", "domain-dns", "dns-critical"))
                 .thenReturn(true);
 
         mockMvc.perform(
-                        delete("/api/notifications/dismissed")
+                        get("/api/notifications/feedback")
                                 .contextPath("/api")
                                 .param("source", "domain-dns")
                                 .param("notificationType", "dns-critical")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
-                .andExpect(status().isOk());
-
-        verify(dismissedNotificationService)
-                .unDismiss("user-1", "domain-dns", "dns-critical");
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
     }
 
     @Test
-    void unDismiss_notFound_returns404() throws Exception {
+    void submitFeedback_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(
+                        post("/api/notifications/feedback")
+                                .contextPath("/api")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"source\":\"a\",\"notificationType\":\"b\",\"feedbackText\":\"c\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void submitFeedback_withCookie_returns200AndCallsService() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("user-1");
-        when(dismissedNotificationService.unDismiss("user-1", "x", "y")).thenReturn(false);
 
         mockMvc.perform(
-                        delete("/api/notifications/dismissed")
+                        post("/api/notifications/feedback")
                                 .contextPath("/api")
-                                .param("source", "x")
-                                .param("notificationType", "y")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"source":"users-groups","notificationType":"user-control","feedbackText":"thanks"}
+                                        """)
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk());
+
+        verify(notificationFeedbackService)
+                .submitFeedback("user-1", "users-groups", "user-control", "thanks");
     }
 }

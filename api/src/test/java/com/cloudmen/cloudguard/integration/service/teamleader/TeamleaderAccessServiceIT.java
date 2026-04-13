@@ -1,7 +1,6 @@
 package com.cloudmen.cloudguard.integration.service.teamleader;
 
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
@@ -30,7 +29,7 @@ import static org.mockito.Mockito.when;
 @TestPropertySource(properties = {
         "teamleader.customfield.cloudguard.id=custom-field-123"
 })
-public class TeamleaderAccessServiceIntegrationTest {
+public class TeamleaderAccessServiceIT {
     @Autowired
     private TeamleaderAccessService teamleaderAccessService;
 

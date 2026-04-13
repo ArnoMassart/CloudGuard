@@ -4,7 +4,6 @@ import com.cloudmen.cloudguard.dto.TeamleaderTokens;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,7 @@ import static org.mockito.Mockito.*;
         "supabase.url=https://mock.supabase.co",
         "supabase.key=mock-key"
 })
-public class SupabaseTokenServiceIntegrationTest {
+public class SupabaseTokenServiceIT {
 
     @Autowired
     private SupabaseTokenService supabaseTokenService;

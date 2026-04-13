@@ -3,11 +3,8 @@ package com.cloudmen.cloudguard.integration.service;
 import com.cloudmen.cloudguard.dto.devices.DeviceCacheEntry;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.DevicePageResponse;
-import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleDeviceService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
-import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.model.ChromeOsDevice;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,14 +20,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.cloudmen.cloudguard.unit.helper.GlobalTestHelper.getMessageSource;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {GoogleDeviceService.class})
-public class GoogleDeviceServiceIntegrationTest {
+public class GoogleDeviceServiceIT {
 
     @Autowired
     private GoogleDeviceService googleDeviceService;

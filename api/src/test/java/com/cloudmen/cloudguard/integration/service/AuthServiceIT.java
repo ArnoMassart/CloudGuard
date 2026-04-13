@@ -29,7 +29,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {AuthService.class})
-public class AuthServiceIntegrationTest {
+public class AuthServiceIT {
 
     @Autowired
     private AuthService authService;

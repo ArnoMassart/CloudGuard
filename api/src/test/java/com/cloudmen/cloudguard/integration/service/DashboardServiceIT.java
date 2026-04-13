@@ -36,7 +36,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = {DashboardService.class})
-public class DashboardServiceIntegrationTest {
+public class DashboardServiceIT {
 
     @Autowired
     private DashboardService dashboardService;

@@ -6,7 +6,6 @@ import com.cloudmen.cloudguard.dto.oauth.OAuthPagedResponse;
 import com.cloudmen.cloudguard.dto.oauth.RawUserToken;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleOAuthService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = {GoogleOAuthService.class})
-public class GoogleOAuthServiceIntegrationTest {
+public class GoogleOAuthServiceIT {
 
     @Autowired
     private GoogleOAuthService googleOAuthService;

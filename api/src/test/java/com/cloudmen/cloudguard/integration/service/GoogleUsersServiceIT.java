@@ -6,7 +6,6 @@ import com.cloudmen.cloudguard.dto.users.UserPageResponse;
 import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleUsersService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.client.util.DateTime;
@@ -30,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = {GoogleUsersService.class})
-public class GoogleUsersServiceIntegrationTest {
+public class GoogleUsersServiceIT {
 
     @Autowired
     private GoogleUsersService googleUsersService;

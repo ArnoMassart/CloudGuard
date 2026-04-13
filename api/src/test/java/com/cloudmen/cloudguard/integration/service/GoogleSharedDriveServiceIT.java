@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
 import com.google.api.client.util.DateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = {GoogleSharedDriveService.class})
-public class GoogleSharedDriveServiceIntegrationTest {
+public class GoogleSharedDriveServiceIT {
 
     @Autowired
     private GoogleSharedDriveService googleSharedDriveService;

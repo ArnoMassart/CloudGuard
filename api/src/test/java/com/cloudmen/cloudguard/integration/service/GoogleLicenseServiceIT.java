@@ -7,7 +7,6 @@ import com.cloudmen.cloudguard.dto.licenses.LicenseType;
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.GoogleLicenseService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleLicenseCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
@@ -26,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {GoogleLicenseService.class})
-public class GoogleLicenseServiceIntegrationTest {
+public class GoogleLicenseServiceIT {
 
     @Autowired
     private GoogleLicenseService licenseService;

@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.exception.AccessTokenEmptyException;
 import com.cloudmen.cloudguard.exception.RefreshTokenEmptyException;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.SupabaseTokenService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.*;
         "teamleader.client.id=test-client-id",
         "teamleader.client.secret=test-client-secret"
 })
-public class TeamleaderServiceIntegrationTest {
+public class TeamleaderServiceIT {
 
     @Autowired
     private TeamleaderService teamleaderService;

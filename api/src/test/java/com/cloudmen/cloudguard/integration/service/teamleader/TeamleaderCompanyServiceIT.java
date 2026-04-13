@@ -1,7 +1,6 @@
 package com.cloudmen.cloudguard.integration.service.teamleader;
 
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(properties = {
         "teamleader.api.base=https://api.teamleader.eu"
 })
-public class TeamleaderCompanyServiceIntegrationTest {
+public class TeamleaderCompanyServiceIT {
     @Autowired
     private TeamleaderCompanyService teamleaderCompanyService;
 

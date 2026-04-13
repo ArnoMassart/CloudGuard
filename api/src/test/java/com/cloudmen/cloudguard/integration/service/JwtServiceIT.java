@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.exception.InvalidExternalTokenException;
 import com.cloudmen.cloudguard.exception.UnauthorizedException;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.when;
         "application.security.jwt.secret-key=thisisaverylongsecretkeythatisatleast32byteslong",
         "application.security.jwt.expiration=3600000"
 })
-public class JwtServiceIntegrationTest {
+public class JwtServiceIT {
 
     @Autowired
     private JwtService jwtService;

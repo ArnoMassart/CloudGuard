@@ -3,10 +3,7 @@ package com.cloudmen.cloudguard.integration.service;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
-import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.UserService;
-import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import jakarta.validation.constraints.Email;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {UserService.class})
-public class UserServiceIntegrationTest {
+public class UserServiceIT {
     @Autowired
     private UserService userService;
 

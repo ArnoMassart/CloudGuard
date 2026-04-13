@@ -2,7 +2,6 @@ package com.cloudmen.cloudguard.integration.service.report;
 
 import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
-import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.report.SecurityReportEmailService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import jakarta.mail.Session;
@@ -23,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = {SecurityReportEmailService.class})
-public class SecurityReportEmailServiceIntegrationTest {
+public class SecurityReportEmailServiceIT {
 
     @Autowired
     SecurityReportEmailService securityReportEmailService;
