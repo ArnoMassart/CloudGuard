@@ -1,6 +1,8 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
 import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
@@ -28,6 +30,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -231,6 +234,22 @@ class NotificationAggregationServiceTest {
 
         assertEquals(1, critical.size());
         assertEquals("critical", critical.get(0).severity());
+    }
+
+    @Test
+    void getNotifications_hidesSourceWhenViewerLacksMatchingViewerRole() {
+        stubQuietBaselines();
+        User u = new User();
+        u.setEmail(GlobalTestHelper.ADMIN);
+        u.setOrganizationId(null);
+        u.setRoles(new ArrayList<>(List.of(UserRole.DOMAIN_DNS_VIEWER)));
+        when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(u));
+        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+                .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
+
+        var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
+
+        assertTrue(response.active().isEmpty());
     }
 
     private void stubQuietBaselines() {

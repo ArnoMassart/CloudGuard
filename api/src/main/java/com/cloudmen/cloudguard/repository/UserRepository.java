@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.repository;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,6 +28,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByOrganizationId(Long organizationId);
 
     Optional<User> findFirstByOrganizationIdOrderByIdAsc(Long organizationId);
+
+    @Query(
+            "SELECT u FROM tbl_users u WHERE u.organizationId = :orgId AND :role MEMBER OF u.roles ORDER BY u.id"
+                    + " ASC")
+    List<User> findByOrganizationIdAndRoleOrderByIdAsc(
+            @Param("orgId") Long organizationId, @Param("role") UserRole role);
 
     @Query("SELECT DISTINCT u.organizationId FROM tbl_users u WHERE u.organizationId IS NOT NULL")
     List<Long> findDistinctOrganizationIds();

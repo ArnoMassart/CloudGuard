@@ -1,12 +1,15 @@
 package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,8 @@ import java.util.Set;
 
 @Service
 public class NotificationProjectionSyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationProjectionSyncService.class);
 
     private final NotificationInstanceRepository instanceRepository;
     private final NotificationAggregationService aggregationService;
@@ -37,15 +42,20 @@ public class NotificationProjectionSyncService {
 
     /**
      * Reconcile org-wide notification rows with the current aggregation snapshot (Google/workspace truth).
-     * Uses the lexicographically first user in the org (by id) as the Google API actor.
+     * Uses a {@link UserRole#SUPER_ADMIN} member of the org (lowest id) as the Google API actor so the snapshot
+     * reflects full admin visibility. If none exists, sync is skipped.
      */
     @Transactional
     public void syncOrganization(Long organizationId) {
-        Optional<User> actorOpt = userRepository.findFirstByOrganizationIdOrderByIdAsc(organizationId);
-        if (actorOpt.isEmpty()) {
+        List<User> superAdmins =
+                userRepository.findByOrganizationIdAndRoleOrderByIdAsc(organizationId, UserRole.SUPER_ADMIN);
+        if (superAdmins.isEmpty()) {
+            log.warn(
+                    "Skipping notification projection sync for organization {}: no user with SUPER_ADMIN role",
+                    organizationId);
             return;
         }
-        User actor = actorOpt.get();
+        User actor = superAdmins.get(0);
         String lang = actor.getLanguage() != null ? actor.getLanguage() : "nl";
         Locale locale = Locale.forLanguageTag(lang.replace('_', '-'));
 

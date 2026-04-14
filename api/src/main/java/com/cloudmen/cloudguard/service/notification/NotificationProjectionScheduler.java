@@ -27,7 +27,7 @@ public class NotificationProjectionScheduler {
         this.syncService = syncService;
     }
 
-    @Scheduled(cron = "${cloudguard.notifications.projection.sync-cron:0 0/10 * * * *}")
+    @Scheduled(cron = "${cloudguard.notifications.projection.sync-cron:0 0 0 * * *}")
     public void syncAllOrganizations() {
         if (!properties.isSyncEnabled()) {
             return;

@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
@@ -18,11 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,7 +53,8 @@ class NotificationProjectionSyncServiceTest {
         actor.setId(1L);
         actor.setEmail("admin@example.com");
         actor.setLanguage("en");
-        when(userRepository.findFirstByOrganizationIdOrderByIdAsc(ORG_ID)).thenReturn(Optional.of(actor));
+        when(userRepository.findByOrganizationIdAndRoleOrderByIdAsc(ORG_ID, UserRole.SUPER_ADMIN))
+                .thenReturn(List.of(actor));
 
         NotificationDto dto =
                 new NotificationDto(
@@ -89,7 +93,8 @@ class NotificationProjectionSyncServiceTest {
         actor.setId(1L);
         actor.setEmail("admin@example.com");
         actor.setLanguage("en");
-        when(userRepository.findFirstByOrganizationIdOrderByIdAsc(ORG_ID)).thenReturn(Optional.of(actor));
+        when(userRepository.findByOrganizationIdAndRoleOrderByIdAsc(ORG_ID, UserRole.SUPER_ADMIN))
+                .thenReturn(List.of(actor));
         when(aggregationService.buildActiveSnapshot("admin@example.com", Locale.ENGLISH)).thenReturn(List.of());
 
         NotificationInstance open = new NotificationInstance();
@@ -106,5 +111,16 @@ class NotificationProjectionSyncServiceTest {
 
         verify(instanceRepository).save(open);
         assertSame(NotificationInstanceStatus.SOLVED, open.getStatus());
+    }
+
+    @Test
+    void syncOrganization_skipsWhenNoSuperAdmin() {
+        when(userRepository.findByOrganizationIdAndRoleOrderByIdAsc(ORG_ID, UserRole.SUPER_ADMIN))
+                .thenReturn(List.of());
+
+        syncService.syncOrganization(ORG_ID);
+
+        verifyNoInteractions(aggregationService);
+        verify(instanceRepository, never()).save(any());
     }
 }

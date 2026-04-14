@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class NotificationProjectionProperties {
     private boolean readEnabled = true;
     private boolean syncEnabled = true;
-    private String syncCron = "0 0/10 * * * *";
+    private String syncCron = "0 0 0 * * *";
 
     public boolean isReadEnabled() {
         return readEnabled;

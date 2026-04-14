@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
@@ -110,15 +111,27 @@ public class NotificationAggregationService {
         this.notificationProjectionProperties = notificationProjectionProperties;
     }
 
-    /** Live aggregation snapshot  */
+    /** Live aggregation snapshot (used by the scheduled sync job). */
     public List<NotificationDto> buildActiveSnapshot(String userEmail, Locale locale) {
-        return aggregateActive(userEmail, locale);
+        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(userEmail);
+        return aggregateActive(userEmail, locale, disabled);
     }
 
     public NotificationsResponse getNotifications(String userId, Locale locale) {
+        User user = userRepository.findByEmail(userId).orElse(null);
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
+        List<UserRole> viewerRoles = user != null && user.getRoles() != null ? user.getRoles() : null;
 
-        List<NotificationDto> active = resolveActiveNotifications(userId, locale);
+        List<NotificationDto> active = resolveActiveNotifications(user, userId, locale, disabledPreferenceKeys);
+        if (viewerRoles != null) {
+            active =
+                    active.stream()
+                            .filter(
+                                    n -> NotificationSourceViewerRoles.isSourceVisibleToRoles(
+                                            n.source(), viewerRoles))
+                            .toList();
+        }
+
         List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
         Set<String> dismissedKeys = dismissed.stream()
                 .map(d -> d.getSource() + ":" + d.getNotificationType())
@@ -132,6 +145,11 @@ public class NotificationAggregationService {
                 .toList();
 
         List<NotificationDto> dismissedDtos = dismissed.stream()
+                .filter(
+                        d ->
+                                viewerRoles == null
+                                        || NotificationSourceViewerRoles.isSourceVisibleToRoles(
+                                                d.getSource(), viewerRoles))
                 .filter(d -> !isHiddenByPreference(d.getSource(), d.getNotificationType(), disabledPreferenceKeys))
                 .map(this::toDismissedDto)
                 .toList();
@@ -139,20 +157,20 @@ public class NotificationAggregationService {
         return new NotificationsResponse(filtered, dismissedDtos);
     }
 
-    private List<NotificationDto> resolveActiveNotifications(String userId, Locale locale) {
+    private List<NotificationDto> resolveActiveNotifications(
+            User user, String userId, Locale locale, Set<String> disabledPreferenceKeys) {
         if (!notificationProjectionProperties.isReadEnabled()) {
-            return aggregateActive(userId, locale);
+            return aggregateActive(userId, locale, disabledPreferenceKeys);
         }
-        Optional<Long> orgId =
-                userRepository.findByEmail(userId).map(User::getOrganizationId).filter(Objects::nonNull);
-        if (orgId.isEmpty()) {
-            return aggregateActive(userId, locale);
+        Long orgId = user != null ? user.getOrganizationId() : null;
+        if (orgId == null) {
+            return aggregateActive(userId, locale, disabledPreferenceKeys);
         }
         List<NotificationInstance> projected =
                 notificationInstanceRepository.findByOrganizationIdAndStatus(
-                        orgId.get(), NotificationInstanceStatus.ACTIVE);
+                        orgId, NotificationInstanceStatus.ACTIVE);
         if (projected.isEmpty()) {
-            return aggregateActive(userId, locale);
+            return aggregateActive(userId, locale, disabledPreferenceKeys);
         }
         return projected.stream().map(this::toDtoFromProjection).toList();
     }
@@ -222,11 +240,9 @@ public class NotificationAggregationService {
         );
     }
 
-    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale) {
+    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled) {
         List<NotificationDto> notifications = new ArrayList<>();
         int id = 0;
-
-        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(adminEmail);
 
         UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
         SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
@@ -318,16 +334,18 @@ public class NotificationAggregationService {
                         "drive-external", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
             }
             if (drives.notOnlyDomainUsersAllowedCount() > 0) {
-                notifications.add(create(++id, "warning", "Drives staan delen buiten het domein toe",
-                        drives.notOnlyDomainUsersAllowedCount() + " drive(s) staan delen met gebruikers buiten uw domein toe.",
-                        List.of("Beperk gedeelde drives tot alleen gebruikers van uw organisatie"),
-                        "drive-outside-domain", "shared-drives", "Gedeelde Drives", "/shared-drives"));
+                notifications.add(create(++id, "warning",
+                        messageSource.getMessage("notifications.drives.outside_domain.title", null, locale),
+                        messageSource.getMessage("notifications.drives.outside_domain.description", new Object[]{drives.notOnlyDomainUsersAllowedCount()}, locale),
+                        List.of(messageSource.getMessage("notifications.drives.outside_domain.actions", null, locale)),
+                        "drive-outside-domain", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
             }
             if (drives.notOnlyMembersCanAccessCount() > 0) {
-                notifications.add(create(++id, "warning", "Drives met toegang voor niet-leden",
-                        drives.notOnlyMembersCanAccessCount() + " drive(s) kunnen toegang verlenen aan niet-leden.",
-                        List.of("Beperk toegang tot leden van de drive"),
-                        "drive-non-member-access", "shared-drives", "Gedeelde Drives", "/shared-drives"));
+                notifications.add(create(++id, "warning",
+                        messageSource.getMessage("notifications.drives.non_member_access.title", null, locale),
+                        messageSource.getMessage("notifications.drives.non_member_access.description", new Object[]{drives.notOnlyMembersCanAccessCount()}, locale),
+                        List.of(messageSource.getMessage("notifications.drives.non_member_access.actions", null, locale)),
+                        "drive-non-member-access", "shared-drives", messageSource.getMessage("notifications.drives.label", null, locale), "/shared-drives"));
             }
         }
 
@@ -401,7 +419,7 @@ public class NotificationAggregationService {
                     .count();
             if (ousWeakLength > 0) {
                 notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.weak_length.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.weak_length.description", new Object[]{ousWithout2Sv}, locale),
+                        messageSource.getMessage("notifications.password_settings.weak_length.description", new Object[]{ousWeakLength}, locale),
                         List.of(messageSource.getMessage("notifications.password_settings.weak_length.actions", null, locale)),
                         "password-weak-length", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
@@ -412,7 +430,7 @@ public class NotificationAggregationService {
                     .count();
             if (ousNoStrong > 0) {
                 notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_strong.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.no_strong.description", new Object[]{ousWithout2Sv}, locale),
+                        messageSource.getMessage("notifications.password_settings.no_strong.description", new Object[]{ousNoStrong}, locale),
                         List.of(messageSource.getMessage("notifications.password_settings.no_strong.actions", null, locale)),
                         "password-strong-not-required", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
@@ -423,7 +441,7 @@ public class NotificationAggregationService {
                     .count();
             if (ousNoExpiry > 0) {
                 notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_expiry.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.no_expiry.description", new Object[]{ousWithout2Sv}, locale),
+                        messageSource.getMessage("notifications.password_settings.no_expiry.description", new Object[]{ousNoExpiry}, locale),
                         List.of(messageSource.getMessage("notifications.password_settings.no_expiry.actions", null, locale)),
                         "password-never-expires", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
@@ -431,7 +449,7 @@ public class NotificationAggregationService {
             // Warning: admins without security keys
             if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
                 notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.without_keys.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.without_keys.description", new Object[]{ousWithout2Sv}, locale),
+                        messageSource.getMessage("notifications.password_settings.without_keys.description", new Object[]{adminsWithoutKeys.size()}, locale),
                         List.of(messageSource.getMessage("notifications.password_settings.without_keys.actions", null, locale)),
                         "password-admins-no-security-keys", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
             }
@@ -440,12 +458,7 @@ public class NotificationAggregationService {
         // Deduplicate by source-notificationType
         Set<String> seen = new HashSet<>();
         return notifications.stream()
-                .filter(n -> {
-                    String key = n.source() + "-" + n.notificationType();
-                    if (seen.contains(key)) return false;
-                    seen.add(key);
-                    return true;
-                })
+                .filter(n -> seen.add(n.source() + ":" + n.notificationType()))
                 .toList();
     }
 
