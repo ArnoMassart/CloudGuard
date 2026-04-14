@@ -48,7 +48,8 @@
     <ul class="flex flex-col gap-2 pt-2">
       @for (item of NavItemsControl; track item.Label) {
       <app-nav-item (click)="closeMobileMenu()" [Route]="item.Route" [Icon]="item.Icon"
-        [Label]="item.Label | transloco"></app-nav-item>
+        [Label]="(item.Label | transloco)"
+        [BadgeCount]="item.Label==='accounts-manager' ? requestedCount() : 0"></app-nav-item>
       }
     </ul>
 

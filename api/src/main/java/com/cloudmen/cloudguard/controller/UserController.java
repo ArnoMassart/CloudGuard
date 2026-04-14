@@ -1,11 +1,16 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
+import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
+import com.cloudmen.cloudguard.dto.users.UserUpdateRoleRequest;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -33,6 +38,66 @@ public class UserController {
         String newLanguage = request.get("language");
 
         userService.updateLanguage(adminEmail, newLanguage);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/request-access")
+    public ResponseEntity<Boolean> getRequestRoleAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
+        String adminEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.getRoleRequested(adminEmail));
+    }
+
+    @PostMapping("/request-access")
+    public ResponseEntity<String> RequestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
+        String adminEmail = jwtService.validateInternalToken(token);
+
+        userService.updateRequestAccess(adminEmail);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/valid-role")
+    public ResponseEntity<Boolean> hasValidRole(@CookieValue(name = "AuthToken", required = false) String token) {
+        String adminEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.hasValidRole(adminEmail));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<DatabaseUsersResponse> getAllUsers(@RequestParam(required = false) String pageToken,
+                                                             @RequestParam(defaultValue = "4") int size,
+                                                             @RequestParam(required = false) String query) {
+        return ResponseEntity.ok(userService.getAll(pageToken, size, query));
+    }
+
+    @GetMapping("/all/no-roles")
+    public ResponseEntity<DatabaseUsersResponse> getAllUsersWithRequestedRole(@RequestParam(required = false) String pageToken,
+                                                             @RequestParam(defaultValue = "4") int size,
+                                                             @RequestParam(required = false) String query) {
+        return ResponseEntity.ok(userService.getAllWithRequestedRole(pageToken, size, query));
+    }
+
+    @GetMapping("/all/requested-count")
+    public ResponseEntity<Long> getAllRequestedCount() {
+        return ResponseEntity.ok(userService.getAllRequestedCount());
+    }
+
+    @PostMapping("/roles")
+    public ResponseEntity<Void> updateRoles(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserUpdateRoleRequest request) {
+       jwtService.validateInternalToken(token);
+
+        userService.updateRoles(request.userEmail(), request.roles());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/roles-without")
+    public ResponseEntity<Void> updateRolesForUserWithoutAny(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserUpdateRoleRequest request) {
+        jwtService.validateInternalToken(token);
+
+        userService.updateRolesAndUpdateRequestedStatus(request.userEmail(), request.roles());
 
         return ResponseEntity.ok().build();
     }

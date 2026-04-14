@@ -510,5 +510,16 @@
   "notifications.error.feedback-failed": "Could not send feedback.",
   "notifications.error.details-failed": "Could not load details.",
   "forbidden.no-access": "You have not logged in with a valid account. \nLog in with a Google Workspace Account to access the application.",
-  "forbidden.note.description": "Only Google Workspace accounts have access to CloudGuard"
+  "forbidden.note.description": "Only Google Workspace accounts have access to CloudGuard",
+  "unassigned.btn-request": "Request Access",
+  "unassigned.btn-requested": "Request Sent",
+  "unassigned.description": "You have successfully logged in, but no roles have been assigned to your account by an administrator yet.",
+  "unassigned.instruction": "Click the button below to request access from your IT administrator.",
+  "unassigned.request-sent-success": "Your request has been sent! \nAn administrator will review your account.",
+  "unassigned.title": "Access pending",
+  "accounts-manager": "Account Management",
+  "account-manager.description": "As an administrator of CLOUDMEN, manage all CloudGuard accounts here with role management",
+  "account-manager.give-role": "Give role",
+  "account-manager.table-without.title": "Users without a role assigned",
+  "change": "Change"
 }

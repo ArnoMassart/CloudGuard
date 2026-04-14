@@ -1,10 +1,12 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { RouteService } from './route-service';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { UserPageResponse } from '../models/users/UserPageResponse';
 import { UserOverviewResponse } from '../models/users/UserOverviewResponse';
 import { UsersWithoutTwoFactorResponse } from '../models/users/UsersWithoutTwoFactorResponse';
+import { Role, User } from '../models/users/User';
+import { DatabaseUsersResponse } from '../models/users/DatabaseUsersResponse';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +14,8 @@ import { UsersWithoutTwoFactorResponse } from '../models/users/UsersWithoutTwoFa
 export class UserService {
   readonly #API_URL = RouteService.getBackendUrl('/google/users');
   readonly #http = inject(HttpClient);
+
+  readonly requestedCount = signal<number>(0);
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
     if (user?.firstName && user?.lastName)
@@ -56,10 +60,8 @@ export class UserService {
   refreshUsersCache(): Observable<string> {
     return this.#http.post(
       `${this.#API_URL}/refresh`,
-      {
-        withCredentials: true,
-      },
-      { responseType: 'text' }
+      {},
+      { responseType: 'text', withCredentials: true }
     );
   }
 
@@ -73,6 +75,111 @@ export class UserService {
     return this.#http.get(url, {
       responseType: 'text',
       withCredentials: true,
+    });
+  }
+
+  requestRoleAccess(): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/request-access');
+    return this.#http.post(
+      url,
+      {},
+      {
+        responseType: 'text',
+        withCredentials: true,
+      }
+    );
+  }
+
+  getRequestRoleAccessSent(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/request-access');
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
+
+  hasValidRole(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/valid-role');
+
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
+
+  getAllDatabaseUsers(
+    size: number,
+    pageToken?: string,
+    query?: string
+  ): Observable<DatabaseUsersResponse> {
+    const url = RouteService.getBackendUrl('/user/all');
+    let params = new HttpParams().set('size', size.toString());
+
+    if (pageToken) params = params.set('pageToken', pageToken);
+    if (query) params = params.set('query', query);
+
+    return this.#http.get<DatabaseUsersResponse>(url, {
+      params: params,
+    });
+  }
+
+  getAllDatabaseUsersWithoutRoles(
+    size: number,
+    pageToken?: string,
+    query?: string
+  ): Observable<DatabaseUsersResponse> {
+    const url = RouteService.getBackendUrl('/user/all/no-roles');
+    let params = new HttpParams().set('size', size.toString());
+
+    if (pageToken) params = params.set('pageToken', pageToken);
+    if (query) params = params.set('query', query);
+
+    return this.#http.get<DatabaseUsersResponse>(url, {
+      params: params,
+    });
+  }
+
+  updateRolesForUser(userEmail: string, roles: Role[]) {
+    const url = RouteService.getBackendUrl('/user/roles');
+    const body = {
+      userEmail,
+      roles,
+    };
+
+    return this.#http.post<DatabaseUsersResponse>(url, body, {
+      withCredentials: true,
+    });
+  }
+
+  updateRolesForUserWithoutAny(userEmail: string, roles: Role[]) {
+    const url = RouteService.getBackendUrl('/user/roles-without');
+    const body = {
+      userEmail,
+      roles,
+    };
+
+    return this.#http
+      .post<DatabaseUsersResponse>(url, body, {
+        withCredentials: true,
+      })
+      .pipe(
+        tap(() => {
+          this.refreshRequestedCount();
+        })
+      );
+  }
+
+  getAllRequestedCount(): Observable<number> {
+    const url = RouteService.getBackendUrl('/user/all/requested-count');
+    return this.#http.get<number>(url);
+  }
+
+  // 2. Maak een methode die de API aanroept en de signal direct updatet
+  refreshRequestedCount(): void {
+    // Vervang dit door jouw daadwerkelijke API URL
+    this.#http.get<number>('jouw/api/url/voor/count').subscribe({
+      next: (count) => {
+        this.requestedCount.set(count); // Update de centrale signal!
+      },
+      error: (err) => console.error('Error fetching requested count', err),
     });
   }
 }

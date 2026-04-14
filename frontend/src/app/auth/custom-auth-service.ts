@@ -92,7 +92,6 @@ export class CustomAuthService {
     localStorage.clear();
     sessionStorage.removeItem('auth0_redirect_pending');
     sessionStorage.removeItem('user-group-section');
-    // this.#tlService.clearCache();
   }
 
   get isLoggedIn$(): Observable<boolean> {
@@ -119,7 +118,7 @@ export class CustomAuthService {
           this.#initializedStatus.next(true);
           this.#fetchCurrentUser();
 
-          this.#warmupCacheService.triggerWarmup();
+          // this.#warmupCacheService.triggerWarmup();
         })
       );
   }

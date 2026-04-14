@@ -510,5 +510,22 @@
   "notifications.error.feedback-failed": "Feedback kon niet worden verzonden.",
   "notifications.error.details-failed": "Details konden niet worden geladen.",
   "all-apps": "Alle apps",
-  "no-risk": "Geen risico"
+  "no-risk": "Geen risico",
+  "unassigned.title": "Toegang in afwachting",
+  "unassigned.description": "Je bent succesvol ingelogd, maar er zijn nog geen rollen aan je account toegewezen door een beheerder.",
+  "unassigned.instruction": "Klik op de knop hieronder om toegang aan te vragen bij je IT-beheerder.",
+  "unassigned.request-sent-success": "Je aanvraag is verstuurd! Een beheerder zal je account beoordelen.",
+  "unassigned.btn-request": "Toegang Aanvragen",
+  "unassigned.btn-requested": "Aanvraag Verstuurd",
+  "accounts-manager": "Accountbeheer",
+  "account-manager.description": "Beheer hier als beheerder van CLOUDMEN alle CloudGuard accounts met rolbeheer",
+  "account-manager.table-without.title": "Gebruikers zonder rol toegewezen",
+  "account-manager.give-role": "Geef rol",
+  "change": "Aanpassen",
+  "roles.edit-title": "Rol Aanpassen",
+  "roles.assign-title": "Rol Toewijzen",
+  "roles.assign-description": "Selecteer een rol om toe te wijzen aan deze gebruiker",
+  "roles.edit-description": "Wijzig de rol voor deze gebruiker",
+  "save": "Opslaan",
+  "assign": "Toewijzen"
 }

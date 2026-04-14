@@ -1,0 +1,58 @@
+<div class="bg-white rounded-xl flex flex-col max-h-[85vh] w-112.5 max-w-full">
+    <header class="flex justify-between items-start pt-6 px-6 pb-2">
+        <div>
+            <h3 class="m-0 text-xl font-medium text-slate-900">
+                {{ data.isEditMode ? ('roles.edit-title' | transloco) : ('roles.assign-title' | transloco) }}
+            </h3>
+            <p class="m-0 text-sm text-slate-500 mt-1">
+                {{ data.isEditMode ? ('roles.edit-description' | transloco) : ('roles.assign-description' | transloco)
+                }}
+            </p>
+        </div>
+        <button type="button" mat-dialog-close
+            class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            aria-label="{{ 'closing' | transloco }}">
+            <lucide-icon [img]="Icons.X" size="20" />
+        </button>
+    </header>
+
+    <div class="flex-1 overflow-hidden flex flex-col px-6">
+
+        <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-4 flex flex-col mb-4 mt-2">
+            <span class="font-medium text-slate-900">{{ data.user.firstName }} {{ data.user.lastName }}</span>
+            <span class="text-sm text-slate-500">{{ data.user.email }}</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto pr-2 pb-2 custom-scrollbar flex flex-col gap-2.5">
+
+            <label class="flex items-center gap-4 p-3.5 border rounded-xl cursor-pointer transition-all duration-200"
+                [class.border-primary]="isSuperAdmin" [class.bg-primary/5]="isSuperAdmin"
+                [class.border-slate-200]="!isSuperAdmin">
+                <input type="checkbox" class="w-4 h-4 accent-primary cursor-pointer" [(ngModel)]="isSuperAdmin">
+                <span class="font-medium text-slate-900">Super Admin</span>
+            </label>
+
+            @for (roleObj of regularRoles; track roleObj.value) {
+            <label class="flex items-center gap-4 p-3.5 border border-slate-200 rounded-xl transition-all duration-200"
+                [class.opacity-50]="isSuperAdmin" [class.bg-slate-50]="isSuperAdmin"
+                [class.cursor-not-allowed]="isSuperAdmin" [class.cursor-pointer]="!isSuperAdmin">
+                <input type="checkbox" class="w-4 h-4 accent-primary" [disabled]="isSuperAdmin"
+                    [class.cursor-not-allowed]="isSuperAdmin" [class.cursor-pointer]="!isSuperAdmin"
+                    [checked]="selectedRoles.has(roleObj.value)" (change)="toggleRole(roleObj.value, $event)">
+                <span class="font-medium text-slate-700">{{ roleObj.label }}</span>
+            </label>
+            }
+        </div>
+    </div>
+
+    <div class="px-6 py-5 flex justify-end gap-3 border-t border-slate-100 mt-2">
+        <button type="button" mat-dialog-close
+            class="cursor-pointer hover:bg-slate-50 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
+            {{ 'cancel' | transloco }}
+        </button>
+        <button type="button" (click)="save()"
+            class="cursor-pointer hover:bg-primary/90 rounded-lg text-white text-sm font-medium bg-primary py-2.5 px-6 transition-colors shadow-sm">
+            {{ data.isEditMode ? ('save' | transloco) : ('assign' | transloco) }}
+        </button>
+    </div>
+</div>

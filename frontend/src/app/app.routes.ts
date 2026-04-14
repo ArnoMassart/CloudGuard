@@ -19,6 +19,8 @@ import { TeamleaderAccessDenied } from './pages/teamleader-access-denied/teamlea
 import { ServerError } from './pages/server-error/server-error';
 import { accessGuard } from './access/access.guard';
 import { Login } from './pages/login/login';
+import { RequestAccess } from './pages/request-access/request-access';
+import { AccountsManager } from './pages/control-section/accounts-manager/accounts-manager';
 
 export const routes: Routes = [
   {
@@ -36,6 +38,10 @@ export const routes: Routes = [
   {
     path: 'access-denied',
     component: TeamleaderAccessDenied,
+  },
+  {
+    path: 'request-access',
+    component: RequestAccess,
   },
   {
     path: 'server-error',
@@ -104,6 +110,11 @@ export const routes: Routes = [
   {
     path: 'security-preferences',
     component: SecurityPreferences,
+    canActivate: [authGuard, accessGuard],
+  },
+  {
+    path: 'accounts-manager',
+    component: AccountsManager,
     canActivate: [authGuard, accessGuard],
   },
   {

@@ -12,4 +12,5 @@ export class NavItem {
   @Input({ required: true }) Icon: LucideIconData = Shield;
   @Input({ required: true }) Label: string = '';
   @Input({ required: true }) Route: string = '';
+  @Input() BadgeCount: number = 0;
 }

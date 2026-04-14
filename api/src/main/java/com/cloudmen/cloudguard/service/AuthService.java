@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
@@ -32,15 +33,13 @@ public class AuthService {
         // 1. Decode the token to get all details (Name, Picture, Email)
         Jwt jwt = jwtService.decodeGoogleToken(externalIdToken);
 
-        if (!jwtService.isGoogleAdmin(jwt)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: Non-Admin User");
-        }
-
         String email = jwt.getClaimAsString("email");
 
         // 2. Try to find user, OR create a new one if missing
         User user = userService.findByEmail(email)
                 .orElseGet(() -> registerNewUser(jwt)); // <--- The Magic Logic
+
+        syncSuperAdminStatus(user, jwt);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");
@@ -71,6 +70,17 @@ public class AuthService {
         newUser.setCreatedAt(java.time.LocalDateTime.now());
 
         return userService.save(newUser);
+    }
+
+    private void syncSuperAdminStatus(User user, Jwt jwt) {
+        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
+        boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
+
+        if (isGoogleSuperAdmin && !hasSuperAdminRole) {
+            user.getRoles().clear();
+            user.getRoles().add(UserRole.SUPER_ADMIN);
+            userService.save(user);
+        }
     }
 
     public UserDto validateSession(String token) {
@@ -131,7 +141,7 @@ public class AuthService {
         return switch (googleName) {
             case "_SEED_ADMIN_ROLE" -> "Super Admin";
             case "_READ_ONLY_ADMIN_ROLE" -> "Read Only Admin";
-            default -> "Admin";
+            default -> "User";
         };
     }
 
