@@ -6,9 +6,6 @@ import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cglib.core.Local;
-import org.springframework.context.i18n.LocaleContext;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +52,7 @@ public class BiannualReportScheduler {
 
                 cacheWarmupService.warmupAllCachesAsync(email).join();
 
-                ReportResponse response = reportService.generateSecurityRapport(email, locale);
+                ReportResponse response = reportService.generateSecurityReport(email, locale);
 
                 String companyName = response.companyName();
 

@@ -11,9 +11,13 @@ export class WarmupCacheService {
 
   triggerWarmup(): void {
     this.#http
-      .post(`${this.#API_URL}`, {
-        withCredentials: true,
-      })
+      .post(
+        `${this.#API_URL}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      )
       .subscribe({
         next: () => console.log('Backend is op de achtergrond de data aan het inladen...'),
         error: (err) => console.error('Warmup trigger mislukt', err),

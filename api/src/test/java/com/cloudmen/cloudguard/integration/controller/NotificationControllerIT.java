@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.unit.controller;
+package com.cloudmen.cloudguard.integration.controller;
 
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;

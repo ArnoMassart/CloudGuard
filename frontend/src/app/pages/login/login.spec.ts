@@ -3,17 +3,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { Login } from './login';
-
-// Simpele mock voor eventuele vertalingen in de login pagina
-const I18N_MOCK: Record<string, string> = {
-  'login.title': 'Login',
-};
-
-class LoginTranslocoLoader implements TranslocoLoader {
-  getTranslation() {
-    return of(I18N_MOCK);
-  }
-}
+import { provideTranslocoTesting } from '../../testing/transloco-testing';
 
 describe('Login', () => {
   let component: Login;
@@ -31,16 +21,7 @@ describe('Login', () => {
 
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [
-        { provide: AuthService, useValue: authServiceMock },
-        provideTransloco({
-          config: {
-            availableLangs: ['en', 'nl'],
-            defaultLang: 'en',
-          },
-          loader: LoginTranslocoLoader,
-        }),
-      ],
+      providers: [{ provide: AuthService, useValue: authServiceMock }, provideTranslocoTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Login);
