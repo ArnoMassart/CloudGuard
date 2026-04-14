@@ -86,6 +86,7 @@ public class AuthServiceIT {
                 new ArrayList<>(),
                 LocalDateTime.now(),
                 false,
+                0L,
                 "Organisation"
         );
 

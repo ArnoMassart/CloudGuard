@@ -5,6 +5,8 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,7 @@ import java.util.Optional;
 @Service
 public class OrganizationService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final UserSecurityPreferenceRepository userSecurityPreferenceRepository;
@@ -44,6 +47,18 @@ public class OrganizationService {
                 }
             }
             deleteAllUnusedFallbackOrganizationsWithoutCustomerId();
+        }
+    }
+
+    public Optional<Organization> findById(Long id) {
+        return organizationRepository.findById(id);
+    }
+
+    public void updateAdminEmailForOrg(String email, Organization org) {
+        if (org.getAdminEmail() == null || org.getAdminEmail().isBlank()) {
+            log.info("Eerste Super Admin gedetecteerd voor organisatie {}. Admin email ingesteld op: {}", org.getName(), email);
+            org.setAdminEmail(email);
+            organizationRepository.save(org);
         }
     }
 
@@ -100,5 +115,9 @@ public class OrganizationService {
         for (Long id : ids) {
             deleteOrphanFallbackOrganizationIfUnused(id);
         }
+    }
+
+    public List<Organization> getAll() {
+        return organizationRepository.findAll();
     }
 }

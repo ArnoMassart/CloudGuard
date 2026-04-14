@@ -97,6 +97,7 @@ public class AuthControllerIT {
                 List.of(UserRole.SUPER_ADMIN),
                 LocalDateTime.now(),
                 false,
+                1L,
                 "Acme Corp"
         );
     }

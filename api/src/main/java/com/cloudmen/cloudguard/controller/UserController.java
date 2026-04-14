@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserUpdateRoleRequest;
+import com.cloudmen.cloudguard.dto.users.UsersUpdateOrganizationRequest;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -98,6 +99,15 @@ public class UserController {
         jwtService.validateInternalToken(token);
 
         userService.updateRolesAndUpdateRequestedStatus(request.userEmail(), request.roles());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/org-change")
+    public ResponseEntity<Void> updateUsersOrganization(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UsersUpdateOrganizationRequest request) {
+        jwtService.validateInternalToken(token);
+
+        userService.updateUsersOrg(request.userEmail(), request.orgId());
 
         return ResponseEntity.ok().build();
     }

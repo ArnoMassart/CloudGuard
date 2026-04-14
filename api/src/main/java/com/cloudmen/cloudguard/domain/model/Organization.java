@@ -31,6 +31,5 @@ public class Organization {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "admin_refresh_token")
-    private String adminRefreshToken;
+    private String adminEmail;
 }

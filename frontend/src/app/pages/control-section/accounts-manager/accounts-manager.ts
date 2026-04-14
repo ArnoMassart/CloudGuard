@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SearchBar } from '../../../components/search-bar/search-bar';
@@ -10,19 +10,24 @@ import { Role, RoleLabels, RolePriority, User } from '../../../models/users/User
 import { LucideAngularModule } from 'lucide-angular';
 import { AssignRoleDialog } from '../../../components/assign-role-dialog/assign-role-dialog';
 import { MatDialog } from '@angular/material/dialog';
+import { OrgService } from '../../../services/org-service';
+import { Organization } from '../../../models/org/Organization';
+import { FormsModule } from '@angular/forms';
 
 const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-accounts-manager',
-  imports: [PageHeader, TranslocoPipe, SearchBar, PaginationBar, LucideAngularModule],
+  imports: [PageHeader, TranslocoPipe, SearchBar, PaginationBar, LucideAngularModule, FormsModule],
   templateUrl: './accounts-manager.html',
   styleUrl: './accounts-manager.css',
 })
-export class AccountsManager {
+export class AccountsManager implements OnInit {
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
+  readonly #orgService = inject(OrgService);
+
   readonly pagination = viewChild(PaginationBar);
   readonly paginationWithoutRoles = viewChild(PaginationBar);
 
@@ -55,6 +60,8 @@ export class AccountsManager {
     }
   }
 
+  readonly orgs = signal<Organization[]>([]);
+
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
@@ -67,6 +74,7 @@ export class AccountsManager {
     this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.loadUsers();
       this.loadUsersWithoutRoles();
+      this.loadOrganizations();
     });
   }
 
@@ -193,6 +201,7 @@ export class AccountsManager {
       .subscribe({
         next: (page) => {
           this.users.set(page.users);
+          console.log(page);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
         },
@@ -223,5 +232,29 @@ export class AccountsManager {
           this.isLoadingWithoutRoles.set(false);
         },
       });
+  }
+
+  loadOrganizations() {
+    this.#orgService.getAllOrgs().subscribe({
+      next: (orgs) => this.orgs.set(orgs),
+      error: (err) => console.error('Fout bij laden organisaties', err),
+    });
+  }
+
+  onOrganizationChange(user: User, event: Event) {
+    const newOrgId = user.organizationId;
+
+    // Roep je UserService aan om de organisatie van de gebruiker te updaten
+    this.#userService.updateUserOrg(user.email, newOrgId).subscribe({
+      next: () => {
+        // Eventueel een succesmelding of de lokale state updaten
+        this.loadUsers();
+      },
+    });
+  }
+
+  isOrgInList(orgId: number | null): boolean {
+    if (!orgId) return false;
+    return this.orgs().some((org) => org.id === orgId);
   }
 }

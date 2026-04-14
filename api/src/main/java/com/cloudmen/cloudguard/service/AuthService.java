@@ -8,6 +8,8 @@ import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -98,6 +100,12 @@ public class AuthService {
         boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
 
         if (isGoogleSuperAdmin) {
+            if (user.getOrganizationId() != null) {
+                organizationService.findById(user.getOrganizationId()).ifPresent(org -> {
+                    organizationService.updateAdminEmailForOrg(user.getEmail(), org);
+                });
+            }
+
             if (!hasSuperAdminRole) {
                 user.getRoles().clear();
                 user.getRoles().add(UserRole.SUPER_ADMIN);

@@ -73,7 +73,9 @@ public class UserService {
                 user.getRoles(),
                 user.getCreatedAt(),
                 user.isRoleRequested(),
+                orgId,
                 organizationName
+
         );
     }
 
@@ -161,9 +163,10 @@ public class UserService {
 
         String nextPageToken = userPage.hasNext() ? String.valueOf(page + 1) : null;
 
-        return new DatabaseUsersResponse(userPage.getContent(), nextPageToken);
+        return new DatabaseUsersResponse(userPage.getContent().stream().map(this::convertToDto).toList(), nextPageToken);
     }
 
+    @Transactional
     public void updateRoles(String email, List<UserRole> roles) {
       Optional<User> userOptional = userRepository.findByEmail(email);
 
@@ -181,6 +184,7 @@ public class UserService {
       }
     }
 
+    @Transactional
     public void updateRolesAndUpdateRequestedStatus(String email, List<UserRole> roles) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
@@ -194,5 +198,13 @@ public class UserService {
 
     public long getAllRequestedCount() {
         return userRepository.countByRoleRequestedTrue();
+    }
+
+    @Transactional
+    public void updateUsersOrg(String email, Long orgId) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+           user.setOrganizationId(orgId);
+           userRepository.save(user);
+        });
     }
 }

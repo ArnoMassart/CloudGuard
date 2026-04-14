@@ -149,7 +149,7 @@ export class UserService {
     };
 
     return this.#http
-      .post<DatabaseUsersResponse>(url, body, {
+      .post(url, body, {
         withCredentials: true,
       })
       .pipe(
@@ -187,5 +187,23 @@ export class UserService {
     const label = RoleLabels[role as Role];
 
     return label ? label : role.toString();
+  }
+
+  updateUserOrg(userEmail: string, orgId: number) {
+    const url = RouteService.getBackendUrl('/user/org-change');
+    const body = {
+      userEmail,
+      orgId,
+    };
+
+    return this.#http
+      .post(url, body, {
+        withCredentials: true,
+      })
+      .pipe(
+        tap(() => {
+          this.refreshRequestedCount();
+        })
+      );
   }
 }
