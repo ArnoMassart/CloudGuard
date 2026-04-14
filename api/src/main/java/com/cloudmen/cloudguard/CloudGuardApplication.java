@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 @SpringBootApplication
 @EnableScheduling
+@EnableConfigurationProperties(NotificationProjectionProperties.class)
 public class CloudGuardApplication {
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure().load();
