@@ -1,9 +1,15 @@
-<li
-  class="flex items-center gap-3 rounded-md cursor-pointer px-3 py-1.5"
-  [routerLink]="[`/${Route}`]"
-  [routerLinkActive]="'selected'"
-  [routerLinkActiveOptions]="{ exact: true }"
->
-  <i-lucide [img]="Icon" size="22" class="icon" />
+<li class="flex items-center gap-3 rounded-md cursor-pointer px-3 py-1.5" [routerLink]="Route"
+  [routerLinkActive]="'selected'" [routerLinkActiveOptions]="{ exact: false }">
+  <div class="relative flex items-center justify-center">
+    <i-lucide [img]="Icon" size="22" class="icon" />
+
+    @if (BadgeCount > 0) {
+    <span
+      class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm">
+      {{ BadgeCount > 99 ? '99+' : BadgeCount }}
+    </span>
+    }
+  </div>
+
   <a class="font-medium text-navbar-foreground-not-selected text-md">{{ Label }}</a>
 </li>

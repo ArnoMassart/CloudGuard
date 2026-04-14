@@ -6,6 +6,7 @@ import { AuthService } from '@auth0/auth0-angular';
 import { CustomAuthService } from '../custom-auth-service';
 import { Router } from '@angular/router';
 import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
+import { UserService } from '../../services/user-service';
 
 @Component({
   selector: 'app-callback',
@@ -16,6 +17,7 @@ import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
 })
 export class Callback implements OnInit {
   private readonly auth0 = inject(AuthService);
+  private readonly userService = inject(UserService);
   private readonly customAuth = inject(CustomAuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -34,7 +36,8 @@ export class Callback implements OnInit {
       switchMap(() => this.auth0.idTokenClaims$),
       filter((claims): claims is NonNullable<typeof claims> => !!claims?.__raw),
       take(1),
-      switchMap((claims) => this.customAuth.loginWithGoogle(claims.__raw))
+      switchMap((claims) => this.customAuth.loginWithGoogle(claims.__raw)),
+      switchMap(() => this.userService.hasValidRole())
     );
 
     const minDelay$ = timer(2500);
@@ -42,9 +45,14 @@ export class Callback implements OnInit {
     forkJoin([login$, minDelay$])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
+        next: ([hasValidRole, _]) => {
           sessionStorage.removeItem('auth0_redirect_pending');
-          this.router.navigate(['/home']);
+
+          if (hasValidRole) {
+            this.router.navigate(['/home']);
+          } else {
+            this.router.navigate(['/request-access']);
+          }
         },
         error: (err) => {
           console.error('Login callback error', err);

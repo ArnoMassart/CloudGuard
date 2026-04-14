@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
@@ -21,7 +22,6 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final GoogleUsersCacheService usersCacheService;
     private final OrganizationService organizationService;
     private final WorkspaceCustomerIdResolver workspaceCustomerIdResolver;
 
@@ -29,13 +29,11 @@ public class AuthService {
             UserService userService,
             JwtService jwtService,
             UserRepository userRepository,
-            GoogleUsersCacheService usersCacheService,
             OrganizationService organizationService,
             WorkspaceCustomerIdResolver workspaceCustomerIdResolver) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-        this.usersCacheService = usersCacheService;
         this.organizationService = organizationService;
         this.workspaceCustomerIdResolver = workspaceCustomerIdResolver;
     }
@@ -43,10 +41,6 @@ public class AuthService {
     public LoginResult processLogin(String externalIdToken) {
         // 1. Decode the token to get all details (Name, Picture, Email)
         Jwt jwt = jwtService.decodeGoogleToken(externalIdToken);
-
-        if (!jwtService.isGoogleAdmin(jwt)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: Non-Admin User");
-        }
 
         String email = jwt.getClaimAsString("email");
 
@@ -65,6 +59,8 @@ public class AuthService {
                 .map(WorkspaceCustomer::displayName)
                 .orElse(null);
         organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
+
+        syncSuperAdminStatus(user, jwt);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");
@@ -95,6 +91,35 @@ public class AuthService {
         newUser.setCreatedAt(java.time.LocalDateTime.now());
 
         return userService.save(newUser);
+    }
+
+    private void syncSuperAdminStatus(User user, Jwt jwt) {
+        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
+        boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
+
+        if (isGoogleSuperAdmin) {
+            if (!hasSuperAdminRole) {
+                user.getRoles().clear();
+                user.getRoles().add(UserRole.SUPER_ADMIN);
+                userService.save(user);
+            }
+        } else {
+            boolean rolesUpdated = false;
+
+            if (hasSuperAdminRole) {
+                user.getRoles().remove(UserRole.SUPER_ADMIN);
+                rolesUpdated = true;
+            }
+
+            if (user.getRoles().isEmpty()) {
+                user.getRoles().add(UserRole.UNASSIGNED);
+                rolesUpdated = true;
+            }
+
+            if (rolesUpdated) {
+                userService.save(user);
+            }
+        }
     }
 
     public UserDto validateSession(String token) {
@@ -137,15 +162,9 @@ public class AuthService {
     public java.util.Optional<UserDto> getCurrentUser(String token) {
         try {
             String email = jwtService.validateInternalToken(token);
-            Optional<UserDto> userDto = userService.findByEmail(email)
+
+            return userService.findByEmail(email)
                     .map(userService::convertToDto);
-
-            if (userDto.isPresent()) {
-                List<String> roles = usersCacheService.getUserRoles(email).stream().map(this::translateRoleName).toList();
-                userDto.get().setRoles(roles);
-            }
-
-            return userDto;
         } catch (Exception e) {
             return java.util.Optional.empty();
         }
@@ -155,7 +174,7 @@ public class AuthService {
         return switch (googleName) {
             case "_SEED_ADMIN_ROLE" -> "Super Admin";
             case "_READ_ONLY_ADMIN_ROLE" -> "Read Only Admin";
-            default -> "Admin";
+            default -> "User";
         };
     }
 

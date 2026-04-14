@@ -32,10 +32,13 @@ export class Navbar {
   readonly profileImageError = signal(false);
   readonly isMobileMenuOpen = signal(false);
 
+  readonly requestedCount = this.userService.requestedCount;
+
   constructor() {
     effect(() => {
       this.currentUser();
       this.profileImageError.set(false);
+      this.userService.refreshRequestedCount();
     });
   }
 
@@ -55,6 +58,7 @@ export class Navbar {
     { Icon: this.Icons.CreditCard, Label: 'licenses', Route: '/licenses' },
     { Icon: this.Icons.Bell, Label: 'notifications-feedback', Route: '/reports-reactions' },
     { Icon: this.Icons.Settings, Label: 'security-preferences', Route: '/security-preferences' },
+    { Icon: this.Icons.UserCog, Label: 'accounts-manager', Route: '/accounts-manager' },
   ];
 
   toggleMobileMenu() {
@@ -106,8 +110,8 @@ export class Navbar {
     event.stopPropagation();
     const ref = this.dialog.open(LogOutDialog, {
       width: '500px',
-      panelClass: 'logout-dialog-panel',
-      backdropClass: 'logout-dialog-backdrop',
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop',
     });
 
     ref.afterClosed().subscribe((result) => {

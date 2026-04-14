@@ -20,11 +20,11 @@ li:not(.selected):hover {
   );
 }
 
-.selected > .icon,
-.selected > a {
+.selected .icon,
+.selected a {
   color: white;
 }
 
-.a {
+a {
   transition: color 0.3s ease-in-out;
 }

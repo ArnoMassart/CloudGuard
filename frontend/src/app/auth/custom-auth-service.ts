@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { RouteService } from '../services/route-service';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
-import { catchError, tap, timeout } from 'rxjs/operators';
+import { catchError, map, tap, timeout } from 'rxjs/operators';
 import { User } from '../models/users/User';
 import { AuthService } from '@auth0/auth0-angular';
 import { WarmupCacheService } from '../services/warmup-cache-service';
@@ -26,36 +26,32 @@ export class CustomAuthService {
 
   readonly currentUser = signal<User | null>(null);
 
-  constructor() {
-    this.#checkServerSession();
-  }
+  #isChecking = false;
 
-  #checkServerSession() {
-    this.#http
+  // Maak deze methode publiek (zonder #) zodat de guard hem kan aanroepen
+  checkServerSession(): Observable<boolean> {
+    if (this.currentUser()) return of(true); // Al ingelogd? Klaar.
+    if (this.#isChecking) return this.isLoggedIn$; // Al bezig? Wacht op resultaat.
+
+    this.#isChecking = true;
+    return this.#http
       .get(`${this.#API_URL}/check-session`, {
         withCredentials: true,
-        observe: 'response', // <--- Crucial: Tells Angular we want the full response object
+        observe: 'response',
       })
       .pipe(
-        timeout(3000), // Bumped slightly for safety
-        catchError((err) => {
-          // If it's a 401, catchError triggers. We return 'null' to signal "not logged in"
-          return of(null);
-        }),
-      )
-      .subscribe((res) => {
-        // If res exists and status is 200-299, the user is authenticated
-        const isAuthenticated = res?.ok ?? false;
-        this.#loggedInStatus.next(isAuthenticated);
-        this.#initializedStatus.next(true);
-
-        if (isAuthenticated) {
-          this.#fetchCurrentUser();
-        } else {
-          // Laat de AuthGuard bepalen of er een redirect naar login nodig is
-          console.warn('No session found.');
-        }
-      });
+        timeout(3000),
+        map((res) => res.ok),
+        catchError(() => of(false)),
+        tap((isAuthenticated) => {
+          this.#loggedInStatus.next(isAuthenticated);
+          this.#initializedStatus.next(true);
+          this.#isChecking = false;
+          if (isAuthenticated) {
+            this.#fetchCurrentUser();
+          }
+        })
+      );
   }
 
   #fetchCurrentUser(): void {
@@ -96,7 +92,6 @@ export class CustomAuthService {
     localStorage.clear();
     sessionStorage.removeItem('auth0_redirect_pending');
     sessionStorage.removeItem('user-group-section');
-    // this.#tlService.clearCache();
   }
 
   get isLoggedIn$(): Observable<boolean> {
@@ -123,8 +118,8 @@ export class CustomAuthService {
           this.#initializedStatus.next(true);
           this.#fetchCurrentUser();
 
-          this.#warmupCacheService.triggerWarmup();
-        }),
+          // this.#warmupCacheService.triggerWarmup();
+        })
       );
   }
 }

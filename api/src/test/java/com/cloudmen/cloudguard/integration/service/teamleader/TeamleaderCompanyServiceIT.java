@@ -123,7 +123,7 @@ public class TeamleaderCompanyServiceIT {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), any(ParameterizedTypeReference.class)))
                 .thenReturn(response);
 
-        String result = teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders);
+        String result = teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders);
 
         assertEquals(COMPANY_ID, result);
     }
@@ -135,7 +135,7 @@ public class TeamleaderCompanyServiceIT {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), any(ParameterizedTypeReference.class)))
                 .thenReturn(response);
 
-        String result = teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders);
+        String result = teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders);
 
         assertNull(result);
     }
@@ -155,7 +155,7 @@ public class TeamleaderCompanyServiceIT {
 
         when(teamleaderService.refreshTokens()).thenReturn(true);
 
-        String result = teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders);
+        String result = teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders);
 
         assertEquals(COMPANY_ID, result);
         verify(teamleaderService, times(1)).refreshTokens();

@@ -7,8 +7,8 @@ export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(CustomAuthService);
   const router = inject(Router);
 
-  return authService.isLoggedIn$.pipe(
-    take(1), // Zodra er een waarde is (true/false), stop met luisteren
+  return authService.checkServerSession().pipe(
+    take(1),
     map((isLoggedIn) => {
       if (isLoggedIn) {
         return true;
@@ -17,6 +17,6 @@ export const authGuard: CanActivateFn = (route, state) => {
           queryParams: { returnUrl: state.url },
         });
       }
-    }),
+    })
   );
 };

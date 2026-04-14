@@ -1,0 +1,227 @@
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { PageHeader } from '../../../components/page-header/page-header';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { SearchBar } from '../../../components/search-bar/search-bar';
+import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
+import { AppIcons } from '../../../shared/AppIcons';
+import { Subscription } from 'rxjs';
+import { UserService } from '../../../services/user-service';
+import { Role, RoleLabels, RolePriority, User } from '../../../models/users/User';
+import { LucideAngularModule } from 'lucide-angular';
+import { AssignRoleDialog } from '../../../components/assign-role-dialog/assign-role-dialog';
+import { MatDialog } from '@angular/material/dialog';
+
+const ITEMS_PER_PAGE = 4;
+
+@Component({
+  selector: 'app-accounts-manager',
+  imports: [PageHeader, TranslocoPipe, SearchBar, PaginationBar, LucideAngularModule],
+  templateUrl: './accounts-manager.html',
+  styleUrl: './accounts-manager.css',
+})
+export class AccountsManager {
+  readonly Icons = AppIcons;
+  readonly #userService = inject(UserService);
+  readonly #translocoService = inject(TranslocoService);
+  readonly pagination = viewChild(PaginationBar);
+  readonly paginationWithoutRoles = viewChild(PaginationBar);
+
+  readonly users = signal<User[]>([]);
+  readonly usersWithoutRoles = signal<User[]>([]);
+  readonly isLoading = signal(false);
+  readonly isLoadingWithoutRoles = signal(false);
+  readonly isRefreshing = signal<boolean>(false);
+  readonly isRefreshingWithoutRoles = signal<boolean>(false);
+  readonly searchQuery = signal('');
+  readonly searchQueryWithoutRoles = signal('');
+
+  readonly nextPageToken = signal<string | null>(null);
+  readonly nextPageTokenWithoutRoles = signal<string | null>(null);
+  readonly dialog = inject(MatDialog);
+
+  readonly expandedRoles = signal<Set<string>>(new Set<string>());
+
+  toggleRolesSummary(email: string, rolesLength: number, event: Event) {
+    event.stopPropagation();
+
+    if (rolesLength > 2) {
+      const current = new Set(this.expandedRoles());
+      if (current.has(email)) {
+        current.delete(email);
+      } else {
+        current.add(email);
+      }
+      this.expandedRoles.set(current);
+    }
+  }
+
+  // ==========================================
+  // PRIVATE PROPERTIES
+  // ==========================================
+  private langSubscription?: Subscription;
+
+  // ==========================================
+  // LIFECYCLE HOOKS
+  // ==========================================
+  ngOnInit(): void {
+    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+      this.loadUsers();
+      this.loadUsersWithoutRoles();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.langSubscription) {
+      this.langSubscription.unsubscribe();
+    }
+  }
+
+  // ==========================================
+  // PUBLIC METHODS
+  // ==========================================
+  onSearch(value: string) {
+    this.searchQuery.set(value);
+    this.pagination()?.reset();
+    this.loadUsers();
+  }
+
+  onSearchWithoutRoles(value: string) {
+    this.searchQueryWithoutRoles.set(value);
+    this.paginationWithoutRoles()?.reset();
+    this.loadUsersWithoutRoles();
+  }
+
+  getAllAvailableRoles() {
+    return Object.values(Role)
+      .filter((role) => (role as Role) !== Role.UNASSIGNED)
+      .map((role) => {
+        const typedRole = role as Role;
+        return {
+          value: typedRole,
+          label: RoleLabels[typedRole],
+        };
+      })
+      .sort((a, b) => {
+        const translatedA = this.#translocoService.translate(a.label);
+        const translatedB = this.#translocoService.translate(b.label);
+
+        return translatedA.localeCompare(translatedB);
+      });
+  }
+
+  getRolesTranslated(user: { roles: Role[] }) {
+    return user.roles
+      .map((role) => {
+        const typedRole = role as Role;
+        return {
+          value: typedRole,
+          label: RoleLabels[typedRole],
+        };
+      })
+      .sort((a, b) => {
+        const priorityA = RolePriority[a.value] ?? 99;
+        const priorityB = RolePriority[b.value] ?? 99;
+
+        if (priorityA === priorityB) {
+          const translatedA = this.#translocoService.translate(a.label);
+          const translatedB = this.#translocoService.translate(b.label);
+          return translatedA.localeCompare(translatedB);
+        }
+
+        return priorityA - priorityB;
+      });
+  }
+
+  openLogoutDialog(event: MouseEvent, user: User, hasExistingRoles: boolean): void {
+    event.stopPropagation();
+    const dialogRef = this.dialog.open(AssignRoleDialog, {
+      width: '450px',
+      panelClass: 'custom-dialog-container',
+      data: {
+        user: user,
+        isEditMode: hasExistingRoles,
+        allAvailableRoles: this.getAllAvailableRoles(),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((newRoles) => {
+      if (newRoles) {
+        if (hasExistingRoles) {
+          this.updateRoles(user.email, newRoles);
+        } else {
+          this.updateRolesForUserWithout(user.email, newRoles);
+        }
+      }
+    });
+  }
+
+  updateRoles(email: string, roles: Role[]) {
+    this.isLoading.set(true);
+    this.#userService.updateRolesForUser(email, roles).subscribe({
+      next: () => {
+        this.loadUsers();
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error occured with updating roles', err);
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  updateRolesForUserWithout(email: string, roles: Role[]) {
+    this.isLoadingWithoutRoles.set(true);
+    this.#userService.updateRolesForUserWithoutAny(email, roles).subscribe({
+      next: () => {
+        this.loadUsers();
+        this.loadUsersWithoutRoles();
+
+        this.isLoadingWithoutRoles.set(false);
+      },
+      error: (err) => {
+        console.error('Error occured with updating roles', err);
+        this.isLoadingWithoutRoles.set(false);
+      },
+    });
+  }
+
+  loadUsers(token?: string) {
+    this.isLoading.set(true);
+
+    this.#userService
+      .getAllDatabaseUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
+      .subscribe({
+        next: (page) => {
+          this.users.set(page.users);
+          this.nextPageToken.set(page.nextPageToken);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load users', err);
+          this.isLoading.set(false);
+        },
+      });
+  }
+
+  loadUsersWithoutRoles(token?: string) {
+    this.isLoadingWithoutRoles.set(true);
+
+    this.#userService
+      .getAllDatabaseUsersWithoutRoles(
+        ITEMS_PER_PAGE,
+        token || undefined,
+        this.searchQueryWithoutRoles()
+      )
+      .subscribe({
+        next: (page) => {
+          this.usersWithoutRoles.set(page.users);
+          this.nextPageTokenWithoutRoles.set(page.nextPageToken);
+          this.isLoadingWithoutRoles.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load users', err);
+          this.isLoadingWithoutRoles.set(false);
+        },
+      });
+  }
+}

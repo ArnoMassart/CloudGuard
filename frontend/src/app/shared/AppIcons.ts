@@ -46,6 +46,7 @@ import {
   ServerCrash,
   X,
   Menu,
+  UserPlus,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -92,6 +93,7 @@ export class AppIcons {
   static readonly TrendingDown = TrendingDown;
   static readonly TriangleAlert = TriangleAlert;
   static readonly UserCog = UserCog;
+  static readonly UserPlus = UserPlus;
   static readonly Users = Users;
   static readonly UsersRound = UsersRound;
   static readonly UserX = UserX;

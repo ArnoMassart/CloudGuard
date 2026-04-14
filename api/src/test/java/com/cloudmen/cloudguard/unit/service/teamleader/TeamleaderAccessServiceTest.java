@@ -48,7 +48,7 @@ public class TeamleaderAccessServiceTest {
     void hasCloudGuardAccess_companyNotFound_returnsFalse() {
         HttpHeaders mockHeaders = new HttpHeaders();
         when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn(null);
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn(null);
 
         boolean result = teamleaderAccessService.hasCloudGuardAccess(ADMIN);
 
@@ -59,7 +59,7 @@ public class TeamleaderAccessServiceTest {
     void hasCloudGuardAccess_companyDetailsNull_returnsFalse() {
         HttpHeaders mockHeaders = new HttpHeaders();
         when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
         when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders)).thenReturn(null);
 
         boolean result = teamleaderAccessService.hasCloudGuardAccess(ADMIN);
@@ -71,7 +71,7 @@ public class TeamleaderAccessServiceTest {
     void hasCloudGuardAccess_noCustomFields_returnsFalse() {
         HttpHeaders mockHeaders = new HttpHeaders();
         when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
         when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders))
                 .thenReturn(createCompanyDetailsWithoutCustomFields());
 
@@ -84,7 +84,7 @@ public class TeamleaderAccessServiceTest {
     void hasCloudGuardAccess_customFieldFalse_returnsFalse() {
         HttpHeaders mockHeaders = new HttpHeaders();
         when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
         when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders))
                 .thenReturn(createCompanyDetailsWithCustomField(CLOUDGUARD_FIELD_ID, false));
 
@@ -97,7 +97,7 @@ public class TeamleaderAccessServiceTest {
     void hasCloudGuardAccess_customFieldTrue_returnsTrue() {
         HttpHeaders mockHeaders = new HttpHeaders();
         when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
         when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders))
                 .thenReturn(createCompanyDetailsWithCustomField(CLOUDGUARD_FIELD_ID, true));
 
@@ -110,7 +110,7 @@ public class TeamleaderAccessServiceTest {
     void hasCloudGuardAccess_differentFieldIdIsTrue_returnsFalse() {
         HttpHeaders mockHeaders = new HttpHeaders();
         when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
         when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders))
                 .thenReturn(createCompanyDetailsWithCustomField("wrong-field-id", true));
 
@@ -129,7 +129,7 @@ public class TeamleaderAccessServiceTest {
 
         when(teamleaderService.refreshTokens()).thenReturn(true);
 
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
         when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders))
                 .thenReturn(createCompanyDetailsWithCustomField(CLOUDGUARD_FIELD_ID, true));
 
@@ -149,7 +149,7 @@ public class TeamleaderAccessServiceTest {
                 .thenReturn(mockHeaders);
 
         when(teamleaderService.refreshTokens()).thenReturn(true);
-        when(teamleaderCompanyService.getCompanyIdByEmail(ADMIN, mockHeaders)).thenThrow(new RuntimeException("API Down"));
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenThrow(new RuntimeException("API Down"));
 
         boolean result = teamleaderAccessService.hasCloudGuardAccess(ADMIN);
 
