@@ -17,6 +17,7 @@ public class UserDto {
     private String pictureUrl;
     private List<String> roles;
     private LocalDateTime createdAt;
+    private String organizationName;
 
     public UserDto(String email, String firstName, String lastName, String pictureUrl, LocalDateTime createdAt) {
         this.email = email;

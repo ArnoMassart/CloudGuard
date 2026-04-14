@@ -10,6 +10,8 @@ import { SecurityPreferencesService } from '../../../services/security-preferenc
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { SECTION_PREFERENCE_CONFIGS } from '../../../models/preferences/section-preference-config';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { MatDialog } from '@angular/material/dialog';
+import { MessageDialog } from '../../../components/message-dialog/message-dialog';
 
 @Component({
   selector: 'app-security-preferences',
@@ -34,6 +36,7 @@ export class SecurityPreferences implements OnInit {
 
   readonly #preferencesService = inject(SecurityPreferencesService);
   readonly #transloco = inject(TranslocoService);
+  readonly #dialog = inject(MatDialog);
   readonly preferencesFacade = inject(SecurityPreferencesFacade);
 
   readonly preferences = signal<Record<string, boolean>>({});
@@ -84,6 +87,22 @@ export class SecurityPreferences implements OnInit {
     return '';
   }
 
+  /** HTTP 409: preference writes blocked until workspace organization is linked. */
+  #handlePreferenceSaveError(err: unknown): void {
+    const detail = this.#httpErrorDetail(err);
+    if (err instanceof HttpErrorResponse && err.status === 409) {
+      this.#dialog.open(MessageDialog, {
+        width: 'min(420px, calc(100vw - 2rem))',
+        data: {
+          titleKey: 'preferences.dialog.organization_required_title',
+          message: detail || this.#transloco.translate('preferences.error.save'),
+        },
+      });
+      return;
+    }
+    this.saveError.set(detail || this.#transloco.translate('preferences.error.save'));
+  }
+
   #applyPreferencesPayload(res: {
     preferences?: Record<string, boolean>;
     dnsImportance?: Record<string, string>;
@@ -121,9 +140,7 @@ export class SecurityPreferences implements OnInit {
         this.preferencesFacade.refresh();
       },
       error: (err: unknown) => {
-        this.saveError.set(
-          this.#httpErrorDetail(err) || this.#transloco.translate('preferences.error.save'),
-        );
+        this.#handlePreferenceSaveError(err);
         this.#loadPreferences();
         this.saving.set(null);
       },
@@ -144,9 +161,7 @@ export class SecurityPreferences implements OnInit {
         this.#reloadPrefsQuiet();
       },
       error: (err: unknown) => {
-        this.saveError.set(
-          this.#httpErrorDetail(err) || this.#transloco.translate('preferences.error.save'),
-        );
+        this.#handlePreferenceSaveError(err);
         this.#loadPreferences();
         this.saving.set(null);
       },

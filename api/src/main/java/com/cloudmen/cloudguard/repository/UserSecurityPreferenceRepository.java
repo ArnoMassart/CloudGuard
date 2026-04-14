@@ -8,9 +8,11 @@ import java.util.Optional;
 
 public interface UserSecurityPreferenceRepository extends JpaRepository<UserSecurityPreference, Long> {
 
-    List<UserSecurityPreference> findByUserId(String userId);
+    List<UserSecurityPreference> findByOrganizationId(Long organizationId);
 
-    List<UserSecurityPreference> findByUserIdAndSection(String userId, String section);
+    List<UserSecurityPreference> findByOrganizationIdAndSection(Long organizationId, String section);
 
-    Optional<UserSecurityPreference> findByUserIdAndSectionAndPreferenceKey(String userId, String section, String preferenceKey);
+    Optional<UserSecurityPreference> findByOrganizationIdAndSectionAndPreferenceKey(Long organizationId, String section, String preferenceKey);
+
+    void deleteByOrganizationId(Long organizationId);
 }

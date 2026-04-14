@@ -13,5 +13,8 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 google:
+  workspace:
+    # Needs domain-wide delegation: https://www.googleapis.com/auth/admin.directory.customer.readonly
+    resolve-customer-id-on-login: true
   gcp:
     project-id: cloudguard-487215

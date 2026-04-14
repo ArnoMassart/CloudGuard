@@ -3,9 +3,10 @@ package com.cloudmen.cloudguard.repository;
 import com.cloudmen.cloudguard.domain.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
+
+    boolean existsByOrganizationId(Long organizationId);
 }
