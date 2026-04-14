@@ -28,7 +28,6 @@ export class CustomAuthService {
 
   #isChecking = false;
 
-  // Maak deze methode publiek (zonder #) zodat de guard hem kan aanroepen
   checkServerSession(): Observable<boolean> {
     if (this.currentUser()) return of(true); // Al ingelogd? Klaar.
     if (this.#isChecking) return this.isLoggedIn$; // Al bezig? Wacht op resultaat.
@@ -45,10 +44,12 @@ export class CustomAuthService {
         catchError(() => of(false)),
         tap((isAuthenticated) => {
           this.#loggedInStatus.next(isAuthenticated);
-          this.#initializedStatus.next(true);
           this.#isChecking = false;
+
           if (isAuthenticated) {
             this.#fetchCurrentUser();
+          } else {
+            this.#initializedStatus.next(true);
           }
         })
       );
@@ -62,6 +63,8 @@ export class CustomAuthService {
         if (user) {
           this.currentUser.set(user);
         }
+        // BELANGRIJK: Pas als de data in de signal zit, mag de guard doorlopen!
+        this.#initializedStatus.next(true);
       });
   }
 

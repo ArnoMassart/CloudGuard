@@ -47,4 +47,6 @@ Thumbs.db
 /.vscode
 .env
 
+env.ts
+
 proxy.conf.js

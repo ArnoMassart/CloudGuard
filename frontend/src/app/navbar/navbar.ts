@@ -1,6 +1,6 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule } from 'lucide-angular';
+import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 import { NavItem } from './nav-item/nav-item';
 import { Profile } from '../pages/profile/profile';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +12,15 @@ import { UserService } from '../services/user-service';
 import { AppIcons } from '../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../components/language-bar/language-bar';
+import { Role, RoleLabels } from '../models/users/User';
+import { CLOUDMEN_ADMIN_EMAIL } from '../../env';
+
+type NavItemsType = {
+  Icon: LucideIconData;
+  Label: string;
+  Route: string;
+  RequiredRole?: Role;
+};
 
 @Component({
   standalone: true,
@@ -42,24 +51,116 @@ export class Navbar {
     });
   }
 
-  readonly NavItemsSecurity = [
-    { Icon: this.Icons.Shield, Label: 'dashboard', Route: '/home' },
-    { Icon: this.Icons.Users, Label: 'user-groups', Route: '/users-groups' },
-    { Icon: this.Icons.Building2, Label: 'organisational-units', Route: '/organizational-units' },
-    { Icon: this.Icons.FolderOpen, Label: 'shared-drives', Route: '/shared-drives' },
-    { Icon: this.Icons.SmartPhone, Label: 'devices', Route: '/devices' },
-    { Icon: this.Icons.Key, Label: 'app-access', Route: '/app-access' },
-    { Icon: this.Icons.LayoutGrid, Label: 'app-passwords', Route: '/app-passwords' },
-    { Icon: this.Icons.Lock, Label: 'password-settings', Route: '/password-settings' },
-    { Icon: this.Icons.Globe, Label: 'domain-dns', Route: '/domain-dns' },
+  readonly NavItemsSecurity: NavItemsType[] = [
+    {
+      Icon: this.Icons.Shield,
+      Label: 'dashboard',
+      Route: '/home',
+    },
+    {
+      Icon: this.Icons.Users,
+      Label: 'user-groups',
+      Route: '/users-groups',
+      RequiredRole: Role.USERS_GROUPS_VIEWER,
+    },
+    {
+      Icon: this.Icons.Building2,
+      Label: 'organisational-units',
+      Route: '/organizational-units',
+      RequiredRole: Role.ORG_UNITS_VIEWER,
+    },
+    {
+      Icon: this.Icons.FolderOpen,
+      Label: 'shared-drives',
+      Route: '/shared-drives',
+      RequiredRole: Role.SHARED_DRIVES_VIEWER,
+    },
+    {
+      Icon: this.Icons.SmartPhone,
+      Label: 'devices',
+      Route: '/devices',
+      RequiredRole: Role.DEVICES_VIEWER,
+    },
+    {
+      Icon: this.Icons.Key,
+      Label: 'app-access',
+      Route: '/app-access',
+      RequiredRole: Role.APP_ACCESS_VIEWER,
+    },
+    {
+      Icon: this.Icons.LayoutGrid,
+      Label: 'app-passwords',
+      Route: '/app-passwords',
+      RequiredRole: Role.APP_PASSWORDS_VIEWER,
+    },
+    {
+      Icon: this.Icons.Lock,
+      Label: 'password-settings',
+      Route: '/password-settings',
+      RequiredRole: Role.PASSWORD_SETTINGS_VIEWER,
+    },
+    {
+      Icon: this.Icons.Globe,
+      Label: 'domain-dns',
+      Route: '/domain-dns',
+      RequiredRole: Role.DOMAIN_DNS_VIEWER,
+    },
   ];
 
-  readonly NavItemsControl = [
-    { Icon: this.Icons.CreditCard, Label: 'licenses', Route: '/licenses' },
-    { Icon: this.Icons.Bell, Label: 'notifications-feedback', Route: '/reports-reactions' },
-    { Icon: this.Icons.Settings, Label: 'security-preferences', Route: '/security-preferences' },
-    { Icon: this.Icons.UserCog, Label: 'accounts-manager', Route: '/accounts-manager' },
+  readonly NavItemsControl: NavItemsType[] = [
+    {
+      Icon: this.Icons.CreditCard,
+      Label: 'licenses',
+      Route: '/licenses',
+      RequiredRole: Role.LICENSES_VIEWER,
+    },
+    {
+      Icon: this.Icons.Bell,
+      Label: 'notifications-feedback',
+      Route: '/reports-reactions',
+      RequiredRole: Role.NOTIFICATIONS_FEEDBACK_VIEWER,
+    },
+    {
+      Icon: this.Icons.Settings,
+      Label: 'security-preferences',
+      Route: '/security-preferences',
+      RequiredRole: Role.SECURITY_PREFERENCES_VIEWER,
+    },
+    {
+      Icon: this.Icons.UserCog,
+      Label: 'accounts-manager',
+      Route: '/accounts-manager',
+      RequiredRole: Role.SUPER_ADMIN,
+    },
   ];
+
+  readonly filteredSecurityItems = computed(() => {
+    const user = this.currentUser();
+    if (!user || !user.roles) return [];
+
+    if (user.roles.includes(Role.SUPER_ADMIN)) {
+      return this.NavItemsSecurity;
+    }
+
+    return this.NavItemsSecurity.filter(
+      (item) => user.roles.includes(item.RequiredRole!) || item.Route === '/home'
+    );
+  });
+
+  readonly filteredControlItems = computed(() => {
+    const user = this.currentUser();
+    if (!user || !user.roles) return [];
+
+    if (user.roles.includes(Role.SUPER_ADMIN)) {
+      if (user.email === CLOUDMEN_ADMIN_EMAIL) {
+        return this.NavItemsControl;
+      }
+
+      return this.NavItemsControl.filter((item) => item.RequiredRole !== Role.SUPER_ADMIN);
+    }
+
+    return this.NavItemsControl.filter((item) => user.roles.includes(item.RequiredRole!));
+  });
 
   toggleMobileMenu() {
     this.isMobileMenuOpen.update((v) => !v);
@@ -127,5 +228,15 @@ export class Navbar {
 
   navigateToHome() {
     this.router.navigate(['/']);
+  }
+
+  getRoleName(user: { roles: Role[] }): string {
+    const role = user.roles.at(0);
+
+    if (role === Role.SUPER_ADMIN) {
+      return RoleLabels[Role.SUPER_ADMIN];
+    }
+
+    return 'viewer';
   }
 }

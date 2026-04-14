@@ -37,6 +37,7 @@ export class App implements OnInit {
         !this.#router.url.includes('/login') &&
         !this.#router.url.includes('/forbidden') &&
         !this.#router.url.includes('/access-denied') &&
+        !this.#router.url.includes('/no-access') &&
         !this.#router.url.includes('/server-error') &&
         !this.#router.url.includes('/request-access') &&
         !this.#router.url.includes('/callback');

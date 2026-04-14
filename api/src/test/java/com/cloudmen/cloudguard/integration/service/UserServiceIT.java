@@ -200,9 +200,9 @@ public class UserServiceIT {
     void updateRoles_withValidRoles_updatesRoles() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(testUser));
 
-        userService.updateRoles(EMAIL, new ArrayList<>(List.of(UserRole.DASHBOARD_VIEWER)));
+        userService.updateRoles(EMAIL, new ArrayList<>(List.of(UserRole.USERS_GROUPS_VIEWER)));
 
-        assertTrue(testUser.getRoles().contains(UserRole.DASHBOARD_VIEWER));
+        assertTrue(testUser.getRoles().contains(UserRole.USERS_GROUPS_VIEWER));
         verify(userRepository).save(testUser);
     }
 

@@ -1,0 +1,40 @@
+<div
+    class="min-h-screen w-full bg-navbar-background flex flex-col items-center justify-center overflow-hidden py-4 text-white md:pb-8">
+    <div class="flex-1 flex flex-col items-center justify-center gap-10 mt-auto w-full max-w-md">
+        <div class="flex flex-col items-center text-center gap-1">
+            <lucide-icon [img]="Icons.ShieldCheck" class="text-primary mb-2 w-12 h-12 md:w-14 md:h-14"></lucide-icon>
+            <h1 class="text-white font-semibold text-3xl mb-1">CloudGuard</h1>
+            <p class="text-white/60 text-sm">
+                by CLOUDMEN
+            </p>
+        </div>
+
+        <div class="bg-white text-black mx-5 px-5 py-7 rounded-xl flex flex-col items-center justify-center gap-3">
+            <div class="flex items-center justify-center bg-[#fee2e2] p-3 mt-1 rounded-4xl">
+                <lucide-icon [img]="Icons.CircleX" size="28"
+                    class="text-destructive w-5 h-5 md:w-7 md:h-7"></lucide-icon>
+            </div>
+            <h2 class="flex justify-center text-xl">{{ 'forbidden.access-denied' | transloco }}</h2>
+            <span class="flex items-center justify-center text-center text-black/50 mb-3">{{ 'no-access' | transloco
+                }}</span>
+            <div
+                class="bg-[#f9fafb] py-3 px-2 mb-3 text-black/50 text-center text-[13px] rounded-lg border-muted border">
+                <span class="font-semibold">{{ 'forbidden.note' | transloco }}: </span>
+                <span>
+                    {{ 'no-access.watch-desc' | transloco }}</span>
+            </div>
+
+            <button (click)="backToHome()"
+                class="bg-primary text-white w-full p-2 rounded-lg hover:bg-primary/80 cursor-pointer">{{
+                'back-home' | transloco }}</button>
+        </div>
+
+
+    </div>
+
+    <div class="text-center text-sm text-white/60 mt-8">
+        <app-language-bar />
+
+        <p class="pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
+    </div>
+</div>

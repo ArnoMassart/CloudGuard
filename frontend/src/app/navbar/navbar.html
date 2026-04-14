@@ -34,26 +34,30 @@
   </div>
 
   <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain navbar-scroll">
+
+    @if (filteredSecurityItems().length > 0) {
     <span class="text-muted-foreground font-medium text-sm px-4 tracking-wider">SECURITY</span>
     <ul class="flex flex-col gap-2 pt-2">
-      @for (item of NavItemsSecurity; track item.Label) {
+      @for (item of filteredSecurityItems(); track item.Label) {
       <app-nav-item (click)="closeMobileMenu()" [Route]="item.Route" [Icon]="item.Icon"
         [Label]="item.Label | transloco"></app-nav-item>
       }
     </ul>
-
     <div class="seperator"></div>
+    }
 
+    @if (filteredControlItems().length > 0) {
     <span class="text-muted-foreground font-medium text-sm px-4 tracking-wider">{{ 'control' | transloco }}</span>
     <ul class="flex flex-col gap-2 pt-2">
-      @for (item of NavItemsControl; track item.Label) {
+      @for (item of filteredControlItems(); track item.Label) {
       <app-nav-item (click)="closeMobileMenu()" [Route]="item.Route" [Icon]="item.Icon"
         [Label]="(item.Label | transloco)"
         [BadgeCount]="item.Label==='accounts-manager' ? requestedCount() : 0"></app-nav-item>
       }
     </ul>
-
     <div class="seperator"></div>
+    }
+
   </div>
 
   @if (currentUser(); as user) {
@@ -75,7 +79,7 @@
 
       <div class="flex flex-col min-w-0">
         <span class="text-white truncate font-medium leading-tight">{{ user.firstName }} {{ user.lastName }}</span>
-        <span class="text-muted-foreground truncate text-sm leading-tight">{{ userService.getRole(user.roles) |
+        <span class="text-muted-foreground truncate text-sm leading-tight">{{ getRoleName(user) |
           transloco
           }}</span>
       </div>

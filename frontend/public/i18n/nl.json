@@ -552,5 +552,9 @@
   "user.role.notifications-feedback": "Notificaties & Feedback Viewer",
   "user.role.security-preferences": "Beveiligingsvoorkeuren Viewer",
   "profile.my-roles": "Mijn Rollen",
-  "close": "Sluiten"
+  "close": "Sluiten",
+  "viewer": "Viewer",
+  "no-access": "U heeft geen toegang tot deze pagina. Als je normaal toegang zou moeten hebben, vraag dan aan CLOUDMEN om je rol voor CloudGuard aan te passen.",
+  "no-access.watch-desc": "Alleen gebruikers met de juiste rechten kunnen deze pagina bekijken",
+  "back-home": "Terug naar home pagina"
 }

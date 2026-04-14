@@ -550,5 +550,11 @@
   "user.role.shared-drives": "Shared Drives Viewer",
   "user.role.super-admin": "Super Admin",
   "user.role.unassigned": "Not Assigned",
-  "user.role.users-groups": "Users & Groups Viewer"
+  "user.role.users-groups": "Users & Groups Viewer",
+  "close": "Close",
+  "profile.my-roles": "My Roles",
+  "viewer": "Viewer",
+  "no-access": "You do not have access to this page. \nIf you should have access, ask CLOUDMEN to adjust your role for CloudGuard.",
+  "no-access.watch-desc": "Only users with appropriate permissions can view this page",
+  "back-home": "Back to home page"
 }
