@@ -28,7 +28,7 @@ describe('WarmupCacheService', () => {
 
       const req = httpMock.expectOne((r) => r.url.endsWith('/cache-warmup'));
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ withCredentials: true });
+      expect(req.request.body).toEqual({});
 
       req.flush(null);
 

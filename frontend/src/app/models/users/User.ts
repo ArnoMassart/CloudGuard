@@ -6,6 +6,7 @@ export type User = {
   roles: Role[];
   createdAt: Date;
   roleRequested: boolean;
+  organizationName?: string | null;
 };
 
 export enum Role {

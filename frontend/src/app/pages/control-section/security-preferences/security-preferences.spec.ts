@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
+import { MessageDialog } from '../../../components/message-dialog/message-dialog';
 import { PreferencesResponse } from '../../../models/preferences/PreferencesResponse';
 import { AppIcons } from '../../../shared/AppIcons';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
@@ -19,6 +21,9 @@ const PREFS_I18N: Record<string, string> = {
   'preferences.error.load': 'Load failed',
   'preferences.error.save': 'Save failed',
   'preferences.error.sync': 'Sync failed',
+  'preferences.dialog.organization_required_title': 'Org title',
+  'preferences.dialog.ok': 'OK',
+  'preferences.dialog.close': 'Close',
   'try-again': 'Retry',
   cancel: 'Cancel',
   'preferences.dns.standard': 'Std',
@@ -79,6 +84,7 @@ describe('SecurityPreferences', () => {
     setPreference: ReturnType<typeof vi.fn>;
   };
   let facadeMock: { refresh: ReturnType<typeof vi.fn>; disabledKeysRefreshFailed: ReturnType<typeof signal> };
+  let dialogMock: { open: ReturnType<typeof vi.fn> };
 
   const payload: PreferencesResponse = {
     preferences: { 'users-groups:2fa': true, 'users-groups:activity': false },
@@ -92,12 +98,14 @@ describe('SecurityPreferences', () => {
       setPreference: vi.fn(() => of(void 0)),
     };
     facadeMock = { refresh: vi.fn(), disabledKeysRefreshFailed: signal(false) };
+    dialogMock = { open: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [SecurityPreferences],
       providers: [
         { provide: SecurityPreferencesService, useValue: serviceMock },
         { provide: SecurityPreferencesFacade, useValue: facadeMock },
+        { provide: MatDialog, useValue: dialogMock },
         provideTransloco({
           config: {
             availableLangs: ['en'],
@@ -153,6 +161,35 @@ describe('SecurityPreferences', () => {
     expect(serviceMock.setPreference).toHaveBeenCalledWith('users-groups', '2fa', false);
     expect(component.preferences()['users-groups:2fa']).toBe(false);
     expect(facadeMock.refresh).toHaveBeenCalled();
+    expect(component.saving()).toBe(null);
+  });
+
+  it('toggle on 409 opens organization dialog and does not set saveError', async () => {
+    dialogMock.open.mockClear();
+    serviceMock.setPreference.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: 'Link your workspace first.',
+          }),
+      ),
+    );
+    const calls = serviceMock.getAllPreferences.mock.calls.length;
+    component.toggle('users-groups', '2fa');
+    await fixture.whenStable();
+
+    expect(dialogMock.open).toHaveBeenCalledWith(
+      MessageDialog,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          titleKey: 'preferences.dialog.organization_required_title',
+          message: 'Link your workspace first.',
+        }),
+      }),
+    );
+    expect(component.saveError()).toBe(null);
+    expect(serviceMock.getAllPreferences.mock.calls.length).toBeGreaterThan(calls);
     expect(component.saving()).toBe(null);
   });
 
@@ -242,6 +279,24 @@ describe('SecurityPreferences', () => {
     facadeMock.disabledKeysRefreshFailed.set(true);
     component.dismissSyncWarning();
     expect(facadeMock.disabledKeysRefreshFailed()).toBe(false);
+  });
+
+  it('setDnsImportance on 409 opens dialog and leaves saveError empty', async () => {
+    dialogMock.open.mockClear();
+    serviceMock.setPreference.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: 'No organization.',
+          }),
+      ),
+    );
+    component.setDnsImportance('domain-dns', 'impSpf', 'SPF', 'OPTIONAL');
+    await fixture.whenStable();
+
+    expect(dialogMock.open).toHaveBeenCalled();
+    expect(component.saveError()).toBe(null);
   });
 
   it('setDnsImportance on error reloads preferences and sets saveError', async () => {

@@ -1,9 +1,11 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserDto;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +27,26 @@ public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+    private static final String ORGANIZATION_FALLBACK_DISPLAY_MESSAGE_KEY =
+            "api.organization.fallback_display_name";
+
+    private static final String ORGANIZATION_FALLBACK_DISPLAY_DEFAULT =
+            "Organization (workspace customer could not be resolved)";
+
+    private final OrganizationRepository organizationRepository;
+    private final MessageSource messageSource;
+
+    public UserService(
+            UserRepository userRepository,
+            OrganizationRepository organizationRepository,
+            @Qualifier("messageSource") MessageSource messageSource) {
         this.userRepository = userRepository;
+        this.organizationRepository = organizationRepository;
+        this.messageSource = messageSource;
     }
 
     public UserDto convertToDto(User user) {
-        return new UserDto(
+        UserDto dto = new UserDto(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
@@ -36,6 +55,27 @@ public class UserService {
                 user.getCreatedAt(),
                 user.isRoleRequested()
         );
+        Long orgId = user.getOrganizationId();
+        if (orgId != null) {
+            organizationRepository
+                    .findById(orgId)
+                    .ifPresent(
+                            org -> {
+                                String displayName;
+                                if (org.getCustomerId() == null || org.getCustomerId().isBlank()) {
+                                    displayName =
+                                            messageSource.getMessage(
+                                                    ORGANIZATION_FALLBACK_DISPLAY_MESSAGE_KEY,
+                                                    null,
+                                                    ORGANIZATION_FALLBACK_DISPLAY_DEFAULT,
+                                                    LocaleContextHolder.getLocale());
+                                } else {
+                                    displayName = org.getName();
+                                }
+                                dto.setOrganizationName(displayName);
+                            });
+        }
+        return dto;
     }
 
     public Optional<User> findByEmail(String email) {

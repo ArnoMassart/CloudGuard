@@ -1,13 +1,15 @@
-package com.cloudmen.cloudguard.unit.controller;
+package com.cloudmen.cloudguard.integration.controller;
 
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
-import com.cloudmen.cloudguard.controller.GoogleDomainController;
-import com.cloudmen.cloudguard.dto.domain.DomainDto;
+import com.cloudmen.cloudguard.controller.GoogleOrgUnitsController;
+import com.cloudmen.cloudguard.dto.organization.OrgUnitNodeDto;
+import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
-import com.cloudmen.cloudguard.service.GoogleDomainService;
+import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
 import com.cloudmen.cloudguard.service.JwtService;
+import com.cloudmen.cloudguard.service.policy.OrgUnitPolicyAggregator;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** HTTP integration tests for {@link GoogleDomainController}. */
+/** HTTP integration tests: {@link AuthInterceptor}, controller wiring, and exception mapping. */
 @WebMvcTest(
-        controllers = GoogleDomainController.class,
+        controllers = GoogleOrgUnitsController.class,
         excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
 @TestPropertySource(
         properties = {
@@ -46,9 +48,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     WebConfig.class,
     AuthInterceptor.class,
     GlobalExceptionHandler.class,
-    GoogleDomainControllerIT.MessageSourceTestConfig.class
+    GoogleOrgUnitsControllerIT.MessageSourceTestConfig.class
 })
-class GoogleDomainControllerIT {
+class GoogleOrgUnitsControllerIT {
 
     private static final String AUTH_COOKIE = "AuthToken";
     private static final String VALID_TOKEN = "internal-jwt";
@@ -57,7 +59,10 @@ class GoogleDomainControllerIT {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private GoogleDomainService googleDomainService;
+    private GoogleOrgUnitService orgUnitService;
+
+    @MockitoBean
+    private OrgUnitPolicyAggregator orgUnitPolicyAggregator;
 
     @MockitoBean
     private JwtService jwtService;
@@ -74,29 +79,80 @@ class GoogleDomainControllerIT {
     }
 
     @Test
-    void getAllDomains_withoutCookie_returns401() throws Exception {
-        mockMvc.perform(get("/api/google/domains").contextPath("/api"))
+    void getOrgUnits_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(get("/api/google/org-units").contextPath("/api"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
     }
 
     @Test
-    void getAllDomains_withCookie_returnsJson() throws Exception {
+    void getOrgUnits_withCookie_returnsTreeJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
-        var dto =
-                new DomainDto("acme.com", "Primary Domain", true, 50);
-        when(googleDomainService.getAllDomains("admin@acme.com")).thenReturn(List.of(dto));
+
+        var root = new OrgUnitNodeDto();
+        root.setId("root-id");
+        root.setName("acme.com");
+        root.setOrgUnitPath("/");
+        root.setUserCount(100);
+        root.setRoot(true);
+        root.setChildren(List.of());
+
+        when(orgUnitService.getOrgUnitTree("admin@acme.com")).thenReturn(root);
 
         mockMvc.perform(
-                        get("/api/google/domains")
+                        get("/api/google/org-units")
                                 .contextPath("/api")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].domainName").value("acme.com"))
-                .andExpect(jsonPath("$[0].domainType").value("Primary Domain"))
-                .andExpect(jsonPath("$[0].isVerified").value(true))
-                .andExpect(jsonPath("$[0].totalUsers").value(50));
+                .andExpect(jsonPath("$.name").value("acme.com"))
+                .andExpect(jsonPath("$.orgUnitPath").value("/"))
+                .andExpect(jsonPath("$.userCount").value(100))
+                .andExpect(jsonPath("$.root").value(true));
+    }
+
+    @Test
+    void getPolicies_defaultPath_callsAggregatorWithSlash() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
+        var row =
+                new OrgUnitPolicyDto(
+                        "key",
+                        "title",
+                        "desc",
+                        "ok",
+                        "ok-class",
+                        "base",
+                        "inh",
+                        false,
+                        "https://admin.test/",
+                        "details");
+        when(orgUnitPolicyAggregator.getPolicies("admin@acme.com", "/"))
+                .thenReturn(List.of(row));
+
+        mockMvc.perform(
+                        get("/api/google/org-units/policies")
+                                .contextPath("/api")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].key").value("key"));
+
+        verify(orgUnitPolicyAggregator).getPolicies("admin@acme.com", "/");
+    }
+
+    @Test
+    void getPolicies_withOrgUnitPath_passesParam() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
+        when(orgUnitPolicyAggregator.getPolicies("admin@acme.com", "/Sales/EMEA"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(
+                        get("/api/google/org-units/policies")
+                                .contextPath("/api")
+                                .param("orgUnitPath", "/Sales/EMEA")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isOk());
+
+        verify(orgUnitPolicyAggregator).getPolicies("admin@acme.com", "/Sales/EMEA");
     }
 
     @Test
@@ -104,12 +160,12 @@ class GoogleDomainControllerIT {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
 
         mockMvc.perform(
-                        post("/api/google/domains/refresh")
+                        post("/api/google/org-units/refresh")
                                 .contextPath("/api")
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Cache is succesvol vernieuwd!"));
 
-        verify(googleDomainService).forceRefreshCache("admin@acme.com");
+        verify(orgUnitService).forceRefreshCache("admin@acme.com");
     }
 }

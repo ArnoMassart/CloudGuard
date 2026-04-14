@@ -6,9 +6,10 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "test": "ng test --watch=false --coverage",
     "extract-i18n": "transloco-keys-manager extract",
-    "i18n:translate": "transloco-keys-manager translate"
+    "i18n:translate": "transloco-keys-manager translate",
+    "test-int": "ng test --include='**/*int.spec.ts' --watch=false"
   },
   "prettier": {
     "printWidth": 100,

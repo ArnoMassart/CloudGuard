@@ -84,7 +84,7 @@ public class PdfReportService {
         this.userSecurityPreferenceService = userSecurityPreferenceService;
     }
 
-    public ReportResponse generateSecurityRapport(String adminEmail, Locale locale) {
+    public ReportResponse generateSecurityReport(String adminEmail, Locale locale) {
         log.info("Starting pdf generation");
 
         try {
