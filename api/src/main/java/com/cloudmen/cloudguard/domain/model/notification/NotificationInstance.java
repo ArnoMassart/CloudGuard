@@ -74,6 +74,10 @@ public class NotificationInstance {
     @Column(name = "solved_at")
     private LocalDateTime solvedAt;
 
+    /** When set, this finding is hidden from the active list for the whole organization. */
+    @Column(name = "dismissed_at")
+    private LocalDateTime dismissedAt;
+
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();

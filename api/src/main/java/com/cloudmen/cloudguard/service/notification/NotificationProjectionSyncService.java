@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -87,6 +86,7 @@ public class NotificationProjectionSyncService {
             } else if (row.getStatus() == NotificationInstanceStatus.SOLVED) {
                 row.setStatus(NotificationInstanceStatus.ACTIVE);
                 row.setSolvedAt(null);
+                row.setDismissedAt(null);
             }
 
             row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));

@@ -3,7 +3,6 @@ package com.cloudmen.cloudguard.service.notification;
 import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
-import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
@@ -132,10 +131,12 @@ public class NotificationAggregationService {
                             .toList();
         }
 
-        List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
-        Set<String> dismissedKeys = dismissed.stream()
-                .map(d -> d.getSource() + ":" + d.getNotificationType())
-                .collect(Collectors.toSet());
+        Long orgIdForDismiss = user != null ? user.getOrganizationId() : null;
+        List<NotificationInstance> dismissedRows = dismissedService.getDismissedForOrganization(orgIdForDismiss);
+        Set<String> dismissedKeys =
+                dismissedRows.stream()
+                        .map(d -> d.getSource() + ":" + d.getNotificationType())
+                        .collect(Collectors.toSet());
         Set<String> feedbackKeys = feedbackService.getAllFeedbackKeys();
 
         List<NotificationDto> filtered = active.stream()
@@ -144,15 +145,19 @@ public class NotificationAggregationService {
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
-        List<NotificationDto> dismissedDtos = dismissed.stream()
-                .filter(
-                        d ->
-                                viewerRoles == null
-                                        || NotificationSourceViewerRoles.isSourceVisibleToRoles(
-                                                d.getSource(), viewerRoles))
-                .filter(d -> !isHiddenByPreference(d.getSource(), d.getNotificationType(), disabledPreferenceKeys))
-                .map(this::toDismissedDto)
-                .toList();
+        List<NotificationDto> dismissedDtos =
+                dismissedRows.stream()
+                        .filter(
+                                d ->
+                                        viewerRoles == null
+                                                || NotificationSourceViewerRoles.isSourceVisibleToRoles(
+                                                        d.getSource(), viewerRoles))
+                        .filter(
+                                d ->
+                                        !isHiddenByPreference(
+                                                d.getSource(), d.getNotificationType(), disabledPreferenceKeys))
+                        .map(this::toDismissedDto)
+                        .toList();
 
         return new NotificationsResponse(filtered, dismissedDtos);
     }
@@ -222,11 +227,12 @@ public class NotificationAggregationService {
                 n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, false, n.supportsDetails());
     }
 
-    private NotificationDto toDismissedDto(DismissedNotification d) {
+    private NotificationDto toDismissedDto(NotificationInstance d) {
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(d.getNotificationType());
+        String severityStr = NotificationSeverity.toDtoString(d.getSeverity());
         return new NotificationDto(
-                d.getId().toString(),
-                d.getSeverity(),
+                "nf-" + d.getId(),
+                severityStr,
                 d.getTitle(),
                 d.getDescription(),
                 d.getRecommendedActions() != null ? d.getRecommendedActions() : List.of(),
@@ -236,8 +242,7 @@ public class NotificationAggregationService {
                 d.getSourceRoute(),
                 false,
                 true,
-                supportsDetails
-        );
+                supportsDetails);
     }
 
     private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled) {

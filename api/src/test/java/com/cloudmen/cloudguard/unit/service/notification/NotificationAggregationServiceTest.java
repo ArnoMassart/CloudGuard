@@ -5,7 +5,8 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
-import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
@@ -145,17 +146,21 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_excludesDismissedMatchingSourceAndType() {
         stubQuietBaselines();
+        User orgUser = new User();
+        orgUser.setEmail(GlobalTestHelper.ADMIN);
+        orgUser.setOrganizationId(99L);
+        when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(orgUser));
         when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        DismissedNotification d = new DismissedNotification();
+        NotificationInstance d = new NotificationInstance();
         d.setId(99L);
         d.setSource("users-groups");
         d.setNotificationType("user-control");
         d.setTitle("t");
         d.setDescription("d");
-        d.setSeverity("critical");
-        when(dismissedService.getDismissedForUser(GlobalTestHelper.ADMIN)).thenReturn(List.of(d));
+        d.setSeverity(NotificationSeverity.CRITICAL);
+        when(dismissedService.getDismissedForOrganization(99L)).thenReturn(List.of(d));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
@@ -274,7 +279,7 @@ class NotificationAggregationServiceTest {
                 .thenReturn(new AppPasswordOverviewResponse(true, 0, 0, 100, null));
         lenient().when(passwordSettingsService.getPasswordSettings(GlobalTestHelper.ADMIN)).thenReturn(null);
 
-        lenient().when(dismissedService.getDismissedForUser(GlobalTestHelper.ADMIN)).thenReturn(List.of());
+        lenient().when(dismissedService.getDismissedForOrganization(null)).thenReturn(List.of());
         lenient().when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of());
     }
 }
