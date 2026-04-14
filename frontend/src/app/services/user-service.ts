@@ -5,7 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { UserPageResponse } from '../models/users/UserPageResponse';
 import { UserOverviewResponse } from '../models/users/UserOverviewResponse';
 import { UsersWithoutTwoFactorResponse } from '../models/users/UsersWithoutTwoFactorResponse';
-import { Role, User } from '../models/users/User';
+import { Role, RoleLabels, RolePriority, User } from '../models/users/User';
 import { DatabaseUsersResponse } from '../models/users/DatabaseUsersResponse';
 
 @Injectable({
@@ -23,14 +23,6 @@ export class UserService {
     if (user?.firstName) return user.firstName.slice(0, 2).toUpperCase();
     if (user?.email) return user.email.slice(0, 2).toUpperCase();
     return '?';
-  }
-
-  getRole(user: { roles: string[] }): string {
-    const roles = user.roles;
-
-    if (!roles) return '';
-
-    return roles.at(0) ?? 'Admin';
   }
 
   getOrgUsers(size: number, pageToken?: string, query?: string): Observable<UserPageResponse> {
@@ -167,19 +159,33 @@ export class UserService {
       );
   }
 
-  getAllRequestedCount(): Observable<number> {
-    const url = RouteService.getBackendUrl('/user/all/requested-count');
-    return this.#http.get<number>(url);
-  }
-
-  // 2. Maak een methode die de API aanroept en de signal direct updatet
   refreshRequestedCount(): void {
-    // Vervang dit door jouw daadwerkelijke API URL
-    this.#http.get<number>('jouw/api/url/voor/count').subscribe({
+    const url = RouteService.getBackendUrl('/user/all/requested-count');
+    this.#http.get<number>(url, { withCredentials: true }).subscribe({
       next: (count) => {
-        this.requestedCount.set(count); // Update de centrale signal!
+        this.requestedCount.set(count);
       },
       error: (err) => console.error('Error fetching requested count', err),
     });
+  }
+
+  getRole(roles: Role[]): string {
+    if (!roles || roles.length === 0) return 'User';
+
+    const sortedRoles = [...roles].sort((a, b) => {
+      const priorityA = RolePriority[a] ?? 99;
+      const priorityB = RolePriority[b] ?? 99;
+      return priorityA - priorityB;
+    });
+
+    const highestPriorityRole = sortedRoles[0];
+
+    return this.getRoleLabel(highestPriorityRole);
+  }
+
+  getRoleLabel(role: string | Role): string {
+    const label = RoleLabels[role as Role];
+
+    return label ? label : role.toString();
   }
 }

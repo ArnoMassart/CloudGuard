@@ -5,6 +5,8 @@ import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,12 +14,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -30,7 +32,9 @@ public class UserService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getPictureUrl(),
-                user.getCreatedAt()
+                user.getRoles(),
+                user.getCreatedAt(),
+                user.isRoleRequested()
         );
     }
 
@@ -126,7 +130,14 @@ public class UserService {
 
       if (userOptional.isPresent()) {
           User user = userOptional.get();
-          user.setRoles(roles);
+
+          if (roles.isEmpty()) {
+              user.getRoles().clear();
+              user.getRoles().add(UserRole.UNASSIGNED);
+          } else {
+            user.setRoles(roles);
+          }
+
           userRepository.save(user);
       }
     }

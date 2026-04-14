@@ -30,6 +30,6 @@ public class User {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "tbl_user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
+    @Column(name = "role", length = 100)
     private List<UserRole> roles = new ArrayList<>(List.of(UserRole.UNASSIGNED));
 }

@@ -37,11 +37,11 @@ public class UserServiceTest {
 
         UserDto dto = userService.convertToDto(user);
 
-        assertEquals(ADMIN, dto.getEmail());
-        assertEquals("John", dto.getFirstName());
-        assertEquals("Doe", dto.getLastName());
-        assertEquals("https://example.com/avatar.jpg", dto.getPictureUrl());
-        assertEquals(user.getCreatedAt(), dto.getCreatedAt());
+        assertEquals(ADMIN, dto.email());
+        assertEquals("John", dto.firstName());
+        assertEquals("Doe", dto.lastName());
+        assertEquals("https://example.com/avatar.jpg", dto.pictureUrl());
+        assertEquals(user.getCreatedAt(), dto.createdAt());
     }
 
     @Test

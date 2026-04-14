@@ -69,7 +69,6 @@ export class LanguageBar implements OnInit {
     this.#authService.isLoggedIn$.pipe(take(1)).subscribe((isLoggedIn) => {
       if (isLoggedIn) {
         this.#userService.updateLanguage(newLang).subscribe({
-          next: () => console.log('Taal opgeslagen in DB'),
           error: (err) => console.error('DB save error', err),
         });
       }

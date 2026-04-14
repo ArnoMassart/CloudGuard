@@ -76,10 +76,19 @@ public class AuthService {
         boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
         boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
 
-        if (isGoogleSuperAdmin && !hasSuperAdminRole) {
-            user.getRoles().clear();
-            user.getRoles().add(UserRole.SUPER_ADMIN);
-            userService.save(user);
+        if (isGoogleSuperAdmin) {
+            if (!hasSuperAdminRole) {
+                user.getRoles().clear();
+                user.getRoles().add(UserRole.SUPER_ADMIN);
+                userService.save(user);
+            }
+        } else {
+            boolean hasUnassignedRole = user.getRoles().contains(UserRole.UNASSIGNED);
+            if (!hasUnassignedRole) {
+                user.getRoles().clear();
+                user.getRoles().add(UserRole.UNASSIGNED);
+                userService.save(user);
+            }
         }
     }
 
@@ -123,15 +132,9 @@ public class AuthService {
     public java.util.Optional<UserDto> getCurrentUser(String token) {
         try {
             String email = jwtService.validateInternalToken(token);
-            Optional<UserDto> userDto = userService.findByEmail(email)
+
+            return userService.findByEmail(email)
                     .map(userService::convertToDto);
-
-            if (userDto.isPresent()) {
-                List<String> roles = usersCacheService.getUserRoles(email).stream().map(this::translateRoleName).toList();
-                userDto.get().setRoles(roles);
-            }
-
-            return userDto;
         } catch (Exception e) {
             return java.util.Optional.empty();
         }

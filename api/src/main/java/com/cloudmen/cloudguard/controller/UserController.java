@@ -50,7 +50,7 @@ public class UserController {
     }
 
     @PostMapping("/request-access")
-    public ResponseEntity<String> RequestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
+    public ResponseEntity<String> requestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
         String adminEmail = jwtService.validateInternalToken(token);
 
         userService.updateRequestAccess(adminEmail);

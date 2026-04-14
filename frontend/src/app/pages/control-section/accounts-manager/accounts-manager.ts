@@ -6,7 +6,7 @@ import { PaginationBar } from '../../../components/pagination-bar/pagination-bar
 import { AppIcons } from '../../../shared/AppIcons';
 import { Subscription } from 'rxjs';
 import { UserService } from '../../../services/user-service';
-import { Role, RoleLabels, User } from '../../../models/users/User';
+import { Role, RoleLabels, RolePriority, User } from '../../../models/users/User';
 import { LucideAngularModule } from 'lucide-angular';
 import { AssignRoleDialog } from '../../../components/assign-role-dialog/assign-role-dialog';
 import { MatDialog } from '@angular/material/dialog';
@@ -38,6 +38,22 @@ export class AccountsManager {
   readonly nextPageToken = signal<string | null>(null);
   readonly nextPageTokenWithoutRoles = signal<string | null>(null);
   readonly dialog = inject(MatDialog);
+
+  readonly expandedRoles = signal<Set<string>>(new Set<string>());
+
+  toggleRolesSummary(email: string, rolesLength: number, event: Event) {
+    event.stopPropagation();
+
+    if (rolesLength > 2) {
+      const current = new Set(this.expandedRoles());
+      if (current.has(email)) {
+        current.delete(email);
+      } else {
+        current.add(email);
+      }
+      this.expandedRoles.set(current);
+    }
+  }
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -84,6 +100,35 @@ export class AccountsManager {
           value: typedRole,
           label: RoleLabels[typedRole],
         };
+      })
+      .sort((a, b) => {
+        const translatedA = this.#translocoService.translate(a.label);
+        const translatedB = this.#translocoService.translate(b.label);
+
+        return translatedA.localeCompare(translatedB);
+      });
+  }
+
+  getRolesTranslated(user: { roles: Role[] }) {
+    return user.roles
+      .map((role) => {
+        const typedRole = role as Role;
+        return {
+          value: typedRole,
+          label: RoleLabels[typedRole],
+        };
+      })
+      .sort((a, b) => {
+        const priorityA = RolePriority[a.value] ?? 99;
+        const priorityB = RolePriority[b.value] ?? 99;
+
+        if (priorityA === priorityB) {
+          const translatedA = this.#translocoService.translate(a.label);
+          const translatedB = this.#translocoService.translate(b.label);
+          return translatedA.localeCompare(translatedB);
+        }
+
+        return priorityA - priorityB;
       });
   }
 

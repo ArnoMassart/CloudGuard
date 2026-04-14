@@ -4,7 +4,10 @@ import { LucideAngularModule } from 'lucide-angular';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { UserService } from '../../services/user-service';
 import { AppIcons } from '../../shared/AppIcons';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { MatDialog } from '@angular/material/dialog';
+import { ViewRolesDialog } from '../../components/view-roles-dialog/view-roles-dialog';
+import { RoleLabels, User } from '../../models/users/User';
 
 @Component({
   selector: 'app-profile',
@@ -16,8 +19,11 @@ export class Profile {
   readonly authService = inject(CustomAuthService);
   readonly currentUser = this.authService.currentUser;
   readonly userService = inject(UserService);
+  readonly translocoService = inject(TranslocoService);
   readonly profileImageError = signal(false);
   closed$ = output<void>();
+
+  readonly dialog = inject(MatDialog);
 
   constructor() {
     effect(() => {
@@ -32,5 +38,30 @@ export class Profile {
 
   logout() {
     this.authService.logout();
+  }
+
+  getSortedTranslatedRoles(user: User) {
+    return user.roles
+      .map((role) => ({
+        value: role,
+        label: RoleLabels[role],
+      }))
+      .sort((a, b) => {
+        const transA = this.translocoService.translate(a.label);
+        const transB = this.translocoService.translate(b.label);
+        return transA.localeCompare(transB);
+      });
+  }
+
+  openRolesDialog(user: User) {
+    if (user.roles.length <= 1) return;
+
+    this.dialog.open(ViewRolesDialog, {
+      width: '400px',
+      panelClass: 'custom-dialog-container',
+      data: {
+        roles: this.getSortedTranslatedRoles(user),
+      },
+    });
   }
 }

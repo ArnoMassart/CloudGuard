@@ -75,7 +75,9 @@
 
       <div class="flex flex-col min-w-0">
         <span class="text-white truncate font-medium leading-tight">{{ user.firstName }} {{ user.lastName }}</span>
-        <span class="text-muted-foreground truncate text-sm leading-tight">{{ userService.getRole(user) }}</span>
+        <span class="text-muted-foreground truncate text-sm leading-tight">{{ userService.getRole(user.roles) |
+          transloco
+          }}</span>
       </div>
     </div>
 
