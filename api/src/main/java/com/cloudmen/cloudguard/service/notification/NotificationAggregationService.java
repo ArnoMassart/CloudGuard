@@ -1,6 +1,11 @@
 package com.cloudmen.cloudguard.service.notification;
 
+import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
+import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
@@ -17,6 +22,8 @@ import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.slf4j.Logger;
@@ -64,6 +71,9 @@ public class NotificationAggregationService {
     private final NotificationFeedbackService feedbackService;
     private final UserSecurityPreferenceService preferenceService;
     private final MessageSource messageSource;
+    private final UserRepository userRepository;
+    private final NotificationInstanceRepository notificationInstanceRepository;
+    private final NotificationProjectionProperties notificationProjectionProperties;
 
     public NotificationAggregationService(
             GoogleDomainService domainService,
@@ -78,7 +88,10 @@ public class NotificationAggregationService {
             PasswordSettingsService passwordSettingsService,
             DismissedNotificationService dismissedService,
             NotificationFeedbackService feedbackService,
-            UserSecurityPreferenceService preferenceService) {
+            UserSecurityPreferenceService preferenceService,
+            UserRepository userRepository,
+            NotificationInstanceRepository notificationInstanceRepository,
+            NotificationProjectionProperties notificationProjectionProperties) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -92,12 +105,20 @@ public class NotificationAggregationService {
         this.feedbackService = feedbackService;
         this.preferenceService = preferenceService;
         this.messageSource = messageSource;
+        this.userRepository = userRepository;
+        this.notificationInstanceRepository = notificationInstanceRepository;
+        this.notificationProjectionProperties = notificationProjectionProperties;
+    }
+
+    /** Live aggregation snapshot  */
+    public List<NotificationDto> buildActiveSnapshot(String userEmail, Locale locale) {
+        return aggregateActive(userEmail, locale);
     }
 
     public NotificationsResponse getNotifications(String userId, Locale locale) {
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
 
-        List<NotificationDto> active = aggregateActive(userId, locale);
+        List<NotificationDto> active = resolveActiveNotifications(userId, locale);
         List<DismissedNotification> dismissed = dismissedService.getDismissedForUser(userId);
         Set<String> dismissedKeys = dismissed.stream()
                 .map(d -> d.getSource() + ":" + d.getNotificationType())
@@ -116,6 +137,44 @@ public class NotificationAggregationService {
                 .toList();
 
         return new NotificationsResponse(filtered, dismissedDtos);
+    }
+
+    private List<NotificationDto> resolveActiveNotifications(String userId, Locale locale) {
+        if (!notificationProjectionProperties.isReadEnabled()) {
+            return aggregateActive(userId, locale);
+        }
+        Optional<Long> orgId =
+                userRepository.findByEmail(userId).map(User::getOrganizationId).filter(Objects::nonNull);
+        if (orgId.isEmpty()) {
+            return aggregateActive(userId, locale);
+        }
+        List<NotificationInstance> projected =
+                notificationInstanceRepository.findByOrganizationIdAndStatus(
+                        orgId.get(), NotificationInstanceStatus.ACTIVE);
+        if (projected.isEmpty()) {
+            return aggregateActive(userId, locale);
+        }
+        return projected.stream().map(this::toDtoFromProjection).toList();
+    }
+
+    private NotificationDto toDtoFromProjection(NotificationInstance f) {
+        List<String> actions =
+                f.getRecommendedActions() != null ? f.getRecommendedActions() : List.of();
+        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(f.getNotificationType());
+        String severityStr = NotificationSeverity.toDtoString(f.getSeverity());
+        return new NotificationDto(
+                "nf-" + f.getId(),
+                severityStr,
+                f.getTitle(),
+                f.getDescription(),
+                actions,
+                f.getNotificationType(),
+                f.getSource(),
+                f.getSourceLabel(),
+                f.getSourceRoute(),
+                false,
+                false,
+                supportsDetails);
     }
 
     private boolean isHiddenByPreference(String source, String notificationType, Set<String> disabledPreferenceKeys) {

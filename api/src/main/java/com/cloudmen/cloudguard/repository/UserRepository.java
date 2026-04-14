@@ -26,8 +26,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRoleRequestedTrue();
     boolean existsByOrganizationId(Long organizationId);
 
-    Optional<User> findFirstByOrganizationIdOrderByAsc(Long organizationId);
+    Optional<User> findFirstByOrganizationIdOrderByIdAsc(Long organizationId);
 
-    @Query("SELECT DISTINCT u.organizationid FROM tbl_users u WHERE u.organizationId IS NOT NULL")
+    @Query("SELECT DISTINCT u.organizationId FROM tbl_users u WHERE u.organizationId IS NOT NULL")
     List<Long> findDistinctOrganizationIds();
 }

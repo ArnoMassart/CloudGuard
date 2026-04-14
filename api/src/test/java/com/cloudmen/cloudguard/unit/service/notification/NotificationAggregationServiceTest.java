@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
+import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
 import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
@@ -10,6 +11,8 @@ import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
@@ -28,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,6 +66,12 @@ class NotificationAggregationServiceTest {
     NotificationFeedbackService feedbackService;
     @Mock
     UserSecurityPreferenceService preferenceService;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    NotificationInstanceRepository notificationInstanceRepository;
+    @Mock
+    NotificationProjectionProperties notificationProjectionProperties;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -87,7 +97,10 @@ class NotificationAggregationServiceTest {
                 passwordSettingsService,
                 dismissedService,
                 feedbackService,
-                preferenceService);
+                preferenceService,
+                userRepository,
+                notificationInstanceRepository,
+                notificationProjectionProperties);
     }
 
     @AfterEach
@@ -221,6 +234,9 @@ class NotificationAggregationServiceTest {
     }
 
     private void stubQuietBaselines() {
+        lenient().when(notificationProjectionProperties.isReadEnabled()).thenReturn(true);
+        lenient().when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.empty());
+
         lenient().when(preferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
         lenient().when(preferenceService.getDnsImportanceOverrides(GlobalTestHelper.ADMIN)).thenReturn(Map.of());
 
