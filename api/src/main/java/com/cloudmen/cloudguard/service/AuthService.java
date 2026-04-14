@@ -104,10 +104,19 @@ public class AuthService {
                 userService.save(user);
             }
         } else {
-            boolean hasUnassignedRole = user.getRoles().contains(UserRole.UNASSIGNED);
-            if (!hasUnassignedRole) {
-                user.getRoles().clear();
+            boolean rolesUpdated = false;
+
+            if (hasSuperAdminRole) {
+                user.getRoles().remove(UserRole.SUPER_ADMIN);
+                rolesUpdated = true;
+            }
+
+            if (user.getRoles().isEmpty()) {
                 user.getRoles().add(UserRole.UNASSIGNED);
+                rolesUpdated = true;
+            }
+
+            if (rolesUpdated) {
                 userService.save(user);
             }
         }
