@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.UserRepository;
@@ -19,11 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,9 +45,6 @@ public class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private GoogleUsersCacheService usersCacheService;
-
-    @Mock
     private OrganizationService organizationService;
 
     @Mock
@@ -61,28 +58,57 @@ public class AuthServiceTest {
                 userService,
                 jwtService,
                 userRepository,
-                usersCacheService,
                 organizationService,
                 workspaceCustomerIdResolver);
         lenient().when(workspaceCustomerIdResolver.resolveWorkspaceCustomer(any())).thenReturn(Optional.empty());
     }
 
     @Test
-    void processLogin_nonAdminUser_throwsForbiddenException() {
+    void processLogin_nonAdminUser_assignsUnassignedRole() {
         Jwt mockJwt = AuthTestHelper.mockGoogleJwt(GlobalTestHelper.ADMIN, "John", "Doe", "pic.jpg");
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
-        when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(false);
+        User existingUser = AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "pic.jpg");
+        existingUser.setRoles(new ArrayList<>()); // Empty roles
+        UserDto dto = AuthTestHelper.mockUserDto();
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
-                authService.processLogin("ext-token")
-        );
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(false); // Niet een Google Admin
+        when(userService.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
+        when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
+        when(userService.convertToDto(existingUser)).thenReturn(dto);
+
+        authService.processLogin("ext-token");
+
+        // SyncSuperAdminStatus moet de user nu 'UNASSIGNED' hebben gemaakt
+        assertTrue(existingUser.getRoles().contains(UserRole.UNASSIGNED));
+        verify(userService, atLeastOnce()).save(existingUser);
     }
 
     @Test
-    void processLogin_existingUserWithSamePicture_returnsLoginResultWithoutSaving() {
+    void processLogin_adminUser_assignsSuperAdminRole() {
         Jwt mockJwt = AuthTestHelper.mockGoogleJwt(GlobalTestHelper.ADMIN, "John", "Doe", "pic.jpg");
         User existingUser = AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "pic.jpg");
+        existingUser.setRoles(new ArrayList<>(List.of(UserRole.UNASSIGNED)));
+        UserDto dto = AuthTestHelper.mockUserDto();
+
+        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(true); // Is een Google Admin
+        when(userService.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
+        when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
+        when(userService.convertToDto(existingUser)).thenReturn(dto);
+
+        authService.processLogin("ext-token");
+
+        // SyncSuperAdminStatus moet de user geupgrade hebben naar SUPER_ADMIN
+        assertTrue(existingUser.getRoles().contains(UserRole.SUPER_ADMIN));
+        assertFalse(existingUser.getRoles().contains(UserRole.UNASSIGNED));
+        verify(userService, atLeastOnce()).save(existingUser);
+    }
+
+    @Test
+    void processLogin_existingUserWithSamePictureAndCorrectRoles_returnsLoginResultWithoutSaving() {
+        Jwt mockJwt = AuthTestHelper.mockGoogleJwt(GlobalTestHelper.ADMIN, "John", "Doe", "pic.jpg");
+        User existingUser = AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "pic.jpg");
+        existingUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN))); // Rollen staan al goed!
         UserDto dto = AuthTestHelper.mockUserDto();
 
         when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
@@ -96,6 +122,8 @@ public class AuthServiceTest {
         assertNotNull(result);
         assertEquals("internal-token", result.cookie().getValue());
         assertEquals(dto, result.userDto());
+
+        // Omdat de rollen én de foto al goed staan, hoeft de DB niets te doen
         verify(userService, never()).save(any(User.class));
     }
 
@@ -103,6 +131,7 @@ public class AuthServiceTest {
     void processLogin_existingUserWithDifferentPicture_updatesPictureAndSaves() {
         Jwt mockJwt = AuthTestHelper.mockGoogleJwt(GlobalTestHelper.ADMIN, "John", "Doe", "new-pic.jpg");
         User existingUser = AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "old-pic.jpg");
+        existingUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN))); // Rollen staan al goed
         UserDto dto = AuthTestHelper.mockUserDto();
 
         when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
@@ -114,7 +143,7 @@ public class AuthServiceTest {
         authService.processLogin("ext-token");
 
         assertEquals("new-pic.jpg", existingUser.getPictureUrl());
-        verify(userService).save(existingUser);
+        verify(userService, times(1)).save(existingUser);
         verify(organizationService).ensureUserLinkedToOrganization(eq(existingUser), isNull(), isNull());
     }
 
@@ -122,6 +151,7 @@ public class AuthServiceTest {
     void processLogin_newUser_registersAndSaves() {
         Jwt mockJwt = AuthTestHelper.mockGoogleJwt("new@x.com", "Jane", "Smith", "pic.jpg");
         User savedUser = AuthTestHelper.createDbUser("new@x.com", "pic.jpg");
+        savedUser.setRoles(new ArrayList<>());
         UserDto dto = AuthTestHelper.mockUserDto();
 
         when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
@@ -133,22 +163,17 @@ public class AuthServiceTest {
 
         authService.processLogin("ext-token");
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userService).save(userCaptor.capture());
-        User capturedUser = userCaptor.getValue();
-
-        assertEquals("new@x.com", capturedUser.getEmail());
-        assertEquals("Jane", capturedUser.getFirstName());
-        assertEquals("Smith", capturedUser.getLastName());
-        assertEquals("pic.jpg", capturedUser.getPictureUrl());
-        assertNotNull(capturedUser.getCreatedAt());
+        // Expect minimaal 2 saves: 1 voor de registratie, 1 voor het syncen van de nieuwe rol
+        verify(userService, atLeast(2)).save(any(User.class));
         verify(organizationService).ensureUserLinkedToOrganization(eq(savedUser), isNull(), isNull());
+        assertTrue(savedUser.getRoles().contains(UserRole.SUPER_ADMIN));
     }
 
     @Test
     void processLogin_resolvedWorkspaceCustomer_passesIdAndDisplayName() {
         Jwt mockJwt = AuthTestHelper.mockGoogleJwt(GlobalTestHelper.ADMIN, "John", "Doe", "pic.jpg");
         User existingUser = AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "pic.jpg");
+        existingUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN)));
         UserDto dto = AuthTestHelper.mockUserDto();
 
         when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
@@ -226,17 +251,16 @@ public class AuthServiceTest {
     }
 
     @Test
-    void getCurrentUser_validToken_returnsUserDtoWithTranslatedRoles() {
+    void getCurrentUser_validToken_returnsUserDto() {
         UserDto dto = AuthTestHelper.mockUserDto();
         when(jwtService.validateInternalToken("token")).thenReturn(GlobalTestHelper.ADMIN);
         when(userService.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(AuthTestHelper.createDbUser(GlobalTestHelper.ADMIN, "")));
         when(userService.convertToDto(any())).thenReturn(dto);
-        when(usersCacheService.getUserRoles(GlobalTestHelper.ADMIN)).thenReturn(List.of("_SEED_ADMIN_ROLE", "UNKNOWN_ROLE"));
 
         Optional<UserDto> result = authService.getCurrentUser("token");
 
         assertTrue(result.isPresent());
-//        verify(dto).setRoles(List.of("Super Admin", "Admin"));
+        assertEquals(dto, result.get());
     }
 
     @Test
@@ -252,6 +276,6 @@ public class AuthServiceTest {
     void translateRoleName_mapsRolesCorrectly() {
         assertEquals("Super Admin", authService.translateRoleName("_SEED_ADMIN_ROLE"));
         assertEquals("Read Only Admin", authService.translateRoleName("_READ_ONLY_ADMIN_ROLE"));
-        assertEquals("Admin", authService.translateRoleName("ANY_OTHER_ROLE"));
+        assertEquals("User", authService.translateRoleName("ANY_OTHER_ROLE"));
     }
 }

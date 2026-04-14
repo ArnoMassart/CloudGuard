@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.integration.controller;
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
 import com.cloudmen.cloudguard.controller.AuthController;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.TokenRequestDto;
 import com.cloudmen.cloudguard.dto.users.UserDto;
@@ -12,6 +13,7 @@ import com.cloudmen.cloudguard.service.AuthService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration;
@@ -19,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.TestPropertySource;
@@ -30,13 +33,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
-import jakarta.servlet.http.Cookie;
-import org.springframework.http.HttpHeaders;
-
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -89,14 +87,17 @@ public class AuthControllerIT {
         }
     }
 
+    // AANGEPAST: Gebruikt nu de juiste List<UserRole>, boolean en String voor orgName
     private UserDto createTestUser() {
         return new UserDto(
                 "admin@acme.com",
                 "Admin",
                 "User",
                 "url",
-                List.of("Admin"),
-                LocalDateTime.now()
+                List.of(UserRole.SUPER_ADMIN),
+                LocalDateTime.now(),
+                false,
+                "Acme Corp"
         );
     }
 
@@ -122,9 +123,9 @@ public class AuthControllerIT {
     @Test
     void logout_withoutCookie_returns401() throws Exception {
         mockMvc.perform(
-                post("/api/auth/logout")
-                        .contextPath("/api")
-        ).andExpect(status().isUnauthorized())
+                        post("/api/auth/logout")
+                                .contextPath("/api")
+                ).andExpect(status().isUnauthorized())
                 .andExpect(content().string("An error occured. Please sign in again."));
     }
 
@@ -140,7 +141,8 @@ public class AuthControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.email").value("admin@acme.com"))
-                .andExpect(jsonPath("$.firstName").value("Admin"));
+                .andExpect(jsonPath("$.firstName").value("Admin"))
+                .andExpect(jsonPath("$.organizationName").value("Acme Corp"));
 
         verify(authService).validateSession(VALID_TOKEN);
     }

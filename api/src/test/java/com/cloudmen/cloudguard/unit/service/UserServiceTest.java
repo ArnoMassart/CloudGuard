@@ -47,12 +47,14 @@ public class UserServiceTest {
 
         UserDto dto = userService.convertToDto(user);
 
-        assertEquals(ADMIN, dto.getEmail());
-        assertEquals("John", dto.getFirstName());
-        assertEquals("Doe", dto.getLastName());
-        assertEquals("https://example.com/avatar.jpg", dto.getPictureUrl());
-        assertEquals(user.getCreatedAt(), dto.getCreatedAt());
-        assertNull(dto.getOrganizationName());
+        // AANGEPAST: Record accessors (zonder "get")
+        assertEquals(ADMIN, dto.email());
+        assertEquals("John", dto.firstName());
+        assertEquals("Doe", dto.lastName());
+        assertEquals("https://example.com/avatar.jpg", dto.pictureUrl());
+        assertEquals(user.getCreatedAt(), dto.createdAt());
+        assertEquals(user.isRoleRequested(), dto.roleRequested()); // Toegevoegd voor compleetheid
+        assertEquals("", dto.organizationName());
     }
 
     @Test
@@ -67,7 +69,8 @@ public class UserServiceTest {
 
         UserDto dto = userService.convertToDto(user);
 
-        assertEquals("Acme Workspace", dto.getOrganizationName());
+        // AANGEPAST: Record accessors
+        assertEquals("Acme Workspace", dto.organizationName());
         verifyNoInteractions(messageSource);
     }
 
@@ -81,15 +84,16 @@ public class UserServiceTest {
         org.setName("Organization (workspace customer id unavailable)");
         when(organizationRepository.findById(42L)).thenReturn(Optional.of(org));
         when(messageSource.getMessage(
-                        eq("api.organization.fallback_display_name"),
-                        isNull(),
-                        eq("Organization (workspace customer could not be resolved)"),
-                        any(Locale.class)))
+                eq("api.organization.fallback_display_name"),
+                isNull(),
+                eq("Organization (workspace customer could not be resolved)"),
+                any(Locale.class)))
                 .thenReturn("Vertaalde fallback");
 
         UserDto dto = userService.convertToDto(user);
 
-        assertEquals("Vertaalde fallback", dto.getOrganizationName());
+        // AANGEPAST: Record accessors
+        assertEquals("Vertaalde fallback", dto.organizationName());
     }
 
     @Test

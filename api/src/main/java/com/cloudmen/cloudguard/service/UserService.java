@@ -46,36 +46,35 @@ public class UserService {
     }
 
     public UserDto convertToDto(User user) {
-        UserDto dto = new UserDto(
+        String organizationName = "";
+        Long orgId = user.getOrganizationId();
+
+        if (orgId != null) {
+            organizationName = organizationRepository.findById(orgId)
+                    .map(org -> {
+                        if (org.getCustomerId() == null || org.getCustomerId().isBlank()) {
+                            return messageSource.getMessage(
+                                    ORGANIZATION_FALLBACK_DISPLAY_MESSAGE_KEY,
+                                    null,
+                                    ORGANIZATION_FALLBACK_DISPLAY_DEFAULT,
+                                    LocaleContextHolder.getLocale());
+                        } else {
+                            return org.getName();
+                        }
+                    })
+                    .orElse("");
+        }
+
+        return new UserDto(
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getPictureUrl(),
                 user.getRoles(),
                 user.getCreatedAt(),
-                user.isRoleRequested()
+                user.isRoleRequested(),
+                organizationName
         );
-        Long orgId = user.getOrganizationId();
-        if (orgId != null) {
-            organizationRepository
-                    .findById(orgId)
-                    .ifPresent(
-                            org -> {
-                                String displayName;
-                                if (org.getCustomerId() == null || org.getCustomerId().isBlank()) {
-                                    displayName =
-                                            messageSource.getMessage(
-                                                    ORGANIZATION_FALLBACK_DISPLAY_MESSAGE_KEY,
-                                                    null,
-                                                    ORGANIZATION_FALLBACK_DISPLAY_DEFAULT,
-                                                    LocaleContextHolder.getLocale());
-                                } else {
-                                    displayName = org.getName();
-                                }
-                                dto.setOrganizationName(displayName);
-                            });
-        }
-        return dto;
     }
 
     public Optional<User> findByEmail(String email) {

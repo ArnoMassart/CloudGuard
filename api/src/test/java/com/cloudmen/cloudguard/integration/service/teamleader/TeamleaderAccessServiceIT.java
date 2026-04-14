@@ -57,7 +57,7 @@ public class TeamleaderAccessServiceIT {
 
     @Test
     void hasCloudGuardAccess_success_returnsTrue() {
-        when(teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders)).thenReturn(COMPANY_ID);
+        when(teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders)).thenReturn(COMPANY_ID);
 
         Map<String, Object> customField = Map.of(
                 "definition", Map.of("id", "custom-field-123"),
@@ -72,7 +72,7 @@ public class TeamleaderAccessServiceIT {
 
     @Test
     void hasCloudGuardAccess_customFieldFalse_returnsFalse() {
-        when(teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders)).thenReturn(COMPANY_ID);
+        when(teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders)).thenReturn(COMPANY_ID);
 
         Map<String, Object> customField = Map.of(
                 "definition", Map.of("id", "custom-field-123"),
@@ -87,7 +87,7 @@ public class TeamleaderAccessServiceIT {
 
     @Test
     void hasCloudGuardAccess_noCompanyFound_returnsFalse() {
-        when(teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders)).thenReturn(null);
+        when(teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders)).thenReturn(null);
 
         assertFalse(teamleaderAccessService.hasCloudGuardAccess(EMAIL));
     }
@@ -98,7 +98,7 @@ public class TeamleaderAccessServiceIT {
                 HttpStatus.UNAUTHORIZED, "Unauthorized", HttpHeaders.EMPTY, new byte[0], StandardCharsets.UTF_8
         );
 
-        when(teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders))
+        when(teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders))
                 .thenThrow(unauthorizedException)
                 .thenReturn(COMPANY_ID);
 
@@ -114,7 +114,7 @@ public class TeamleaderAccessServiceIT {
         assertTrue(teamleaderAccessService.hasCloudGuardAccess(EMAIL));
 
         verify(teamleaderService).refreshTokens();
-        verify(teamleaderCompanyService, times(2)).getCompanyIdByEmail(EMAIL, mockHeaders);
+        verify(teamleaderCompanyService, times(2)).getCompanyIdByDomain(EMAIL, mockHeaders);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TeamleaderAccessServiceIT {
                 HttpStatus.UNAUTHORIZED, "Unauthorized", HttpHeaders.EMPTY, new byte[0], StandardCharsets.UTF_8
         );
 
-        when(teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders))
+        when(teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders))
                 .thenThrow(unauthorizedException);
 
         when(teamleaderService.refreshTokens()).thenReturn(false);
@@ -131,12 +131,12 @@ public class TeamleaderAccessServiceIT {
         assertFalse(teamleaderAccessService.hasCloudGuardAccess(EMAIL));
 
         verify(teamleaderService).refreshTokens();
-        verify(teamleaderCompanyService, times(1)).getCompanyIdByEmail(EMAIL, mockHeaders);
+        verify(teamleaderCompanyService, times(1)).getCompanyIdByDomain(EMAIL, mockHeaders);
     }
 
     @Test
     void hasCloudGuardAccess_genericException_returnsFalse() {
-        when(teamleaderCompanyService.getCompanyIdByEmail(EMAIL, mockHeaders))
+        when(teamleaderCompanyService.getCompanyIdByDomain(EMAIL, mockHeaders))
                 .thenThrow(new RuntimeException("Unexpected Error"));
 
         assertFalse(teamleaderAccessService.hasCloudGuardAccess(EMAIL));

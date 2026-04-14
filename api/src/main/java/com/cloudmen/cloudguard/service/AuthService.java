@@ -22,7 +22,6 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final GoogleUsersCacheService usersCacheService;
     private final OrganizationService organizationService;
     private final WorkspaceCustomerIdResolver workspaceCustomerIdResolver;
 
@@ -30,13 +29,11 @@ public class AuthService {
             UserService userService,
             JwtService jwtService,
             UserRepository userRepository,
-            GoogleUsersCacheService usersCacheService,
             OrganizationService organizationService,
             WorkspaceCustomerIdResolver workspaceCustomerIdResolver) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
-        this.usersCacheService = usersCacheService;
         this.organizationService = organizationService;
         this.workspaceCustomerIdResolver = workspaceCustomerIdResolver;
     }
