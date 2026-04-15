@@ -171,12 +171,13 @@ public class NotificationAggregationService {
         if (orgId == null) {
             return aggregateActive(userId, locale, disabledPreferenceKeys);
         }
-        List<NotificationInstance> projected =
-                notificationInstanceRepository.findByOrganizationIdAndStatus(
-                        orgId, NotificationInstanceStatus.ACTIVE);
-        if (projected.isEmpty()) {
+        boolean everSynced = notificationInstanceRepository.existsByOrganizationId(orgId);
+        if (!everSynced) {
             return aggregateActive(userId, locale, disabledPreferenceKeys);
         }
+        List<NotificationInstance> projected =
+                notificationInstanceRepository.findByOrganizationIdAndStatusAndDismissedAtIsNull(
+                        orgId, NotificationInstanceStatus.ACTIVE);
         return projected.stream().map(this::toDtoFromProjection).toList();
     }
 

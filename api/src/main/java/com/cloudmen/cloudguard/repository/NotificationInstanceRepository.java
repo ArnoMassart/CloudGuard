@@ -15,7 +15,12 @@ import java.util.Optional;
 public interface NotificationInstanceRepository extends JpaRepository<NotificationInstance, Long> {
     List<NotificationInstance> findByOrganizationId(Long organizationId);
 
+    boolean existsByOrganizationId(Long organizationId);
+
     List<NotificationInstance> findByOrganizationIdAndStatus(
+            Long organizationId, NotificationInstanceStatus status);
+
+    List<NotificationInstance> findByOrganizationIdAndStatusAndDismissedAtIsNull(
             Long organizationId, NotificationInstanceStatus status);
 
     List<NotificationInstance> findByOrganizationIdAndDismissedAtIsNotNullOrderByDismissedAtDesc(

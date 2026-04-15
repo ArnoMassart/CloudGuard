@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
+import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -81,8 +82,8 @@ public class CriticalNotificationReminderEmailService {
     private String buildHtml(Locale locale, List<NotificationInstance> items) {
         StringBuilder rows = new StringBuilder();
         for (NotificationInstance n : items) {
-            String title = escapeHtml(itemTitle(n, locale));
-            String sub = escapeHtml(itemSubtitle(n));
+            String title = UtilityFunctions.escapeHtml(itemTitle(n, locale));
+            String sub = UtilityFunctions.escapeHtml(itemSubtitle(n));
             rows.append(
                     """
                     <tr><td style="padding:10px 12px;border-bottom:1px solid %s;">
@@ -115,10 +116,10 @@ public class CriticalNotificationReminderEmailService {
                         CARD_BG,
                         FOREGROUND,
                         MUTED_BG,
-                        escapeHtml(messageSource.getMessage("email.reminder.critical.intro", null, locale)),
+                        UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.intro", null, locale)),
                         rows,
                         MUTED_TEXT,
-                        escapeHtml(messageSource.getMessage("email.reminder.critical.footer", null, locale)));
+                        UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.footer", null, locale)));
     }
 
     private String itemTitle(NotificationInstance n, Locale locale) {
@@ -133,17 +134,5 @@ public class CriticalNotificationReminderEmailService {
             return n.getSourceLabel();
         }
         return n.getSource() != null ? n.getSource() : "";
-    }
-
-    private String escapeHtml(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
     }
 }

@@ -19,9 +19,9 @@ public class DismissedNotificationCleanupScheduler {
 
     @Scheduled(cron = "0 0 2 * * *") // Run daily at 2 AM
     public void cleanupOldDismissedNotifications() {
-        int deleted = dismissedNotificationService.deleteOlderThan30Days();
-        if (deleted > 0) {
-            log.info("Deleted {} dismissed notifications older than 30 days", deleted);
+        int cleared = dismissedNotificationService.deleteOlderThan30Days();
+        if (cleared > 0) {
+            log.info("Cleared dismissal from {} notifications older than 30 days (now active again)", cleared);
         }
     }
 }
