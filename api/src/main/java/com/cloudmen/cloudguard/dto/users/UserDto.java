@@ -13,6 +13,7 @@ public record UserDto(
         List<UserRole> roles,
         LocalDateTime createdAt,
         Boolean roleRequested,
+        Boolean organizationRequested,
         Long organizationId,
         String organizationName
         ) {

@@ -1,17 +1,13 @@
 package com.cloudmen.cloudguard.controller;
 
-import com.cloudmen.cloudguard.domain.model.User;
-import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserUpdateRoleRequest;
 import com.cloudmen.cloudguard.dto.users.UsersUpdateOrganizationRequest;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.UserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,43 +23,66 @@ public class UserController {
 
     @GetMapping("/language")
     public ResponseEntity<String> getLanguage(@CookieValue(name = "AuthToken", required = false) String token) {
-        String adminEmail = jwtService.validateInternalToken(token);
+        String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(userService.getLanguage(adminEmail));
+        return ResponseEntity.ok(userService.getLanguage(loggedInEmail));
     }
 
     @PostMapping("/language")
     public ResponseEntity<Void> updateLanguage(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody Map<String, String> request) {
-        String adminEmail = jwtService.validateInternalToken(token);
+        String loggedInEmail = jwtService.validateInternalToken(token);
 
         String newLanguage = request.get("language");
 
-        userService.updateLanguage(adminEmail, newLanguage);
+        userService.updateLanguage(loggedInEmail, newLanguage);
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/request-access")
     public ResponseEntity<Boolean> getRequestRoleAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
-        String adminEmail = jwtService.validateInternalToken(token);
+        String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(userService.getRoleRequested(adminEmail));
+        return ResponseEntity.ok(userService.getRoleRequested(loggedInEmail));
     }
 
     @PostMapping("/request-access")
     public ResponseEntity<String> requestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
-        String adminEmail = jwtService.validateInternalToken(token);
+        String loggedInEmail = jwtService.validateInternalToken(token);
 
-        userService.updateRequestAccess(adminEmail);
+        userService.updateRequestAccess(loggedInEmail);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/no-organization")
+    public ResponseEntity<Boolean> getRequestNoOrganizationSent(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.getNoOrganizationRequested(loggedInEmail));
+    }
+
+    @PostMapping("/no-organization")
+    public ResponseEntity<String> requestNoOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        userService.updateRequestNoOrganization(loggedInEmail);
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/valid-role")
     public ResponseEntity<Boolean> hasValidRole(@CookieValue(name = "AuthToken", required = false) String token) {
-        String adminEmail = jwtService.validateInternalToken(token);
+        String loggedInEmail = jwtService.validateInternalToken(token);
 
-        return ResponseEntity.ok(userService.hasValidRole(adminEmail));
+        return ResponseEntity.ok(userService.hasValidRole(loggedInEmail));
+    }
+
+    @GetMapping("/has-organization")
+    public ResponseEntity<Boolean> hasOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.hasOrganization(loggedInEmail));
     }
 
     @GetMapping("/all")
@@ -77,7 +96,7 @@ public class UserController {
     public ResponseEntity<DatabaseUsersResponse> getAllUsersWithRequestedRole(@RequestParam(required = false) String pageToken,
                                                              @RequestParam(defaultValue = "4") int size,
                                                              @RequestParam(required = false) String query) {
-        return ResponseEntity.ok(userService.getAllWithRequestedRole(pageToken, size, query));
+        return ResponseEntity.ok(userService.getAllWithRequestedRoleAndOrganization(pageToken, size, query));
     }
 
     @GetMapping("/all/requested-count")

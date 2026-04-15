@@ -12,16 +12,24 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
-    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = :roleRequested " +
+    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = true OR u.organizationRequested = true " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<User> findAllByRoleRequestedWithSearch(
-            @Param("roleRequested") boolean roleRequested,
             @Param("query") String query,
             Pageable pageable);
 
-    long countByRoleRequestedTrue();
+    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = false AND u.organizationRequested = false " +
+            "AND (:query IS NULL OR :query = '' OR " +
+            "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<User> findAllWithoutRequested(
+            @Param("query") String query,
+            Pageable pageable);
+
+    long countByRoleRequestedTrueAndOrganizationRequestedTrue();
     boolean existsByOrganizationId(Long organizationId);
 }

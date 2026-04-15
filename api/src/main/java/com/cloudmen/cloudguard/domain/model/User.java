@@ -29,6 +29,7 @@ public class User {
 
     private String language = "nl";
     private boolean roleRequested = false;
+    private boolean organizationRequested = false;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "tbl_user_roles", joinColumns = @JoinColumn(name = "user_id"))

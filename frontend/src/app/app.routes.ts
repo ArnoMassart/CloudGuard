@@ -24,6 +24,7 @@ import { AccountsManager } from './pages/control-section/accounts-manager/accoun
 import { roleGuard } from './guards/role.guard';
 import { Role } from './models/users/User';
 import { AccessDenied } from './pages/access-denied/access-denied';
+import { NoOrganization } from './pages/no-organization/no-organization';
 import { CLOUDMEN_ADMIN_EMAIL } from '../env';
 
 export const routes: Routes = [
@@ -50,6 +51,10 @@ export const routes: Routes = [
   {
     path: 'request-access',
     component: RequestAccess,
+  },
+  {
+    path: 'no-organization',
+    component: NoOrganization,
   },
   {
     path: 'server-error',

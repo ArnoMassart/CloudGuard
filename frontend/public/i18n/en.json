@@ -518,14 +518,13 @@
   "forbidden.note.description": "Only Google Workspace accounts have access to CloudGuard",
   "unassigned.btn-request": "Request Access",
   "unassigned.btn-requested": "Request Sent",
-  "unassigned.description": "You have successfully logged in, but no roles have been assigned to your account by an administrator yet.",
-  "unassigned.instruction": "Click the button below to request access from your IT administrator.",
+  "unassigned.description": "You have successfully logged in, but no roles have been assigned to your account by an administrator from CLOUDMEN yet.",
+  "unassigned.instruction": "Click the button below to request access from the IT administrator from CLOUDMEN.",
   "unassigned.request-sent-success": "Your request has been sent! \nAn administrator will review your account.",
   "unassigned.title": "Access pending",
   "accounts-manager": "Account Management",
   "account-manager.description": "As an administrator of CLOUDMEN, manage all CloudGuard accounts here with role management",
   "account-manager.give-role": "Give role",
-  "account-manager.table-without.title": "Users without a role assigned",
   "change": "Change",
   "account-manager.minimize": "Click to minimize",
   "account-manager.more-roles-text": "This user has even more roles",
@@ -558,5 +557,8 @@
   "no-access.watch-desc": "Only users with appropriate permissions can view this page",
   "back-home": "Back to home page",
   "organisation": "Organization",
-  "select-org": "Choose organization"
+  "select-org": "Choose organization",
+  "account-manager.no-org-assigned": "No organization assigned",
+  "account-manager.table-without.title": "Users with adjustment needed",
+  "no-org.desc": "You have successfully logged in, but no organization has been assigned to your account yet."
 }

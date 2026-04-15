@@ -1,6 +1,5 @@
 package com.cloudmen.cloudguard.service;
 
-import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
@@ -9,6 +8,7 @@ import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +35,9 @@ public class UserService {
 
     private final OrganizationRepository organizationRepository;
     private final MessageSource messageSource;
+
+    @Value("${cloudmen.admin.email}")
+    private String CLOUDMEN_ADMIN_EMAIL;
 
     public UserService(
             UserRepository userRepository,
@@ -73,6 +76,7 @@ public class UserService {
                 user.getRoles(),
                 user.getCreatedAt(),
                 user.isRoleRequested(),
+                user.isOrganizationRequested(),
                 orgId,
                 organizationName
 
@@ -133,37 +137,81 @@ public class UserService {
         }
     }
 
+    public boolean getNoOrganizationRequested(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        return userOptional.map(User::isOrganizationRequested).orElse(false);
+    }
+
+    @Transactional
+    public void updateRequestNoOrganization(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setOrganizationRequested(true);
+            userRepository.save(user);
+        }
+    }
+
     public boolean hasValidRole(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
-            if (user.getRoles().isEmpty()) return false;
-            return user.getRoles().stream().noneMatch(userRole -> userRole.equals(UserRole.UNASSIGNED));
+            if (user.getRoles() == null || user.getRoles().isEmpty()) {
+                return false;
+            }
+
+            if (user.getRoles().contains(UserRole.UNASSIGNED)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean hasOrganization(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            return user.getOrganizationId() != null && user.getOrganizationId() != 0;
         }
 
         return false;
     }
 
     public DatabaseUsersResponse getAll(String pageToken, int size, String query) {
-        return fetchUsersFromDb(false, pageToken, size, query);
+        return fetchUsersFromDb(pageToken, size, query, true);
     }
 
-    public DatabaseUsersResponse getAllWithRequestedRole(String pageToken, int size, String query) {
-        return fetchUsersFromDb(true, pageToken, size, query);
+    public DatabaseUsersResponse getAllWithRequestedRoleAndOrganization(String pageToken, int size, String query) {
+        return fetchUsersFromDb(pageToken, size, query, false);
     }
 
-    private DatabaseUsersResponse fetchUsersFromDb(boolean roleRequested, String pageToken, int size, String query) {
+    private DatabaseUsersResponse fetchUsersFromDb(String pageToken, int size, String query, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName").ascending());
 
-        Page<User> userPage = userRepository.findAllByRoleRequestedWithSearch(roleRequested, query, pageable);
+        Page<User> userPage;
+
+        if (withoutRequests) {
+            userPage = userRepository.findAllWithoutRequested(query, pageable);
+        } else {
+            userPage = userRepository.findAllByRoleRequestedWithSearch(query, pageable);
+        }
 
         String nextPageToken = userPage.hasNext() ? String.valueOf(page + 1) : null;
 
-        return new DatabaseUsersResponse(userPage.getContent().stream().map(this::convertToDto).toList(), nextPageToken);
+        List<UserDto> filteredList = userPage.getContent().stream().filter(user -> !user.getEmail().equalsIgnoreCase(CLOUDMEN_ADMIN_EMAIL)).map(this::convertToDto).toList();
+
+        return new DatabaseUsersResponse(filteredList, nextPageToken);
     }
 
     @Transactional
@@ -197,13 +245,14 @@ public class UserService {
     }
 
     public long getAllRequestedCount() {
-        return userRepository.countByRoleRequestedTrue();
+        return userRepository.countByRoleRequestedTrueAndOrganizationRequestedTrue();
     }
 
     @Transactional
     public void updateUsersOrg(String email, Long orgId) {
         userRepository.findByEmail(email).ifPresent(user -> {
            user.setOrganizationId(orgId);
+           user.setOrganizationRequested(false);
            userRepository.save(user);
         });
     }

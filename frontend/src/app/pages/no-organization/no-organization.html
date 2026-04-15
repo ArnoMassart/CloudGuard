@@ -16,16 +16,18 @@
     >
       <div class="flex items-center justify-center bg-amber-100 p-3 mt-1 rounded-full">
         <lucide-icon
-          [img]="Icons.UserPlus"
+          [img]="Icons.Building2"
           size="28"
           class="text-amber-600 w-5 h-5 md:w-7 md:h-7"
         ></lucide-icon>
       </div>
 
-      <h2 class="flex justify-center text-xl">{{ 'unassigned.title' | transloco }}</h2>
+      <h2 class="flex justify-center text-xl">
+        {{ 'account-manager.no-org-assigned' | transloco }}
+      </h2>
 
       <span class="flex items-center justify-center text-center text-black/50 mb-3">
-        {{ 'unassigned.description' | transloco }}
+        {{ 'no-org.desc' | transloco }}
       </span>
 
       <div

@@ -6,6 +6,7 @@ export type User = {
   roles: Role[];
   createdAt: Date;
   roleRequested: boolean;
+  organizationRequested: boolean;
   organizationId: number;
   organizationName?: string | null;
 };

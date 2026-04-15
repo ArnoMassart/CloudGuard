@@ -53,7 +53,7 @@ export class UserService {
     return this.#http.post(
       `${this.#API_URL}/refresh`,
       {},
-      { responseType: 'text', withCredentials: true }
+      { responseType: 'text', withCredentials: true },
     );
   }
 
@@ -78,12 +78,31 @@ export class UserService {
       {
         responseType: 'text',
         withCredentials: true,
-      }
+      },
     );
   }
 
   getRequestRoleAccessSent(): Observable<boolean> {
     const url = RouteService.getBackendUrl('/user/request-access');
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
+
+  requestNoOrganization(): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/no-organization');
+    return this.#http.post(
+      url,
+      {},
+      {
+        responseType: 'text',
+        withCredentials: true,
+      },
+    );
+  }
+
+  getRequestNoOrganizationSent(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/no-organization');
     return this.#http.get<boolean>(url, {
       withCredentials: true,
     });
@@ -97,10 +116,18 @@ export class UserService {
     });
   }
 
+  hasOrganization(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/has-organization');
+
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
+
   getAllDatabaseUsers(
     size: number,
     pageToken?: string,
-    query?: string
+    query?: string,
   ): Observable<DatabaseUsersResponse> {
     const url = RouteService.getBackendUrl('/user/all');
     let params = new HttpParams().set('size', size.toString());
@@ -116,7 +143,7 @@ export class UserService {
   getAllDatabaseUsersWithoutRoles(
     size: number,
     pageToken?: string,
-    query?: string
+    query?: string,
   ): Observable<DatabaseUsersResponse> {
     const url = RouteService.getBackendUrl('/user/all/no-roles');
     let params = new HttpParams().set('size', size.toString());
@@ -155,7 +182,7 @@ export class UserService {
       .pipe(
         tap(() => {
           this.refreshRequestedCount();
-        })
+        }),
       );
   }
 
@@ -203,7 +230,7 @@ export class UserService {
       .pipe(
         tap(() => {
           this.refreshRequestedCount();
-        })
+        }),
       );
   }
 }

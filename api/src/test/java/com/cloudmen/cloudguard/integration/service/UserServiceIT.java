@@ -236,7 +236,7 @@ public class UserServiceIT {
     @Test
     void getAll_returnsMappedDatabaseResponse() {
         Page<User> mockPage = new PageImpl<>(List.of(testUser));
-        when(userRepository.findAllByRoleRequestedWithSearch(eq(false), eq("query"), any(Pageable.class)))
+        when(userRepository.findAllByRoleRequestedWithSearch(eq("query"), any(Pageable.class)))
                 .thenReturn(mockPage);
 
         DatabaseUsersResponse response = userService.getAll("0", 10, "query");
@@ -246,12 +246,12 @@ public class UserServiceIT {
     }
 
     @Test
-    void getAllWithRequestedRole_returnsMappedDatabaseResponse() {
+    void getAllWithRequestedRole_AndOrganization_returnsMappedDatabaseResponse() {
         Page<User> mockPage = new PageImpl<>(List.of(testUser));
-        when(userRepository.findAllByRoleRequestedWithSearch(eq(true), eq(""), any(Pageable.class)))
+        when(userRepository.findAllByRoleRequestedWithSearch(eq(""), any(Pageable.class)))
                 .thenReturn(mockPage);
 
-        DatabaseUsersResponse response = userService.getAllWithRequestedRole("0", 10, "");
+        DatabaseUsersResponse response = userService.getAllWithRequestedRoleAndOrganization("0", 10, "");
 
         assertEquals(1, response.users().size());
         assertNull(response.nextPageToken()); // Geen hasNext() in kleine list
@@ -259,7 +259,7 @@ public class UserServiceIT {
 
     @Test
     void getAllRequestedCount_returnsDirectCount() {
-        when(userRepository.countByRoleRequestedTrue()).thenReturn(15L);
+        when(userRepository.countByRoleRequestedTrueAndOrganizationRequestedTrue()).thenReturn(15L);
         long count = userService.getAllRequestedCount();
         assertEquals(15L, count);
     }

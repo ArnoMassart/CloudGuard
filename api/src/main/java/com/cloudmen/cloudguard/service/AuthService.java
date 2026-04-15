@@ -50,19 +50,23 @@ public class AuthService {
         User user = userService.findByEmail(email)
                 .orElseGet(() -> registerNewUser(jwt));
 
-        Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
-        String workspaceCustomerId = resolved
-                .map(WorkspaceCustomer::id)
-                .or(() -> Optional.ofNullable(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID))
-                        .filter(s -> !s.isBlank())
-                        .map(String::trim))
-                .orElse(null);
-        String workspaceDisplayName = resolved
-                .map(WorkspaceCustomer::displayName)
-                .orElse(null);
-        organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
+        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
 
-        syncSuperAdminStatus(user, jwt);
+        if (isGoogleSuperAdmin) {
+            Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
+            String workspaceCustomerId = resolved
+                    .map(WorkspaceCustomer::id)
+                    .or(() -> Optional.ofNullable(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID))
+                            .filter(s -> !s.isBlank())
+                            .map(String::trim))
+                    .orElse(null);
+            String workspaceDisplayName = resolved
+                    .map(WorkspaceCustomer::displayName)
+                    .orElse(null);
+            organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
+        }
+
+        syncSuperAdminStatus(user, isGoogleSuperAdmin);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");
@@ -95,11 +99,10 @@ public class AuthService {
         return userService.save(newUser);
     }
 
-    private void syncSuperAdminStatus(User user, Jwt jwt) {
-        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
+    private void syncSuperAdminStatus(User user, boolean isGoogleAdmin) {
         boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
 
-        if (isGoogleSuperAdmin) {
+        if (isGoogleAdmin) {
             if (user.getOrganizationId() != null) {
                 organizationService.findById(user.getOrganizationId()).ifPresent(org -> {
                     organizationService.updateAdminEmailForOrg(user.getEmail(), org);
