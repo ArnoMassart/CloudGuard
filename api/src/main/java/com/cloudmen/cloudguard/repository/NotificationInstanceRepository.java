@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.repository;
 
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +20,11 @@ public interface NotificationInstanceRepository extends JpaRepository<Notificati
 
     List<NotificationInstance> findByOrganizationIdAndDismissedAtIsNotNullOrderByDismissedAtDesc(
             Long organizationId);
+
+    List<NotificationInstance> findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+            Long organizationId,
+            NotificationInstanceStatus status,
+            NotificationSeverity severity);
 
     Optional<NotificationInstance> findByOrganizationIdAndSourceAndNotificationType(
             Long organizationId, String source, String notificationType);

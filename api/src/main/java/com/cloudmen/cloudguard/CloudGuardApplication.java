@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard;
 
 import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
+import com.cloudmen.cloudguard.configuration.NotificationReminderProperties;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties(NotificationProjectionProperties.class)
+@EnableConfigurationProperties({NotificationProjectionProperties.class, NotificationReminderProperties.class})
 public class CloudGuardApplication {
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure().load();
