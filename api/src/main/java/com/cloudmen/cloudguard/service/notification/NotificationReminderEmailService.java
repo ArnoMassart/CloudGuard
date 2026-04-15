@@ -21,5 +21,4 @@ public class NotificationReminderEmailService {
         this.messageSource = messageSource;
     }
 
-    
 }
