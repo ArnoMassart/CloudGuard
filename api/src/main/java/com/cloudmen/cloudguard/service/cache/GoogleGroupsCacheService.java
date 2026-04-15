@@ -76,27 +76,27 @@ public class GoogleGroupsCacheService {
 
     private GroupCacheEntry fetchFromGoogle(String loggedInEmail, GroupCacheEntry fallbackEntry) {
         try {
-            String impersonationEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
-            log.info("Ophalen LIVE data van Google. Groep: {}, Impersonatie via Admin: {}", loggedInEmail, impersonationEmail);
+            log.info("Ophalen LIVE groepen data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
 
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY
             );
-            Directory service = googleApiFactory.getDirectoryService(scopes, impersonationEmail);
+            Directory service = googleApiFactory.getDirectoryService(scopes, adminEmail);
 
             CloudIdentity cloudIdentity = null;
             try {
-                cloudIdentity = getCloudIdentityService(loggedInEmail);
+                cloudIdentity = getCloudIdentityService(adminEmail);
             } catch (Throwable t) {
                 log.warn("Cloud Identity API unavailable", t);
             }
 
-            String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
+            String primaryDomain = adminEmail.substring(adminEmail.indexOf('@') + 1);
 
             // A. Haal alle groepen en details op
-            List<CachedGroupItem> allMappedGroups = fetchAllGroups(service, cloudIdentity, primaryDomain, loggedInEmail);
+            List<CachedGroupItem> allMappedGroups = fetchAllGroups(service, cloudIdentity, primaryDomain, adminEmail);
 
             return new GroupCacheEntry(allMappedGroups, System.currentTimeMillis());
 
@@ -109,7 +109,7 @@ public class GoogleGroupsCacheService {
         }
     }
 
-    private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain, String loggedInEmail) throws IOException {
+    private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain, String adminEmail) throws IOException {
         List<CachedGroupItem> allMappedGroups = new ArrayList<>();
         String pageToken = null;
 
@@ -151,7 +151,7 @@ public class GoogleGroupsCacheService {
                     String adminId = group.getId() != null ? group.getId() : "";
                     String groupName = group.getName() != null ? group.getName() : "";
 
-                    GroupSettingsDto settings = getGroupSettings(loggedInEmail, groupEmail);
+                    GroupSettingsDto settings = getGroupSettings(adminEmail, groupEmail);
 
                     GroupOrgDetail detail = new GroupOrgDetail(
                             groupEmail, adminId, risk, tags, total, external, externalAllowed, settings.getWhoCanJoin(), settings.getWhoCanView()

@@ -43,14 +43,18 @@ public class AppPasswordsService {
             DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
     );
     private final MessageSource messageSource;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public AppPasswordsService(GoogleApiFactory apiFactory, MessageSource messageSource) {
+    public AppPasswordsService(GoogleApiFactory apiFactory, MessageSource messageSource, UserService userService, OrganizationService organizationService) {
         this.apiFactory = apiFactory;
         this.messageSource = messageSource;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
-    public AppPasswordPageResponse getAppPasswordsPaged(String adminEmail, String pageToken, int size, String query, boolean isTestMode) {
-        AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(adminEmail, this::fetchAllAppPasswords);
+    public AppPasswordPageResponse getAppPasswordsPaged(String loggedInEmail, String pageToken, int size, String query, boolean isTestMode) {
+        AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(loggedInEmail, this::fetchAllAppPasswords);
         List<UserAppPasswordsDto> allUsers = GoogleServiceHelperMethods.filterByNameOrEmail(
                 entry.users(),
                 query,
@@ -129,9 +133,11 @@ public class AppPasswordsService {
         cache.asMap().compute(adminEmail, (email, existing) -> fetchAllAppPasswords(email));
     }
 
-    private AppPasswordCacheEntry fetchAllAppPasswords(String adminEmail) {
+    private AppPasswordCacheEntry fetchAllAppPasswords(String loggedInEmail) {
         try {
-            log.info("Ophalen LIVE app passwords van Google voor: {}", adminEmail);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
+            log.info("Ophalen LIVE App Passwords van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
             Directory directory = apiFactory.getDirectoryService(scopes, adminEmail);
 
             List<UserAppPasswordsDto> result = new ArrayList<>();
@@ -210,8 +216,8 @@ public class AppPasswordsService {
         AppPasswordDto dto = new AppPasswordDto();
         dto.setCodeId(asp.getCodeId());
         dto.setName(asp.getName());
-        dto.setCreationTime(asp.getCreationTime() != null ? String.valueOf(asp.getCreationTime()) : null);
-        dto.setLastTimeUsed(asp.getLastTimeUsed() != null ? String.valueOf(asp.getLastTimeUsed()) : null);
+        dto.setCreationTime(asp.getCreationTime() != null ? DateTimeConverter.parseWithPattern(asp.getCreationTime(), "dd-MM-yyyy") : null);
+        dto.setLastTimeUsed(asp.getLastTimeUsed() != null ? DateTimeConverter.convertToTimeAgo(asp.getLastTimeUsed()) : null);
         return dto;
     }
 }

@@ -2,6 +2,8 @@ package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordPageResponse;
 import com.cloudmen.cloudguard.service.AppPasswordsService;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
@@ -37,6 +39,8 @@ class AppPasswordsServiceTest {
 
     private ResourceBundleMessageSource messageSource;
     private AppPasswordsService service;
+    private UserService userService;
+    private OrganizationService organizationService;
 
     @BeforeEach
     void setUp() {
@@ -45,7 +49,7 @@ class AppPasswordsServiceTest {
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setFallbackToSystemLocale(false);
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-        service = new AppPasswordsService(apiFactory, messageSource);
+        service = new AppPasswordsService(apiFactory, messageSource, userService, organizationService);
     }
 
     @AfterEach

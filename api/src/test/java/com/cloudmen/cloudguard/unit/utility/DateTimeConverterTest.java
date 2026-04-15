@@ -47,11 +47,11 @@ public class DateTimeConverterTest {
     }
 
     @Test
-    void convertGoogleDateTime_returnsLocalDateInSystemZone() {
+    void convertGoogleDateTime_returnsLocalDateInSystemZoneToLocalData() {
         long epochMillis = 1672531200000L;
         DateTime dateTime = new DateTime(epochMillis);
 
-        LocalDate result = DateTimeConverter.convertGoogleDateTime(dateTime);
+        LocalDate result = DateTimeConverter.convertGoogleDateTimeToLocalDate(dateTime);
 
         LocalDate expected = java.time.Instant.ofEpochMilli(epochMillis)
                 .atZone(ZoneId.systemDefault())

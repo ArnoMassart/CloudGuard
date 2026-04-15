@@ -87,14 +87,14 @@ public class GoogleUsersCacheService {
 
     private UserCacheEntry fetchFromGoogle(String loggedInEmail, UserCacheEntry fallbackEntry) {
         try {
-            String impersonationEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
-            log.info("Ophalen LIVE data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, impersonationEmail);
+            log.info("Ophalen LIVE gebruikers data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
             Directory userDirectory = googleApiFactory.getDirectoryService(
                     Set.of(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY),
-                    impersonationEmail);
+                    adminEmail);
             Directory roleDirectory = googleApiFactory.getDirectoryService(
-                    DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, impersonationEmail);
+                    DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, adminEmail);
 
             // A. Haal alle gebruikers op
             List<User> allUsers = fetchAllOrgUsers(userDirectory);

@@ -15,11 +15,11 @@ public class GoogleDomainService {
         this.domainCacheService = domainCacheService;
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        domainCacheService.forceRefreshCache(adminEmail);
+    public void forceRefreshCache(String loggedInEmail) {
+        domainCacheService.forceRefreshCache(loggedInEmail);
     }
 
-    public List<DomainDto> getAllDomains(String adminEmail) {
-        return domainCacheService.getOrFetchDomainData(adminEmail).domains();
+    public List<DomainDto> getAllDomains(String loggedInEmail) {
+        return domainCacheService.getOrFetchDomainData(loggedInEmail).domains();
     }
 }

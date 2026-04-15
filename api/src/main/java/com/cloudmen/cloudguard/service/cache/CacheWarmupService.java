@@ -65,6 +65,8 @@ public class CacheWarmupService {
         });
     }
 
+//    Force refresh cache of tsvPolicyProvider, adminSecurityKeysService needs the adminEmail
+
     public CompletableFuture<Void> warmupAllCachesAsync(String loggedInEmail) {
         CompletableFuture<?>[] tasks = new CompletableFuture<?>[] {
           runSafeAsync(() -> usersCacheService.forceRefreshCache(loggedInEmail), "Users"),

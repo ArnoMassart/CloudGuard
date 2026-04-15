@@ -46,7 +46,7 @@ public class GoogleServiceHelperMethods {
         LocalDate now = LocalDate.now();
         Long daysSinceLogin = null;
         if (lastLogin != null) {
-            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
             daysSinceLogin = ChronoUnit.DAYS.between(loginDate, now);
         }
 

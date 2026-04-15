@@ -4,8 +4,11 @@ import com.cloudmen.cloudguard.dto.licenses.InactiveUser;
 import com.cloudmen.cloudguard.dto.licenses.LicenseCacheEntry;
 import com.cloudmen.cloudguard.dto.licenses.LicenseType;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.model.User;
@@ -33,10 +36,14 @@ public class GoogleLicenseCacheService {
             .expireAfterWrite(6, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public GoogleLicenseCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService) {
+    public GoogleLicenseCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
         this.usersCacheService = usersCacheService;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -49,9 +56,11 @@ public class GoogleLicenseCacheService {
 
     private LicenseCacheEntry fetchFromGoogle(String loggedInEmail, LicenseCacheEntry fallback) {
         try {
-            log.info("Ophalen LIVE License data van Google voor: {}", loggedInEmail);
-            Licensing licensingDirectory = googleApiFactory.getLicensingService(LicensingScopes.APPS_LICENSING, loggedInEmail);
-            String domain = loggedInEmail.split("@")[1];
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+            log.info("Ophalen LIVE License data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+
+            Licensing licensingDirectory = googleApiFactory.getLicensingService(LicensingScopes.APPS_LICENSING, adminEmail);
+            String domain = adminEmail.split("@")[1];
 
             List<String> productIds = List.of(
                     "Google-Apps",
@@ -71,22 +80,6 @@ public class GoogleLicenseCacheService {
             List<LicenseType> licenseTypes = mapAssignmentsToLicenseTypes(allItems);
 
             List<InactiveUser> inactiveUsers = findInactiveUsersWithLicenses(allUsers, allItems);
-
-            // ==========================================
-            // START SIMULATIE INACTIVE USER
-            // ==========================================
-            // Dit is een hardcoded inactieve gebruiker om de frontend/service te testen.
-            // Verwijder dit blok weer als je klaar bent met testen!
-            inactiveUsers.add(new InactiveUser(
-                    "test.inactief@" + domain,         // email
-                    "5 maanden geleden",               // time ago text
-                    "Google Workspace Business Plus",  // sku/license name
-                    false,                             // 2FA status
-                    150L                               // days inactive
-            ));
-            // ==========================================
-            // EINDE SIMULATIE
-            // ==========================================
 
             return new LicenseCacheEntry(licenseTypes, inactiveUsers, System.currentTimeMillis());
         } catch (Exception e) {

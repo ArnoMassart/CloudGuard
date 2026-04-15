@@ -2,7 +2,10 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.devices.DeviceCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -25,14 +28,18 @@ public class GoogleDeviceCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleDeviceCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     private final Cache<String, DeviceCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 
-    public GoogleDeviceCacheService(GoogleApiFactory googleApiFactory) {
+    public GoogleDeviceCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -45,14 +52,17 @@ public class GoogleDeviceCacheService {
 
     private DeviceCacheEntry fetchFromGoogle(String loggedInEmail, DeviceCacheEntry fallbackEntry) {
         try {
-            log.info("Ophalen RUWE Device data PARALLEL van Google voor: {}", loggedInEmail);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
+            log.info("Ophalen LIVE Device data PARALLEL van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+
 
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_DEVICE_MOBILE_READONLY,
                     DirectoryScopes.ADMIN_DIRECTORY_DEVICE_CHROMEOS_READONLY
             );
-            Directory directoryService = googleApiFactory.getDirectoryService(scopes, loggedInEmail);
-            CloudIdentity cloudIdentityService = googleApiFactory.getCloudIdentityService(CloudIdentityScopes.CLOUD_IDENTITY_DEVICES_READONLY, loggedInEmail);
+            Directory directoryService = googleApiFactory.getDirectoryService(scopes, adminEmail);
+            CloudIdentity cloudIdentityService = googleApiFactory.getCloudIdentityService(CloudIdentityScopes.CLOUD_IDENTITY_DEVICES_READONLY, adminEmail);
 
             CompletableFuture<List<MobileDevice>> mobileFuture = CompletableFuture.supplyAsync(() -> {
                 try { return fetchRawMobileDevices(directoryService); }

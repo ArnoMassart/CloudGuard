@@ -50,8 +50,8 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
     }
 
     @Override
-    public OrgUnitPolicyDto fetch(String loggedInEmail, String orgUnitPath) throws Exception {
-        MdStats stats = getOrFetchStats(loggedInEmail).getOrDefault(
+    public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
+        MdStats stats = getOrFetchStats(adminEmail).getOrDefault(
                 normalizePath(orgUnitPath),
                 new MdStats(0, 0, 0)
         );
@@ -105,8 +105,8 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         cache.remove(adminEmail);
     }
 
-    private Map<String, MdStats> getOrFetchStats(String loggedInEmail) {
-        return cache.compute(loggedInEmail, (email, existing) -> {
+    private Map<String, MdStats> getOrFetchStats(String adminEmail) {
+        return cache.compute(adminEmail, (email, existing) -> {
             long now = System.currentTimeMillis();
             if (existing != null && (now - existing.timestamp()) < CACHE_TTL_MS) {
                 return existing;
@@ -115,12 +115,12 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         }).statsMap();
     }
 
-    private CacheEntry fetchAndAggregate(String loggedInEmail, CacheEntry fallback) {
+    private CacheEntry fetchAndAggregate(String adminEmail, CacheEntry fallback) {
         try {
-            log.info("Ophalen mobiel beheerniveau per apparaat voor: {}", loggedInEmail);
+            log.info("Ophalen mobiel beheerniveau per apparaat. Impersonatie via Admin: {}", adminEmail);
 
-            Map<String, String> emailToOu = fetchEmailToOuMap(loggedInEmail);
-            List<MobileDevice> devices = deviceCache.getOrFetchDeviceData(loggedInEmail).mobileDevices();
+            Map<String, String> emailToOu = fetchEmailToOuMap(adminEmail);
+            List<MobileDevice> devices = deviceCache.getOrFetchDeviceData(adminEmail).mobileDevices();
             if (devices == null) devices = List.of();
 
             Map<String, MdStats> statsMap = new HashMap<>();
@@ -151,8 +151,8 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         }
     }
 
-    private Map<String, String> fetchEmailToOuMap(String loggedInEmail) throws Exception {
-        Directory directory = directoryFactory.getDirectoryService(Set.of(DIRECTORY_USER_READONLY), loggedInEmail);
+    private Map<String, String> fetchEmailToOuMap(String adminEmail) throws Exception {
+        Directory directory = directoryFactory.getDirectoryService(Set.of(DIRECTORY_USER_READONLY), adminEmail);
         Map<String, String> map = new HashMap<>();
         String pageToken = null;
 
