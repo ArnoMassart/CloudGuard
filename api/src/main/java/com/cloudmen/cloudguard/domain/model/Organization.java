@@ -30,4 +30,6 @@ public class Organization {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    private String adminEmail;
 }

@@ -3,8 +3,11 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.drive.Drive;
@@ -23,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class GoogleSharedDriveCacheService {
     private final GoogleApiFactory googleApiFactory;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     private final Cache<String, SharedDriveCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(24, TimeUnit.HOURS)
@@ -31,8 +36,10 @@ public class GoogleSharedDriveCacheService {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleSharedDriveCacheService.class);
 
-    public GoogleSharedDriveCacheService(GoogleApiFactory googleApiFactory) {
+    public GoogleSharedDriveCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -45,9 +52,11 @@ public class GoogleSharedDriveCacheService {
 
     private SharedDriveCacheEntry fetchFromGoogle(String loggedInEmail, SharedDriveCacheEntry fallbackEntry) {
         try {
-            log.info("Ophalen LIVE Shared Drive data van Google voor: {}", loggedInEmail);
-            Drive driveService = googleApiFactory.getDriveService(DriveScopes.DRIVE_READONLY, loggedInEmail);
-            String customerDomain = loggedInEmail.substring(loggedInEmail.indexOf("@") + 1);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+            log.info("Ophalen LIVE Shared Drive data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+
+            Drive driveService = googleApiFactory.getDriveService(DriveScopes.DRIVE_READONLY, adminEmail);
+            String customerDomain = adminEmail.substring(adminEmail.indexOf("@") + 1);
 
             List<SharedDriveBasicDetail> allDrives = fetchAllDrivesWithSecurityData(driveService, customerDomain);
 

@@ -3,7 +3,10 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.domain.DomainCacheEntry;
 import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -28,28 +31,34 @@ public class GoogleDomainCacheService {
 
     private final GoogleApiFactory apiFactory;
     private final MessageSource messageSource;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     private final Cache<String, DomainCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(4, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
 
-    public GoogleDomainCacheService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource) {
+    public GoogleDomainCacheService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource, UserService userService, OrganizationService organizationService) {
         this.apiFactory = apiFactory;
         this.messageSource = messageSource;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        cache.asMap().compute(adminEmail, this::fetchFromGoogle);
+    public void forceRefreshCache(String loggedInEmail) {
+        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
-    public DomainCacheEntry getOrFetchDomainData(String adminEmail) {
-        return cache.get(adminEmail, email -> fetchFromGoogle(email, null));
+    public DomainCacheEntry getOrFetchDomainData(String loggedInEmail) {
+        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
-    private DomainCacheEntry fetchFromGoogle(String adminEmail, DomainCacheEntry fallbackEntry) {
+    private DomainCacheEntry fetchFromGoogle(String loggedInEmail, DomainCacheEntry fallbackEntry) {
         try {
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
             log.info("Ophalen LIVE domain data van Google voor: {}", adminEmail);
+
             Directory directory = apiFactory.getDirectoryService(
                     Set.of(
                             DirectoryScopes.ADMIN_DIRECTORY_DOMAIN_READONLY,

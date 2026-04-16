@@ -7,6 +7,7 @@ import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
 import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -39,19 +40,23 @@ public class PasswordSettingsService {
             .maximumSize(100)
             .build();
     private final MessageSource messageSource;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     public PasswordSettingsService(PolicyApiCacheService policyCache,
-                                  GoogleUsersCacheService usersCache,
-                                  GoogleOrgUnitCacheService orgUnitCache,
-                                  AdminSecurityKeysService adminSecurityKeysService,
-                                  UserSecurityPreferenceService userSecurityPreferenceService,
-                                  MessageSource messageSource) {
+                                   GoogleUsersCacheService usersCache,
+                                   GoogleOrgUnitCacheService orgUnitCache,
+                                   AdminSecurityKeysService adminSecurityKeysService,
+                                   UserSecurityPreferenceService userSecurityPreferenceService,
+                                   MessageSource messageSource, UserService userService, OrganizationService organizationService) {
         this.policyCache = policyCache;
         this.usersCache = usersCache;
         this.orgUnitCache = orgUnitCache;
         this.adminSecurityKeysService = adminSecurityKeysService;
         this.userSecurityPreferenceService = userSecurityPreferenceService;
         this.messageSource = messageSource;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -62,15 +67,18 @@ public class PasswordSettingsService {
         adminSecurityKeysService.forceRefreshCache(adminEmail);
     }
 
-    public PasswordSettingsDto getPasswordSettings(String adminEmail) {
-        return cache.get(adminEmail, this::fetchPasswordSettings);
+    public PasswordSettingsDto getPasswordSettings(String loggedInEmail) {
+        return cache.get(loggedInEmail, this::fetchPasswordSettings);
     }
 
-    private PasswordSettingsDto fetchPasswordSettings(String adminEmail) {
-        var entry = usersCache.getOrFetchUsersData(adminEmail);
+    private PasswordSettingsDto fetchPasswordSettings(String loggedInEmail) {
+        String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
+        var entry = usersCache.getOrFetchUsersData(loggedInEmail);
         List<User> allUsers = entry.allUsers();
 
-        List<OuPasswordPolicyDto> passwordPoliciesByOu = buildPasswordPoliciesPerOu(adminEmail);
+
+        List<OuPasswordPolicyDto> passwordPoliciesByOu = buildPasswordPoliciesPerOu(loggedInEmail, adminEmail);
         TwoStepVerificationDto twoStepVerification = buildTwoStepVerification(adminEmail, allUsers);
         List<PasswordChangeRequirementDto> forcedChange = getUsersWithForcedPasswordChange(allUsers);
 
@@ -86,7 +94,7 @@ public class PasswordSettingsService {
                 ? adminSecurityKeysResponse.admins() : List.of();
         String adminsSecurityKeysErrorMessage = adminSecurityKeysResponse.errorMessage();
 
-        Set<String> disabledPrefs = userSecurityPreferenceService.getDisabledPreferenceKeys(adminEmail);
+        Set<String> disabledPrefs = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
         var scoreResult = calculateSecurityScoreWithBreakdown(
                 adminSecurityKeysResponse.totalAdmins(),
                 adminsWithoutSecurityKeys.size(),
@@ -99,11 +107,12 @@ public class PasswordSettingsService {
                 adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, scoreResult.score(), scoreResult.breakdown());
     }
 
-    private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String adminEmail) {
+    private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String loggedInEmail, String adminEmail) {
         Map<String, Integer> userCounts = new HashMap<>();
         List<String> ouPaths = new ArrayList<>();
+
         try {
-            var ouEntry = orgUnitCache.getOrFetchOrgUnitData(adminEmail);
+            var ouEntry = orgUnitCache.getOrFetchOrgUnitData(loggedInEmail);
             userCounts.putAll(ouEntry.userCounts());
             Set<String> pathSet = new LinkedHashSet<>();
             pathSet.add("/");

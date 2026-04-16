@@ -8,6 +8,8 @@ import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -48,19 +50,23 @@ public class AuthService {
         User user = userService.findByEmail(email)
                 .orElseGet(() -> registerNewUser(jwt));
 
-        Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
-        String workspaceCustomerId = resolved
-                .map(WorkspaceCustomer::id)
-                .or(() -> Optional.ofNullable(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID))
-                        .filter(s -> !s.isBlank())
-                        .map(String::trim))
-                .orElse(null);
-        String workspaceDisplayName = resolved
-                .map(WorkspaceCustomer::displayName)
-                .orElse(null);
-        organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
+        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
 
-        syncSuperAdminStatus(user, jwt);
+        if (isGoogleSuperAdmin) {
+            Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
+            String workspaceCustomerId = resolved
+                    .map(WorkspaceCustomer::id)
+                    .or(() -> Optional.ofNullable(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID))
+                            .filter(s -> !s.isBlank())
+                            .map(String::trim))
+                    .orElse(null);
+            String workspaceDisplayName = resolved
+                    .map(WorkspaceCustomer::displayName)
+                    .orElse(null);
+            organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
+        }
+
+        syncSuperAdminStatus(user, isGoogleSuperAdmin);
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");
@@ -93,11 +99,16 @@ public class AuthService {
         return userService.save(newUser);
     }
 
-    private void syncSuperAdminStatus(User user, Jwt jwt) {
-        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
+    private void syncSuperAdminStatus(User user, boolean isGoogleAdmin) {
         boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
 
-        if (isGoogleSuperAdmin) {
+        if (isGoogleAdmin) {
+            if (user.getOrganizationId() != null) {
+                organizationService.findById(user.getOrganizationId()).ifPresent(org -> {
+                    organizationService.updateAdminEmailForOrg(user.getEmail(), org);
+                });
+            }
+
             if (!hasSuperAdminRole) {
                 user.getRoles().clear();
                 user.getRoles().add(UserRole.SUPER_ADMIN);
@@ -105,11 +116,6 @@ public class AuthService {
             }
         } else {
             boolean rolesUpdated = false;
-
-            if (hasSuperAdminRole) {
-                user.getRoles().remove(UserRole.SUPER_ADMIN);
-                rolesUpdated = true;
-            }
 
             if (user.getRoles().isEmpty()) {
                 user.getRoles().add(UserRole.UNASSIGNED);

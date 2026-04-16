@@ -118,13 +118,13 @@ public class GoogleUsersService {
 
         long activeLongNoLoginCount = googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
-            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(user.getLastLoginTime());
             return !Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) >= 90;
         }).count();
 
         long inactiveRecentLoginCount = googleUsers.stream().filter(user -> {
             if (user.getLastLoginTime() == null) return false;
-            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(user.getLastLoginTime());
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(user.getLastLoginTime());
             return Boolean.TRUE.equals(user.getSuspended()) && ChronoUnit.DAYS.between(loginDate, now) <= 7;
         }).count();
 
@@ -167,7 +167,7 @@ public class GoogleUsersService {
                 if (lastLogin == null) {
                     longNoLoginCount++;
                 } else {
-                    LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+                    LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
                     if (ChronoUnit.YEARS.between(loginDate, now) >= 1) {
                         longNoLoginCount++;
                     }
@@ -175,7 +175,7 @@ public class GoogleUsersService {
                 continue;
             }
             if (lastLogin != null) {
-                LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+                LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
                 if (ChronoUnit.DAYS.between(loginDate, now) <= 7) {
                     inactiveRecentCount++;
                 }
@@ -242,13 +242,13 @@ public class GoogleUsersService {
             if (lastLogin == null) {
                 return false;
             }
-            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
             return ChronoUnit.YEARS.between(loginDate, now) < 1;
         }
         if (lastLogin == null) {
             return true;
         }
-        LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+        LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
         return ChronoUnit.DAYS.between(loginDate, now) > 7;
     }
 }

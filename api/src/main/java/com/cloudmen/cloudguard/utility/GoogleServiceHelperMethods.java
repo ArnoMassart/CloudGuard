@@ -1,6 +1,9 @@
 package com.cloudmen.cloudguard.utility;
 
 import com.cloudmen.cloudguard.dto.users.UserSecurityEvaluation;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.google.api.client.util.DateTime;
 
 import java.security.PrivateKey;
@@ -43,7 +46,7 @@ public class GoogleServiceHelperMethods {
         LocalDate now = LocalDate.now();
         Long daysSinceLogin = null;
         if (lastLogin != null) {
-            LocalDate loginDate = DateTimeConverter.convertGoogleDateTime(lastLogin);
+            LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
             daysSinceLogin = ChronoUnit.DAYS.between(loginDate, now);
         }
 
@@ -142,4 +145,17 @@ public class GoogleServiceHelperMethods {
         }
         return Math.max(0, 100 - (violationCount * 100 / total));
     }
+
+    public static String getAdminEmailForUser(String email, UserService userService, OrganizationService organizationService) {
+        return userService.findByEmail(email)
+                .flatMap(user -> organizationService.findById(user.getOrganizationId()))
+                .map(org -> {
+                    if (org.getAdminEmail() == null || org.getAdminEmail().isBlank()) {
+                        throw new GoogleWorkspaceSyncException("No Admin email configured for organization: " + org.getName());
+                    }
+                    return org.getAdminEmail();
+                })
+                .orElseThrow(() -> new GoogleWorkspaceSyncException("User or Organization not found for: " + email));
+    }
+
 }

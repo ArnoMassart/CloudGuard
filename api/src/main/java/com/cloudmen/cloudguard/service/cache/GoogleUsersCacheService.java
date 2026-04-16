@@ -2,7 +2,10 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -33,9 +36,13 @@ public class GoogleUsersCacheService {
             .build();
 
     private static final String MY_CUSTOMER_TEXT = "my_customer";
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public GoogleUsersCacheService(GoogleApiFactory googleApiFactory) {
+    public GoogleUsersCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -46,13 +53,15 @@ public class GoogleUsersCacheService {
         return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
 
-    public List<String> getUserRoles(String email) {
+    public List<String> getUserRoles(String loggedInEmail) {
         try {
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
             Directory service = googleApiFactory.getDirectoryService(
-                    DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, email);
+                    DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, adminEmail);
 
             RoleAssignments assignments = service.roleAssignments().list(MY_CUSTOMER_TEXT)
-                    .setUserKey(email)
+                    .setUserKey(loggedInEmail)
                     .execute();
             List<RoleAssignment> items = assignments.getItems();
 
@@ -76,9 +85,11 @@ public class GoogleUsersCacheService {
         }
     }
 
-    private UserCacheEntry fetchFromGoogle(String adminEmail, UserCacheEntry fallbackEntry) {
+    private UserCacheEntry fetchFromGoogle(String loggedInEmail, UserCacheEntry fallbackEntry) {
         try {
-            log.info("Ophalen LIVE Gebruiker data van Google voor: {}", adminEmail);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
+            log.info("Ophalen LIVE gebruikers data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
             Directory userDirectory = googleApiFactory.getDirectoryService(
                     Set.of(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY),
                     adminEmail);

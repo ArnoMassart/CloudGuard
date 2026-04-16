@@ -42,6 +42,12 @@ class PasswordSettingsServiceTest {
     @Mock
     UserSecurityPreferenceService userSecurityPreferenceService;
 
+    @Mock
+    UserService userService;
+
+    @Mock
+    OrganizationService organizationService;
+
     private ResourceBundleMessageSource messageSource;
     private PasswordSettingsService service;
 
@@ -53,7 +59,7 @@ class PasswordSettingsServiceTest {
         messageSource.setFallbackToSystemLocale(false);
         LocaleContextHolder.setLocale(Locale.ENGLISH);
         service = new PasswordSettingsService(
-                policyCache, usersCache, orgUnitCache, adminSecurityKeysService, userSecurityPreferenceService, messageSource);
+                policyCache, usersCache, orgUnitCache, adminSecurityKeysService, userSecurityPreferenceService, messageSource, userService, organizationService);
     }
 
     @AfterEach

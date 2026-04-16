@@ -16,7 +16,7 @@ public class AppPasswordController {
     private final JwtService jwtService;
     private final UserSecurityPreferenceService preferenceService;
 
-    private static final boolean IS_TESTMODE = true;
+    private static final boolean IS_TESTMODE = false;
 
     public AppPasswordController(AppPasswordsService appPasswordsService, JwtService jwtService,
                                  UserSecurityPreferenceService preferenceService) {

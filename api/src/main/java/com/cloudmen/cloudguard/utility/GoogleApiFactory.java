@@ -25,13 +25,13 @@ public class GoogleApiFactory {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    public ServiceAccountCredentials getCredentials(Set<String> scopes, String loggedInEmail) throws Exception {
+    public ServiceAccountCredentials getCredentials(Set<String> scopes, String organizationAdminEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
 
         return ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
                 .setPrivateKey(decodePrivateKey(pk))
-                .setServiceAccountUser(loggedInEmail)
+                .setServiceAccountUser(organizationAdminEmail)
                 .setScopes(scopes)
                 .build();
     }

@@ -5,7 +5,10 @@ import com.cloudmen.cloudguard.dto.groups.CachedGroupItem;
 import com.cloudmen.cloudguard.dto.groups.GroupCacheEntry;
 import com.cloudmen.cloudguard.dto.groups.GroupOrgDetail;
 import com.cloudmen.cloudguard.dto.groups.GroupSettingsDto;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -47,6 +50,8 @@ public class GoogleGroupsCacheService {
 
     private static final String CLOUD_IDENTITY_SCOPE = "https://www.googleapis.com/auth/cloud-identity.groups.readonly";
     private static final String GROUPS_SETTINGS_SCOPE = "https://www.googleapis.com/auth/apps.groups.settings";
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
 
     @Value("${google.api.client-email}")
@@ -55,8 +60,10 @@ public class GoogleGroupsCacheService {
     @Value("${google.api.private-key}")
     private String privateKey;
 
-    public GoogleGroupsCacheService(GoogleApiFactory googleApiFactory) {
+    public GoogleGroupsCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -69,25 +76,27 @@ public class GoogleGroupsCacheService {
 
     private GroupCacheEntry fetchFromGoogle(String loggedInEmail, GroupCacheEntry fallbackEntry) {
         try {
-            log.info("Ophalen LIVE Groep data van Google voor: {}", loggedInEmail);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
+            log.info("Ophalen LIVE groepen data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
 
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_MEMBER_READONLY
             );
-            Directory service = googleApiFactory.getDirectoryService(scopes, loggedInEmail);
+            Directory service = googleApiFactory.getDirectoryService(scopes, adminEmail);
 
             CloudIdentity cloudIdentity = null;
             try {
-                cloudIdentity = getCloudIdentityService(loggedInEmail);
+                cloudIdentity = getCloudIdentityService(adminEmail);
             } catch (Throwable t) {
                 log.warn("Cloud Identity API unavailable", t);
             }
 
-            String primaryDomain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
+            String primaryDomain = adminEmail.substring(adminEmail.indexOf('@') + 1);
 
             // A. Haal alle groepen en details op
-            List<CachedGroupItem> allMappedGroups = fetchAllGroups(service, cloudIdentity, primaryDomain, loggedInEmail);
+            List<CachedGroupItem> allMappedGroups = fetchAllGroups(service, cloudIdentity, primaryDomain, adminEmail);
 
             return new GroupCacheEntry(allMappedGroups, System.currentTimeMillis());
 
@@ -100,7 +109,7 @@ public class GoogleGroupsCacheService {
         }
     }
 
-    private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain, String loggedInEmail) throws IOException {
+    private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain, String adminEmail) throws IOException {
         List<CachedGroupItem> allMappedGroups = new ArrayList<>();
         String pageToken = null;
 
@@ -142,7 +151,7 @@ public class GoogleGroupsCacheService {
                     String adminId = group.getId() != null ? group.getId() : "";
                     String groupName = group.getName() != null ? group.getName() : "";
 
-                    GroupSettingsDto settings = getGroupSettings(loggedInEmail, groupEmail);
+                    GroupSettingsDto settings = getGroupSettings(adminEmail, groupEmail);
 
                     GroupOrgDetail detail = new GroupOrgDetail(
                             groupEmail, adminId, risk, tags, total, external, externalAllowed, settings.getWhoCanJoin(), settings.getWhoCanView()

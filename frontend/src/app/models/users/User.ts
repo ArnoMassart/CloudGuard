@@ -6,6 +6,8 @@ export type User = {
   roles: Role[];
   createdAt: Date;
   roleRequested: boolean;
+  organizationRequested: boolean;
+  organizationId: number;
   organizationName?: string | null;
 };
 
@@ -13,7 +15,6 @@ export enum Role {
   UNASSIGNED = 'UNASSIGNED',
   SUPER_ADMIN = 'SUPER_ADMIN',
 
-  DASHBOARD_VIEWER = 'DASHBOARD_VIEWER',
   USERS_GROUPS_VIEWER = 'USERS_GROUPS_VIEWER',
   ORG_UNITS_VIEWER = 'ORG_UNITS_VIEWER',
   SHARED_DRIVES_VIEWER = 'SHARED_DRIVES_VIEWER',
@@ -30,7 +31,6 @@ export enum Role {
 export const RoleLabels: Record<Role, string> = {
   [Role.UNASSIGNED]: 'user.role.unassigned',
   [Role.SUPER_ADMIN]: 'user.role.super-admin',
-  [Role.DASHBOARD_VIEWER]: 'user.role.dashboard',
   [Role.USERS_GROUPS_VIEWER]: 'user.role.users-groups',
   [Role.ORG_UNITS_VIEWER]: 'user.role.org-units',
   [Role.SHARED_DRIVES_VIEWER]: 'user.role.shared-drives',
@@ -46,7 +46,6 @@ export const RoleLabels: Record<Role, string> = {
 
 export const RolePriority: Record<Role, number> = {
   [Role.SUPER_ADMIN]: 1,
-  [Role.DASHBOARD_VIEWER]: 2,
   [Role.NOTIFICATIONS_FEEDBACK_VIEWER]: 3,
   [Role.SECURITY_PREFERENCES_VIEWER]: 4,
   [Role.USERS_GROUPS_VIEWER]: 5,

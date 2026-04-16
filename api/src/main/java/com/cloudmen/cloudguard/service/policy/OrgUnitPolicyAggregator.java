@@ -1,6 +1,9 @@
 package com.cloudmen.cloudguard.service.policy;
 
 import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,8 +23,14 @@ public class OrgUnitPolicyAggregator {
 
     private final List<OrgUnitPolicyProvider> providers;
     private final MessageSource messageSource;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public OrgUnitPolicyAggregator(List<OrgUnitPolicyProvider> providers, @Qualifier("messageSource") MessageSource messageSource) {
+    public OrgUnitPolicyAggregator(
+            List<OrgUnitPolicyProvider> providers,
+            @Qualifier("messageSource") MessageSource messageSource,
+            UserService userService,
+            OrganizationService organizationService) {
         this.providers = providers.stream()
                 .sorted(Comparator.comparingInt(p -> {
                     Order o = p.getClass().getAnnotation(Order.class);
@@ -29,16 +38,20 @@ public class OrgUnitPolicyAggregator {
                 }))
                 .toList();
         this.messageSource = messageSource;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public List<OrgUnitPolicyDto> getPolicies(String loggedInEmail, String orgUnitPath) {
+        String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
         Locale locale = LocaleContextHolder.getLocale();
 
         String path = (orgUnitPath == null || orgUnitPath.isBlank()) ? "/" : orgUnitPath.trim();
         List<OrgUnitPolicyDto> result = new ArrayList<>();
         for (OrgUnitPolicyProvider provider : providers) {
             try {
-                result.add(provider.fetch(loggedInEmail, path));
+                result.add(provider.fetch(adminEmail, path));
             } catch (Exception e) {
                 log.warn("Policy provider {} failed for OU {}: {}", provider.key(), path, e.getMessage());
                 result.add(new OrgUnitPolicyDto(

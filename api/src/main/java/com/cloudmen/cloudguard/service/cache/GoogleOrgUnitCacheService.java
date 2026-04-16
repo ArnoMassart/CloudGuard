@@ -2,7 +2,10 @@ package com.cloudmen.cloudguard.service.cache;
 
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -24,6 +27,8 @@ public class GoogleOrgUnitCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleOrgUnitCacheService.class);
 
     private final GoogleApiFactory directoryFactory;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     // --- CACHE CONFIGURATIE ---
     private final Cache<String, OrgUnitCacheEntry> cache = Caffeine.newBuilder()
@@ -31,8 +36,10 @@ public class GoogleOrgUnitCacheService {
             .maximumSize(100)
             .build();
 
-    public GoogleOrgUnitCacheService(GoogleApiFactory directoryFactory) {
+    public GoogleOrgUnitCacheService(GoogleApiFactory directoryFactory, UserService userService, OrganizationService organizationService) {
         this.directoryFactory = directoryFactory;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     public void forceRefreshCache(String adminEmail) {
@@ -45,12 +52,13 @@ public class GoogleOrgUnitCacheService {
 
     private OrgUnitCacheEntry fetchFromGoogle(String loggedInEmail, OrgUnitCacheEntry fallbackEntry) {
         try {
-            log.info("Ophalen LIVE OrgUnit data van Google voor: {}", loggedInEmail);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+            log.info("Ophalen LIVE data van Google. Org Units: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_ORGUNIT_READONLY,
                     DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
             );
-            Directory directory = directoryFactory.getDirectoryService(scopes, loggedInEmail);
+            Directory directory = directoryFactory.getDirectoryService(scopes, adminEmail);
 
             // 1. Haal de ruwe OrgUnits op
             List<OrgUnit> allOrgUnits = fetchAllOrgUnits(directory);

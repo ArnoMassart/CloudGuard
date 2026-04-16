@@ -1,54 +1,73 @@
 <div
-    class="min-h-screen w-full bg-navbar-background flex flex-col items-center justify-center overflow-hidden py-4 text-white md:pb-8">
-    <div class="flex-1 flex flex-col items-center justify-center gap-10 mt-auto w-full max-w-md">
-        <div class="flex flex-col items-center text-center gap-1">
-            <lucide-icon [img]="Icons.ShieldCheck" class="text-primary mb-2 w-12 h-12 md:w-14 md:h-14"></lucide-icon>
-            <h1 class="text-white font-semibold text-3xl mb-1">CloudGuard</h1>
-            <p class="text-white/60 text-sm">by CLOUDMEN</p>
-        </div>
-
-        <div
-            class="bg-white text-black mx-5 px-5 py-7 rounded-xl flex flex-col items-center justify-center gap-3 shadow-2xl">
-            <div class="flex items-center justify-center bg-amber-100 p-3 mt-1 rounded-full">
-                <lucide-icon [img]="Icons.UserPlus" size="28"
-                    class="text-amber-600 w-5 h-5 md:w-7 md:h-7"></lucide-icon>
-            </div>
-
-            <h2 class="flex justify-center text-xl">{{ 'unassigned.title' | transloco }}</h2>
-
-            <span class="flex items-center justify-center text-center text-black/50 mb-3">
-                {{ 'unassigned.description' | transloco }}
-            </span>
-
-            <div
-                class="bg-slate-50 py-3 px-4 mb-3 text-black/50 text-center text-[13px] rounded-lg border-slate-200 border">
-                @if (!requestSent()) {
-                <span>{{ 'unassigned.instruction' | transloco }}</span>
-                } @else {
-                <span class="text-green-600 font-medium">
-                    <lucide-icon [img]="Icons.CircleCheck" size="14" class="inline mb-0.5 mr-1"></lucide-icon>
-                    {{ 'unassigned.request-sent-success' | transloco }}
-                </span>
-                }
-            </div>
-
-            <div class="flex flex-col w-full gap-2">
-                <button (click)="requestAccess()" [disabled]="requestSent()" [class.opacity-50]="requestSent()"
-                    [class.cursor-not-allowed]="requestSent()"
-                    class="bg-primary text-white w-full p-2.5 rounded-lg hover:bg-primary/80 transition-all font-medium cursor-pointer">
-                    {{ (requestSent() ? 'unassigned.btn-requested' : 'unassigned.btn-request') | transloco }}
-                </button>
-
-                <button (click)="tryAgain()"
-                    class="text-black/40 hover:text-black/60 text-sm py-1 transition-colors cursor-pointer">
-                    {{ 'back-to-login' | transloco }}
-                </button>
-            </div>
-        </div>
+  class="min-h-screen w-full bg-navbar-background flex flex-col items-center justify-center overflow-hidden py-4 text-white md:pb-8"
+>
+  <div class="flex-1 flex flex-col items-center justify-center gap-10 mt-auto w-full max-w-md">
+    <div class="flex flex-col items-center text-center gap-1">
+      <lucide-icon
+        [img]="Icons.ShieldCheck"
+        class="text-primary mb-2 w-12 h-12 md:w-14 md:h-14"
+      ></lucide-icon>
+      <h1 class="text-white font-semibold text-3xl mb-1">CloudGuard</h1>
+      <p class="text-white/60 text-sm">by CLOUDMEN</p>
     </div>
 
-    <div class="text-center text-sm text-white/60 mt-8">
-        <app-language-bar />
-        <p class="pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
+    <div
+      class="bg-white text-black mx-5 px-5 py-7 rounded-xl flex flex-col items-center justify-center gap-3 shadow-2xl"
+    >
+      <div class="flex items-center justify-center bg-amber-100 p-3 mt-1 rounded-full">
+        <lucide-icon
+          [img]="Icons.UserPlus"
+          size="28"
+          class="text-amber-600 w-5 h-5 md:w-7 md:h-7"
+        ></lucide-icon>
+      </div>
+
+      <h2 class="flex justify-center text-xl">{{ 'unassigned.title' | transloco }}</h2>
+
+      <span class="flex items-center justify-center text-center text-black/50 mb-3">
+        {{ 'unassigned.description' | transloco }}
+      </span>
+
+      <div
+        class="bg-slate-50 py-3 px-4 mb-3 text-black/50 text-center text-[13px] rounded-lg border-slate-200 border"
+      >
+        @if (!requestSent()) {
+          <span>{{ 'unassigned.instruction' | transloco }}</span>
+        } @else {
+          <span class="text-green-600 font-medium">
+            <lucide-icon
+              [img]="Icons.CircleCheck"
+              size="14"
+              class="inline mb-0.5 mr-1"
+            ></lucide-icon>
+            {{ 'unassigned.request-sent-success' | transloco }}
+          </span>
+        }
+      </div>
+
+      <div class="flex flex-col w-full gap-2">
+        <button
+          (click)="requestAccess()"
+          [disabled]="requestSent()"
+          [class.opacity-50]="requestSent()"
+          [class.cursor-not-allowed]="requestSent()"
+          class="bg-primary text-white w-full p-2.5 rounded-lg hover:bg-primary/80 transition-all font-medium cursor-pointer"
+        >
+          {{ (requestSent() ? 'unassigned.btn-requested' : 'unassigned.btn-request') | transloco }}
+        </button>
+
+        <button
+          (click)="tryAgain()"
+          class="text-black/40 hover:text-black/60 text-sm py-1 transition-colors cursor-pointer"
+        >
+          {{ 'back-to-login' | transloco }}
+        </button>
+      </div>
     </div>
+  </div>
+
+  <div class="text-center text-sm text-white/60 mt-8">
+    <app-language-bar />
+    <p class="pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
+  </div>
 </div>

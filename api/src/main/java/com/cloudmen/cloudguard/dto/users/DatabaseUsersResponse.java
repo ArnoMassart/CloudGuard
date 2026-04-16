@@ -5,7 +5,7 @@ import com.cloudmen.cloudguard.domain.model.User;
 import java.util.List;
 
 public record DatabaseUsersResponse(
-        List<User> users,
+        List<UserDto> users,
         String nextPageToken
 ) {
 }

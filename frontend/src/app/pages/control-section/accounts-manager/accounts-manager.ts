@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, viewChild } from '@angular/core';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SearchBar } from '../../../components/search-bar/search-bar';
@@ -10,19 +10,33 @@ import { Role, RoleLabels, RolePriority, User } from '../../../models/users/User
 import { LucideAngularModule } from 'lucide-angular';
 import { AssignRoleDialog } from '../../../components/assign-role-dialog/assign-role-dialog';
 import { MatDialog } from '@angular/material/dialog';
+import { OrgService } from '../../../services/org-service';
+import { Organization } from '../../../models/org/Organization';
+import { FormsModule } from '@angular/forms';
+import { AccountsManagerTable } from './accounts-manager-table/accounts-manager-table';
 
 const ITEMS_PER_PAGE = 4;
 
 @Component({
   selector: 'app-accounts-manager',
-  imports: [PageHeader, TranslocoPipe, SearchBar, PaginationBar, LucideAngularModule],
+  imports: [
+    PageHeader,
+    TranslocoPipe,
+    SearchBar,
+    PaginationBar,
+    LucideAngularModule,
+    FormsModule,
+    AccountsManagerTable,
+  ],
   templateUrl: './accounts-manager.html',
   styleUrl: './accounts-manager.css',
 })
-export class AccountsManager {
+export class AccountsManager implements OnInit {
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
+  readonly #orgService = inject(OrgService);
+
   readonly pagination = viewChild(PaginationBar);
   readonly paginationWithoutRoles = viewChild(PaginationBar);
 
@@ -41,9 +55,7 @@ export class AccountsManager {
 
   readonly expandedRoles = signal<Set<string>>(new Set<string>());
 
-  toggleRolesSummary(email: string, rolesLength: number, event: Event) {
-    event.stopPropagation();
-
+  toggleRolesSummary(email: string, rolesLength: number) {
     if (rolesLength > 2) {
       const current = new Set(this.expandedRoles());
       if (current.has(email)) {
@@ -54,6 +66,8 @@ export class AccountsManager {
       this.expandedRoles.set(current);
     }
   }
+
+  readonly orgs = signal<Organization[]>([]);
 
   // ==========================================
   // PRIVATE PROPERTIES
@@ -67,6 +81,7 @@ export class AccountsManager {
     this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
       this.loadUsers();
       this.loadUsersWithoutRoles();
+      this.loadOrganizations();
     });
   }
 
@@ -132,8 +147,7 @@ export class AccountsManager {
       });
   }
 
-  openLogoutDialog(event: MouseEvent, user: User, hasExistingRoles: boolean): void {
-    event.stopPropagation();
+  openRoleChangeDialog(user: User, hasExistingRoles: boolean): void {
     const dialogRef = this.dialog.open(AssignRoleDialog, {
       width: '450px',
       panelClass: 'custom-dialog-container',
@@ -193,6 +207,7 @@ export class AccountsManager {
       .subscribe({
         next: (page) => {
           this.users.set(page.users);
+          console.log(page);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
         },
@@ -210,7 +225,7 @@ export class AccountsManager {
       .getAllDatabaseUsersWithoutRoles(
         ITEMS_PER_PAGE,
         token || undefined,
-        this.searchQueryWithoutRoles()
+        this.searchQueryWithoutRoles(),
       )
       .subscribe({
         next: (page) => {
@@ -223,5 +238,30 @@ export class AccountsManager {
           this.isLoadingWithoutRoles.set(false);
         },
       });
+  }
+
+  loadOrganizations() {
+    this.#orgService.getAllOrgs().subscribe({
+      next: (orgs) => this.orgs.set(orgs),
+      error: (err) => console.error('Fout bij laden organisaties', err),
+    });
+  }
+
+  onOrganizationChange(user: User) {
+    const newOrgId = user.organizationId;
+
+    // Roep je UserService aan om de organisatie van de gebruiker te updaten
+    this.#userService.updateUserOrg(user.email, newOrgId).subscribe({
+      next: () => {
+        // Eventueel een succesmelding of de lokale state updaten
+        this.loadUsersWithoutRoles();
+        this.loadUsers();
+      },
+    });
+  }
+
+  isOrgInList(orgId: number | null): boolean {
+    if (!orgId) return false;
+    return this.orgs().some((org) => org.id === orgId);
   }
 }

@@ -25,12 +25,20 @@ public class DateTimeConverter {
         return convertTimeToPretty(epochMillis);
     }
 
-    public static LocalDate convertGoogleDateTime(DateTime googleDateTime) {
+    public static LocalDate convertGoogleDateTimeToLocalDate(DateTime googleDateTime) {
         long millis = googleDateTime.getValue();
 
         return Instant.ofEpochMilli(millis)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
+    }
+
+    public static String parseWithPattern(long epochMillis, String pattern) {
+        Instant instant = Instant.ofEpochMilli(epochMillis);
+
+        LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+        return parseWithPattern(dateTime, pattern);
     }
 
     public static String parseWithPattern(LocalDateTime value, String pattern) {

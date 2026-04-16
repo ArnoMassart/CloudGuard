@@ -3,7 +3,10 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.oauth.OAuthCacheEntry;
 import com.cloudmen.cloudguard.dto.oauth.RawUserToken;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
@@ -31,10 +34,14 @@ public class GoogleOAuthCacheService {
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
+    private final OrganizationService organizationService;
+    private final UserService userService;
 
-    public GoogleOAuthCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService) {
+    public GoogleOAuthCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService, OrganizationService organizationService, UserService userService) {
         this.googleApiFactory = googleApiFactory;
         this.usersCacheService = usersCacheService;
+        this.organizationService = organizationService;
+        this.userService = userService;
     }
 
     public void forceRefreshCache(String loggedInEmail) {
@@ -47,10 +54,12 @@ public class GoogleOAuthCacheService {
 
     private OAuthCacheEntry fetchFromGoogle(String loggedInEmail, OAuthCacheEntry fallback) {
         try {
-            log.info("Ophalen LIVE OAuth data van Google voor: {}", loggedInEmail);
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+            log.info("Ophalen LIVE OAuth data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+
             Directory directory = googleApiFactory.getDirectoryService(
                     Set.of(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY),
-                    loggedInEmail
+                    adminEmail
             );
 
             List<User> allUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();

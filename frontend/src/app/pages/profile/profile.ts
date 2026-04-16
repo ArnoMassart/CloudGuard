@@ -7,7 +7,7 @@ import { AppIcons } from '../../shared/AppIcons';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { ViewRolesDialog } from '../../components/view-roles-dialog/view-roles-dialog';
-import { RoleLabels, User } from '../../models/users/User';
+import { Role, RoleLabels, User } from '../../models/users/User';
 
 @Component({
   selector: 'app-profile',
@@ -51,6 +51,16 @@ export class Profile {
         const transB = this.translocoService.translate(b.label);
         return transA.localeCompare(transB);
       });
+  }
+
+  getRoleName(user: { roles: Role[] }): string {
+    const role = user.roles.at(0);
+
+    if (role === Role.SUPER_ADMIN) {
+      return RoleLabels[Role.SUPER_ADMIN];
+    }
+
+    return 'viewer';
   }
 
   openRolesDialog(user: User) {

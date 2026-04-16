@@ -45,8 +45,8 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
     }
 
     @Override
-    public OrgUnitPolicyDto fetch(String loggedInEmail, String orgUnitPath) throws Exception {
-        Map<String, TsvStats> allStats = getOrFetchTsvData(loggedInEmail);
+    public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
+        Map<String, TsvStats> allStats = getOrFetchTsvData(adminEmail);
 
         String normalizedPath = (orgUnitPath == null || orgUnitPath.isBlank()) ? "/" : orgUnitPath.trim();
         TsvStats stats = allStats.getOrDefault(normalizedPath, new TsvStats(0, 0));
@@ -90,8 +90,8 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         );
     }
 
-    private Map<String, TsvStats> getOrFetchTsvData(String loggedInEmail) {
-        return cache.compute(loggedInEmail, (email, existingEntry) -> {
+    private Map<String, TsvStats> getOrFetchTsvData(String adminEmail) {
+        return cache.compute(adminEmail, (email, existingEntry) -> {
             long now = System.currentTimeMillis();
             if (existingEntry != null && (now - existingEntry.timestamp() < CACHE_TTL_MS)) {
                 return existingEntry;
@@ -100,11 +100,11 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         }).statsMap();
     }
 
-    private CacheEntry fetchAllUsersFromGoogle(String loggedInEmail, CacheEntry fallbackEntry) {
+    private CacheEntry fetchAllUsersFromGoogle(String adminEmail, CacheEntry fallbackEntry) {
         try {
-            log.info("Ophalen LIVE 2SV data van Google voor: {}", loggedInEmail);
+            log.info("Ophalen LIVE 2SV data van Google. Impersonatie via Admin: {}", adminEmail);
             Set<String> scopes = Set.of(DIRECTORY_USER_READONLY_SCOPE, DIRECTORY_USER_SECURITY_SCOPE);
-            Directory directory = directoryFactory.getDirectoryService(scopes, loggedInEmail);
+            Directory directory = directoryFactory.getDirectoryService(scopes, adminEmail);
 
             Map<String, TsvStats> statsMap = new HashMap<>();
             String pageToken = null;
