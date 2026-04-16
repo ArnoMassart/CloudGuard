@@ -35,14 +35,16 @@ public class UserService {
 
     private final OrganizationRepository organizationRepository;
     private final MessageSource messageSource;
+    private final AccessRequestEmailService accessRequestEmailService;
 
     public UserService(
             UserRepository userRepository,
             OrganizationRepository organizationRepository,
-            @Qualifier("messageSource") MessageSource messageSource) {
+            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.messageSource = messageSource;
+        this.accessRequestEmailService = accessRequestEmailService;
     }
 
     public UserDto convertToDto(User user) {
@@ -133,8 +135,13 @@ public class UserService {
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setRoleRequested(true);
-            userRepository.save(user);
+
+            if (!user.isRoleRequested()) {
+                user.setRoleRequested(true);
+                userRepository.save(user);
+
+                accessRequestEmailService.notifyRoleRequest(email);
+            }
         }
     }
 
@@ -150,8 +157,13 @@ public class UserService {
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setOrganizationRequested(true);
-            userRepository.save(user);
+
+            if (!user.isOrganizationRequested()) {
+                user.setOrganizationRequested(true);
+                userRepository.save(user);
+
+                accessRequestEmailService.notifyOrganizationRequest(email);
+            }
         }
     }
 

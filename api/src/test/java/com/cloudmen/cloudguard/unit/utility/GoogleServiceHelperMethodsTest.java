@@ -1,6 +1,12 @@
 package com.cloudmen.cloudguard.unit.utility;
 
+import com.cloudmen.cloudguard.domain.model.Organization;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.UserSecurityEvaluation;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.client.util.DateTime;
 import org.junit.jupiter.api.Test;
@@ -10,9 +16,12 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 import static com.cloudmen.cloudguard.unit.helper.GlobalTestHelper.daysAgo;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class GoogleServiceHelperMethodsTest {
 
@@ -153,8 +162,9 @@ public class GoogleServiceHelperMethodsTest {
 
     @Test
     void severity_colorOverride_returnsFixedColor() {
-        assertEquals("blue", GoogleServiceHelperMethods.severity(80, false, "blue"));
-        assertEquals("blue", GoogleServiceHelperMethods.severity(80, true, "blue"));
+        assertEquals("blue", GoogleServiceHelperMethods.severity(80, "blue"));
+        assertEquals("purple", GoogleServiceHelperMethods.severity(80, false, "purple"));
+        assertEquals("purple", GoogleServiceHelperMethods.severity(80, true, "purple"));
     }
 
     @Test
@@ -169,5 +179,100 @@ public class GoogleServiceHelperMethodsTest {
         assertEquals(100, GoogleServiceHelperMethods.calculateDeductionScore(0, 5));
         assertEquals(80, GoogleServiceHelperMethods.calculateDeductionScore(10, 2));
         assertEquals(0, GoogleServiceHelperMethods.calculateDeductionScore(10, 15));
+    }
+
+    // --- NIEUWE TESTS ---
+
+    @Test
+    void getAdminEmailForUser_success_returnsAdminEmail() {
+        UserService userService = mock(UserService.class);
+        OrganizationService orgService = mock(OrganizationService.class);
+
+        User user = new User();
+        user.setOrganizationId(1L);
+
+        Organization org = new Organization();
+        org.setName("Cloudmen");
+        org.setAdminEmail("admin@cloudmen.com");
+
+        when(userService.findByEmailOptional("user@cloudmen.com")).thenReturn(Optional.of(user));
+        when(orgService.findById(1L)).thenReturn(Optional.of(org));
+
+        String result = GoogleServiceHelperMethods.getAdminEmailForUser("user@cloudmen.com", userService, orgService);
+        assertEquals("admin@cloudmen.com", result);
+    }
+
+    @Test
+    void getAdminEmailForUser_userNotFound_throwsException() {
+        UserService userService = mock(UserService.class);
+        OrganizationService orgService = mock(OrganizationService.class);
+
+        when(userService.findByEmailOptional("unknown@cloudmen.com")).thenReturn(Optional.empty());
+
+        GoogleWorkspaceSyncException ex = assertThrows(GoogleWorkspaceSyncException.class, () ->
+                GoogleServiceHelperMethods.getAdminEmailForUser("unknown@cloudmen.com", userService, orgService)
+        );
+
+        assertTrue(ex.getMessage().contains("User or Organization not found"));
+    }
+
+    @Test
+    void getAdminEmailForUser_orgNotFound_throwsException() {
+        UserService userService = mock(UserService.class);
+        OrganizationService orgService = mock(OrganizationService.class);
+
+        User user = new User();
+        user.setOrganizationId(99L);
+
+        when(userService.findByEmailOptional("user@cloudmen.com")).thenReturn(Optional.of(user));
+        when(orgService.findById(99L)).thenReturn(Optional.empty());
+
+        GoogleWorkspaceSyncException ex = assertThrows(GoogleWorkspaceSyncException.class, () ->
+                GoogleServiceHelperMethods.getAdminEmailForUser("user@cloudmen.com", userService, orgService)
+        );
+
+        assertTrue(ex.getMessage().contains("User or Organization not found"));
+    }
+
+    @Test
+    void getAdminEmailForUser_adminEmailBlank_throwsException() {
+        UserService userService = mock(UserService.class);
+        OrganizationService orgService = mock(OrganizationService.class);
+
+        User user = new User();
+        user.setOrganizationId(1L);
+
+        Organization org = new Organization();
+        org.setName("Cloudmen");
+        org.setAdminEmail("   "); // Lege string
+
+        when(userService.findByEmailOptional("user@cloudmen.com")).thenReturn(Optional.of(user));
+        when(orgService.findById(1L)).thenReturn(Optional.of(org));
+
+        GoogleWorkspaceSyncException ex = assertThrows(GoogleWorkspaceSyncException.class, () ->
+                GoogleServiceHelperMethods.getAdminEmailForUser("user@cloudmen.com", userService, orgService)
+        );
+
+        assertTrue(ex.getMessage().contains("No Admin email configured for organization"));
+    }
+
+    @Test
+    void hasAccessToModule_nullRoles_returnsFalse() {
+        assertFalse(GoogleServiceHelperMethods.hasAccessToModule(null, UserRole.DEVICES_VIEWER));
+    }
+
+    @Test
+    void hasAccessToModule_hasSuperAdmin_returnsTrue() {
+        assertTrue(GoogleServiceHelperMethods.hasAccessToModule(List.of(UserRole.SUPER_ADMIN), UserRole.DEVICES_VIEWER));
+    }
+
+    @Test
+    void hasAccessToModule_hasRequiredRole_returnsTrue() {
+        assertTrue(GoogleServiceHelperMethods.hasAccessToModule(List.of(UserRole.DEVICES_VIEWER), UserRole.DEVICES_VIEWER));
+    }
+
+    @Test
+    void hasAccessToModule_doesNotHaveRequiredRole_returnsFalse() {
+        assertFalse(GoogleServiceHelperMethods.hasAccessToModule(List.of(UserRole.USERS_GROUPS_VIEWER), UserRole.DEVICES_VIEWER));
     }
 }
