@@ -12,7 +12,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import com.cloudmen.cloudguard.utility.UtilityFunctions;
+
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class FeedbackEmailService {
@@ -41,17 +44,21 @@ public class FeedbackEmailService {
     public void sendFeedbackEmail(String userId, String source, String notificationType, String feedbackText) {
         if (recipientEmails == null || recipientEmails.isEmpty()) return;
 
+        Locale locale = LocaleContextHolder.getLocale();
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(recipientEmails.toArray(new String[0]));
-            helper.setSubject("CloudGuard: Nieuwe feedback – " + notificationType);
-            try{
+            helper.setSubject(messageSource.getMessage(
+                    "email.feedback.subject", new Object[]{notificationType}, locale));
+            try {
                 helper.setFrom(fromEmail, "CloudGuard");
-            }catch(Exception e){
+            } catch (Exception e) {
                 throw new MessagingException(e.getMessage());
             }
-            helper.setText(buildPlainText(userId, source, notificationType, feedbackText), buildHtmlContent(userId, source, notificationType, feedbackText));
+            helper.setText(
+                    buildPlainText(locale, userId, source, notificationType, feedbackText),
+                    buildHtmlContent(locale, userId, source, notificationType, feedbackText));
             mailSender.send(message);
         } catch (MessagingException e) {
             throwFeedbackEmailFailed(e);
@@ -65,19 +72,28 @@ public class FeedbackEmailService {
         throw new FailedFeedbackEmailException(msg, cause);
     }
 
-    private String buildPlainText(String userId, String source, String notificationType, String feedbackText) {
-        return String.format(
-                "Er is nieuwe feedback ontvangen.\n\n" +
-                        "Gebruiker: %s\n" +
-                        "Bron: %s\n" +
-                        "Meldingstype: %s\n\n" +
-                        "Feedback:\n%s",
-                userId, source, notificationType, feedbackText
-        );
+    private String buildPlainText(Locale locale, String userId, String source, String notificationType, String feedbackText) {
+        String intro = messageSource.getMessage("email.feedback.intro", null, locale);
+        String userLabel = messageSource.getMessage("email.feedback.label.user", null, locale);
+        String sourceLabel = messageSource.getMessage("email.feedback.label.source", null, locale);
+        String typeLabel = messageSource.getMessage("email.feedback.label.type", null, locale);
+        String fbLabel = messageSource.getMessage("email.feedback.label.feedback", null, locale);
+
+        return intro + "\n\n" +
+                userLabel + ": " + userId + "\n" +
+                sourceLabel + ": " + source + "\n" +
+                typeLabel + ": " + notificationType + "\n\n" +
+                fbLabel + ":\n" + feedbackText;
     }
 
-    private String buildHtmlContent(String userId, String source, String notificationType, String feedbackText) {
-        String escapedFeedback = escapeHtml(feedbackText);
+    private String buildHtmlContent(Locale locale, String userId, String source, String notificationType, String feedbackText) {
+        String escapedFeedback = UtilityFunctions.escapeHtml(feedbackText);
+        String titleText = messageSource.getMessage("email.feedback.html.title", null, locale);
+        String userLabel = messageSource.getMessage("email.feedback.label.user", null, locale);
+        String sourceLabel = messageSource.getMessage("email.feedback.label.source", null, locale);
+        String typeLabel = messageSource.getMessage("email.feedback.label.type", null, locale);
+        String fbLabel = messageSource.getMessage("email.feedback.label.feedback", null, locale);
+        String footerText = messageSource.getMessage("email.feedback.footer", null, locale);
 
         return """
             <!DOCTYPE html>
@@ -110,20 +126,20 @@ public class FeedbackEmailService {
                   </div>
                 </div>
                 <div class="content">
-                  <h2 class="title">Nieuwe feedback ontvangen</h2>
+                  <h2 class="title">%s</h2>
                   <div class="card">
-                    <div class="label">Gebruiker</div>
+                    <div class="label">%s</div>
                     <div class="value">%s</div>
-                    <div class="label">Bron</div>
+                    <div class="label">%s</div>
                     <div class="value">%s</div>
-                    <div class="label">Meldingstype</div>
+                    <div class="label">%s</div>
                     <div class="value">%s</div>
-                    <div class="label">Feedback</div>
+                    <div class="label">%s</div>
                     <div class="feedback-box">%s</div>
                   </div>
                 </div>
                 <div class="footer">
-                  Deze e-mail is automatisch verzonden door CloudGuard Security Dashboard.
+                  %s
                 </div>
               </div>
             </body>
@@ -140,20 +156,16 @@ public class FeedbackEmailService {
                 PRIMARY,
                 MUTED_BG,
                 MUTED_TEXT,
-                escapeHtml(userId),
-                escapeHtml(source),
-                escapeHtml(notificationType),
-                escapedFeedback
+                UtilityFunctions.escapeHtml(titleText),
+                UtilityFunctions.escapeHtml(userLabel),
+                UtilityFunctions.escapeHtml(userId),
+                UtilityFunctions.escapeHtml(sourceLabel),
+                UtilityFunctions.escapeHtml(source),
+                UtilityFunctions.escapeHtml(typeLabel),
+                UtilityFunctions.escapeHtml(notificationType),
+                UtilityFunctions.escapeHtml(fbLabel),
+                escapedFeedback,
+                UtilityFunctions.escapeHtml(footerText)
         );
-    }
-
-    private String escapeHtml(String text) {
-        if (text == null) return "";
-        return text
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
     }
 }
