@@ -42,6 +42,7 @@ class CriticalNotificationReminderEmailServiceTest {
     void setUp() {
         service = new CriticalNotificationReminderEmailService(mailSender, messageSource);
         ReflectionTestUtils.setField(service, "fromEmail", "noreply@test.com");
+        ReflectionTestUtils.setField(service, "appPublicUrl", "https://app.example.com");
         lenient()
                 .when(messageSource.getMessage(eq("email.reminder.critical.subject"), isNull(), eq(Locale.ENGLISH)))
                 .thenReturn("Subject");
@@ -59,6 +60,12 @@ class CriticalNotificationReminderEmailServiceTest {
         lenient()
                 .when(messageSource.getMessage(eq("email.reminder.critical.untitled"), isNull(), eq(Locale.ENGLISH)))
                 .thenReturn("Untitled");
+        lenient()
+                .when(messageSource.getMessage(eq("email.reminder.critical.button"), isNull(), eq(Locale.ENGLISH)))
+                .thenReturn("Open CloudGuard");
+        lenient()
+                .when(messageSource.getMessage(eq("email.report.footer"), isNull(), eq(Locale.ENGLISH)))
+                .thenReturn("This email was generated automatically.");
     }
 
     @Test

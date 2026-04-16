@@ -33,6 +33,9 @@ public class CriticalNotificationReminderEmailService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
+    @Value("${cloudguard.app.public-url:}")
+    private String appPublicUrl;
+
     public CriticalNotificationReminderEmailService(
             JavaMailSender mailSender, @Qualifier("messageSource") MessageSource messageSource) {
         this.mailSender = mailSender;
@@ -75,51 +78,96 @@ public class CriticalNotificationReminderEmailService {
                             locale);
             sb.append("• ").append(line).append("\n");
         }
-        sb.append("\n").append(messageSource.getMessage("email.reminder.critical.footer", null, locale));
+        sb.append("\n\n")
+                .append(messageSource.getMessage("email.reminder.critical.footer", null, locale));
+        String link = appPublicUrl != null ? appPublicUrl.trim() : "";
+        if (!link.isEmpty()) {
+            sb.append("\n").append(link);
+        }
         return sb.toString();
     }
 
     private String buildHtml(Locale locale, List<NotificationInstance> items) {
-        StringBuilder rows = new StringBuilder();
+        String intro = UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.intro", null, locale));
+        String cta = UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.footer", null, locale));
+        String buttonLabel = UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.button", null, locale));
+        String footer = UtilityFunctions.escapeHtml(messageSource.getMessage("email.report.footer", null, locale));
+
+        StringBuilder itemBlocks = new StringBuilder();
         for (NotificationInstance n : items) {
             String title = UtilityFunctions.escapeHtml(itemTitle(n, locale));
             String sub = UtilityFunctions.escapeHtml(itemSubtitle(n));
-            rows.append(
+            itemBlocks.append(
                     """
-                    <tr><td style="padding:10px 12px;border-bottom:1px solid %s;">
-                    <div style="font-weight:600;color:%s;">%s</div>
-                    <div style="font-size:13px;color:%s;margin-top:4px;">%s</div>
-                    </td></tr>
+                    <p style="margin: 16px 0 0 0; padding: 12px 16px; background: %s; border-radius: 6px; border-left: 4px solid %s;">
+                    <strong style="color: %s;">%s</strong><br>
+                    <span style="font-size: 14px; color: %s;">%s</span>
+                    </p>
                     """
-                            .formatted(MUTED_BG, FOREGROUND, title, MUTED_TEXT, sub));
+                            .formatted(MUTED_BG, HEADER_BG, FOREGROUND, title, MUTED_TEXT, sub));
         }
+
+        String link = appPublicUrl != null ? appPublicUrl.trim() : "";
+        String buttonBlock =
+                link.isEmpty()
+                        ? ""
+                        : """
+ <p style="margin: 16px 0 0 0; text-align: center;">
+ <a href="%s" style="display: inline-block; background: %s; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">%s</a>
+                            </p>
+                            """
+                                .formatted(safeHref(link), HEADER_BG, buttonLabel);
+
         return """
                 <!DOCTYPE html>
                 <html>
-                <body style="margin:0;background:%s;font-family:system-ui,Segoe UI,sans-serif;">
-                <div style="max-width:560px;margin:0 auto;padding:24px;">
-                  <div style="background:%s;color:#fff;padding:16px 20px;border-radius:12px 12px 0 0;">
-                    <div style="font-size:18px;font-weight:600;">CloudGuard</div>
+                <head>
+                  <meta charset="UTF-8">
+                  <style>
+                    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f3f3f5; }
+                    .container { max-width: 600px; margin: 20px auto; background: %s; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+                    .header { background: %s; padding: 24px 32px; text-align: center; color: white; }
+                    .content { padding: 32px; color: %s; line-height: 1.5; }
+                    .footer { background: %s; padding: 20px 32px; font-size: 12px; color: %s; text-align: center; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <div class="header">
+                      <h2 style="margin: 0;">CloudGuard Security</h2>
+                    </div>
+                    <div class="content">
+                      <h3 style="margin-top: 0; color: %s;">%s</h3>
+                      %s
+                      <p style="margin: 24px 0 0 0;">%s</p>
+                      %s
+                    </div>
+                    <div class="footer">
+                      %s
+                    </div>
                   </div>
-                  <div style="background:%s;color:%s;padding:20px;border-radius:0 0 12px 12px;border:1px solid %s;border-top:none;">
-                    <p style="margin:0 0 16px;line-height:1.5;">%s</p>
-                    <table style="width:100%%;border-collapse:collapse;">%s</table>
-                    <p style="margin:16px 0 0;font-size:14px;color:%s;">%s</p>
-                  </div>
-                </div>
                 </body>
                 </html>
                 """
                 .formatted(
-                        MUTED_BG,
-                        HEADER_BG,
                         CARD_BG,
+                        HEADER_BG,
                         FOREGROUND,
                         MUTED_BG,
-                        UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.intro", null, locale)),
-                        rows,
                         MUTED_TEXT,
-                        UtilityFunctions.escapeHtml(messageSource.getMessage("email.reminder.critical.footer", null, locale)));
+                        HEADER_BG,
+                        intro,
+                        itemBlocks,
+                        cta,
+                        buttonBlock,
+                        footer);
+    }
+
+    private static String safeHref(String url) {
+        if (url == null) {
+            return "";
+        }
+        return UtilityFunctions.escapeHtml(url).replace(" ", "%20");
     }
 
     private String itemTitle(NotificationInstance n, Locale locale) {
