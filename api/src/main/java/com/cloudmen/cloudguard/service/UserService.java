@@ -4,11 +4,11 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserDto;
+import com.cloudmen.cloudguard.exception.UserNotFoundException;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -80,8 +80,12 @@ public class UserService {
         );
     }
 
-    public Optional<User> findByEmail(String email) {
+    public Optional<User> findByEmailOptional(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public User findByEmail(String email) {
+        return findByEmailOptional(email).orElseThrow(() -> new UserNotFoundException("User met email: " + email + " niet gevonden"));
     }
 
     public User save(User user) {

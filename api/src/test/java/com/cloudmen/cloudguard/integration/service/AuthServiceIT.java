@@ -12,7 +12,6 @@ import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.WorkspaceCustomerIdResolver;
-import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +104,7 @@ public class AuthServiceIT {
     void processLogin_existingUserIsGoogleSuperAdmin_upgradesToSuperAdminAndReturnsResult() {
         // Arrange
         when(jwtService.decodeGoogleToken(EXTERNAL_TOKEN)).thenReturn(mockJwt);
-        when(userService.findByEmail(EMAIL)).thenReturn(Optional.of(testUser));
+        when(userService.findByEmailOptional(EMAIL)).thenReturn(Optional.of(testUser));
         when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(true); // User IS Google Admin
         when(jwtService.generateToken(testUser)).thenReturn(INTERNAL_TOKEN);
         when(userService.convertToDto(testUser)).thenReturn(testUserDto);
@@ -132,7 +131,7 @@ public class AuthServiceIT {
         // Arrange
         testUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN))); // Starts as Super Admin
         when(jwtService.decodeGoogleToken(EXTERNAL_TOKEN)).thenReturn(mockJwt);
-        when(userService.findByEmail(EMAIL)).thenReturn(Optional.of(testUser));
+        when(userService.findByEmailOptional(EMAIL)).thenReturn(Optional.of(testUser));
         when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(false); // User IS NOT Google Admin
         when(jwtService.generateToken(testUser)).thenReturn(INTERNAL_TOKEN);
         when(userService.convertToDto(testUser)).thenReturn(testUserDto);
@@ -150,7 +149,7 @@ public class AuthServiceIT {
     void processLogin_newUser_registersSetsUnassignedAndLinksOrg() {
         // Arrange
         when(jwtService.decodeGoogleToken(EXTERNAL_TOKEN)).thenReturn(mockJwt);
-        when(userService.findByEmail(EMAIL)).thenReturn(Optional.empty()); // New User
+        when(userService.findByEmailOptional(EMAIL)).thenReturn(Optional.empty()); // New User
         when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(false);
         when(userService.save(any(User.class))).thenReturn(testUser);
         when(jwtService.generateToken(testUser)).thenReturn(INTERNAL_TOKEN);
@@ -170,7 +169,7 @@ public class AuthServiceIT {
     void processLogin_workspaceCustomerNotResolved_fallsBackToJwtClaim() {
         // Arrange
         when(jwtService.decodeGoogleToken(EXTERNAL_TOKEN)).thenReturn(mockJwt);
-        when(userService.findByEmail(EMAIL)).thenReturn(Optional.of(testUser));
+        when(userService.findByEmailOptional(EMAIL)).thenReturn(Optional.of(testUser));
         when(jwtService.isGoogleAdmin(mockJwt)).thenReturn(false);
         when(jwtService.generateToken(testUser)).thenReturn(INTERNAL_TOKEN);
         when(userService.convertToDto(testUser)).thenReturn(testUserDto);
@@ -253,7 +252,7 @@ public class AuthServiceIT {
     @Test
     void getCurrentUser_validToken_returnsUserDto() {
         when(jwtService.validateInternalToken(INTERNAL_TOKEN)).thenReturn(EMAIL);
-        when(userService.findByEmail(EMAIL)).thenReturn(Optional.of(testUser));
+        when(userService.findByEmailOptional(EMAIL)).thenReturn(Optional.of(testUser));
         when(userService.convertToDto(testUser)).thenReturn(testUserDto);
 
         Optional<UserDto> result = authService.getCurrentUser(INTERNAL_TOKEN);
@@ -265,7 +264,7 @@ public class AuthServiceIT {
     @Test
     void getCurrentUser_userNotFound_returnsEmpty() {
         when(jwtService.validateInternalToken(INTERNAL_TOKEN)).thenReturn(EMAIL);
-        when(userService.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userService.findByEmailOptional(EMAIL)).thenReturn(Optional.empty());
 
         Optional<UserDto> result = authService.getCurrentUser(INTERNAL_TOKEN);
 

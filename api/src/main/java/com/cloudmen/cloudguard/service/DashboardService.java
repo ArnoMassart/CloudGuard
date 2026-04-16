@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardOverviewResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardPageResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardScores;
@@ -13,12 +15,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
 @Service
 public class DashboardService {
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
-    private static final boolean IS_TESTMODE = true;
+    private static final boolean IS_TESTMODE = false;
 
     private final GoogleUsersService usersService;
     private final GoogleGroupsService groupsService;
@@ -31,8 +36,9 @@ public class DashboardService {
     private final NotificationAggregationService notificationService;
     private final PasswordSettingsService passwordSettingsService;
     private final UserSecurityPreferenceService userSecurityPreferenceService;
+    private final UserService userService;
 
-    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService, PasswordSettingsService passwordSettingsService, UserSecurityPreferenceService userSecurityPreferenceService) {
+    public DashboardService(GoogleUsersService usersService, GoogleGroupsService groupsService, GoogleSharedDriveService sharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService oAuthService, AppPasswordsService passwordsService, DnsRecordsService dnsRecordsService, GoogleDomainService domainService, NotificationAggregationService notificationService, PasswordSettingsService passwordSettingsService, UserSecurityPreferenceService userSecurityPreferenceService, UserService userService) {
         this.usersService = usersService;
         this.groupsService = groupsService;
         this.sharedDriveService = sharedDriveService;
@@ -44,6 +50,7 @@ public class DashboardService {
         this.notificationService = notificationService;
         this.passwordSettingsService = passwordSettingsService;
         this.userSecurityPreferenceService = userSecurityPreferenceService;
+        this.userService = userService;
     }
 
     public DashboardPageResponse getDashboardSecurityScores(String loggedInEmail) {
@@ -76,6 +83,9 @@ public class DashboardService {
     }
 
     private DashboardScores getAllScores(String loggedInEmail) {
+        User user = userService.findByEmail(loggedInEmail);
+        List<UserRole> roles = user.getRoles();
+
         var disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
 
         CompletableFuture<Integer> usersFuture = CompletableFuture.supplyAsync(() ->
@@ -158,7 +168,6 @@ public class DashboardService {
                     return 100;
                 });
 
-        // Wacht tot alle taken klaar zijn (lukken ze niet? Dan geven ze door the .exceptionally gewoon 0 terug!)
         CompletableFuture.allOf(
                 usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture,
                 passwordSettingsFuture, dnsAverageFuture
@@ -183,6 +192,18 @@ public class DashboardService {
 
 
         return Math.round((float)totalScoresAdded / totalCategories);
+    }
+
+    private CompletableFuture<Integer> fetchScoreIfAllowed(List<UserRole roles, UserRole requiredRole, java.util.function.Supplier<Integer> scoreSupplier, String moduleName) {
+        if (hasAccessToModule(roles, requiredRole)) {
+            return CompletableFuture.supplyAsync(scoreSupplier)
+                    .exceptionally(ex -> {
+                        log.error("Fout bij laden {} score: {}", moduleName, ex.getMessage());
+                        return 100; // Fallback score bij error
+                    });
+        }
+
+        return CompletableFuture.completedFuture(-1);
     }
 }
 

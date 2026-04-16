@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
+
 @Service
 public class CacheWarmupService {
 
@@ -74,7 +76,7 @@ public class CacheWarmupService {
     }
 
     public CompletableFuture<Void> warmupAllCachesAsync(String loggedInEmail) {
-        Optional<User> user = userService.findByEmail(loggedInEmail);
+        Optional<User> user = userService.findByEmailOptional(loggedInEmail);
         String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
         if (user.isEmpty()) return CompletableFuture.completedFuture(null);
@@ -86,16 +88,14 @@ public class CacheWarmupService {
             return CompletableFuture.completedFuture(null);
         }
 
-        boolean isSuperAdmin = roles.contains(UserRole.SUPER_ADMIN);
-
         List<CompletableFuture<?>> tasks = new ArrayList<>();
 
-        if (isSuperAdmin || roles.contains(UserRole.USERS_GROUPS_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
             tasks.add(runSafeAsync(() -> usersCacheService.forceRefreshCache(loggedInEmail), "Users"));
             tasks.add(runSafeAsync(() -> groupsCacheService.forceRefreshCache(loggedInEmail), "Groups"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.ORG_UNITS_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.ORG_UNITS_VIEWER)) {
             tasks.add(runSafeAsync(() -> orgUnitCacheService.forceRefreshCache(loggedInEmail), "Org units"));
             tasks.add(runSafeAsync(() -> tsvPolicyProvider.forceRefreshCache(adminEmail), "TSV Policy"));
             tasks.add(runSafeAsync(() -> mobileManagementPolicyProvider.forceRefreshCache(adminEmail), "Mobile Management Policy"));
@@ -105,32 +105,32 @@ public class CacheWarmupService {
             }, "Policy API"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.SHARED_DRIVES_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER)) {
             tasks.add(runSafeAsync(() -> sharedDriveCacheService.forceRefreshCache(loggedInEmail), "Drives"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.DEVICES_VIEWER)){
+        if (hasAccessToModule(roles, UserRole.DEVICES_VIEWER)){
             tasks.add(runSafeAsync(() -> mobileDeviceCacheService.forceRefreshCache(loggedInEmail), "Devices"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.APP_ACCESS_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER)) {
             tasks.add(runSafeAsync(() -> oAuthCacheService.forceRefreshCache(loggedInEmail), "OAuth"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.APP_PASSWORDS_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER)) {
             tasks.add(runSafeAsync(() -> appPasswordsService.forceRefreshCache(loggedInEmail), "App passwords"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.PASSWORD_SETTINGS_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER)) {
             tasks.add(runSafeAsync(() -> passwordSettingsService.getPasswordSettings(loggedInEmail), "Password settings"));
             tasks.add(runSafeAsync(() -> adminSecurityKeysService.forceRefreshCache(loggedInEmail), "Admin security keys"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.DOMAIN_DNS_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
             tasks.add(runSafeAsync(() -> domainCacheService.forceRefreshCache(loggedInEmail), "Domain"));
         }
 
-        if (isSuperAdmin || roles.contains(UserRole.LICENSES_VIEWER)) {
+        if (hasAccessToModule(roles, UserRole.LICENSES_VIEWER)) {
             tasks.add(runSafeAsync(() -> licenseCacheService.forceRefreshCache(loggedInEmail), "Licenses"));
         }
 

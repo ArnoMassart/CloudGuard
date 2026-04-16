@@ -116,4 +116,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleOrganizationNotNullException(OrganizationNotNullException ex) {
         return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
+        return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }

@@ -92,10 +92,10 @@ public class UserServiceIT {
     }
 
     @Test
-    void findByEmail_returnsUserFromRepository() {
+    void findByEmail_Optional_returnsUserFromRepository() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(testUser));
 
-        Optional<User> result = userService.findByEmail(EMAIL);
+        Optional<User> result = userService.findByEmailOptional(EMAIL);
 
         assertTrue(result.isPresent());
         assertEquals(EMAIL, result.get().getEmail());

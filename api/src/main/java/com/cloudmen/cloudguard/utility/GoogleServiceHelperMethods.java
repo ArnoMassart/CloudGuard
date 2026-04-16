@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.utility;
 
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.UserSecurityEvaluation;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
@@ -147,7 +148,7 @@ public class GoogleServiceHelperMethods {
     }
 
     public static String getAdminEmailForUser(String email, UserService userService, OrganizationService organizationService) {
-        return userService.findByEmail(email)
+        return userService.findByEmailOptional(email)
                 .flatMap(user -> organizationService.findById(user.getOrganizationId()))
                 .map(org -> {
                     if (org.getAdminEmail() == null || org.getAdminEmail().isBlank()) {
@@ -158,4 +159,8 @@ public class GoogleServiceHelperMethods {
                 .orElseThrow(() -> new GoogleWorkspaceSyncException("User or Organization not found for: " + email));
     }
 
+    public static boolean hasAccessToModule(List<UserRole> roles, UserRole requiredRole) {
+        if (roles==null) return false;
+        return roles.contains(UserRole.SUPER_ADMIN) | roles.contains(requiredRole);
+    }
 }

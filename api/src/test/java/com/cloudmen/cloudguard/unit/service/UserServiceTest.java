@@ -97,11 +97,11 @@ public class UserServiceTest {
     }
 
     @Test
-    void findByEmail_delegatesToRepository() {
+    void findByEmail_Optional_delegatesToRepository() {
         User user = createDbUser(ADMIN, "John", "Doe", "nl");
         when(userRepository.findByEmail(ADMIN)).thenReturn(Optional.of(user));
 
-        Optional<User> result = userService.findByEmail(ADMIN);
+        Optional<User> result = userService.findByEmailOptional(ADMIN);
 
         assertTrue(result.isPresent());
         assertEquals(ADMIN, result.get().getEmail());
