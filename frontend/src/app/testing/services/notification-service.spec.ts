@@ -162,7 +162,7 @@ describe('NotificationService', () => {
     httpMock.verify();
   });
 
-  describe('getNotificationsAndDismissed', () => {
+  describe('getNotifications', () => {
     it('GETs notifications with credentials and maps response', () => {
       const active: Notification[] = [
         {
@@ -176,8 +176,8 @@ describe('NotificationService', () => {
           sourceRoute: '/',
         },
       ];
-      const body: NotificationsResponse = { active, dismissed: [] };
-      service.getNotificationsAndDismissed().subscribe((res) => expect(res).toEqual(body));
+      const body: NotificationsResponse = { active };
+      service.getNotifications().subscribe((res) => expect(res).toEqual(body));
 
       const req = httpMock.expectOne((r) => r.url === '/api/notifications');
       expect(req.request.method).toBe('GET');
@@ -185,10 +185,9 @@ describe('NotificationService', () => {
       req.flush(body);
     });
 
-    it('returns empty lists when HTTP fails', () => {
-      service.getNotificationsAndDismissed().subscribe((res) => {
+    it('returns empty active when HTTP fails', () => {
+      service.getNotifications().subscribe((res) => {
         expect(res.active).toEqual([]);
-        expect(res.dismissed).toEqual([]);
       });
 
       const req = httpMock.expectOne((r) => r.url === '/api/notifications');

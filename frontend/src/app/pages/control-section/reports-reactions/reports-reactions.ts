@@ -8,7 +8,6 @@ import { FilterOption } from '../../../models/FilterOption';
 import { NotificationService } from '../../../services/notification-service';
 import { Notification, NotificationSeverity } from '../../../models/notification/Notification';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
-import { DismissedNotificationService } from '../../../services/dismissed-notification-service';
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -34,16 +33,12 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly #notificationService = inject(NotificationService);
   readonly #notificationFeedbackService = inject(NotificationFeedbackService);
   readonly #translocoService = inject(TranslocoService);
-  readonly #dismissedService = inject(DismissedNotificationService);
 
   readonly notifications = signal<Notification[]>([]);
-  readonly dismissedNotifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly listLoadError = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'>(
-    'all'
-  );
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'in-behandeling'>('all');
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
@@ -51,12 +46,9 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly feedbackTextById = signal<Record<string, string>>({});
   readonly submittingIds = signal<Set<string>>(new Set());
   readonly feedbackFormOpenIds = signal<Set<string>>(new Set());
-  readonly dismissingIds = signal<Set<string>>(new Set());
-  readonly unDismissingIds = signal<Set<string>>(new Set());
 
   readonly filteredNotifications = computed(() => {
     const filter = this.filterSeverity();
-    if (filter === 'dismissed') return this.dismissedNotifications();
     const list = this.notifications();
     if (filter === 'in-behandeling') return list.filter((n) => n.hasReported);
     if (filter === 'all') return list;
@@ -64,18 +56,15 @@ export class ReportsReactions implements OnInit, OnDestroy {
   });
 
   readonly totalCount = computed(() => this.notifications().length);
-  readonly dismissedCount = computed(() => this.dismissedNotifications().length);
   readonly criticalCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'critical').length
+    () => this.notifications().filter((n) => n.severity === 'critical').length,
   );
   readonly warningCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'warning').length
+    () => this.notifications().filter((n) => n.severity === 'warning').length,
   );
-  readonly infoCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'info').length
-  );
+  readonly infoCount = computed(() => this.notifications().filter((n) => n.severity === 'info').length);
   readonly inBehandelingCount = computed(
-    () => this.notifications().filter((n) => n.hasReported).length
+    () => this.notifications().filter((n) => n.hasReported).length,
   );
 
   readonly isWarningExpanded = signal(true);
@@ -117,13 +106,6 @@ export class ReportsReactions implements OnInit, OnDestroy {
       label: 'feedback.processing',
       count: this.inBehandelingCount(),
       activeClass: 'bg-teal-100 text-teal-800',
-      inactiveClass: '',
-    },
-    {
-      value: 'dismissed',
-      label: 'dismissed',
-      count: this.dismissedCount(),
-      activeClass: 'bg-gray-400 text-white',
       inactiveClass: '',
     },
   ]);
@@ -172,9 +154,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
   }
 
   setFilter(filter: string) {
-    this.filterSeverity.set(
-      filter as NotificationSeverity | 'all' | 'dismissed' | 'in-behandeling'
-    );
+    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'in-behandeling');
   }
 
   #loadNotifications() {
@@ -184,102 +164,22 @@ export class ReportsReactions implements OnInit, OnDestroy {
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
-    this.unDismissingIds.set(new Set());
-    this.#notificationService.getNotificationsAndDismissed().subscribe({
-      next: ({ active, dismissed }) => {
+    this.#notificationService.getNotifications().subscribe({
+      next: ({ active }) => {
         this.notifications.set(active);
-        this.dismissedNotifications.set(dismissed);
         this.isLoading.set(false);
         this.listLoadError.set(null);
       },
       error: (err) => {
         console.error('Notifications load failed: ', err);
         this.notifications.set([]);
-        this.dismissedNotifications.set([]);
         const msg = this.#httpErrorDetail(err);
         this.listLoadError.set(
-          msg || this.#translocoService.translate('reports-reactions.error.load-failed')
+          msg || this.#translocoService.translate('reports-reactions.error.load-failed'),
         );
         this.isLoading.set(false);
       },
     });
-  }
-
-  markAsDismissed(n: Notification) {
-    const key = `${n.source}:${n.notificationType}`;
-    if (this.dismissingIds().has(key)) return;
-    this.dismissingIds.update((s) => new Set(s).add(key));
-    this.#dismissedService
-      .markAsDismissed({
-        source: n.source,
-        notificationType: n.notificationType,
-        sourceLabel: n.sourceLabel,
-        sourceRoute: n.sourceRoute,
-        title: n.title,
-        description: n.description,
-        severity: n.severity,
-        recommendedActions: n.recommendedActions,
-      })
-      .subscribe({
-        next: () => {
-          this.dismissingIds.update((s) => {
-            const next = new Set(s);
-            next.delete(key);
-            return next;
-          });
-          this.actionError.set(null);
-          this.refresh();
-        },
-        error: (err) => {
-          console.error('Mark as dismissed failed: ', err);
-          const msg = this.#httpErrorDetail(err);
-          this.actionError.set(
-            msg || this.#translocoService.translate('reports-reactions.error.dismiss-failed')
-          );
-          this.dismissingIds.update((s) => {
-            const next = new Set(s);
-            next.delete(key);
-            return next;
-          });
-        },
-      });
-  }
-
-  isDismissing(n: Notification): boolean {
-    return this.dismissingIds().has(`${n.source}:${n.notificationType}`);
-  }
-
-  unDismiss(n: Notification) {
-    const key = `${n.source}:${n.notificationType}`;
-    if (this.unDismissingIds().has(key)) return;
-    this.unDismissingIds.update((s) => new Set(s).add(key));
-    this.#dismissedService.unDismiss(n.source, n.notificationType).subscribe({
-      next: () => {
-        this.unDismissingIds.update((s) => {
-          const next = new Set(s);
-          next.delete(key);
-          return next;
-        });
-        this.actionError.set(null);
-        this.refresh();
-      },
-      error: (err) => {
-        console.error('Un dismiss failed: ', err);
-        const msg = this.#httpErrorDetail(err);
-        this.actionError.set(
-          msg || this.#translocoService.translate('reports-reactions.error.un-dismiss-failed')
-        );
-        this.unDismissingIds.update((s) => {
-          const next = new Set(s);
-          next.delete(key);
-          return next;
-        });
-      },
-    });
-  }
-
-  isUnDismissing(n: Notification): boolean {
-    return this.unDismissingIds().has(`${n.source}:${n.notificationType}`);
   }
 
   refresh() {
@@ -324,7 +224,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
             console.error('Get details failed: ', err);
             const msg = this.#httpErrorDetail(err);
             this.actionError.set(
-              msg || this.#translocoService.translate('reports-reactions.error.get-details-failed')
+              msg || this.#translocoService.translate('reports-reactions.error.get-details-failed'),
             );
             this.loadingDetailsIds.update((s) => {
               const next = new Set(s);
@@ -358,7 +258,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
     this.#notificationFeedbackService.submitFeedback(n.source, n.notificationType, text).subscribe({
       next: () => {
         this.notifications.update((list) =>
-          list.map((item) => (item.id === n.id ? { ...item, hasReported: true } : item))
+          list.map((item) => (item.id === n.id ? { ...item, hasReported: true } : item)),
         );
         this.feedbackFormOpenIds.update((s) => {
           const next = new Set(s);
@@ -381,7 +281,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
         console.error('Submit feedback failed: ', err);
         const msg = this.#httpErrorDetail(err);
         this.actionError.set(
-          msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed')
+          msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed'),
         );
         this.submittingIds.update((s) => {
           const next = new Set(s);

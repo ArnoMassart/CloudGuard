@@ -11,6 +11,5 @@ export interface Notification {
   sourceLabel: string;
   sourceRoute: string;
   hasReported?: boolean;
-  dismissed?: boolean;
   supportsDetails?: boolean;
 }

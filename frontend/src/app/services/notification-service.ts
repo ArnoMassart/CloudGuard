@@ -28,13 +28,10 @@ export class NotificationService {
   readonly #passwordSettingsService = inject(PasswordSettingsService);
   readonly #translocoService = inject(TranslocoService);
 
-  getNotificationsAndDismissed(): Observable<{
-    active: Notification[];
-    dismissed: Notification[];
-  }> {
+  getNotifications(): Observable<{ active: Notification[] }> {
     return this.#http
       .get<NotificationsResponse>(this.#API_URL, { withCredentials: true })
-      .pipe(catchError(() => of({ active: [], dismissed: [] })));
+      .pipe(catchError(() => of({ active: [] })));
   }
 
   getNotificationDetails(notification: Notification): Observable<string[]> {
@@ -42,7 +39,7 @@ export class NotificationService {
       case 'user-control':
         return this.#userService.getUsersWithoutTwoFactor().pipe(
           map((r) => r.users.map((u) => `${u.fullName} (${u.email})`)),
-          catchError(() => of([]))
+          catchError(() => of([])),
         );
       case 'group-external':
         return this.#groupService.getOrgGroups(undefined, undefined, 200).pipe(
@@ -55,10 +52,10 @@ export class NotificationService {
                     g.externalMembers > 1
                       ? this.#translocoService.translate('external-members')
                       : this.#translocoService.translate('external-member')
-                  })`
-              )
+                  })`,
+              ),
           ),
-          catchError(() => of([]))
+          catchError(() => of([])),
         );
       case 'oauth-high-risk':
         return this.#oAuthService.getApps(50, 'high').pipe(
@@ -69,10 +66,10 @@ export class NotificationService {
                   a.totalUsers > 1
                     ? this.#translocoService.translate('users-no-cap')
                     : this.#translocoService.translate('user')
-                })`
-            )
+                })`,
+            ),
           ),
-          catchError(() => of([]))
+          catchError(() => of([])),
         );
       case 'drive-orphan':
       case 'drive-external':
@@ -100,7 +97,7 @@ export class NotificationService {
             }
             return r.drives.filter((d) => !d.onlyMembersCanAccess).map((d) => d.name);
           }),
-          catchError(() => of([]))
+          catchError(() => of([])),
         );
       case 'device-lockscreen':
         return this.#getDevicesByFilter((d) => !d.lockSecure);
@@ -134,7 +131,7 @@ export class NotificationService {
           })
           .map((d) => `${d.deviceName} – ${d.userName} (${d.userEmail})`);
       }),
-      catchError(() => of([]))
+      catchError(() => of([])),
     );
   }
 
@@ -151,7 +148,7 @@ export class NotificationService {
                     ou.totalCount > 1
                       ? this.#translocoService.translate('users-no-cap')
                       : this.#translocoService.translate('user')
-                  }`
+                  }`,
               );
           case 'password-weak-length':
             return data.passwordPoliciesByOu
@@ -162,7 +159,7 @@ export class NotificationService {
                     p.minLength! > 1
                       ? this.#translocoService.translate('characters')
                       : this.#translocoService.translate('character')
-                  }`
+                  }`,
               );
           case 'password-strong-not-required':
             return data.passwordPoliciesByOu
@@ -178,7 +175,7 @@ export class NotificationService {
             return [];
         }
       }),
-      catchError(() => of([]))
+      catchError(() => of([])),
     );
   }
 }

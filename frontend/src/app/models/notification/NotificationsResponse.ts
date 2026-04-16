@@ -1,6 +1,5 @@
-import { Notification } from "./Notification";
+import { Notification } from './Notification';
 
 export interface NotificationsResponse {
   active: Notification[];
-  dismissed: Notification[];
 }
