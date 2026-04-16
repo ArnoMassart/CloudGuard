@@ -76,6 +76,8 @@ class NotificationAggregationServiceTest {
     NotificationInstanceRepository notificationInstanceRepository;
     @Mock
     NotificationProjectionProperties notificationProjectionProperties;
+    @Mock
+    private UserService userService;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -102,9 +104,9 @@ class NotificationAggregationServiceTest {
                 dismissedService,
                 feedbackService,
                 preferenceService,
-                userRepository,
                 notificationInstanceRepository,
-                notificationProjectionProperties);
+                notificationProjectionProperties,
+                userService);
     }
 
     @AfterEach

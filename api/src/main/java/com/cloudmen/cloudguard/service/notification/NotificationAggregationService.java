@@ -37,6 +37,8 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
+
 @Service
 public class NotificationAggregationService {
 
@@ -72,9 +74,9 @@ public class NotificationAggregationService {
     private final NotificationFeedbackService feedbackService;
     private final UserSecurityPreferenceService preferenceService;
     private final MessageSource messageSource;
-    private final UserRepository userRepository;
     private final NotificationInstanceRepository notificationInstanceRepository;
     private final NotificationProjectionProperties notificationProjectionProperties;
+    private final UserService userService;
 
     public NotificationAggregationService(
             GoogleDomainService domainService,
@@ -90,9 +92,8 @@ public class NotificationAggregationService {
             DismissedNotificationService dismissedService,
             NotificationFeedbackService feedbackService,
             UserSecurityPreferenceService preferenceService,
-            UserRepository userRepository,
             NotificationInstanceRepository notificationInstanceRepository,
-            NotificationProjectionProperties notificationProjectionProperties) {
+            NotificationProjectionProperties notificationProjectionProperties, UserService userService) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -106,19 +107,23 @@ public class NotificationAggregationService {
         this.feedbackService = feedbackService;
         this.preferenceService = preferenceService;
         this.messageSource = messageSource;
-        this.userRepository = userRepository;
         this.notificationInstanceRepository = notificationInstanceRepository;
         this.notificationProjectionProperties = notificationProjectionProperties;
+        this.userService = userService;
     }
 
     /** Live aggregation snapshot (used by the scheduled sync job). */
     public List<NotificationDto> buildActiveSnapshot(String userEmail, Locale locale) {
         Set<String> disabled = preferenceService.getDisabledPreferenceKeys(userEmail);
-        return aggregateActive(userEmail, locale, disabled);
+
+        User user = userService.findByEmailOptional(userEmail).orElse(null);
+
+        List<UserRole> roles = user != null ? user.getRoles() : null;
+        return aggregateActive(userEmail, locale, disabled, roles);
     }
 
     public NotificationsResponse getNotifications(String userId, Locale locale) {
-        User user = userRepository.findByEmail(userId).orElse(null);
+        User user = userService.findByEmailOptional(userId).orElse(null);
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
         List<UserRole> viewerRoles = user != null && user.getRoles() != null ? user.getRoles() : null;
 
@@ -165,16 +170,18 @@ public class NotificationAggregationService {
 
     private List<NotificationDto> resolveActiveNotifications(
             User user, String userId, Locale locale, Set<String> disabledPreferenceKeys) {
+        List<UserRole> roles = user != null ? user.getRoles() : null;
+
         if (!notificationProjectionProperties.isReadEnabled()) {
-            return aggregateActive(userId, locale, disabledPreferenceKeys);
+            return aggregateActive(userId, locale, disabledPreferenceKeys, roles);
         }
         Long orgId = user != null ? user.getOrganizationId() : null;
         if (orgId == null) {
-            return aggregateActive(userId, locale, disabledPreferenceKeys);
+            return aggregateActive(userId, locale, disabledPreferenceKeys, roles);
         }
         boolean everSynced = notificationInstanceRepository.existsByOrganizationIdAndDismissedAtIsNull(orgId);
         if (!everSynced) {
-            List<NotificationDto> live = aggregateActive(userId, locale, disabledPreferenceKeys);
+            List<NotificationDto> live = aggregateActive(userId, locale, disabledPreferenceKeys, roles);
             persistAggregatedNotifications(orgId, live);
             return live;
         }
@@ -279,50 +286,78 @@ public class NotificationAggregationService {
                 supportsDetails);
     }
 
-    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled) {
+    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
         List<NotificationDto> notifications = new ArrayList<>();
         int id = 0;
 
-        UserOverviewResponse users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
-        SharedDriveOverviewResponse drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
-        DeviceOverviewResponse devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail, disabled));
-        GroupOverviewResponse groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail, disabled));
-        OAuthOverviewResponse oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail, disabled));
-        AppPasswordOverviewResponse appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true, disabled));
+        UserOverviewResponse users = null;
+        if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
+            users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
+        }
 
-        DnsRecordResponseDto dns = getDnsData(adminEmail);
+        SharedDriveOverviewResponse drives = null;
+        if (hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER)) {
+        drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
+        }
+
+        DeviceOverviewResponse devices = null;
+        if (hasAccessToModule(roles, UserRole.DEVICES_VIEWER)) {
+            devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail, disabled));
+        }
+
+        GroupOverviewResponse groups = null;
+        if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
+            groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail, disabled));
+        }
+
+        OAuthOverviewResponse oAuth = null;
+        if (hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER)) {
+            oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail, disabled));
+        }
+
+        AppPasswordOverviewResponse appPasswords = null;
+        if (hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER)) {
+            appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true, disabled));
+        }
+
+        DnsRecordResponseDto dns = null;
+        if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
+            dns = getDnsData(adminEmail);
+        }
 
         // DNS
-        Set<String> criticalDnsTypes = new HashSet<>();
-        Set<String> attentionDnsTypes = new HashSet<>();
-        for (DnsRecordDto row : dns.rows()) {
-            if (row.status() == DnsRecordStatus.ACTION_REQUIRED || row.status() == DnsRecordStatus.ERROR) {
-                criticalDnsTypes.add(DNS_TITLES.getOrDefault(row.type(), row.type()));
-            } else if (row.status() == DnsRecordStatus.ATTENTION
-                    && (row.importance() == DnsRecordImportance.REQUIRED || row.importance() == DnsRecordImportance.RECOMMENDED)) {
-                attentionDnsTypes.add(DNS_TITLES.getOrDefault(row.type(), row.type()));
+        if (dns != null && dns.rows() != null) {
+            Set<String> criticalDnsTypes = new HashSet<>();
+            Set<String> attentionDnsTypes = new HashSet<>();
+            for (DnsRecordDto row : dns.rows()) {
+                if (row.status() == DnsRecordStatus.ACTION_REQUIRED || row.status() == DnsRecordStatus.ERROR) {
+                    criticalDnsTypes.add(DNS_TITLES.getOrDefault(row.type(), row.type()));
+                } else if (row.status() == DnsRecordStatus.ATTENTION
+                        && (row.importance() == DnsRecordImportance.REQUIRED || row.importance() == DnsRecordImportance.RECOMMENDED)) {
+                    attentionDnsTypes.add(DNS_TITLES.getOrDefault(row.type(), row.type()));
+                }
             }
-        }
-        if (!criticalDnsTypes.isEmpty()) {
-            String typesList = String.join(", ", criticalDnsTypes);
-            String messageKey = (criticalDnsTypes.size() == 1) ? "notifications.dns.critical.description.singular" : "notifications.dns.critical.description.plural";
-            String description = messageSource.getMessage(messageKey, new Object[]{typesList}, locale);
-            notifications.add(
-                    create(++id,
-                            "critical",
-                            messageSource.getMessage("notifications.dns.critical.title", null, locale),
-                    description,
-                    List.of(messageSource.getMessage("notifications.dns.critical.actions", null, locale)),
-                    "dns-critical", "domain-dns", messageSource.getMessage("notifications.dns.label", null, locale), "/domain-dns"));
-        }
-        if (!attentionDnsTypes.isEmpty()) {
-            String typesList = String.join(", ", attentionDnsTypes);
-            String messageKey = (attentionDnsTypes.size() == 1) ? "notifications.dns.attention.description.singular" : "notifications.dns.attention.description.plural";
-            String description = messageSource.getMessage(messageKey, new Object[]{typesList}, locale);
-            notifications.add(create(++id, "warning", messageSource.getMessage("notifications.dns.attention.title", null, locale),
-                    description,
-                    List.of(messageSource.getMessage("notifications.dns.attention.actions", null, locale)),
-                    "dns-attention", "domain-dns", messageSource.getMessage("notifications.dns.label", null, locale), "/domain-dns"));
+            if (!criticalDnsTypes.isEmpty()) {
+                String typesList = String.join(", ", criticalDnsTypes);
+                String messageKey = (criticalDnsTypes.size() == 1) ? "notifications.dns.critical.description.singular" : "notifications.dns.critical.description.plural";
+                String description = messageSource.getMessage(messageKey, new Object[]{typesList}, locale);
+                notifications.add(
+                        create(++id,
+                                "critical",
+                                messageSource.getMessage("notifications.dns.critical.title", null, locale),
+                        description,
+                        List.of(messageSource.getMessage("notifications.dns.critical.actions", null, locale)),
+                        "dns-critical", "domain-dns", messageSource.getMessage("notifications.dns.label", null, locale), "/domain-dns"));
+            }
+            if (!attentionDnsTypes.isEmpty()) {
+                String typesList = String.join(", ", attentionDnsTypes);
+                String messageKey = (attentionDnsTypes.size() == 1) ? "notifications.dns.attention.description.singular" : "notifications.dns.attention.description.plural";
+                String description = messageSource.getMessage(messageKey, new Object[]{typesList}, locale);
+                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.dns.attention.title", null, locale),
+                        description,
+                        List.of(messageSource.getMessage("notifications.dns.attention.actions", null, locale)),
+                        "dns-attention", "domain-dns", messageSource.getMessage("notifications.dns.label", null, locale), "/domain-dns"));
+            }
         }
 
         // Users
@@ -436,61 +471,64 @@ public class NotificationAggregationService {
         }
 
         // Password settings
-        PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(adminEmail));
-        if (passwordSettings != null) {
-            var twoStep = passwordSettings.twoStepVerification();
-            var policies = passwordSettings.passwordPoliciesByOu();
-            var adminsWithoutKeys = passwordSettings.adminsWithoutSecurityKeys();
+        if (hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER)) {
+            PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(adminEmail));
 
-            // Critical: 2SV not enforced in some OUs
-            long ousWithout2Sv = twoStep.byOrgUnit().stream().filter(ou -> !ou.enforced()).count();
-            if (ousWithout2Sv > 0) {
-                notifications.add(create(++id, "critical",
-                        messageSource.getMessage("notifications.password_settings.without_2SV.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.without_2SV.description", new Object[]{ousWithout2Sv}, locale),
-                        List.of(messageSource.getMessage("notifications.password_settings.without_2SV.actions", null, locale)),
-                        "password-2sv-not-enforced", "password-settings",  messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
-            }
+            if (passwordSettings != null) {
+                var twoStep = passwordSettings.twoStepVerification();
+                var policies = passwordSettings.passwordPoliciesByOu();
+                var adminsWithoutKeys = passwordSettings.adminsWithoutSecurityKeys();
 
-            // Warning: weak password length (< 12)
-            long ousWeakLength = policies.stream()
-                    .filter(p -> p.minLength() != null && p.minLength() < 12)
-                    .count();
-            if (ousWeakLength > 0) {
-                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.weak_length.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.weak_length.description", new Object[]{ousWeakLength}, locale),
-                        List.of(messageSource.getMessage("notifications.password_settings.weak_length.actions", null, locale)),
-                        "password-weak-length", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
-            }
+                // Critical: 2SV not enforced in some OUs
+                long ousWithout2Sv = twoStep.byOrgUnit().stream().filter(ou -> !ou.enforced()).count();
+                if (ousWithout2Sv > 0) {
+                    notifications.add(create(++id, "critical",
+                            messageSource.getMessage("notifications.password_settings.without_2SV.title", null, locale),
+                            messageSource.getMessage("notifications.password_settings.without_2SV.description", new Object[]{ousWithout2Sv}, locale),
+                            List.of(messageSource.getMessage("notifications.password_settings.without_2SV.actions", null, locale)),
+                            "password-2sv-not-enforced", "password-settings",  messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
+                }
 
-            // Warning: strong password not required
-            long ousNoStrong = policies.stream()
-                    .filter(p -> Boolean.FALSE.equals(p.strongPasswordRequired()))
-                    .count();
-            if (ousNoStrong > 0) {
-                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_strong.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.no_strong.description", new Object[]{ousNoStrong}, locale),
-                        List.of(messageSource.getMessage("notifications.password_settings.no_strong.actions", null, locale)),
-                        "password-strong-not-required", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
-            }
+                // Warning: weak password length (< 12)
+                long ousWeakLength = policies.stream()
+                        .filter(p -> p.minLength() != null && p.minLength() < 12)
+                        .count();
+                if (ousWeakLength > 0) {
+                    notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.weak_length.title", null, locale),
+                            messageSource.getMessage("notifications.password_settings.weak_length.description", new Object[]{ousWeakLength}, locale),
+                            List.of(messageSource.getMessage("notifications.password_settings.weak_length.actions", null, locale)),
+                            "password-weak-length", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
+                }
 
-            // Warning: password never expires
-            long ousNoExpiry = policies.stream()
-                    .filter(p -> p.expirationDays() == null || p.expirationDays() == 0)
-                    .count();
-            if (ousNoExpiry > 0) {
-                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_expiry.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.no_expiry.description", new Object[]{ousNoExpiry}, locale),
-                        List.of(messageSource.getMessage("notifications.password_settings.no_expiry.actions", null, locale)),
-                        "password-never-expires", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
-            }
+                // Warning: strong password not required
+                long ousNoStrong = policies.stream()
+                        .filter(p -> Boolean.FALSE.equals(p.strongPasswordRequired()))
+                        .count();
+                if (ousNoStrong > 0) {
+                    notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_strong.title", null, locale),
+                            messageSource.getMessage("notifications.password_settings.no_strong.description", new Object[]{ousNoStrong}, locale),
+                            List.of(messageSource.getMessage("notifications.password_settings.no_strong.actions", null, locale)),
+                            "password-strong-not-required", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
+                }
 
-            // Warning: admins without security keys
-            if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
-                notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.without_keys.title", null, locale),
-                        messageSource.getMessage("notifications.password_settings.without_keys.description", new Object[]{adminsWithoutKeys.size()}, locale),
-                        List.of(messageSource.getMessage("notifications.password_settings.without_keys.actions", null, locale)),
-                        "password-admins-no-security-keys", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
+                // Warning: password never expires
+                long ousNoExpiry = policies.stream()
+                        .filter(p -> p.expirationDays() == null || p.expirationDays() == 0)
+                        .count();
+                if (ousNoExpiry > 0) {
+                    notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.no_expiry.title", null, locale),
+                            messageSource.getMessage("notifications.password_settings.no_expiry.description", new Object[]{ousNoExpiry}, locale),
+                            List.of(messageSource.getMessage("notifications.password_settings.no_expiry.actions", null, locale)),
+                            "password-never-expires", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
+                }
+
+                // Warning: admins without security keys
+                if (adminsWithoutKeys != null && !adminsWithoutKeys.isEmpty()) {
+                    notifications.add(create(++id, "warning", messageSource.getMessage("notifications.password_settings.without_keys.title", null, locale),
+                            messageSource.getMessage("notifications.password_settings.without_keys.description", new Object[]{adminsWithoutKeys.size()}, locale),
+                            List.of(messageSource.getMessage("notifications.password_settings.without_keys.actions", null, locale)),
+                            "password-admins-no-security-keys", "password-settings", messageSource.getMessage("notifications.password_settings.label", null, locale), "/password-settings"));
+                }
             }
         }
 

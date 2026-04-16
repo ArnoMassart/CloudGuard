@@ -68,7 +68,7 @@ export class Callback implements OnInit {
             this.router.navigate(['/no-organization']);
           } else {
             this.warmupCacheService.triggerWarmup();
-            this.router.navigate(['/test']);
+            this.router.navigate(['/home']);
           }
         },
         error: (err) => {
