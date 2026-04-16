@@ -15,6 +15,7 @@ import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
@@ -40,25 +41,41 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationAggregationServiceTest {
 
-    @Mock GoogleDomainService domainService;
-    @Mock DnsRecordsService dnsRecordsService;
-    @Mock GoogleUsersService usersService;
-    @Mock GoogleSharedDriveService driveService;
-    @Mock GoogleDeviceService deviceService;
-    @Mock AppPasswordsService appPasswordsService;
-    @Mock GoogleGroupsService groupsService;
-    @Mock GoogleOAuthService oAuthService;
-    @Mock PasswordSettingsService passwordSettingsService;
-    @Mock DismissedNotificationService dismissedService;
-    @Mock NotificationFeedbackService feedbackService;
-    @Mock UserSecurityPreferenceService preferenceService;
-    @Mock NotificationInstanceRepository notificationInstanceRepository;
-    @Mock NotificationProjectionProperties notificationProjectionProperties;
-    @Mock UserService userService; // Nieuwe service die userRepository vervangt
+    @Mock
+    GoogleDomainService domainService;
+    @Mock
+    DnsRecordsService dnsRecordsService;
+    @Mock
+    GoogleUsersService usersService;
+    @Mock
+    GoogleSharedDriveService driveService;
+    @Mock
+    GoogleDeviceService deviceService;
+    @Mock
+    AppPasswordsService appPasswordsService;
+    @Mock
+    GoogleGroupsService groupsService;
+    @Mock
+    GoogleOAuthService oAuthService;
+    @Mock
+    PasswordSettingsService passwordSettingsService;
+    @Mock
+    NotificationFeedbackService feedbackService;
+    @Mock
+    UserSecurityPreferenceService preferenceService;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    NotificationInstanceRepository notificationInstanceRepository;
+    @Mock
+    NotificationProjectionProperties notificationProjectionProperties;
+    @Mock
+    UserService userService;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -83,7 +100,6 @@ class NotificationAggregationServiceTest {
                 oAuthService,
                 messageSource,
                 passwordSettingsService,
-                dismissedService,
                 feedbackService,
                 preferenceService,
                 notificationInstanceRepository,
@@ -112,7 +128,6 @@ class NotificationAggregationServiceTest {
         assertEquals("users-groups", n.source());
         assertTrue(n.supportsDetails());
         assertFalse(n.hasReported());
-        assertFalse(n.dismissed());
     }
 
     @Test
@@ -277,7 +292,6 @@ class NotificationAggregationServiceTest {
                 .thenReturn(new AppPasswordOverviewResponse(true, 0, 0, 100, null));
         lenient().when(passwordSettingsService.getPasswordSettings(GlobalTestHelper.ADMIN)).thenReturn(null);
 
-        lenient().when(dismissedService.getDismissedForOrganization(null)).thenReturn(List.of());
         lenient().when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of());
     }
 }

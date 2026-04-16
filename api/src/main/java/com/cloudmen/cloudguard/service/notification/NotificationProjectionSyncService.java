@@ -86,7 +86,6 @@ public class NotificationProjectionSyncService {
             } else if (row.getStatus() == NotificationInstanceStatus.SOLVED) {
                 row.setStatus(NotificationInstanceStatus.ACTIVE);
                 row.setSolvedAt(null);
-                row.setDismissedAt(null);
             }
 
             row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));

@@ -1,7 +1,7 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
-import com.cloudmen.cloudguard.service.notification.CriticalNotificationReminderEmailService;
+import com.cloudmen.cloudguard.service.reminder.CriticalNotificationReminderEmailService;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

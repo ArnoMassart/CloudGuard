@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
@@ -70,7 +69,6 @@ public class NotificationAggregationService {
     private final GoogleGroupsService groupsService;
     private final GoogleOAuthService oAuthService;
     private final PasswordSettingsService passwordSettingsService;
-    private final DismissedNotificationService dismissedService;
     private final NotificationFeedbackService feedbackService;
     private final UserSecurityPreferenceService preferenceService;
     private final MessageSource messageSource;
@@ -89,7 +87,6 @@ public class NotificationAggregationService {
             GoogleOAuthService oAuthService,
             MessageSource messageSource,
             PasswordSettingsService passwordSettingsService,
-            DismissedNotificationService dismissedService,
             NotificationFeedbackService feedbackService,
             UserSecurityPreferenceService preferenceService,
             NotificationInstanceRepository notificationInstanceRepository,
@@ -103,7 +100,6 @@ public class NotificationAggregationService {
         this.groupsService = groupsService;
         this.oAuthService = oAuthService;
         this.passwordSettingsService = passwordSettingsService;
-        this.dismissedService = dismissedService;
         this.feedbackService = feedbackService;
         this.preferenceService = preferenceService;
         this.messageSource = messageSource;
@@ -137,35 +133,14 @@ public class NotificationAggregationService {
                             .toList();
         }
 
-        Long orgIdForDismiss = user != null ? user.getOrganizationId() : null;
-        List<NotificationInstance> dismissedRows = dismissedService.getDismissedForOrganization(orgIdForDismiss);
-        Set<String> dismissedKeys =
-                dismissedRows.stream()
-                        .map(d -> d.getSource() + ":" + d.getNotificationType())
-                        .collect(Collectors.toSet());
         Set<String> feedbackKeys = feedbackService.getAllFeedbackKeys();
 
         List<NotificationDto> filtered = active.stream()
                 .filter(n -> !isHiddenByPreference(n.source(), n.notificationType(), disabledPreferenceKeys))
-                .filter(n -> !dismissedKeys.contains(n.source() + ":" + n.notificationType()))
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
-        List<NotificationDto> dismissedDtos =
-                dismissedRows.stream()
-                        .filter(
-                                d ->
-                                        viewerRoles == null
-                                                || NotificationSourceViewerRoles.isSourceVisibleToRoles(
-                                                        d.getSource(), viewerRoles))
-                        .filter(
-                                d ->
-                                        !isHiddenByPreference(
-                                                d.getSource(), d.getNotificationType(), disabledPreferenceKeys))
-                        .map(this::toDismissedDto)
-                        .toList();
-
-        return new NotificationsResponse(filtered, dismissedDtos);
+        return new NotificationsResponse(filtered);
     }
 
     private List<NotificationDto> resolveActiveNotifications(
@@ -179,14 +154,14 @@ public class NotificationAggregationService {
         if (orgId == null) {
             return aggregateActive(userId, locale, disabledPreferenceKeys, roles);
         }
-        boolean everSynced = notificationInstanceRepository.existsByOrganizationIdAndDismissedAtIsNull(orgId);
+        boolean everSynced = notificationInstanceRepository.existsByOrganizationId(orgId);
         if (!everSynced) {
             List<NotificationDto> live = aggregateActive(userId, locale, disabledPreferenceKeys, roles);
             persistAggregatedNotifications(orgId, live);
             return live;
         }
         List<NotificationInstance> projected =
-                notificationInstanceRepository.findByOrganizationIdAndStatusAndDismissedAtIsNull(
+                notificationInstanceRepository.findByOrganizationIdAndStatus(
                         orgId, NotificationInstanceStatus.ACTIVE);
         return projected.stream().map(this::toDtoFromProjection).toList();
     }
@@ -237,7 +212,6 @@ public class NotificationAggregationService {
                 f.getSourceLabel(),
                 f.getSourceRoute(),
                 false,
-                false,
                 supportsDetails);
     }
 
@@ -265,25 +239,7 @@ public class NotificationAggregationService {
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         boolean hasReported = feedbackKeys.contains(n.source() + ":" + n.notificationType());
         return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),
-                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, false, n.supportsDetails());
-    }
-
-    private NotificationDto toDismissedDto(NotificationInstance d) {
-        boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(d.getNotificationType());
-        String severityStr = NotificationSeverity.toDtoString(d.getSeverity());
-        return new NotificationDto(
-                "nf-" + d.getId(),
-                severityStr,
-                d.getTitle(),
-                d.getDescription(),
-                d.getRecommendedActions() != null ? d.getRecommendedActions() : List.of(),
-                d.getNotificationType(),
-                d.getSource(),
-                d.getSourceLabel(),
-                d.getSourceRoute(),
-                false,
-                true,
-                supportsDetails);
+                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, n.supportsDetails());
     }
 
     private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
@@ -572,7 +528,7 @@ public class NotificationAggregationService {
                                   String source, String sourceLabel, String sourceRoute) {
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(notificationType);
         return new NotificationDto("n-" + id, severity, title, description, recommendedActions,
-                notificationType, source, sourceLabel, sourceRoute, false, false, supportsDetails);
+                notificationType, source, sourceLabel, sourceRoute, false, supportsDetails);
     }
 
 }

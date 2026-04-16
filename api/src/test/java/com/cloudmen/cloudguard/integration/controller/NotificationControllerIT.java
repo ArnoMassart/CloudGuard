@@ -87,7 +87,6 @@ class NotificationControllerIT {
                 "DNS",
                 "/domain-dns",
                 false,
-                false,
                 true);
     }
 
@@ -101,8 +100,7 @@ class NotificationControllerIT {
     @Test
     void getNotifications_withCookie_returnsJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
-        var response =
-                new NotificationsResponse(List.of(sampleNotification()), List.of());
+        var response = new NotificationsResponse(List.of(sampleNotification()));
         when(aggregationService.getNotifications(eq("admin@acme.com"), any(Locale.class)))
                 .thenReturn(response);
 
@@ -113,8 +111,7 @@ class NotificationControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.active[0].id").value("n1"))
-                .andExpect(jsonPath("$.active[0].source").value("domain-dns"))
-                .andExpect(jsonPath("$.dismissed").isArray());
+                .andExpect(jsonPath("$.active[0].source").value("domain-dns"));
 
         verify(aggregationService).getNotifications(eq("admin@acme.com"), any(Locale.class));
     }

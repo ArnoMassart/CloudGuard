@@ -7,8 +7,6 @@ import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceSta
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
-import com.cloudmen.cloudguard.service.notification.CriticalNotificationReminderEmailService;
-import com.cloudmen.cloudguard.service.notification.CriticalNotificationWeeklyReminderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +49,7 @@ class CriticalNotificationWeeklyReminderServiceTest {
     @Test
     void sendWeeklyReminders_skipsWhenNoCriticalRows() {
         when(userRepository.findDistinctOrganizationIds()).thenReturn(List.of(ORG));
-        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         eq(ORG), eq(NotificationInstanceStatus.ACTIVE), eq(NotificationSeverity.CRITICAL)))
                 .thenReturn(List.of());
 
@@ -66,7 +64,7 @@ class CriticalNotificationWeeklyReminderServiceTest {
         when(userRepository.findDistinctOrganizationIds()).thenReturn(List.of(ORG));
         NotificationInstance crit = new NotificationInstance();
         crit.setTitle("Gap");
-        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         eq(ORG), eq(NotificationInstanceStatus.ACTIVE), eq(NotificationSeverity.CRITICAL)))
                 .thenReturn(List.of(crit));
         when(userRepository.findByOrganizationIdAndRoleOrderByIdAsc(ORG, UserRole.SUPER_ADMIN))
@@ -84,7 +82,7 @@ class CriticalNotificationWeeklyReminderServiceTest {
         crit.setTitle("2FA");
         crit.setSourceLabel("Users");
         List<NotificationInstance> criticalList = List.of(crit);
-        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         eq(ORG), eq(NotificationInstanceStatus.ACTIVE), eq(NotificationSeverity.CRITICAL)))
                 .thenReturn(criticalList);
 
@@ -112,7 +110,7 @@ class CriticalNotificationWeeklyReminderServiceTest {
     void sendWeeklyReminders_usesNlWhenLanguageMissing() {
         when(userRepository.findDistinctOrganizationIds()).thenReturn(List.of(ORG));
         List<NotificationInstance> criticalList = List.of(new NotificationInstance());
-        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         eq(ORG), eq(NotificationInstanceStatus.ACTIVE), eq(NotificationSeverity.CRITICAL)))
                 .thenReturn(criticalList);
         User admin = new User();
@@ -131,11 +129,11 @@ class CriticalNotificationWeeklyReminderServiceTest {
     @Test
     void sendWeeklyReminders_continuesWhenOneOrgThrows() {
         when(userRepository.findDistinctOrganizationIds()).thenReturn(List.of(1L, 2L));
-        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         eq(1L), eq(NotificationInstanceStatus.ACTIVE), eq(NotificationSeverity.CRITICAL)))
                 .thenThrow(new RuntimeException("db"));
         List<NotificationInstance> criticalList = List.of(new NotificationInstance());
-        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+        when(notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         eq(2L), eq(NotificationInstanceStatus.ACTIVE), eq(NotificationSeverity.CRITICAL)))
                 .thenReturn(criticalList);
         User admin = new User();
