@@ -118,7 +118,6 @@ export class Navbar {
       Icon: this.Icons.Bell,
       Label: 'notifications-feedback',
       Route: '/reports-reactions',
-      RequiredRole: Role.NOTIFICATIONS_FEEDBACK_VIEWER,
     },
     {
       Icon: this.Icons.Settings,
@@ -159,7 +158,9 @@ export class Navbar {
       return this.NavItemsControl.filter((item) => item.RequiredRole !== Role.SUPER_ADMIN);
     }
 
-    return this.NavItemsControl.filter((item) => user.roles.includes(item.RequiredRole!));
+    return this.NavItemsControl.filter(
+      (item) => user.roles.includes(item.RequiredRole!) || item.Route === '/reports-reactions'
+    );
   });
 
   toggleMobileMenu() {

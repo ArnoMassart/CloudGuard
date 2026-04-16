@@ -81,21 +81,38 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            @if (pageResponse()?.scores?.usersScore !== -1) {
             <app-security-component Label="{{ 'users' | transloco }}" [Value]="pageResponse()?.scores?.usersScore" />
+            }
+
+            @if (pageResponse()?.scores?.groupsScore !== -1) {
             <app-security-component Label="{{ 'groups' | transloco }}" [Value]="pageResponse()?.scores?.groupsScore"
               [Icon]="Icons.UsersRound" [IsGroups]="true" />
+            }
+            @if (pageResponse()?.scores?.drivesScore !== -1) {
             <app-security-component Label="Drives" [Value]="pageResponse()?.scores?.drivesScore"
               [Icon]="Icons.FolderOpen" Route="shared-drives" />
+            }
+            @if (pageResponse()?.scores?.devicesScore !== -1) {
             <app-security-component Label="{{ 'devices' | transloco }}" [Value]="pageResponse()?.scores?.devicesScore"
               [Icon]="Icons.SmartPhone" Route="devices" />
+            }
+            @if (pageResponse()?.scores?.appAccessScore !== -1) {
             <app-security-component Label="{{ 'app-access' | transloco }}"
               [Value]="pageResponse()?.scores?.appAccessScore" [Icon]="Icons.Key" Route="app-access" />
+            }
+            @if (pageResponse()?.scores?.appPasswordsScore !== -1) {
             <app-security-component Label="{{ 'app-passwords' | transloco }}"
               [Value]="pageResponse()?.scores?.appPasswordsScore" [Icon]="Icons.LayoutGrid" Route="app-passwords" />
+            }
+            @if (pageResponse()?.scores?.passwordSettingsScore !== -1) {
             <app-security-component Label="{{ 'password-settings' | transloco }}" [Icon]="Icons.Lock"
               [Value]="pageResponse()?.scores?.passwordSettingsScore" Route="password-settings" />
+            }
+            @if (pageResponse()?.scores?.dnsScore !== -1) {
             <app-security-component Label="DNS" [Value]="pageResponse()?.scores?.dnsScore" [Icon]="Icons.Globe"
               Route="domain-dns" />
+            }
           </div>
         </div>
       </div>

@@ -145,10 +145,7 @@ export const routes: Routes = [
   {
     path: 'reports-reactions',
     component: ReportsReactions,
-    canActivate: [authGuard, accessGuard, roleGuard],
-    data: {
-      requiredRoles: [Role.NOTIFICATIONS_FEEDBACK_VIEWER],
-    },
+    canActivate: [authGuard, accessGuard],
   },
   {
     path: 'security-preferences',

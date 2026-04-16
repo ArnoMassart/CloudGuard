@@ -298,7 +298,7 @@
         </div>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showUsersGroups}">
         <h1>Gebruikers</h1>
         <p class="error-title" th:if="${report.users().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Inzicht in de beveiliging van werknemersaccounts. Het afdwingen van sterke authenticatie en het beperken van beheerdersrechten is essentieel om identiteitsfraude te voorkomen.</p>
@@ -375,7 +375,7 @@
         </table>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showUsersGroups}">
         <h1>Groepen</h1>
         <p class="error-title" th:if="${report.groups().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Inzicht in de configuratie van uw Google Groups. Slecht beheerde groepen kunnen leiden tot datalekken (bijvoorbeeld als externe personen ongemerkt in een interne mailinglijst zitten) of spam-problemen.</p>
@@ -436,7 +436,7 @@
         </table>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showDrives}">
         <h1>Gedeelde Drives</h1>
         <p class="error-title" th:if="${report.drives().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Overzicht van de cloud-opslag. Het is belangrijk om te controleren of bestanden niet onbedoeld toegankelijk zijn voor mensen buiten de organisatie.</p>
@@ -498,7 +498,7 @@
         </table>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showDevices}">
         <h1>Apparaten (Endpoints)</h1>
         <p class="error-title" th:if="${report.devices().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Analyse van de telefoons, tablets en laptops die toegang hebben tot bedrijfsgegevens. Ontbrekende updates of encryptie vormen een direct datalekrisico bij verlies of diefstal.</p>
@@ -577,7 +577,7 @@
         </table>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showAppAccess}">
         <h1>App Toegang (OAuth)</h1>
         <p class="error-title" th:if="${report.appAccess().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Applicaties van derden die via OAuth toegang hebben gekregen tot Google Workspace data (zoals e-mails lezen of bestanden inzien). Kwaadaardige apps kunnen ongemerkt data exfiltreren.</p>
@@ -637,7 +637,7 @@
         </table>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showAppPasswords}">
         <h1>App-wachtwoorden</h1>
         <p class="error-title" th:if="${report.appPasswords().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>App-wachtwoorden zijn een verouderde vorm van authenticatie die MFA omzeilen. Ze worden vaak gebruikt door oude mailclients, maar vormen een aanzienlijk beveiligingsrisico en moeten worden uitgefaseerd.</p>
@@ -686,7 +686,7 @@
         </p>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showPasswordSettings}">
         <h1>Wachtwoordbeleid & 2-Staps Verificatie</h1>
         <p class="error-title" th:if="${report.passwordSettings().hasError()}">Data kon niet live worden opgehaald uit Google Workspace</p>
         <p>Inzicht in de vereisten voor wachtwoorden en tweestapsverificatie (2FA/MFA) binnen uw organisatie. Een sterk wachtwoordbeleid, gecombineerd met hardware security keys voor beheerders, is de sterkste verdediging tegen accountovernames door phishing of datalekken.</p>
@@ -753,7 +753,7 @@
         </table>
     </div>
 
-    <div class="section-break">
+    <div class="section-break" th:if="${showDns}">
         <h1>Domein & DNS Beveiliging</h1>
         <p>DNS-records beschermen uw domeinen tegen spoofing, phishing en misbruik. Zonder de juiste configuratie (zoals SPF, DKIM en DMARC) kunnen kwaadwillenden e-mails versturen uit naam van uw organisatie. Hieronder volgt een gedetailleerde analyse per gekoppeld domein.</p>
 

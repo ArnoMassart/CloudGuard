@@ -4,6 +4,7 @@ import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../../components/language-bar/language-bar';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-server-error',
@@ -13,10 +14,9 @@ import { LanguageBar } from '../../components/language-bar/language-bar';
 })
 export class ServerError {
   readonly Icons = AppIcons;
+  readonly #router = inject(Router);
 
-  readonly #authService = inject(CustomAuthService);
-
-  tryAgain() {
-    this.#authService.logout();
+  backToHome() {
+    this.#router.navigate(['/home']);
   }
 }

@@ -53,6 +53,8 @@ public class PdfReportServiceTest {
     @Mock private TeamleaderService teamleaderService;
     @Mock private MessageSource messageSource;
     @Mock private UserSecurityPreferenceService userSecurityPreferenceService;
+    @Mock private UserService userService;
+    @Mock private OrganizationService organizationService;
 
     private PdfReportService pdfReportService;
 
@@ -63,7 +65,7 @@ public class PdfReportServiceTest {
                 googleUsersService, googleGroupsService, googleSharedDriveService,
                 googleDeviceService, googleOAuthService, appPasswordsService,
                 dnsRecordsService, googleDomainService, passwordSettingsService,
-                teamleaderCompanyService, teamleaderService, messageSource, userSecurityPreferenceService
+                teamleaderCompanyService, teamleaderService, messageSource, userSecurityPreferenceService, userService, organizationService
         );
     }
 

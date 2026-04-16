@@ -88,85 +88,80 @@ public class DashboardService {
 
         var disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
 
-        CompletableFuture<Integer> usersFuture = CompletableFuture.supplyAsync(() ->
-                        usersService.getUsersPageOverview(loggedInEmail, disabled).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden Users score: {}", ex.getMessage());
-                    return 100; // Fallback score
-                });
+        CompletableFuture<Integer> usersFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.USERS_GROUPS_VIEWER,
+                () -> usersService.getUsersPageOverview(loggedInEmail, disabled).securityScore(),
+                "Users"
+        );
 
-        CompletableFuture<Integer> groupsFuture = CompletableFuture.supplyAsync(() ->
-                        groupsService.getGroupsOverview(loggedInEmail, disabled).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden Groups score: {}", ex.getMessage());
-                    return 100;
-                });
+        CompletableFuture<Integer> groupsFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.USERS_GROUPS_VIEWER,
+                () -> groupsService.getGroupsOverview(loggedInEmail, disabled).securityScore(),
+                "Groups"
+        );
 
-        CompletableFuture<Integer> drivesFuture = CompletableFuture.supplyAsync(() ->
-                        sharedDriveService.getDrivesPageOverview(loggedInEmail, disabled).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden Drives score: {}", ex.getMessage());
-                    return 100;
-                });
+        CompletableFuture<Integer> drivesFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.SHARED_DRIVES_VIEWER,
+                () -> sharedDriveService.getDrivesPageOverview(loggedInEmail, disabled).securityScore(),
+                "Drives"
+                );
 
-        CompletableFuture<Integer> devicesFuture = CompletableFuture.supplyAsync(() ->
-                        googleDeviceService.getDevicesPageOverview(loggedInEmail, disabled).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden Devices score: {}", ex.getMessage());
-                    return 100;
-                });
+        CompletableFuture<Integer> devicesFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.DEVICES_VIEWER,
+                () -> googleDeviceService.getDevicesPageOverview(loggedInEmail, disabled).securityScore(),
+                "Devices"
+        );
 
-        CompletableFuture<Integer> appAccessFuture = CompletableFuture.supplyAsync(() ->
-                        oAuthService.getOAuthPageOverview(loggedInEmail, disabled).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden App Access score: {}", ex.getMessage());
-                    return 100;
-                });
+        CompletableFuture<Integer> appAccessFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.APP_ACCESS_VIEWER,
+                () -> oAuthService.getOAuthPageOverview(loggedInEmail, disabled).securityScore(),
+                "App Access"
+        );
 
-        CompletableFuture<Integer> appPasswordsFuture = CompletableFuture.supplyAsync(() ->
-                        passwordsService.getOverview(loggedInEmail, IS_TESTMODE, disabled).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden App Passwords score: {}", ex.getMessage());
-                    return 100;
-                });
+        CompletableFuture<Integer> appPasswordsFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.APP_PASSWORDS_VIEWER,
+                () -> passwordsService.getOverview(loggedInEmail, IS_TESTMODE ,disabled).securityScore(),
+                "App Passwords"
+                );
 
-        CompletableFuture<Integer> passwordSettingsFuture = CompletableFuture.supplyAsync(() ->
-                        passwordSettingsService.getPasswordSettings(loggedInEmail).securityScore())
-                .exceptionally(ex -> {
-                    log.error("Fout bij laden Password Settings score: {}", ex.getMessage());
-                    return 100;
-                });
+        CompletableFuture<Integer> passwordSettingsFuture = fetchScoreIfAllowed(
+                roles,
+                UserRole.PASSWORD_SETTINGS_VIEWER,
+                () -> passwordSettingsService.getPasswordSettings(loggedInEmail).securityScore(),
+                "Password Settings"
+        );
 
-        CompletableFuture<Integer> dnsAverageFuture = CompletableFuture.supplyAsync(() ->
-                        domainService.getAllDomains(loggedInEmail))
-                .thenCompose(domains -> {
-                    if (domains == null || domains.isEmpty()) {
-                        return CompletableFuture.completedFuture(0);
-                    }
+        CompletableFuture<Integer> dnsAverageFuture;
+        if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
+            dnsAverageFuture = CompletableFuture.supplyAsync(() -> domainService.getAllDomains(loggedInEmail))
+                    .thenCompose(domains -> {
+                        if (domains == null || domains.isEmpty()) return CompletableFuture.completedFuture(0);
 
-                    var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
-                    List<CompletableFuture<Integer>> dnsTasks = domains.stream()
-                            .map(dto -> CompletableFuture.supplyAsync(() ->
-                                    dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
-                            ).exceptionally(ex -> {
-                                log.error("Fout bij berekenen DNS score voor domein {}: {}", dto.domainName(), ex.getMessage());
-                                return 100; // Vangt fouten per specifiek domein af
-                            }))
-                            .toList();
+                        var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
+                        List<CompletableFuture<Integer>> dnsTasks = domains.stream()
+                                .map(dto -> CompletableFuture.supplyAsync(() ->
+                                        dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
+                                ).exceptionally(ex -> 100))
+                                .toList();
 
-                    return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
-                            .thenApply(v -> {
-                                int totalScore = dnsTasks.stream()
-                                        .mapToInt(CompletableFuture::join)
-                                        .sum();
-
-                                return Math.round((float) totalScore / domains.size());
-                            });
-                })
-                .exceptionally(ex -> {
-                    log.error("Fout in globale DNS Average logica: {}", ex.getMessage());
-                    return 100;
-                });
+                        return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
+                                .thenApply(v -> {
+                                    int totalScore = dnsTasks.stream().mapToInt(CompletableFuture::join).sum();
+                                    return Math.round((float) totalScore / domains.size());
+                                });
+                    }).exceptionally(ex -> {
+                        log.error("Fout in globale DNS Average logica: {}", ex.getMessage());
+                        return 100;
+                    });
+        } else {
+            dnsAverageFuture = CompletableFuture.completedFuture(-1);
+        }
 
         CompletableFuture.allOf(
                 usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture,
@@ -187,14 +182,28 @@ public class DashboardService {
     }
 
     private int calculateTotalScore(DashboardScores scores) {
-        int totalCategories = 8;
-        int totalScoresAdded = scores.usersScore() + scores.groupsScore() + scores.drivesScore() + scores.devicesScore() + scores.appAccessScore() + scores.appPasswordsScore()+scores.passwordSettingsScore()+scores.dnsScore();
+        int totalScore = 0;
+        int categoriesCount = 0;
 
+        // Tel score alleen mee als deze niet -1 is
+        if (scores.usersScore() >= 0) { totalScore += scores.usersScore(); categoriesCount++; }
+        if (scores.groupsScore() >= 0) { totalScore += scores.groupsScore(); categoriesCount++; }
+        if (scores.drivesScore() >= 0) { totalScore += scores.drivesScore(); categoriesCount++; }
+        if (scores.devicesScore() >= 0) { totalScore += scores.devicesScore(); categoriesCount++; }
+        if (scores.appAccessScore() >= 0) { totalScore += scores.appAccessScore(); categoriesCount++; }
+        if (scores.appPasswordsScore() >= 0) { totalScore += scores.appPasswordsScore(); categoriesCount++; }
+        if (scores.passwordSettingsScore() >= 0) { totalScore += scores.passwordSettingsScore(); categoriesCount++; }
+        if (scores.dnsScore() >= 0) { totalScore += scores.dnsScore(); categoriesCount++; }
 
-        return Math.round((float)totalScoresAdded / totalCategories);
+        // Voorkom 'divide by zero' als de gebruiker nergens rechten voor heeft
+        if (categoriesCount == 0) {
+            return 0;
+        }
+
+        return Math.round((float) totalScore / categoriesCount);
     }
 
-    private CompletableFuture<Integer> fetchScoreIfAllowed(List<UserRole roles, UserRole requiredRole, java.util.function.Supplier<Integer> scoreSupplier, String moduleName) {
+    private CompletableFuture<Integer> fetchScoreIfAllowed(List<UserRole> roles, UserRole requiredRole, java.util.function.Supplier<Integer> scoreSupplier, String moduleName) {
         if (hasAccessToModule(roles, requiredRole)) {
             return CompletableFuture.supplyAsync(scoreSupplier)
                     .exceptionally(ex -> {

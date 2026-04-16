@@ -37,6 +37,7 @@ public class DashboardServiceTest {
     @Mock private NotificationAggregationService notificationService;
     @Mock private PasswordSettingsService passwordSettingsService;
     @Mock private UserSecurityPreferenceService userSecurityPreferenceService;
+    @Mock private UserService userService;
 
     private DashboardService dashboardService;
 
@@ -45,7 +46,7 @@ public class DashboardServiceTest {
         dashboardService = new DashboardService(
                 usersService, groupsService, sharedDriveService, googleDeviceService,
                 oAuthService, passwordsService, dnsRecordsService, domainService,
-                notificationService, passwordSettingsService, userSecurityPreferenceService
+                notificationService, passwordSettingsService, userSecurityPreferenceService, userService
         );
     }
 
