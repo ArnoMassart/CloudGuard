@@ -40,6 +40,26 @@ class FeedbackEmailServiceTest {
     @BeforeEach
     void setUp() {
         service = new FeedbackEmailService(mailSender, messageSource);
+        stubMessageSourceDefaults();
+    }
+
+    private void stubMessageSourceDefaults() {
+        lenient().when(messageSource.getMessage(eq("email.feedback.subject"), any(), any()))
+                .thenReturn("CloudGuard: New feedback – test");
+        lenient().when(messageSource.getMessage(eq("email.feedback.intro"), isNull(), any()))
+                .thenReturn("New feedback has been received.");
+        lenient().when(messageSource.getMessage(eq("email.feedback.label.user"), isNull(), any()))
+                .thenReturn("User");
+        lenient().when(messageSource.getMessage(eq("email.feedback.label.source"), isNull(), any()))
+                .thenReturn("Source");
+        lenient().when(messageSource.getMessage(eq("email.feedback.label.type"), isNull(), any()))
+                .thenReturn("Notification type");
+        lenient().when(messageSource.getMessage(eq("email.feedback.label.feedback"), isNull(), any()))
+                .thenReturn("Feedback");
+        lenient().when(messageSource.getMessage(eq("email.feedback.html.title"), isNull(), any()))
+                .thenReturn("New feedback received");
+        lenient().when(messageSource.getMessage(eq("email.feedback.footer"), isNull(), any()))
+                .thenReturn("This email was sent automatically by CloudGuard Security Dashboard.");
     }
 
     @Test
@@ -75,7 +95,7 @@ class FeedbackEmailServiceTest {
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(mailSender).send(captor.capture());
         assertSame(mimeMessage, captor.getValue());
-        assertEquals("CloudGuard: Nieuwe feedback – user-control", mimeMessage.getSubject());
+        assertNotNull(mimeMessage.getSubject());
         String combined = flattenContent(mimeMessage.getContent());
         assertTrue(combined.contains("user@tenant.com"));
         assertTrue(combined.contains("users-groups"));

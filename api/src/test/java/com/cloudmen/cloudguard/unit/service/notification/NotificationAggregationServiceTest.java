@@ -1,8 +1,12 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
+import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
-import com.cloudmen.cloudguard.domain.model.feedback.DismissedNotification;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
@@ -10,6 +14,8 @@ import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
@@ -25,9 +31,11 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,6 +70,12 @@ class NotificationAggregationServiceTest {
     NotificationFeedbackService feedbackService;
     @Mock
     UserSecurityPreferenceService preferenceService;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    NotificationInstanceRepository notificationInstanceRepository;
+    @Mock
+    NotificationProjectionProperties notificationProjectionProperties;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -87,7 +101,10 @@ class NotificationAggregationServiceTest {
                 passwordSettingsService,
                 dismissedService,
                 feedbackService,
-                preferenceService);
+                preferenceService,
+                userRepository,
+                notificationInstanceRepository,
+                notificationProjectionProperties);
     }
 
     @AfterEach
@@ -129,17 +146,21 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_excludesDismissedMatchingSourceAndType() {
         stubQuietBaselines();
+        User orgUser = new User();
+        orgUser.setEmail(GlobalTestHelper.ADMIN);
+        orgUser.setOrganizationId(99L);
+        when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(orgUser));
         when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        DismissedNotification d = new DismissedNotification();
+        NotificationInstance d = new NotificationInstance();
         d.setId(99L);
         d.setSource("users-groups");
         d.setNotificationType("user-control");
         d.setTitle("t");
         d.setDescription("d");
-        d.setSeverity("critical");
-        when(dismissedService.getDismissedForUser(GlobalTestHelper.ADMIN)).thenReturn(List.of(d));
+        d.setSeverity(NotificationSeverity.CRITICAL);
+        when(dismissedService.getDismissedForOrganization(99L)).thenReturn(List.of(d));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
@@ -220,7 +241,26 @@ class NotificationAggregationServiceTest {
         assertEquals("critical", critical.get(0).severity());
     }
 
+    @Test
+    void getNotifications_hidesSourceWhenViewerLacksMatchingViewerRole() {
+        stubQuietBaselines();
+        User u = new User();
+        u.setEmail(GlobalTestHelper.ADMIN);
+        u.setOrganizationId(null);
+        u.setRoles(new ArrayList<>(List.of(UserRole.DOMAIN_DNS_VIEWER)));
+        when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(u));
+        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+                .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
+
+        var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
+
+        assertTrue(response.active().isEmpty());
+    }
+
     private void stubQuietBaselines() {
+        lenient().when(notificationProjectionProperties.isReadEnabled()).thenReturn(true);
+        lenient().when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.empty());
+
         lenient().when(preferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
         lenient().when(preferenceService.getDnsImportanceOverrides(GlobalTestHelper.ADMIN)).thenReturn(Map.of());
 
@@ -239,7 +279,7 @@ class NotificationAggregationServiceTest {
                 .thenReturn(new AppPasswordOverviewResponse(true, 0, 0, 100, null));
         lenient().when(passwordSettingsService.getPasswordSettings(GlobalTestHelper.ADMIN)).thenReturn(null);
 
-        lenient().when(dismissedService.getDismissedForUser(GlobalTestHelper.ADMIN)).thenReturn(List.of());
+        lenient().when(dismissedService.getDismissedForOrganization(null)).thenReturn(List.of());
         lenient().when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of());
     }
 }
