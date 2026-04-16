@@ -32,6 +32,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -171,14 +172,46 @@ public class NotificationAggregationService {
         if (orgId == null) {
             return aggregateActive(userId, locale, disabledPreferenceKeys);
         }
-        boolean everSynced = notificationInstanceRepository.existsByOrganizationId(orgId);
+        boolean everSynced = notificationInstanceRepository.existsByOrganizationIdAndDismissedAtIsNull(orgId);
         if (!everSynced) {
-            return aggregateActive(userId, locale, disabledPreferenceKeys);
+            List<NotificationDto> live = aggregateActive(userId, locale, disabledPreferenceKeys);
+            persistAggregatedNotifications(orgId, live);
+            return live;
         }
         List<NotificationInstance> projected =
                 notificationInstanceRepository.findByOrganizationIdAndStatusAndDismissedAtIsNull(
                         orgId, NotificationInstanceStatus.ACTIVE);
         return projected.stream().map(this::toDtoFromProjection).toList();
+    }
+
+    /**
+     * Persists live-aggregated DTOs so the projection table is populated immediately,
+     * without waiting for the daily sync job.
+     */
+    private void persistAggregatedNotifications(Long orgId, List<NotificationDto> dtos) {
+        LocalDateTime now = LocalDateTime.now();
+        for (NotificationDto dto : dtos) {
+            boolean exists = notificationInstanceRepository
+                    .findByOrganizationIdAndSourceAndNotificationType(orgId, dto.source(), dto.notificationType())
+                    .isPresent();
+            if (exists) {
+                continue;
+            }
+            NotificationInstance row = new NotificationInstance();
+            row.setOrganizationId(orgId);
+            row.setSource(dto.source());
+            row.setNotificationType(dto.notificationType());
+            row.setStatus(NotificationInstanceStatus.ACTIVE);
+            row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));
+            row.setTitle(dto.title());
+            row.setDescription(dto.description());
+            row.setRecommendedActions(dto.recommendedActions() != null ? dto.recommendedActions() : List.of());
+            row.setSourceLabel(dto.sourceLabel());
+            row.setSourceRoute(dto.sourceRoute());
+            row.setFirstObservedAt(now);
+            row.setLastObservedAt(now);
+            notificationInstanceRepository.save(row);
+        }
     }
 
     private NotificationDto toDtoFromProjection(NotificationInstance f) {

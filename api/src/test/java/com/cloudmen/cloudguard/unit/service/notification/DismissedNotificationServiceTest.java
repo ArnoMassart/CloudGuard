@@ -42,7 +42,7 @@ class DismissedNotificationServiceTest {
     }
 
     @Test
-    void markAsDismissed_createsAndSavesWhenNotExisting() {
+    void markAsDismissed_throwsWhenNoRowExists() {
         User u = new User();
         u.setOrganizationId(ORG_ID);
         when(userRepository.findByEmail("admin@x.com")).thenReturn(Optional.of(u));
@@ -52,15 +52,8 @@ class DismissedNotificationServiceTest {
         DismissNotificationRequest req =
                 new DismissNotificationRequest("src", "typ", "label", "/route", "t", "d", "warning", List.of("a"));
 
-        service.markAsDismissed("admin@x.com", req);
-
-        ArgumentCaptor<NotificationInstance> cap = ArgumentCaptor.forClass(NotificationInstance.class);
-        verify(notificationInstanceRepository).save(cap.capture());
-        assertEquals(ORG_ID, cap.getValue().getOrganizationId());
-        assertEquals("src", cap.getValue().getSource());
-        assertEquals("typ", cap.getValue().getNotificationType());
-        assertNotNull(cap.getValue().getDismissedAt());
-        assertEquals(NotificationInstanceStatus.ACTIVE, cap.getValue().getStatus());
+        assertThrows(IllegalStateException.class, () -> service.markAsDismissed("admin@x.com", req));
+        verify(notificationInstanceRepository, never()).save(any());
     }
 
     @Test

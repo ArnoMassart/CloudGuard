@@ -22,7 +22,7 @@ public class CriticalNotificationReminderScheduler {
         this.reminderService = reminderService;
     }
 
-    @Scheduled(cron = "${cloudguard.notifications.reminder.weekly-critical-cron:0 * * * *}")
+    @Scheduled(cron = "${cloudguard.notifications.reminder.weekly-critical-cron:0 * * * * *}")
     public void sendWeeklyCriticalDigests() {
         if (!properties.isWeeklyCriticalEnabled()) {
             log.debug("Weekly critical reminder skipped: feature disabled");

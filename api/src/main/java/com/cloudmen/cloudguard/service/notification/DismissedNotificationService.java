@@ -2,7 +2,7 @@ package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
-import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
+
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.notifications.DismissNotificationRequest;
 import com.cloudmen.cloudguard.exception.OrganizationRequiredException;
@@ -36,19 +36,11 @@ public class DismissedNotificationService {
                 notificationInstanceRepository
                         .findByOrganizationIdAndSourceAndNotificationType(
                                 orgId, request.source(), request.notificationType())
-                        .orElseGet(
-                                () -> {
-                                    NotificationInstance n = new NotificationInstance();
-                                    n.setOrganizationId(orgId);
-                                    n.setSource(request.source());
-                                    n.setNotificationType(request.notificationType());
-                                    n.setStatus(NotificationInstanceStatus.ACTIVE);
-                                    n.setSeverity(NotificationSeverity.fromDtoString(request.severity()));
-                                    LocalDateTime now = LocalDateTime.now();
-                                    n.setFirstObservedAt(now);
-                                    n.setLastObservedAt(now);
-                                    return n;
-                                });
+                        .orElseThrow(
+                                () -> new IllegalStateException(
+                                        "Cannot dismiss: no notification row exists for org "
+                                                + orgId + " source=" + request.source()
+                                                + " type=" + request.notificationType()));
         applySnapshotFromRequest(row, request);
         row.setDismissedAt(LocalDateTime.now());
         notificationInstanceRepository.save(row);

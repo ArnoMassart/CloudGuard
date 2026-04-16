@@ -17,6 +17,8 @@ public interface NotificationInstanceRepository extends JpaRepository<Notificati
 
     boolean existsByOrganizationId(Long organizationId);
 
+    boolean existsByOrganizationIdAndDismissedAtIsNull(Long organizationId);
+
     List<NotificationInstance> findByOrganizationIdAndStatus(
             Long organizationId, NotificationInstanceStatus status);
 
