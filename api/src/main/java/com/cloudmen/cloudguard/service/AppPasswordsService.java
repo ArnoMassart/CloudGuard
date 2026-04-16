@@ -129,8 +129,8 @@ public class AppPasswordsService {
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        cache.asMap().compute(adminEmail, (email, existing) -> fetchAllAppPasswords(email));
+    public void forceRefreshCache(String loggedInEmail) {
+        cache.asMap().compute(loggedInEmail, (email, existing) -> fetchAllAppPasswords(email));
     }
 
     private AppPasswordCacheEntry fetchAllAppPasswords(String loggedInEmail) {

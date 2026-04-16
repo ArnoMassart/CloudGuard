@@ -4,6 +4,7 @@ import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminSecurityKeysResponse;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -48,22 +49,28 @@ public class AdminSecurityKeysService {
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public AdminSecurityKeysService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource) {
+    public AdminSecurityKeysService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource, UserService userService, OrganizationService organizationService) {
         this.apiFactory = apiFactory;
         this.messageSource = messageSource;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
-    public AdminSecurityKeysResponse getAdminsWithSecurityKeys(String adminEmail) {
-        return cache.get(adminEmail, this::fetchAdminsWithoutSecurityKeys);
+    public AdminSecurityKeysResponse getAdminsWithSecurityKeys(String loggedInEmail) {
+        return cache.get(loggedInEmail, this::fetchAdminsWithoutSecurityKeys);
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        cache.asMap().compute(adminEmail, (email, existing) -> fetchAdminsWithoutSecurityKeys(email));
+    public void forceRefreshCache(String loggedInEmail) {
+        cache.asMap().compute(loggedInEmail, (email, existing) -> fetchAdminsWithoutSecurityKeys(email));
     }
 
-    private AdminSecurityKeysResponse fetchAdminsWithoutSecurityKeys(String adminEmail) {
+    private AdminSecurityKeysResponse fetchAdminsWithoutSecurityKeys(String loggedInEmail) {
         try {
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
             Set<String> directoryScopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY
             );

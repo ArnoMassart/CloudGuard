@@ -120,8 +120,6 @@ export class CustomAuthService {
           this.#loggedInStatus.next(true);
           this.#initializedStatus.next(true);
           this.#fetchCurrentUser();
-
-          // this.#warmupCacheService.triggerWarmup();
         })
       );
   }

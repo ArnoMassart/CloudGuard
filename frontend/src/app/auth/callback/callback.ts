@@ -7,6 +7,7 @@ import { CustomAuthService } from '../custom-auth-service';
 import { Router } from '@angular/router';
 import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
 import { UserService } from '../../services/user-service';
+import { WarmupCacheService } from '../../services/warmup-cache-service';
 
 @Component({
   selector: 'app-callback',
@@ -21,6 +22,7 @@ export class Callback implements OnInit {
   private readonly customAuth = inject(CustomAuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly warmupCacheService = inject(WarmupCacheService);
 
   ngOnInit(): void {
     const returningFromAuth0 = sessionStorage.getItem('auth0_redirect_pending') === '1';
@@ -44,7 +46,7 @@ export class Callback implements OnInit {
           hasValidRole: this.userService.hasValidRole(),
           hasOrganization: this.userService.hasOrganization(),
         });
-      }),
+      })
     );
 
     const minDelay$ = timer(2500);
@@ -65,7 +67,8 @@ export class Callback implements OnInit {
           } else if (!loginData.hasOrganization) {
             this.router.navigate(['/no-organization']);
           } else {
-            this.router.navigate(['/home']);
+            this.warmupCacheService.triggerWarmup();
+            this.router.navigate(['/test']);
           }
         },
         error: (err) => {
