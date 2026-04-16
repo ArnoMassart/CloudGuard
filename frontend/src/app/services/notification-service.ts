@@ -28,6 +28,10 @@ export class NotificationService {
   readonly #passwordSettingsService = inject(PasswordSettingsService);
   readonly #translocoService = inject(TranslocoService);
 
+  syncNotifications(): Observable<void> {
+    return this.#http.post<void>(`${this.#API_URL}/sync`, null, { withCredentials: true });
+  }
+
   getNotifications(): Observable<{ active: Notification[] }> {
     return this.#http
       .get<NotificationsResponse>(this.#API_URL, { withCredentials: true })

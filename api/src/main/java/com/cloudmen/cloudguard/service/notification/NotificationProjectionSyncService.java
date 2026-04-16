@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,8 +92,11 @@ public class NotificationProjectionSyncService {
             row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));
             row.setTitle(dto.title());
             row.setDescription(dto.description());
+            // Hibernate mutates this @ElementCollection on merge/save — must be mutable (not List.of / unmodifiable).
             row.setRecommendedActions(
-                    dto.recommendedActions() != null ? dto.recommendedActions() : List.of());
+                    dto.recommendedActions() != null
+                            ? new ArrayList<>(dto.recommendedActions())
+                            : new ArrayList<>());
             row.setSourceLabel(dto.sourceLabel());
             row.setSourceRoute(dto.sourceRoute());
             row.setLastObservedAt(now);

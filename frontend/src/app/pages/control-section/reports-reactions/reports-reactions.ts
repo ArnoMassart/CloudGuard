@@ -11,8 +11,10 @@ import { NotificationFeedbackService } from '../../../services/notification-feed
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -37,6 +39,8 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly notifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly listLoadError = signal<string | null>(null);
+  /** Shown when manual refresh sync fails but the notification list was still loaded (best-effort). */
+  readonly syncWarning = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly filterSeverity = signal<NotificationSeverity | 'all' | 'in-behandeling'>('all');
   readonly expandedIds = signal<Set<string>>(new Set());
@@ -114,7 +118,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
-      this.#loadNotifications();
+      this.#loadNotifications(false);
     });
   }
 
@@ -157,18 +161,46 @@ export class ReportsReactions implements OnInit, OnDestroy {
     this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'in-behandeling');
   }
 
-  #loadNotifications() {
+  #loadNotifications(syncFirst = false) {
     this.listLoadError.set(null);
+    this.syncWarning.set(null);
     this.isLoading.set(true);
     this.expandedIds.set(new Set());
     this.detailsCache.set({});
     this.loadingDetailsIds.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
-    this.#notificationService.getNotifications().subscribe({
-      next: ({ active }) => {
+
+    type SyncMeta =
+      | { mode: 'skipped' }
+      | { mode: 'ok' }
+      | { mode: 'failed'; detail: string };
+
+    const load$ = this.#notificationService.getNotifications();
+    const pipeline$ = syncFirst
+      ? this.#notificationService.syncNotifications().pipe(
+          map((): SyncMeta => ({ mode: 'ok' })),
+          catchError((err): Observable<SyncMeta> => {
+            console.error('Notification sync failed: ', err);
+            return of({ mode: 'failed', detail: this.#httpErrorDetail(err) });
+          }),
+          switchMap((syncMeta) =>
+            load$.pipe(map((data) => ({ active: data.active, syncMeta }))),
+          ),
+        )
+      : load$.pipe(map((data) => ({ active: data.active, syncMeta: { mode: 'skipped' } as const })));
+    pipeline$.subscribe({
+      next: ({ active, syncMeta }) => {
         this.notifications.set(active);
         this.isLoading.set(false);
         this.listLoadError.set(null);
+        if (syncMeta.mode === 'failed') {
+          this.syncWarning.set(
+            syncMeta.detail ||
+              this.#translocoService.translate('reports-reactions.error.sync-failed'),
+          );
+        } else {
+          this.syncWarning.set(null);
+        }
       },
       error: (err) => {
         console.error('Notifications load failed: ', err);
@@ -183,7 +215,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
   }
 
   refresh() {
-    this.#loadNotifications();
+    this.#loadNotifications(true);
   }
 
   getSeverityIcon(severity: NotificationSeverity) {

@@ -505,6 +505,7 @@
   "app-passwords.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw.",
   "password-settings.error.load-failed": "Wachtwoordinstellingen konden niet worden geladen.",
   "password-settings.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw.",
+  "reports-reactions.error.sync-failed": "Meldingen konden niet worden gesynchroniseerd met Google. De lijst hieronder kan iets achterlopen; probeer later opnieuw te vernieuwen.",
   "notifications.error.load-failed": "Meldingen konden niet worden geladen. Probeer het later opnieuw.",
   "notifications.error.feedback-failed": "Feedback kon niet worden verzonden.",
   "notifications.error.details-failed": "Details konden niet worden geladen.",

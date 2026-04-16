@@ -187,7 +187,10 @@ public class NotificationAggregationService {
             row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));
             row.setTitle(dto.title());
             row.setDescription(dto.description());
-            row.setRecommendedActions(dto.recommendedActions() != null ? dto.recommendedActions() : List.of());
+            row.setRecommendedActions(
+                    dto.recommendedActions() != null
+                            ? new ArrayList<>(dto.recommendedActions())
+                            : new ArrayList<>());
             row.setSourceLabel(dto.sourceLabel());
             row.setSourceRoute(dto.sourceRoute());
             row.setFirstObservedAt(now);
