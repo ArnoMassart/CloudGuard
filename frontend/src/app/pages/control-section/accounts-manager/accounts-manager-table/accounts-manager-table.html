@@ -1,103 +1,104 @@
-<table class="w-full text-left border-collapse">
-  <thead>
+<table class="w-full text-left border-collapse block xl:table">
+  <thead class="hidden xl:table-header-group">
     <tr class="border-b border-t border-gray-100 bg-gray-50/50">
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-1/3">
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
         {{ 'user-cap' | transloco }}
       </th>
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-1/3">
+
+      @if (!hasExistingRoles()) {
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+        {{ 'required-changes' | transloco }}
+      </th>
+      }
+
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
         {{ 'role' | transloco }}
       </th>
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-1/3">
-        {{ 'organisation' | transloco }}
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+        {{ 'organization' | transloco }}
       </th>
-      <th class="px-6 py-4 w-1/3"></th>
+      <th class="px-6 py-4"></th>
     </tr>
   </thead>
-  <tbody>
+
+  <tbody class="block xl:table-row-group">
     @for (user of users(); track user.email) {
-      <tr class="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-        <td class="px-6 py-4">
-          <div class="flex flex-col">
-            <span class="font-medium text-slate-900 text-sm"
-              >{{ user.firstName }} {{ user.lastName }}</span
-            >
-            <span class="text-xs text-gray-400">{{ user.email }}</span>
-          </div>
-        </td>
+    <tr
+      class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
 
-        <td
-          class="px-6 py-4 cursor-pointer hover:bg-slate-50/50 transition-colors group"
-          (click)="
-            $event.stopPropagation();
-            toggleRoles.emit({ email: user.email, length: user.roles.length })
-          "
-          [title]="
-            (user.roles.length > 2
-              ? expandedRoles().has(user.email)
-                ? 'account-manager.minimize'
-                : 'account-manager.view-all'
-              : ''
-            ) | transloco
-          "
-        >
-          <div class="flex flex-wrap gap-2 items-center">
-            @if (expandedRoles().has(user.email)) {
-              @for (role of getRolesTranslated(user); track role.value) {
-                <span
-                  class="px-3 py-1 bg-slate-100 text-slate-600 text-[11px] font-medium rounded-full border border-slate-200 whitespace-nowrap"
-                >
-                  {{ role.label | transloco }}
-                </span>
-              }
-              <span
-                class="text-[10px] text-slate-400 uppercase font-medium ml-1 group-hover:text-primary transition-colors"
-              >
-                {{ 'less' | transloco }}
-              </span>
-            } @else {
-              @for (role of getRolesTranslated(user).slice(0, 2); track role.value) {
-                <span
-                  class="px-3 py-1 bg-slate-100 text-slate-600 text-[11px] font-medium rounded-full border border-slate-200 whitespace-nowrap"
-                >
-                  {{ role.label | transloco }}
-                </span>
-              }
-              @if (user.roles.length > 2) {
-                <span
-                  class="px-2.5 py-1 bg-primary/10 text-primary text-[11px] font-semibold rounded-full border border-primary/20 whitespace-nowrap shadow-sm transition-all group-hover:bg-primary group-hover:text-white"
-                >
-                  +{{ user.roles.length - 2 }}
-                </span>
-              }
+      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+        <div class="flex flex-col">
+          <span class="font-medium text-slate-900 text-sm">{{ user.firstName }} {{ user.lastName }}</span>
+          <span class="text-xs text-gray-400">{{ user.email }}</span>
+        </div>
+      </td>
+
+      @if (!hasExistingRoles()) {
+      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+        <span
+          class="px-3 py-1 inline-flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-medium tracking-wide uppercase bg-blue-50 text-blue-600 border border-blue-100">
+          @if (user.roleRequested) {
+          <span>{{ 'roles.assign-title' | transloco }}</span>
+          } @else if (user.organizationRequested) {
+          <span>{{ 'assign-org' | transloco }}</span>
+          }
+        </span>
+      </td>
+      }
+
+      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 cursor-pointer group"
+        (click)="$event.stopPropagation(); toggleRoles.emit({ email: user.email, length: user.roles.length })"
+        [title]="(user.roles.length > 2 ? (expandedRoles().has(user.email) ? 'account-manager.minimize' : 'account-manager.view-all') : '') | transloco">
+        <div class="flex flex-wrap gap-2 items-center">
+
+          @if (expandedRoles().has(user.email)) {
+          @for (role of getRolesTranslated(user); track role.value) {
+          <span class="px-3 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap"
+            [ngClass]="getRoleColorClasses(role.value, user)">
+            {{ role.label | transloco }}
+          </span>
+          }
+          <span class="text-[10px] text-slate-400 uppercase font-bold ml-1 group-hover:text-primary transition-colors">
+            {{ 'less' | transloco }}
+          </span>
+          } @else {
+          @for (role of getRolesTranslated(user).slice(0, 2); track role.value) {
+          <span class="px-3 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap"
+            [ngClass]="getRoleColorClasses(role.value, user)">
+            {{ checkCLOUDMENSuperAdmin(user) ? "CLOUDMEN Super Admin" : role.label | transloco }}
+          </span>
+          }
+          @if (user.roles.length > 2) {
+          <span
+            class="px-2.5 py-1 bg-slate-100 text-slate-600 border-slate-200 text-[11px] font-semibold rounded-full border whitespace-nowrap shadow-sm transition-all group-hover:bg-slate-200">
+            +{{ user.roles.length - 2 }}
+          </span>
+          }
+          }
+        </div>
+      </td>
+
+      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+        <div class="flex flex-col min-w-37.5">
+          <select [disabled]="checkCLOUDMENSuperAdmin(user)" [(ngModel)]="user.organizationId"
+            (change)="onOrgChange(user, $event)" (click)="$event.stopPropagation()"
+            class="bg-transparent border-none p-0 font-medium text-slate-600 text-[13px] focus:ring-0 focus:outline-none cursor-pointer hover:text-primary transition-colors disabled:cursor-not-allowed disabled:hover:text-slate-600">
+            <option [ngValue]="null">{{ 'select-org' | transloco }}</option>
+            @for (org of orgs(); track org.id) {
+            <option [ngValue]="org.id">{{ org.name }}</option>
             }
-          </div>
-        </td>
+          </select>
+        </div>
+      </td>
 
-        <td class="px-6 py-4">
-          <div class="flex flex-col min-w-37.5">
-            <select
-              [(ngModel)]="user.organizationId"
-              (change)="onOrgChange(user, $event)"
-              (click)="$event.stopPropagation()"
-              class="bg-transparent border-none p-0 font-medium text-slate-600 text-[13px] focus:ring-0 focus:outline-none cursor-pointer hover:text-primary transition-colors"
-            >
-              <option [ngValue]="null">{{ 'select-org' | transloco }}</option>
-              @for (org of orgs(); track org.id) {
-                <option [ngValue]="org.id">{{ org.name }}</option>
-              }
-            </select>
-          </div>
-        </td>
+      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 xl:text-right">
+        <button [disabled]="checkCLOUDMENSuperAdmin(user)" (click)="$event.stopPropagation(); actionClick.emit(user)"
+          class="text-[11px] font-medium text-white uppercase py-2.5 px-5 bg-primary rounded-lg hover:bg-primary/90 transition-all shadow-sm disabled:bg-muted disabled:text-muted-foreground">
+          {{ (hasExistingRoles() ? 'roles.edit-title' : 'account-manager.give-role') | transloco }}
+        </button>
+      </td>
 
-        <td class="px-8 py-4 text-right">
-          <button
-            (click)="$event.stopPropagation(); actionClick.emit(user)"
-            class="text-[11px] font-medium text-white uppercase py-2 px-5 bg-primary rounded-lg hover:bg-primary/90 transition-all shadow-sm"
-          >
-            {{ (hasExistingRoles() ? 'change' : 'account-manager.give-role') | transloco }}
-          </button>
-        </td>
-      </tr>
+    </tr>
     }
   </tbody>
 </table>

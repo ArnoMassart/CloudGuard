@@ -523,7 +523,6 @@
   "unassigned.request-sent-success": "Your request has been sent! \nAn administrator will review your account.",
   "unassigned.title": "Access pending",
   "accounts-manager": "Account Management",
-  "account-manager.description": "As an administrator of CLOUDMEN, manage all CloudGuard accounts here with role management",
   "account-manager.give-role": "Give role",
   "change": "Change",
   "account-manager.minimize": "Click to minimize",
@@ -532,7 +531,7 @@
   "assign": "Assign",
   "less": "Less",
   "roles.assign-description": "Select a role to assign to this user",
-  "roles.assign-title": "Assign role",
+  "roles.assign-title": "Assign Role",
   "roles.edit-description": "Change the role for this user",
   "roles.edit-title": "Adjust role",
   "save": "Save",
@@ -556,9 +555,12 @@
   "no-access": "You do not have access to this page. \nIf you should have access, ask CLOUDMEN to adjust your role for CloudGuard.",
   "no-access.watch-desc": "Only users with appropriate permissions can view this page",
   "back-home": "Back to home page",
-  "organisation": "Organization",
+  "organization": "Organization",
   "select-org": "Choose organization",
   "account-manager.no-org-assigned": "No organization assigned",
-  "account-manager.table-without.title": "Users with adjustment needed",
-  "no-org.desc": "You have successfully logged in, but no organization has been assigned to your account yet."
+  "no-org.desc": "You have successfully logged in, but no organization has been assigned to your account yet.",
+  "assign-org": "Organization Assign",
+  "required-changes": "RequestType",
+  "account-manager.description": "As an administrator of CLOUDMEN, manage all CloudGuard accounts with roles and organizations here",
+  "account-manager.table-without.title": "To request"
 }

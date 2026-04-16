@@ -36,9 +36,6 @@ public class UserService {
     private final OrganizationRepository organizationRepository;
     private final MessageSource messageSource;
 
-    @Value("${cloudmen.admin.email}")
-    private String CLOUDMEN_ADMIN_EMAIL;
-
     public UserService(
             UserRepository userRepository,
             OrganizationRepository organizationRepository,
@@ -209,7 +206,7 @@ public class UserService {
 
         String nextPageToken = userPage.hasNext() ? String.valueOf(page + 1) : null;
 
-        List<UserDto> filteredList = userPage.getContent().stream().filter(user -> !user.getEmail().equalsIgnoreCase(CLOUDMEN_ADMIN_EMAIL)).map(this::convertToDto).toList();
+        List<UserDto> filteredList = userPage.getContent().stream().map(this::convertToDto).toList();
 
         return new DatabaseUsersResponse(filteredList, nextPageToken);
     }

@@ -117,11 +117,6 @@ public class AuthService {
         } else {
             boolean rolesUpdated = false;
 
-            if (hasSuperAdminRole) {
-                user.getRoles().remove(UserRole.SUPER_ADMIN);
-                rolesUpdated = true;
-            }
-
             if (user.getRoles().isEmpty()) {
                 user.getRoles().add(UserRole.UNASSIGNED);
                 rolesUpdated = true;

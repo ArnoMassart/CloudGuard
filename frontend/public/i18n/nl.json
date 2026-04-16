@@ -523,8 +523,8 @@
   "unassigned.btn-request": "Toegang Aanvragen",
   "unassigned.btn-requested": "Aanvraag Verstuurd",
   "accounts-manager": "Accountbeheer",
-  "account-manager.description": "Beheer hier als beheerder van CLOUDMEN alle CloudGuard accounts met rolbeheer",
-  "account-manager.table-without.title": "Gebruikers met aanpassing nodig",
+  "account-manager.description": "Beheer hier als beheerder van CLOUDMEN alle CloudGuard accounts met rollen en organisaties",
+  "account-manager.table-without.title": "Aanvragen",
   "account-manager.give-role": "Geef rol",
   "change": "Aanpassen",
   "roles.edit-title": "Rol Aanpassen",
@@ -557,8 +557,10 @@
   "no-access": "U heeft geen toegang tot deze pagina. Als je normaal toegang zou moeten hebben, vraag dan aan CLOUDMEN om je rol voor CloudGuard aan te passen.",
   "no-access.watch-desc": "Alleen gebruikers met de juiste rechten kunnen deze pagina bekijken",
   "back-home": "Terug naar home pagina",
-  "organisation": "Organisatie",
+  "organization": "Organisatie",
   "select-org": "Kies organisatie",
   "account-manager.no-org-assigned": "Geen organisatie toegewezen",
-  "no-org.desc": "Je bent succesvol ingelogd, maar er is nog geen organisatie aan je account toegewezen."
+  "no-org.desc": "Je bent succesvol ingelogd, maar er is nog geen organisatie aan je account toegewezen.",
+  "required-changes": "Request Type",
+  "assign-org": "Organisatie Toewijzen"
 }
