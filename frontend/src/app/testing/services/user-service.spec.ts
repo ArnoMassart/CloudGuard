@@ -52,9 +52,9 @@ describe('UserService', () => {
 
   describe('getRole & getRoleLabel', () => {
     it('returns the label of the highest priority role', () => {
-      // Zelfs als DASHBOARD_VIEWER als eerste in de array staat,
+      // Zelfs als een lagere-prioriteit rol als eerste in de array staat,
       // moet SUPER_ADMIN winnen dankzij de RolePriority
-      const roles = [Role.DASHBOARD_VIEWER, Role.SUPER_ADMIN];
+      const roles = [Role.USERS_GROUPS_VIEWER, Role.SUPER_ADMIN];
       const roleLabel = service.getRole(roles);
       expect(roleLabel).toBe(RoleLabels[Role.SUPER_ADMIN]);
     });

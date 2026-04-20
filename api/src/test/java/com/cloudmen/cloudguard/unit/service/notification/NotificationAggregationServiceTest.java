@@ -14,8 +14,9 @@ import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
-import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
@@ -40,6 +41,8 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationAggregationServiceTest {
@@ -84,7 +87,6 @@ class NotificationAggregationServiceTest {
                 oAuthService,
                 messageSource,
                 passwordSettingsService,
-                dismissedService,
                 feedbackService,
                 preferenceService,
                 notificationInstanceRepository,
@@ -114,7 +116,6 @@ class NotificationAggregationServiceTest {
         assertEquals("users-groups", n.source());
         assertTrue(n.supportsDetails());
         assertFalse(n.hasReported());
-        assertFalse(n.dismissed());
     }
 
     @Test
@@ -131,10 +132,9 @@ class NotificationAggregationServiceTest {
     }
 
     @Test
-    void getNotifications_excludesDismissedMatchingSourceAndType() {
+    void getNotifications_excludesActiveWhenMarkedDisabledInDb() {
         stubQuietBaselines();
 
-        // Mock een gebruiker MET organisatie ID EN rollen
         User orgUser = new User();
         orgUser.setEmail(GlobalTestHelper.ADMIN);
         orgUser.setOrganizationId(99L);
@@ -144,18 +144,29 @@ class NotificationAggregationServiceTest {
         lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        NotificationInstance d = new NotificationInstance();
-        d.setId(99L);
-        d.setSource("users-groups");
-        d.setNotificationType("user-control");
-        d.setTitle("t");
-        d.setDescription("d");
-        d.setSeverity(NotificationSeverity.CRITICAL);
-        lenient().when(dismissedService.getDismissedForOrganization(99L)).thenReturn(List.of(d));
+        // First visit: aggregate from live APIs, then exclude rows marked DISABLED in projection table
+        lenient().when(notificationInstanceRepository.existsByOrganizationId(99L)).thenReturn(false);
+        lenient()
+                .when(notificationInstanceRepository.findByOrganizationIdAndSourceAndNotificationType(
+                        eq(99L), eq("users-groups"), eq("user-control")))
+                .thenReturn(Optional.empty());
+        lenient().when(notificationInstanceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        NotificationInstance disabled = new NotificationInstance();
+        disabled.setId(1L);
+        disabled.setOrganizationId(99L);
+        disabled.setSource("users-groups");
+        disabled.setNotificationType("user-control");
+        disabled.setStatus(NotificationInstanceStatus.DISABLED);
+        lenient()
+                .when(notificationInstanceRepository.findByOrganizationIdAndStatus(
+                        eq(99L), eq(NotificationInstanceStatus.DISABLED)))
+                .thenReturn(List.of(disabled));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
         assertTrue(response.active().isEmpty());
+        verify(notificationInstanceRepository).save(any());
     }
 
     @Test
@@ -279,7 +290,6 @@ class NotificationAggregationServiceTest {
                 .thenReturn(new AppPasswordOverviewResponse(true, 0, 0, 100, null));
         lenient().when(passwordSettingsService.getPasswordSettings(GlobalTestHelper.ADMIN)).thenReturn(null);
 
-        lenient().when(dismissedService.getDismissedForOrganization(null)).thenReturn(List.of());
         lenient().when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of());
     }
 }

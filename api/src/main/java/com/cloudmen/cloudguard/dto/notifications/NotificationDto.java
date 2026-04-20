@@ -13,7 +13,6 @@ public record NotificationDto(
         String sourceLabel,
         String sourceRoute,
         boolean hasReported,
-        boolean dismissed,
-        boolean supportsDetails
-) {
-}
+        boolean supportsDetails,
+        /** ISO-8601 instant string from {@code tbl_notifications.created_at}, or null when not persisted yet */
+        String createdAt) {}

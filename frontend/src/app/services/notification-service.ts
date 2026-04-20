@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { RouteService } from './route-service';
 import { UserService } from './user-service';
@@ -28,11 +28,22 @@ export class NotificationService {
   readonly #passwordSettingsService = inject(PasswordSettingsService);
   readonly #translocoService = inject(TranslocoService);
 
-  getNotificationsAndDismissed(): Observable<{
+  syncNotifications(): Observable<void> {
+    return this.#http.post<void>(`${this.#API_URL}/sync`, null, { withCredentials: true });
+  }
+
+  getNotifications(): Observable<{
     active: Notification[];
-    dismissed: Notification[];
+    solved: Notification[];
+    lastNotificationSyncAt: string | null;
   }> {
-    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true });
+    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
+      map((res) => ({
+        active: res.active ?? [],
+        solved: res.solved ?? [],
+        lastNotificationSyncAt: res.lastNotificationSyncAt ?? null,
+      }))
+    );
   }
 
   getNotificationDetails(notification: Notification): Observable<string[]> {
