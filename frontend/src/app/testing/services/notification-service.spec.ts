@@ -177,7 +177,9 @@ describe('NotificationService', () => {
         },
       ];
       const body: NotificationsResponse = { active, solved: [] };
-      service.getNotifications().subscribe((res) => expect(res).toEqual({ active, solved: [] }));
+      service.getNotifications().subscribe((res) =>
+        expect(res).toEqual({ active, solved: [], lastNotificationSyncAt: null }),
+      );
 
       const req = httpMock.expectOne((r) => r.url === '/api/notifications');
       expect(req.request.method).toBe('GET');
@@ -189,10 +191,71 @@ describe('NotificationService', () => {
       service.getNotifications().subscribe((res) => {
         expect(res.active).toEqual([]);
         expect(res.solved).toEqual([]);
+        expect(res.lastNotificationSyncAt).toBeNull();
       });
 
       const req = httpMock.expectOne((r) => r.url === '/api/notifications');
       req.flush('', { status: 500, statusText: 'Server Error' });
+    });
+
+    it('maps active, solved, and lastNotificationSyncAt from API response', () => {
+      const active: Notification[] = [
+        {
+          id: 'a1',
+          severity: 'info',
+          title: 'A',
+          description: 'D',
+          notificationType: 'x',
+          source: 's',
+          sourceLabel: 'L',
+          sourceRoute: '/',
+        },
+      ];
+      const solved: Notification[] = [
+        {
+          id: 's1',
+          severity: 'info',
+          title: 'S',
+          description: 'D',
+          notificationType: 'x',
+          source: 's',
+          sourceLabel: 'L',
+          sourceRoute: '/',
+        },
+      ];
+      const lastAt = '2025-06-01T12:00:00.000Z';
+
+      service.getNotifications().subscribe((res) => {
+        expect(res.active).toEqual(active);
+        expect(res.solved).toEqual(solved);
+        expect(res.lastNotificationSyncAt).toBe(lastAt);
+      });
+
+      const req = httpMock.expectOne((r) => r.url === '/api/notifications');
+      req.flush({
+        active,
+        solved,
+        lastNotificationSyncAt: lastAt,
+      });
+    });
+
+    it('defaults lastNotificationSyncAt to null when omitted', () => {
+      service.getNotifications().subscribe((res) => {
+        expect(res.lastNotificationSyncAt).toBeNull();
+      });
+      const req = httpMock.expectOne((r) => r.url === '/api/notifications');
+      req.flush({ active: [], solved: [] });
+    });
+  });
+
+  describe('syncNotifications', () => {
+    it('POSTs to /api/notifications/sync with credentials', () => {
+      service.syncNotifications().subscribe();
+
+      const req = httpMock.expectOne((r) => r.url === '/api/notifications/sync');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.withCredentials).toBe(true);
+      req.flush(null);
     });
   });
 
@@ -381,6 +444,38 @@ describe('NotificationService', () => {
       const n = baseNotification({ notificationType: 'device-lockscreen' });
       const lines = await firstValueFrom(service.getNotificationDetails(n));
       expect(lines).toEqual(['D1 – User (u@x.com)']);
+    });
+
+    it('device-os maps devices failing OS compliance', async () => {
+      deviceServiceMock.getDevices.mockReturnValue(
+        of({
+          devices: [
+            makeDevice({ resourceId: 'a', deviceName: 'OldOS', osSecure: false }),
+            makeDevice({ resourceId: 'b', deviceName: 'Ok', osSecure: true }),
+          ],
+          nextPageToken: null,
+        }),
+      );
+      const n = baseNotification({ notificationType: 'device-os' });
+      expect(await firstValueFrom(service.getNotificationDetails(n))).toEqual([
+        'OldOS – User (u@x.com)',
+      ]);
+    });
+
+    it('device-integrity maps devices failing integrity check', async () => {
+      deviceServiceMock.getDevices.mockReturnValue(
+        of({
+          devices: [
+            makeDevice({ resourceId: 'a', deviceName: 'Rooted', intSecure: false }),
+            makeDevice({ resourceId: 'b', deviceName: 'Fine', intSecure: true }),
+          ],
+          nextPageToken: null,
+        }),
+      );
+      const n = baseNotification({ notificationType: 'device-integrity' });
+      expect(await firstValueFrom(service.getNotificationDetails(n))).toEqual([
+        'Rooted – User (u@x.com)',
+      ]);
     });
 
     it('device details return empty when DeviceService errors', async () => {

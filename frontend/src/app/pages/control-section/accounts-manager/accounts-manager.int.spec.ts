@@ -25,7 +25,7 @@ describe('AccountsManager Integration', () => {
       email: 'many@cloudmen.com',
       firstName: 'Test',
       lastName: 'User',
-      roles: [Role.DASHBOARD_VIEWER, Role.USERS_GROUPS_VIEWER, Role.LICENSES_VIEWER],
+      roles: [Role.ORG_UNITS_VIEWER, Role.USERS_GROUPS_VIEWER, Role.LICENSES_VIEWER],
     },
   ];
 

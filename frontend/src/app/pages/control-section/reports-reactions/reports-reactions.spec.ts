@@ -48,6 +48,14 @@ const FB_I18N: Record<string, string> = {
   'reports-reactions.error.get-details-failed': 'Details failed (i18n)',
   'reports-reactions.error.submit-feedback-failed': 'Feedback failed (i18n)',
   'try-again': 'Try again',
+  'feedback.last-sync-never': 'Never synced',
+  'feedback.last-sync-at': 'Synced {{time}}',
+  'feedback.notification-created-unknown': '—',
+  'notification.created-at': 'Created',
+  'feedback.solved': 'Solved',
+  'feedback.solved-detail': 'Resolved detail',
+  'feedback.severity.resolved': 'No resolved',
+  'reports-reactions.error.sync-failed': 'Sync failed',
 };
 
 class ReportsReactionsTranslocoLoader implements TranslocoLoader {
@@ -78,6 +86,7 @@ describe('ReportsReactions', () => {
   let notificationServiceMock: {
     getNotifications: ReturnType<typeof vi.fn>;
     getNotificationDetails: ReturnType<typeof vi.fn>;
+    syncNotifications: ReturnType<typeof vi.fn>;
   };
   let feedbackServiceMock: { submitFeedback: ReturnType<typeof vi.fn> };
 
@@ -91,6 +100,7 @@ describe('ReportsReactions', () => {
     notificationServiceMock = {
       getNotifications: vi.fn(() => of({ active: activeList, solved: [] })),
       getNotificationDetails: vi.fn(() => of(['line one'])),
+      syncNotifications: vi.fn(() => of(void 0)),
     };
     feedbackServiceMock = {
       submitFeedback: vi.fn(() => of(void 0)),
@@ -122,6 +132,16 @@ describe('ReportsReactions', () => {
     expect(component).toBeTruthy();
   });
 
+  it('renders translated notifications page title in the header', () => {
+    const h1 = fixture.nativeElement.querySelector('h1');
+    expect(h1?.textContent?.trim()).toBe('Notifications');
+  });
+
+  it('lastSyncedLine uses last-sync-never when never synced', () => {
+    expect(component.lastNotificationSyncAt()).toBeNull();
+    expect(component.lastSyncedLine()).toBe('Never synced');
+  });
+
   it('loads notifications on init', () => {
     expect(notificationServiceMock.getNotifications).toHaveBeenCalled();
     expect(component.isLoading()).toBe(false);
@@ -131,6 +151,23 @@ describe('ReportsReactions', () => {
     expect(component.warningCount()).toBe(1);
     expect(component.infoCount()).toBe(1);
     expect(component.inBehandelingCount()).toBe(1);
+  });
+
+  it('merges active and solved notifications with instanceStatus', async () => {
+    notificationServiceMock.getNotifications.mockReturnValue(
+      of({
+        active: [makeNotification({ id: 'open-n' })],
+        solved: [makeNotification({ id: 'solved-n' })],
+      }),
+    );
+    fixture = TestBed.createComponent(ReportsReactions);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.notifications().length).toBe(2);
+    expect(component.notifications().find((x) => x.id === 'solved-n')?.instanceStatus).toBe('solved');
+    expect(component.solvedCount()).toBe(1);
   });
 
   it('filteredNotifications respects severity filters', () => {
@@ -288,7 +325,7 @@ describe('ReportsReactions', () => {
     expect(notificationServiceMock.getNotifications.mock.calls.length).toBeGreaterThan(callsAfterInit);
   });
 
-  it('refresh collapses expanded row and refetches list', async () => {
+  it('refresh collapses expanded row, syncs, and refetches list', async () => {
     const n = activeList[0];
     component.toggleExpand(n);
     await fixture.whenStable();
@@ -298,6 +335,7 @@ describe('ReportsReactions', () => {
     component.refresh();
     await fixture.whenStable();
 
+    expect(notificationServiceMock.syncNotifications).toHaveBeenCalled();
     expect(component.isExpanded(n.id)).toBe(false);
     expect(notificationServiceMock.getNotifications.mock.calls.length).toBeGreaterThan(callsBefore);
   });

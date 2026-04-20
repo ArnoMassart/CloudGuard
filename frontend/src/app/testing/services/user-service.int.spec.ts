@@ -153,7 +153,7 @@ describe('UserService Integration', () => {
     });
 
     it('should update roles for user without roles AND refresh requested count via tap', () => {
-      const roles = [Role.DASHBOARD_VIEWER];
+      const roles = [Role.USERS_GROUPS_VIEWER];
 
       // Roep de functie aan
       service.updateRolesForUserWithoutAny('test@domain.com', roles).subscribe();
@@ -204,7 +204,7 @@ describe('UserService Integration', () => {
     it('should sort roles by priority and return the label of the highest priority role', () => {
       // Gebruik Enum waarden die in RolePriority gedefinieerd staan.
       // Super Admin heeft de hoogste prioriteit (laagste getal)
-      const roles = [Role.DASHBOARD_VIEWER, Role.SUPER_ADMIN, Role.DEVICES_VIEWER];
+      const roles = [Role.USERS_GROUPS_VIEWER, Role.SUPER_ADMIN, Role.DEVICES_VIEWER];
 
       const expectedLabel = RoleLabels[Role.SUPER_ADMIN];
 

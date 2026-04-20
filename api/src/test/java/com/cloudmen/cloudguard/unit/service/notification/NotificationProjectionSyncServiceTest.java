@@ -7,9 +7,11 @@ import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceSta
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationProjectionSyncService;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,10 +21,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -39,12 +44,24 @@ class NotificationProjectionSyncServiceTest {
     private NotificationAggregationService aggregationService;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private UserSecurityPreferenceService preferenceService;
+    @Mock
+    private OrganizationRepository organizationRepository;
 
     private NotificationProjectionSyncService syncService;
 
     @BeforeEach
     void setUp() {
-        syncService = new NotificationProjectionSyncService(instanceRepository, aggregationService, userRepository);
+        syncService =
+                new NotificationProjectionSyncService(
+                        instanceRepository,
+                        aggregationService,
+                        userRepository,
+                        preferenceService,
+                        organizationRepository);
+        lenient().when(preferenceService.getDisabledPreferenceKeys(any())).thenReturn(Set.of());
+        lenient().when(organizationRepository.findById(ORG_ID)).thenReturn(Optional.empty());
     }
 
     @Test
