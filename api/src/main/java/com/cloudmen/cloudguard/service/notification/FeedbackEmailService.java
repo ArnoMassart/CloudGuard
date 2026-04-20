@@ -102,14 +102,11 @@ public class FeedbackEmailService {
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
-                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f3f3f5; }
-                .container { max-width: 600px; margin: 0 auto; background: %s; }
-                .header { background: %s; padding: 24px 32px; text-align: left; }
-                .logo { display: flex; align-items: center; gap: 12px; }
-                .logo-icon { font-size: 28px; line-height: 1; }
-                .logo-text { color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
-                .content { padding: 32px; color: %s; }
-                .title { font-size: 20px; font-weight: 600; color: %s; margin: 0 0 24px 0; }
+                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f3f3f5; }
+                .container { max-width: 600px; margin: 20px auto; background: %s; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+                .header { background: %s; padding: 24px 32px; text-align: center; color: white; }
+                .content { padding: 32px; color: %s; line-height: 1.5; }
+                .title { margin: 0 0 24px 0; color: %s; }
                 .card { background: %s; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
                 .label { font-size: 12px; font-weight: 600; color: %s; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
                 .value { font-size: 15px; color: %s; margin-bottom: 16px; }
@@ -120,13 +117,10 @@ public class FeedbackEmailService {
             <body>
               <div class="container">
                 <div class="header">
-                  <div class="logo">
-                    <span class="logo-icon">&#128737;</span>
-                    <h1 class="logo-text">CloudGuard</h1>
-                  </div>
+                  <h2 style="margin: 0;">CloudGuard Security</h2>
                 </div>
                 <div class="content">
-                  <h2 class="title">%s</h2>
+                  <h3 class="title">%s</h3>
                   <div class="card">
                     <div class="label">%s</div>
                     <div class="value">%s</div>
