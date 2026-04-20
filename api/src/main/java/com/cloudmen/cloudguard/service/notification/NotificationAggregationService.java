@@ -124,6 +124,7 @@ public class NotificationAggregationService {
         List<UserRole> viewerRoles = user != null && user.getRoles() != null ? user.getRoles() : null;
 
         List<NotificationDto> active = resolveActiveNotifications(user, userId, locale, disabledPreferenceKeys);
+        active = excludeNotificationsMarkedDisabledInDb(user, active);
         if (viewerRoles != null) {
             active =
                     active.stream()
@@ -141,6 +142,30 @@ public class NotificationAggregationService {
                 .toList();
 
         return new NotificationsResponse(filtered);
+    }
+
+    /**
+     * Drops notifications that are stored as {@link NotificationInstanceStatus#DISABLED} for this org.
+     * Needed when the live aggregation path is used: it does not read {@code tbl_notifications} status,
+     * but sync may still have marked rows DISABLED.
+     */
+    private List<NotificationDto> excludeNotificationsMarkedDisabledInDb(User user, List<NotificationDto> notifications) {
+        if (user == null || user.getOrganizationId() == null || notifications.isEmpty()) {
+            return notifications;
+        }
+        List<NotificationInstance> disabledRows =
+                notificationInstanceRepository.findByOrganizationIdAndStatus(
+                        user.getOrganizationId(), NotificationInstanceStatus.DISABLED);
+        if (disabledRows.isEmpty()) {
+            return notifications;
+        }
+        Set<String> disabledKeys = new HashSet<>();
+        for (NotificationInstance row : disabledRows) {
+            disabledKeys.add(row.getSource() + ":" + row.getNotificationType());
+        }
+        return notifications.stream()
+                .filter(n -> !disabledKeys.contains(n.source() + ":" + n.notificationType()))
+                .toList();
     }
 
     private List<NotificationDto> resolveActiveNotifications(
