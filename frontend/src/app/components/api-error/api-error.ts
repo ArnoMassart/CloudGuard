@@ -16,7 +16,7 @@ export class ApiError {
 
   readonly descriptionKey = input<string>('error.general_description');
 
-  @Input() fullBorder: boolean = false;
+  @Input() fullBorder: boolean = true;
 
   readonly isNoAdminError = computed(() => {
     const msg = this.errorMessage();

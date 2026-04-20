@@ -496,6 +496,7 @@
   "explanation": "Toelichting",
   "control": "BEHEER",
   "error.title": "Verbindingsfout met Google Workspace",
+  "error.general_description": "We konden de gegevens tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",
   "error.admin_required.title": "Actie vereist: Beheerder moet inloggen",
   "error.admin_required.description": "Om deze gegevens te kunnen ophalen, moet een Google Workspace-beheerder van jullie organisatie ten minste één keer inloggen. Vraag je IT-beheerder om dit eenmalig te doen.",
   "users.error.description": "We konden de gebruikers tijdelijk niet ophalen. Controleer uw configuratie of probeer de gegevens te vernieuwen.",

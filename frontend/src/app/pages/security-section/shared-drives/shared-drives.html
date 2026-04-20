@@ -95,6 +95,10 @@
     </app-page-warnings>
     }
 
+    @if (errorMessage()) {
+    <app-api-error [errorMessage]="errorMessage()" descriptionKey="drives.error.description" />
+
+    } @else {
     <app-search-bar placeholder="{{ 'shared-drives.search' | transloco }}..." (searchChange)="onSearch($event)" />
 
     <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
@@ -122,9 +126,6 @@
           </span>
         </div>
       </div>
-      }
-      @else if (apiError()) {
-      <app-api-error [errorMessage]="errorMessage()" descriptionKey="drives.error.description" />
       }
       @else if (drives().length > 0) {
       <div class="space-y-4 mt-1 md:px-6 pb-4">
@@ -247,5 +248,7 @@
           (loadData)="loadDrives($event)" />
       </div>
     </div>
+    }
+
   </div>
 </app-page-content-wrapper>

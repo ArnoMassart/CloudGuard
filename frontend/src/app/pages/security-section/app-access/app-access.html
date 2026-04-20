@@ -25,6 +25,10 @@
                 </div>
             </div>
 
+            @if (errorMessage()) {
+            <app-api-error [errorMessage]="errorMessage()" descriptionKey="app-access.error.description" />
+
+            } @else {
             <div class="flex flex-wrap items-center gap-10">
                 <app-search-bar placeholder="{{ 'app-access.search' | transloco }}..." class="flex-1 min-w-50"
                     (searchChange)="onSearch($event)" />
@@ -60,9 +64,6 @@
                         </span>
                     </div>
                 </div>
-                }
-                @else if (apiError()) {
-                <app-api-error [errorMessage]="errorMessage()" descriptionKey="app-access.error.description" />
                 }
                 @else if (apps().length > 0) {
                 <div class="space-y-4 mt-1 md:px-6 pb-4">
@@ -251,6 +252,7 @@ UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
                         (loadData)="loadApps($event)" />
                 </div>
             </div>
+            }
         </div>
     </div>
 </app-page-content-wrapper>

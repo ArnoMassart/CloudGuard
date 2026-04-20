@@ -115,10 +115,9 @@ public class GoogleDomainCacheService {
                 log.error("Google API faalde! Terugvallen op oude cache: {}", e.getMessage());
                 return fallbackEntry;
             }
-            log.error("Fout bij ophalen Google domains: {}", e.getMessage(), e);
+            log.error("Fout bij ophalen Google domains: {}", e.getMessage());
             throw new GoogleWorkspaceSyncException(
-                    messageSource.getMessage("api.google.domains_fetch_failed", null, LocaleContextHolder.getLocale()),
-                    e);
+                    messageSource.getMessage("api.google.domains_fetch_failed", null, LocaleContextHolder.getLocale()) + ": " + e.getMessage());
         }
     }
 

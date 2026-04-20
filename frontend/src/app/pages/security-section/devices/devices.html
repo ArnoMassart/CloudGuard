@@ -73,6 +73,10 @@
     </app-page-warnings>
     }
 
+    @if (errorMessage()) {
+    <app-api-error [errorMessage]="errorMessage()" descriptionKey="devices.error.description" />
+
+    } @else {
     <div
       class="flex flex-col sm:flex-row w-full items-start sm:items-center justify-start sm:justify-end gap-3 sm:gap-4">
       <div class="flex items-center gap-2 text-sm text-gray-600">
@@ -137,9 +141,6 @@
           </span>
         </div>
       </div>
-      }
-      @else if (apiError()) {
-      <app-api-error [errorMessage]="errorMessage()" descriptionKey="devices.error.description" />
       }
       @else if (devices().length > 0) {
       <table class="w-full text-left border-collapse mt-6 block xl:table">
@@ -213,10 +214,10 @@
               <div class="py-1 px-3 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
                 [class.text-emerald-600]="device.complianceScore >= 75"
                 [class.bg-[#dbfce7]]="device.complianceScore >= 75" [class.text-[#d69518]]="
-                          device.complianceScore < 75 && device.complianceScore >= 50
-                        " [class.bg-[#fef9c2]]="
-                          device.complianceScore < 75 && device.complianceScore >= 50
-                        " [class.text-[#e7000b]]="device.complianceScore < 50"
+                            device.complianceScore < 75 && device.complianceScore >= 50
+                          " [class.bg-[#fef9c2]]="
+                            device.complianceScore < 75 && device.complianceScore >= 50
+                          " [class.text-[#e7000b]]="device.complianceScore < 50"
                 [class.bg-[#ffe2e2]]="device.complianceScore < 50">
                 <lucide-icon [img]="device.complianceScore >= 75 ? Icons.CircleCheck : Icons.CircleX"
                   size="14"></lucide-icon>
@@ -232,12 +233,12 @@
                 [class.bg-[#fef9c2]]="device.status === 'Pending'" [class.text-[#e7000b]]="device.status === 'Blocked'"
                 [class.bg-[#ffe2e2]]="device.status === 'Blocked'">
                 <lucide-icon [img]="
-                            device.status === 'Approved'
-                              ? Icons.Shield
-                              : device.status === 'Pending'
-                                ? Icons.Clock
-                                : Icons.ShieldAlert
-                          " size="14"></lucide-icon>
+                              device.status === 'Approved'
+                                ? Icons.Shield
+                                : device.status === 'Pending'
+                                  ? Icons.Clock
+                                  : Icons.ShieldAlert
+                            " size="14"></lucide-icon>
                 {{
                 device.status === 'Approved'
                 ? 'Approved'
@@ -266,17 +267,17 @@
                   <div class="flex flex-col min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="font-medium text-sm" [ngClass]="
-                            f.state === 'ok'
-                              ? 'text-emerald-700'
-                              : f.state === 'warn'
-                                ? 'text-[#e7000b]'
-                                : 'text-gray-500'
-                          ">{{ f.label }}</span>
+                              f.state === 'ok'
+                                ? 'text-emerald-700'
+                                : f.state === 'warn'
+                                  ? 'text-[#e7000b]'
+                                  : 'text-gray-500'
+                            ">{{ f.label }}</span>
                       @if (f.state === 'warn') {
                       <i-lucide [img]="Icons.ExternalLink" size="14" class="text-[#e7000b] cursor-pointer" (click)="
-                            UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list');
-                            $event.stopPropagation()
-                          "></i-lucide>
+                              UtilityMethods.openAdminPage('https://admin.google.com/ac/devices/list');
+                              $event.stopPropagation()
+                            "></i-lucide>
                       }
                       <i-lucide
                         [img]="f.state === 'ok' ? Icons.CircleCheck : f.state === 'muted' ? Icons.CircleQuestionMark : Icons.TriangleAlert"
@@ -308,6 +309,7 @@
           (loadData)="loadDevices($event)" />
       </div>
     </div>
+    }
   </div>
 
 </app-page-content-wrapper>

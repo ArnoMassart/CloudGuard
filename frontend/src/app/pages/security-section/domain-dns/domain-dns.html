@@ -9,14 +9,18 @@
             <app-section-top-card class="min-w-0" Title="{{ 'domain.valid-dns' | transloco }}"
                 [Value]="validDnsRecords()" BackgroundColor="#dbfce7" IconColor="#17b04f" TextColor="#17b04f"
                 [Icon]="Icons.CircleCheck" />
-            <div class="col-span-2 md:col-span-1 min-w-0 cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()"
-                role="button" tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
+            <div class="col-span-2 md:col-span-1 min-w-0 cursor-pointer transition-opacity hover:opacity-90"
+                (click)="openSecurityScoreDetail()" role="button" tabindex="0"
+                (keydown.enter)="openSecurityScoreDetail()"
                 (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
-                <app-section-top-card class="min-w-0" Title="Security Score" [Value]="securityScore()" [IsPercentage]="true"
-                    BackgroundColor="#fef9c2" IconColor="#d69518" />
+                <app-section-top-card class="min-w-0" Title="Security Score" [Value]="securityScore()"
+                    [IsPercentage]="true" BackgroundColor="#fef9c2" IconColor="#d69518" />
             </div>
         </div>
 
+        @if (errorMessage()) {
+        <app-api-error [errorMessage]="errorMessage()" />
+        } @else {
         @if (!isLoading()) {
         @if (domains().length > 0) {
         <div class="bg-white rounded-lg pt-4 sm:pt-6 border-2 border-muted/50 overflow-hidden">
@@ -43,28 +47,37 @@
             <table class="w-full text-center border-collapse mt-4 sm:mt-6 block md:table">
                 <thead class="hidden md:table-header-group">
                     <tr class="border-b border-t border-gray-200 bg-gray-50/50">
-                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'domain.domain-name' |
+                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{
+                            'domain.domain-name' |
                             transloco }}</th>
-                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'domain.record-type' | transloco }}</th>
+                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{
+                            'domain.record-type' | transloco }}</th>
                         <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{
                             'domain.verification-status' | transloco }}</th>
-                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{ 'domain.number-users' |
+                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase">{{
+                            'domain.number-users' |
                             transloco }}</th>
                     </tr>
                 </thead>
 
                 <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
                     @for (domain of domains(); track domain.domainName) {
-                    <tr class="block md:table-row border border-gray-200 md:border-0 md:border-b md:border-gray-200 hover:bg-gray-50 transition-colors mb-4 md:mb-0 rounded-lg md:rounded-none overflow-hidden bg-white md:bg-transparent">
-                        <td class="block md:table-cell px-4 py-3 md:py-4 border-b md:border-none border-gray-100 bg-gray-50/30 md:bg-transparent text-left md:text-center">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase block mb-1">{{ 'domain.domain-name' | transloco }}</span>
+                    <tr
+                        class="block md:table-row border border-gray-200 md:border-0 md:border-b md:border-gray-200 hover:bg-gray-50 transition-colors mb-4 md:mb-0 rounded-lg md:rounded-none overflow-hidden bg-white md:bg-transparent">
+                        <td
+                            class="block md:table-cell px-4 py-3 md:py-4 border-b md:border-none border-gray-100 bg-gray-50/30 md:bg-transparent text-left md:text-center">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase block mb-1">{{
+                                'domain.domain-name' | transloco }}</span>
                             <div class="flex items-center gap-3 md:justify-center min-w-0">
-                                <span class="font-medium text-slate-900 text-sm break-all">{{ domain.domainName }}</span>
+                                <span class="font-medium text-slate-900 text-sm break-all">{{ domain.domainName
+                                    }}</span>
                             </div>
                         </td>
 
-                        <td class="flex md:table-cell justify-between md:justify-center items-center gap-2 px-4 py-3 md:px-6 md:py-4 border-b md:border-none border-gray-100">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'domain.record-type' | transloco }}</span>
+                        <td
+                            class="flex md:table-cell justify-between md:justify-center items-center gap-2 px-4 py-3 md:px-6 md:py-4 border-b md:border-none border-gray-100">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{
+                                'domain.record-type' | transloco }}</span>
                             <span class="inline-flex justify-center rounded-md text-xs font-medium px-3 py-1 shrink-0"
                                 [class.bg-indigo-100]="domain.domainType === 'Primary Domain'"
                                 [class.text-indigo-700]="domain.domainType === 'Primary Domain'"
@@ -76,8 +89,10 @@
                             </span>
                         </td>
 
-                        <td class="flex md:table-cell justify-between md:justify-center items-center gap-2 px-4 py-3 md:px-6 md:py-4 border-b md:border-none border-gray-100">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'domain.verification-status' | transloco }}</span>
+                        <td
+                            class="flex md:table-cell justify-between md:justify-center items-center gap-2 px-4 py-3 md:px-6 md:py-4 border-b md:border-none border-gray-100">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{
+                                'domain.verification-status' | transloco }}</span>
                             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium shrink-0"
                                 [class.text-emerald-600]="domain.isVerified" [class.bg-[#dbfce7]]="domain.isVerified"
                                 [class.text-amber-700]="!domain.isVerified" [class.bg-amber-100]="!domain.isVerified">
@@ -87,8 +102,10 @@
                             </div>
                         </td>
 
-                        <td class="flex md:table-cell justify-between md:justify-center items-center gap-2 px-4 py-3 md:px-6 md:py-4">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'domain.number-users' | transloco }}</span>
+                        <td
+                            class="flex md:table-cell justify-between md:justify-center items-center gap-2 px-4 py-3 md:px-6 md:py-4">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{
+                                'domain.number-users' | transloco }}</span>
                             <div class="flex items-center gap-2 md:justify-center">
                                 <i-lucide [img]="Icons.Users" size="16" class="text-gray-500 shrink-0" />
                                 <span class="text-sm font-medium text-slate-600">{{ domain.totalUsers ?? '–' }}</span>
@@ -102,7 +119,8 @@
         } @else {
         <div class="bg-white rounded-lg border-2 border-muted/50 flex gap-4 flex-col overflow-hidden">
             <div class="flex flex-col items-center justify-center px-4 py-8 sm:p-8 gap-4">
-                <span class="text-base sm:text-lg font-medium text-slate-600 text-center">{{ 'domain.none' | transloco }}.</span>
+                <span class="text-base sm:text-lg font-medium text-slate-600 text-center">{{ 'domain.none' | transloco
+                    }}.</span>
             </div>
         </div>
         }
@@ -122,20 +140,24 @@
             </div>
         </div>
         }
+        }
     </div>
 
 
+    @if (!errorMessage()) {
     <!-- Beveiligingscontroles card -->
     <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-6 sm:mt-8">
         <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
             <div class="flex items-start gap-3 flex-1 min-w-0">
-            <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#d8f2ef] text-[#3abfad] shrink-0">
-                <i-lucide [img]="Icons.Shield" size="22" />
-            </div>
-            <div class="flex-1 min-w-0">
-                <h2 class="text-base sm:text-lg font-medium text-gray-900">{{ 'domain.security-checks' | transloco }}</h2>
-                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ 'domain.authentication-state' | transloco }}</p>
-            </div>
+                <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-[#d8f2ef] text-[#3abfad] shrink-0">
+                    <i-lucide [img]="Icons.Shield" size="22" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900">{{ 'domain.security-checks' | transloco
+                        }}</h2>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-0.5">{{ 'domain.authentication-state' | transloco }}
+                    </p>
+                </div>
             </div>
             @if (domains().length > 0) {
             <select [ngModel]="selectedDnsDomain() ?? ''" (ngModelChange)="selectDnsDomain($event)"
@@ -155,9 +177,9 @@
         </div>
         } @else if (rows().length > 0) {
         @if (showDnsCriticalBanner() || showDnsAttentionBanner()) {
-        <div class="mx-4 sm:mx-6 mt-4 sm:mt-6 mb-0 rounded-lg border p-3 sm:p-4" [class.bg-red-50]="showDnsCriticalBanner()"
-            [class.border-red-200]="showDnsCriticalBanner()" [class.bg-amber-50]="showDnsAttentionBanner()"
-            [class.border-amber-200]="showDnsAttentionBanner()">
+        <div class="mx-4 sm:mx-6 mt-4 sm:mt-6 mb-0 rounded-lg border p-3 sm:p-4"
+            [class.bg-red-50]="showDnsCriticalBanner()" [class.border-red-200]="showDnsCriticalBanner()"
+            [class.bg-amber-50]="showDnsAttentionBanner()" [class.border-amber-200]="showDnsAttentionBanner()">
             <div class="flex items-start gap-3">
                 @if (showDnsCriticalBanner()) {
                 <i-lucide [img]="Icons.CircleX" size="20" class="text-red-600 shrink-0 mt-0.5" />
@@ -186,43 +208,45 @@
                 @for (row of securityControlsRows(); track row.type + row.name) {
                 <div class="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 py-4 first:pt-0">
                     <div class="flex items-start gap-3 sm:contents">
-                    <div class="shrink-0 mt-0.5">
-                        @if (getDnsStatusClass(row.status, row.type) === 'valid') {
-                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-[#d8f2ef] text-[#3abfad]">
-                            <i-lucide [img]="Icons.CircleCheck" size="18" />
-                        </div>
-                        } @else if (getDnsStatusClass(row.status, row.type) === 'error') {
-                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 text-red-600">
-                            <i-lucide [img]="Icons.CircleX" size="18" />
-                        </div>
-                        } @else {
-                        <div class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                            <i-lucide [img]="Icons.TriangleAlert" size="18" />
-                        </div>
-                        }
-                    </div>
-                    <div class="flex-1 min-w-0 sm:order-none order-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-medium text-gray-900 text-sm">{{ getControlTitle(row.type) | transloco
-                                }}</span>
-                            @if (getControlArticleUrl(row.type)) {
-                            <a [href]="getControlArticleUrl(row.type)!" target="_blank" rel="noopener noreferrer"
-                                class="text-gray-400 hover:text-gray-600 transition-colors">
-                                <i-lucide [img]="Icons.ExternalLink" size="14" />
-                            </a>
+                        <div class="shrink-0 mt-0.5">
+                            @if (getDnsStatusClass(row.status, row.type) === 'valid') {
+                            <div
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-[#d8f2ef] text-[#3abfad]">
+                                <i-lucide [img]="Icons.CircleCheck" size="18" />
+                            </div>
+                            } @else if (getDnsStatusClass(row.status, row.type) === 'error') {
+                            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 text-red-600">
+                                <i-lucide [img]="Icons.CircleX" size="18" />
+                            </div>
+                            } @else {
+                            <div
+                                class="w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                                <i-lucide [img]="Icons.TriangleAlert" size="18" />
+                            </div>
                             }
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">{{ getControlStatusDescription(row) | transloco }}</p>
-                        @if (getControlTip(row.type, row.status)) {
-                        <p class="text-sm mt-2">
-                            <span class="text-gray-600">Tip: </span>
-                            <span [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
-                                [class.text-red-600]="getDnsStatusClass(row.status, row.type) === 'error'">
-                                {{ getControlTip(row.type, row.status) | transloco }}
-                            </span>
-                        </p>
-                        }
-                    </div>
+                        <div class="flex-1 min-w-0 sm:order-none order-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-medium text-gray-900 text-sm">{{ getControlTitle(row.type) | transloco
+                                    }}</span>
+                                @if (getControlArticleUrl(row.type)) {
+                                <a [href]="getControlArticleUrl(row.type)!" target="_blank" rel="noopener noreferrer"
+                                    class="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <i-lucide [img]="Icons.ExternalLink" size="14" />
+                                </a>
+                                }
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">{{ getControlStatusDescription(row) | transloco }}</p>
+                            @if (getControlTip(row.type, row.status)) {
+                            <p class="text-sm mt-2">
+                                <span class="text-gray-600">Tip: </span>
+                                <span [class.text-amber-700]="getDnsStatusClass(row.status, row.type) === 'attention'"
+                                    [class.text-red-600]="getDnsStatusClass(row.status, row.type) === 'error'">
+                                    {{ getControlTip(row.type, row.status) | transloco }}
+                                </span>
+                            </p>
+                            }
+                        </div>
                     </div>
                     <div class="shrink-0 self-start sm:self-auto sm:ml-auto">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
@@ -259,15 +283,16 @@
     <div class="bg-white rounded-lg border-2 border-muted/50 shadow-sm overflow-hidden mt-6 sm:mt-8">
         <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-3">
             <div class="flex items-start gap-3 flex-1 min-w-0">
-            <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
-                <i-lucide [img]="Icons.FileText" size="22" />
-            </div>
-            <div class="flex-1 min-w-0">
-                <h2 class="text-base sm:text-lg font-medium text-gray-900">DNS Records</h2>
-                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
-                    {{ 'domain.dns-records.important' | transloco }}
-                </p>
-            </div>
+                <div
+                    class="w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                    <i-lucide [img]="Icons.FileText" size="22" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-base sm:text-lg font-medium text-gray-900">DNS Records</h2>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                        {{ 'domain.dns-records.important' | transloco }}
+                    </p>
+                </div>
             </div>
             @if (domains().length > 0) {
             <select [ngModel]="selectedDnsDomain() ?? ''" (ngModelChange)="selectDnsDomain($event)"
@@ -291,10 +316,13 @@
                 <thead class="hidden md:table-header-group">
                     <tr class="border-b border-t border-gray-200 bg-gray-50/80">
                         <th class="px-4 py-4 text-left"></th>
-                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{ 'domain.record-type' | transloco }}</th>
-                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{ 'name-caps' |
+                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{
+                            'domain.record-type' | transloco }}</th>
+                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{
+                            'name-caps' |
                             transloco }}</th>
-                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{ 'value-caps'
+                        <th class="px-4 md:px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wide">{{
+                            'value-caps'
                             | transloco }}</th>
                     </tr>
                 </thead>
@@ -311,31 +339,38 @@
                         [class.rounded-b-none]="expandedDnsRow() === row.type + row.name"
                         [class.bg-white]="expandedDnsRow() !== row.type + row.name"
                         [class.bg-[#f9fafb]]="expandedDnsRow() === row.type + row.name">
-                        <td class="block md:table-cell absolute right-3 top-4 md:static px-0 py-0 md:px-4 md:py-4 border-none align-middle">
+                        <td
+                            class="block md:table-cell absolute right-3 top-4 md:static px-0 py-0 md:px-4 md:py-4 border-none align-middle">
                             <i-lucide
                                 [img]="expandedDnsRow() === row.type + row.name ? Icons.ChevronDown : Icons.ChevronRight"
                                 size="16" class="text-gray-400" />
                         </td>
                         <td class="flex md:table-cell justify-between md:justify-start items-center gap-2 px-4 py-3 md:px-6 md:py-4 border-b md:border-none border-gray-100 pr-12 md:pr-6"
-                          [class.border-b-0]="expandedDnsRow() === row.type + row.name">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'domain.record-type' | transloco }}</span>
-                            <span class="text-sm font-medium text-gray-900 md:align-middle break-all">{{ row.type }}</span>
+                            [class.border-b-0]="expandedDnsRow() === row.type + row.name">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{
+                                'domain.record-type' | transloco }}</span>
+                            <span class="text-sm font-medium text-gray-900 md:align-middle break-all">{{ row.type
+                                }}</span>
                         </td>
                         <td class="flex md:table-cell justify-between md:justify-start items-start gap-2 px-4 py-3 md:px-6 md:py-4 border-b md:border-none border-gray-100"
-                          [class.border-b-0]="expandedDnsRow() === row.type + row.name">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'name-caps' | transloco }}</span>
-                            <span class="text-sm text-gray-700 md:align-middle break-all min-w-0 text-right md:text-left">{{ row.name }}</span>
+                            [class.border-b-0]="expandedDnsRow() === row.type + row.name">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'name-caps'
+                                | transloco }}</span>
+                            <span
+                                class="text-sm text-gray-700 md:align-middle break-all min-w-0 text-right md:text-left">{{
+                                row.name }}</span>
                         </td>
-                        <td
-                          class="flex md:table-cell justify-between md:justify-start items-start gap-2 px-4 md:px-6 md:pt-4 md:align-middle md:overflow-hidden border-b md:border-none border-gray-100"
-                          [class.border-b-0]="expandedDnsRow() === row.type + row.name"
-                          [class.py-3]="expandedDnsRow() !== row.type + row.name"
-                          [class.pt-3]="expandedDnsRow() === row.type + row.name"
-                          [class.pb-1]="expandedDnsRow() === row.type + row.name"
-                          [class.md:pb-2]="expandedDnsRow() === row.type + row.name"
-                          [class.md:pb-4]="expandedDnsRow() !== row.type + row.name">
-                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'value-caps' | transloco }}</span>
-                            <span class="text-sm text-gray-600 md:block md:truncate min-w-0 text-right md:text-left" [title]="row.values[0] || ''">{{ row.values[0] || '-'
+                        <td class="flex md:table-cell justify-between md:justify-start items-start gap-2 px-4 md:px-6 md:pt-4 md:align-middle md:overflow-hidden border-b md:border-none border-gray-100"
+                            [class.border-b-0]="expandedDnsRow() === row.type + row.name"
+                            [class.py-3]="expandedDnsRow() !== row.type + row.name"
+                            [class.pt-3]="expandedDnsRow() === row.type + row.name"
+                            [class.pb-1]="expandedDnsRow() === row.type + row.name"
+                            [class.md:pb-2]="expandedDnsRow() === row.type + row.name"
+                            [class.md:pb-4]="expandedDnsRow() !== row.type + row.name">
+                            <span class="md:hidden text-xs font-medium text-gray-500 uppercase shrink-0">{{ 'value-caps'
+                                | transloco }}</span>
+                            <span class="text-sm text-gray-600 md:block md:truncate min-w-0 text-right md:text-left"
+                                [title]="row.values[0] || ''">{{ row.values[0] || '-'
                                 }}</span>
                         </td>
                     </tr>
@@ -375,4 +410,6 @@
         </div>
         }
     </div>
+    }
+
 </div>
