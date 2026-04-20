@@ -1,13 +1,8 @@
 package com.cloudmen.cloudguard.unit.service.report;
 
-import com.cloudmen.cloudguard.service.report.SecurityReportEmailService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.mail.javamail.JavaMailSender;
 import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
+import com.cloudmen.cloudguard.service.report.SecurityReportEmailService;
+import com.cloudmen.cloudguard.utility.SecurityEmailHtml;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
@@ -119,6 +114,8 @@ public class SecurityReportEmailServiceTest {
 
         assertTrue(combinedHtml.contains("Beste &lt;script&gt;alert(&#39;hack&#39;)&lt;/script&gt; &amp; &quot;Corp&quot;"));
         assertFalse(combinedHtml.contains("<script>"));
+        assertTrue(combinedHtml.contains(SecurityEmailHtml.DEFAULT_HEADER_TITLE));
+        assertTrue(combinedHtml.contains("margin: 20px auto"));
     }
 
     @Test

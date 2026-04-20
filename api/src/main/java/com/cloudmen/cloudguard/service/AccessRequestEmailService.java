@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.utility.SecurityEmailHtml;
 import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,6 @@ import java.util.Locale;
 
 @Service
 public class AccessRequestEmailService {
-    private static final String HEADER_BG = "#011624";
-    private static final String PRIMARY = "#3abfad";
-    private static final String MUTED_BG = "#ececf0";
-    private static final String MUTED_TEXT = "#717182";
-    private static final String CARD_BG = "#ffffff";
-    private static final String FOREGROUND = "#030213";
     private static final Logger log = LoggerFactory.getLogger(AccessRequestEmailService.class);
 
     private final JavaMailSender mailSender;
@@ -100,63 +95,44 @@ public class AccessRequestEmailService {
     }
 
     private String buildHtmlContent(String userEmail, String requestType, String actionRequired) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>
-                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f3f3f5; }
-                .container { max-width: 600px; margin: 0 auto; background: %s; }
-                .header { background: %s; padding: 24px 32px; text-align: left; }
-                .logo { display: flex; align-items: center; gap: 12px; }
-                .logo-icon { font-size: 28px; line-height: 1; }
-                .logo-text { color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
-                .content { padding: 32px; color: %s; }
-                .title { font-size: 20px; font-weight: 600; color: %s; margin: 0 0 24px 0; }
-                .card { background: %s; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
-                .label { font-size: 12px; font-weight: 600; color: %s; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-                .value { font-size: 15px; color: %s; margin-bottom: 16px; font-weight: 500; }
-                .user-email { color: #0284c7; text-decoration: none; }
-                .action-box { background: #f0f9ff; border-left: 4px solid %s; padding: 16px; border-radius: 4px; margin-top: 8px; white-space: pre-wrap; color: #0369a1; font-size: 14px;}
-                .footer { background: %s; padding: 20px 32px; font-size: 12px; color: %s; text-align: center; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <div class="logo">
-                    <span class="logo-icon">&#128737;</span>
-                    <h1 class="logo-text">CloudGuard</h1>
-                  </div>
-                </div>
-                <div class="content">
-                  <h2 class="title">Actie vereist: Aanpassing account nodig</h2>
-                  <div class="card">
-                    <div class="label">GEBRUIKER</div>
-                    <div class="value"><a href="mailto:%s" class="user-email">%s</a></div>
-                    
-                    <div class="label">TYPE AANVRAAG</div>
-                    <div class="value">%s</div>
-                    
-                    <div class="label">VEREISTE ACTIE</div>
-                    <div class="action-box">%s</div>
-                  </div>
-                </div>
-                <div class="footer">
-                  Dit is een automatisch gegenereerd bericht vanuit het CloudGuard platform.
-                </div>
-              </div>
-            </body>
-            </html>
-            """.formatted(
-                CARD_BG, HEADER_BG, FOREGROUND, FOREGROUND, CARD_BG, MUTED_TEXT, FOREGROUND,
-                PRIMARY, MUTED_BG, MUTED_TEXT,
-                UtilityFunctions.escapeHtml(userEmail),
-                UtilityFunctions.escapeHtml(userEmail),
-                UtilityFunctions.escapeHtml(requestType),
-                UtilityFunctions.escapeHtml(actionRequired)
-        );
+        String extraCss =
+                """
+                        .title { font-size: 20px; font-weight: 600; color: %s; margin: 0 0 24px 0; }
+                        .card { background: %s; border-radius: 8px; padding: 20px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
+                        .label { font-size: 12px; font-weight: 600; color: %s; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+                        .value { font-size: 15px; color: %s; margin-bottom: 16px; font-weight: 500; }
+                        .user-email { color: #0284c7; text-decoration: none; }
+                        .action-box { background: #f0f9ff; border-left: 4px solid %s; padding: 16px; border-radius: 4px; margin-top: 8px; white-space: pre-wrap; color: #0369a1; font-size: 14px;}
+                        """
+                        .formatted(
+                                SecurityEmailHtml.FOREGROUND,
+                                SecurityEmailHtml.CARD_BG,
+                                SecurityEmailHtml.MUTED_TEXT,
+                                SecurityEmailHtml.FOREGROUND,
+                                SecurityEmailHtml.PRIMARY);
+
+        String content =
+                """
+                          <h2 class="title">Actie vereist: Aanpassing account nodig</h2>
+                          <div class="card">
+                            <div class="label">GEBRUIKER</div>
+                            <div class="value"><a href="mailto:%s" class="user-email">%s</a></div>
+                            <div class="label">TYPE AANVRAAG</div>
+                            <div class="value">%s</div>
+                            <div class="label">VEREISTE ACTIE</div>
+                            <div class="action-box">%s</div>
+                          </div>
+                        """
+                        .formatted(
+                                UtilityFunctions.escapeHtml(userEmail),
+                                UtilityFunctions.escapeHtml(userEmail),
+                                UtilityFunctions.escapeHtml(requestType),
+                                UtilityFunctions.escapeHtml(actionRequired));
+
+        String footer =
+                UtilityFunctions.escapeHtml(
+                        "Dit is een automatisch gegenereerd bericht vanuit het CloudGuard platform.");
+
+        return SecurityEmailHtml.document(extraCss, true, content, footer);
     }
 }
