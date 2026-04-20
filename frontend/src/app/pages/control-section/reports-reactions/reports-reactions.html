@@ -1,5 +1,5 @@
 <div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
-    <app-page-header Title="notifications-feedback" Description="{{ 'feedback.description' | transloco }}"
+    <app-page-header Title="{{ 'notifications-feedback' | transloco }}" Description="{{ 'feedback.description' | transloco }}"
         [NeedAdminLink]="false" />
 
     <div class="w-full flex flex-col gap-4 sm:gap-5 pt-4 sm:pt-6">
@@ -130,7 +130,7 @@
                             {{ 'feedback.solved-detail' | transloco }}
                             } @else {
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            Created at:
+                            {{ 'notification.created-at' | transloco }}
                             {{ formatNotificationCreatedAt(n) }}
                             }
                         </p>

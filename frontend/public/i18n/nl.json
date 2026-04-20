@@ -511,6 +511,9 @@
   "password-settings.error.load-failed": "Wachtwoordinstellingen konden niet worden geladen.",
   "password-settings.error.refresh-failed": "Gegevens vernieuwen is mislukt. Probeer het later opnieuw.",
   "reports-reactions.error.sync-failed": "Meldingen konden niet worden gesynchroniseerd met Google. De lijst hieronder kan iets achterlopen; probeer later opnieuw te vernieuwen.",
+  "reports-reactions.error.load-failed": "Meldingen konden niet worden geladen. Probeer het opnieuw.",
+  "reports-reactions.error.get-details-failed": "Details voor deze melding konden niet worden geladen.",
+  "reports-reactions.error.submit-feedback-failed": "Feedback kon niet worden verzonden. Probeer het opnieuw.",
   "notifications.error.load-failed": "Meldingen konden niet worden geladen. Probeer het later opnieuw.",
   "notifications.error.feedback-failed": "Feedback kon niet worden verzonden.",
   "notifications.error.details-failed": "Details konden niet worden geladen.",
@@ -562,5 +565,6 @@
   "account-manager.no-org-assigned": "Geen organisatie toegewezen",
   "no-org.desc": "Je bent succesvol ingelogd, maar er is nog geen organisatie aan je account toegewezen.",
   "required-changes": "Request Type",
-  "assign-org": "Organisatie Toewijzen"
+  "assign-org": "Organisatie Toewijzen",
+  "notification.created-at": "Aangemaakt op:"
 }
