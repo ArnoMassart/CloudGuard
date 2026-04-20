@@ -1,81 +1,27 @@
 <div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
-  <app-page-header
-    Title="{{ 'accounts-manager' | transloco }}"
-    Description="{{ 'account-manager.description' | transloco }}"
-    [NeedAdminLink]="false"
-  />
+  <app-page-header Title="{{ 'accounts-manager' | transloco }}"
+    Description="{{ 'account-manager.description' | transloco }}" [NeedAdminLink]="false" />
 
-  <div class="w-full flex flex-col gap-8 mt-6">
-    <div class="w-full" [class.hidden]="usersWithoutRoles().length === 0">
-      <app-search-bar
-        placeholder="{{ 'users.search' | transloco }}..."
-        (searchChange)="onSearchWithoutRoles($event)"
-      />
+  <div class="flex items-center gap-6 sm:gap-10 md:gap-12 pt-4 sm:pt-6 border-b border-gray-200">
+    <button (click)="togglePage('USERS')"
+      class="flex shrink-0 items-center gap-2 pb-3 transition-all duration-200 font-medium"
+      [ngClass]="getTabClass('USERS')">
+      <lucide-icon [img]="Icons.Users" size="16"></lucide-icon>
+      <span class="text-sm">{{ 'users' | transloco }}</span>
+    </button>
 
-      <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-4">
-        <div class="mx-6 mb-6">
-          <span class="font-medium md:text-lg text-[17px] text-slate-900">
-            {{ 'account-manager.table-without.title' | transloco }}
-          </span>
-        </div>
-
-        @if (isLoadingWithoutRoles()) {
-        } @else if (usersWithoutRoles().length > 0) {
-          <app-accounts-manager-table
-            [users]="usersWithoutRoles()"
-            [orgs]="orgs()"
-            [hasExistingRoles]="false"
-            [expandedRoles]="expandedRoles()"
-            (actionClick)="openRoleChangeDialog($event, false)"
-            (orgChange)="onOrganizationChange($event.user)"
-            (toggleRoles)="toggleRolesSummary($event.email, $event.length)"
-          />
-        }
-
-        <div [class.hidden]="usersWithoutRoles().length === 0">
-          <app-pagination-bar
-            [nextPageToken]="nextPageTokenWithoutRoles()"
-            [isLoading]="isLoadingWithoutRoles()"
-            (loadData)="loadUsersWithoutRoles($event)"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div class="w-full">
-      <app-search-bar
-        placeholder="{{ 'users.search' | transloco }}..."
-        (searchChange)="onSearch($event)"
-      />
-
-      <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-4">
-        <div class="mx-6 mb-6">
-          <span class="font-medium md:text-lg text-[17px] text-slate-900">
-            {{ 'users.all' | transloco }}
-          </span>
-        </div>
-
-        @if (isLoading()) {
-        } @else if (users().length > 0) {
-          <app-accounts-manager-table
-            [users]="users()"
-            [orgs]="orgs()"
-            [hasExistingRoles]="true"
-            [expandedRoles]="expandedRoles()"
-            (actionClick)="openRoleChangeDialog($event, true)"
-            (orgChange)="onOrganizationChange($event.user)"
-            (toggleRoles)="toggleRolesSummary($event.email, $event.length)"
-          />
-        }
-
-        <div [class.hidden]="users().length === 0">
-          <app-pagination-bar
-            [nextPageToken]="nextPageToken()"
-            [isLoading]="isLoading()"
-            (loadData)="loadUsers($event)"
-          />
-        </div>
-      </div>
-    </div>
+    <button (click)="togglePage('ORGANIZATIONS')"
+      class="flex shrink-0 items-center gap-2 pb-3 transition-all duration-200 font-medium"
+      [ngClass]="getTabClass('ORGANIZATIONS')">
+      <lucide-icon [img]="Icons.Building2" size="16"></lucide-icon>
+      <span class="text-sm">{{ 'account-manager.tab.org' | transloco }}</span>
+    </button>
   </div>
+
+  @if (currentSection() === "USERS") {
+  <app-accounts-manager-users />
+  } @else {
+  <app-accounts-manager-organizations />
+  }
+
 </div>

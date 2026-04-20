@@ -258,7 +258,7 @@ public class UserService {
     }
 
     public long getAllRequestedCount() {
-        return userRepository.countByRoleRequestedTrueAndOrganizationRequestedTrue();
+        return userRepository.countByRoleRequestedTrueOrOrganizationRequestedTrue();
     }
 
     @Transactional

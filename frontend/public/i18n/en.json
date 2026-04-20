@@ -581,5 +581,10 @@
   "org-units.error.description": "We were temporarily unable to collect the organizational units. \nCheck your configuration or try refreshing the data.",
   "error.general_description": "We were temporarily unable to retrieve the data. \nCheck your configuration or try refreshing the data.",
   "password-settings.error.description": "We were temporarily unable to retrieve the password settings. \nCheck your configuration or try refreshing the data.",
-  "notification.created-at": "Created at:"
+  "notification.created-at": "Created at:",
+  "account-manager.tab.org": "Organizations",
+  "account-manager.admin-email": "Admin Email",
+  "account-manager.all-orgs": "All organizations",
+  "account-manager.no-email-bound": "No email connected",
+  "account-manager.search-orgs": "Search organizations by name"
 }

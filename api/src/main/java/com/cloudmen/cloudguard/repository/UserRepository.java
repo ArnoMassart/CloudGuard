@@ -32,7 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("query") String query,
             Pageable pageable);
 
-    long countByRoleRequestedTrueAndOrganizationRequestedTrue();
+    long countByRoleRequestedTrueOrOrganizationRequestedTrue();
     boolean existsByOrganizationId(Long organizationId);
 
     Optional<User> findFirstByOrganizationIdOrderByIdAsc(Long organizationId);

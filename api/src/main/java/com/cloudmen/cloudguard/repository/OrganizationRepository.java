@@ -1,8 +1,11 @@
 package com.cloudmen.cloudguard.repository;
 
 import com.cloudmen.cloudguard.domain.model.Organization;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,4 +23,11 @@ public interface OrganizationRepository extends JpaRepository<Organization,Long>
             AND NOT EXISTS (SELECT 1 FROM tbl_users u WHERE u.organizationId = o.id)
             """)
     List<Long> findIdsOfUnusedFallbackOrganizationsWithoutCustomerId();
+
+    @Query("SELECT o FROM Organization o WHERE " +
+            ":query IS NULL OR :query = '' OR " +
+            "LOWER(o.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<Organization> findAllWithSearch(
+            @Param("query") String query,
+            Pageable pageable);
 }
