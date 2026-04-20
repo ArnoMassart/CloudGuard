@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.service.notification;
+package com.cloudmen.cloudguard.service.reminder;
 
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
 import com.cloudmen.cloudguard.utility.UtilityFunctions;

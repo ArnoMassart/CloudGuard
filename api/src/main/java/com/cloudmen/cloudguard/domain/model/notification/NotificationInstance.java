@@ -65,18 +65,8 @@ public class NotificationInstance {
     @Column(name = "source_route", length = 256)
     private String sourceRoute;
 
-    @Column(name = "first_observed_at")
-    private LocalDateTime firstObservedAt;
-
-    @Column(name = "last_observed_at")
-    private LocalDateTime lastObservedAt;
-
     @Column(name = "solved_at")
     private LocalDateTime solvedAt;
-
-    /** When set, this finding is hidden from the active list for the whole organization. */
-    @Column(name = "dismissed_at")
-    private LocalDateTime dismissedAt;
 
     @PrePersist
     void onCreate() {

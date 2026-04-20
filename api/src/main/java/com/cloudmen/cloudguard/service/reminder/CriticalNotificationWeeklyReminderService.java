@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.service.notification;
+package com.cloudmen.cloudguard.service.reminder;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
@@ -45,7 +45,7 @@ public class CriticalNotificationWeeklyReminderService {
 
     private void processOrganization(Long organizationId) {
         List<NotificationInstance> critical =
-                notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverityAndDismissedAtIsNull(
+                notificationInstanceRepository.findByOrganizationIdAndStatusAndSeverity(
                         organizationId, NotificationInstanceStatus.ACTIVE, NotificationSeverity.CRITICAL);
         if (critical.isEmpty()) {
             return;

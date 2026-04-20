@@ -7,7 +7,7 @@ public class NotificationReminderProperties {
 
     /**
      * When true, sends a weekly digest to each {@link com.cloudmen.cloudguard.domain.model.UserRole#SUPER_ADMIN}
-     * for orgs that have active, critical, non-dismissed notification projection rows.
+     * for orgs that have active, critical notification projection rows.
      */
     private boolean weeklyCriticalEnabled = false;
 

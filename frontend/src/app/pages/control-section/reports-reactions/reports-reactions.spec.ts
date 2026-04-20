@@ -1,9 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTransloco, TranslocoLoader, TranslocoService } from '@jsverse/transloco';
-import { firstValueFrom, Observable, of, Subject, throwError } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { Notification } from '../../../models/notification/Notification';
-import { DismissedNotificationService } from '../../../services/dismissed-notification-service';
 import { NotificationFeedbackService } from '../../../services/notification-feedback-service';
 import { NotificationService } from '../../../services/notification-service';
 import { ReportsReactions } from './reports-reactions';
@@ -20,13 +19,11 @@ const FB_I18N: Record<string, string> = {
   'feedback.loading': 'Loading',
   'feedback.none': 'None',
   'feedback.severity.all': 'All',
-  'feedback.severity.dismissed': 'Dismissed',
   'feedback.severity.processing': 'Proc',
   'feedback.severity.none': 'None sev',
   'critical-2': 'Critical',
   'warning-2': 'Warning',
   Info: 'Info',
-  dismissed: 'Dismissed',
   today: 'Today',
   'hide-details': 'Hide',
   'view-details': 'View',
@@ -42,20 +39,23 @@ const FB_I18N: Record<string, string> = {
   'feedback.automatic': 'Auto',
   'feedback.send': 'Send fb',
   busy: 'Busy',
-  'ignore-30-days': 'Ignore',
-  resolved: 'Resolved',
-  repairing: 'Repair',
   all: 'All',
   'notifications-feedback': 'Notifications',
   'to-admin-console': 'Admin',
   info: 'Info',
   refresh: 'Refresh',
   'reports-reactions.error.load-failed': 'Load failed (i18n)',
-  'reports-reactions.error.dismiss-failed': 'Dismiss failed (i18n)',
-  'reports-reactions.error.un-dismiss-failed': 'Un-dismiss failed (i18n)',
   'reports-reactions.error.get-details-failed': 'Details failed (i18n)',
   'reports-reactions.error.submit-feedback-failed': 'Feedback failed (i18n)',
   'try-again': 'Try again',
+  'feedback.last-sync-never': 'Never synced',
+  'feedback.last-sync-at': 'Synced {{time}}',
+  'feedback.notification-created-unknown': '—',
+  'notification.created-at': 'Created',
+  'feedback.solved': 'Solved',
+  'feedback.solved-detail': 'Resolved detail',
+  'feedback.severity.resolved': 'No resolved',
+  'reports-reactions.error.sync-failed': 'Sync failed',
 };
 
 class ReportsReactionsTranslocoLoader implements TranslocoLoader {
@@ -84,12 +84,9 @@ describe('ReportsReactions', () => {
   let component: ReportsReactions;
   let fixture: ComponentFixture<ReportsReactions>;
   let notificationServiceMock: {
-    getNotificationsAndDismissed: ReturnType<typeof vi.fn>;
+    getNotifications: ReturnType<typeof vi.fn>;
     getNotificationDetails: ReturnType<typeof vi.fn>;
-  };
-  let dismissedServiceMock: {
-    markAsDismissed: ReturnType<typeof vi.fn>;
-    unDismiss: ReturnType<typeof vi.fn>;
+    syncNotifications: ReturnType<typeof vi.fn>;
   };
   let feedbackServiceMock: { submitFeedback: ReturnType<typeof vi.fn> };
 
@@ -101,12 +98,9 @@ describe('ReportsReactions', () => {
 
   beforeEach(async () => {
     notificationServiceMock = {
-      getNotificationsAndDismissed: vi.fn(() => of({ active: activeList, dismissed: [] })),
+      getNotifications: vi.fn(() => of({ active: activeList, solved: [] })),
       getNotificationDetails: vi.fn(() => of(['line one'])),
-    };
-    dismissedServiceMock = {
-      markAsDismissed: vi.fn(() => of(void 0)),
-      unDismiss: vi.fn(() => of(void 0)),
+      syncNotifications: vi.fn(() => of(void 0)),
     };
     feedbackServiceMock = {
       submitFeedback: vi.fn(() => of(void 0)),
@@ -116,7 +110,6 @@ describe('ReportsReactions', () => {
       imports: [ReportsReactions],
       providers: [
         { provide: NotificationService, useValue: notificationServiceMock },
-        { provide: DismissedNotificationService, useValue: dismissedServiceMock },
         { provide: NotificationFeedbackService, useValue: feedbackServiceMock },
         provideTransloco({
           config: {
@@ -139,8 +132,18 @@ describe('ReportsReactions', () => {
     expect(component).toBeTruthy();
   });
 
-  it('loads active and dismissed notifications on init', () => {
-    expect(notificationServiceMock.getNotificationsAndDismissed).toHaveBeenCalled();
+  it('renders translated notifications page title in the header', () => {
+    const h1 = fixture.nativeElement.querySelector('h1');
+    expect(h1?.textContent?.trim()).toBe('Notifications');
+  });
+
+  it('lastSyncedLine uses last-sync-never when never synced', () => {
+    expect(component.lastNotificationSyncAt()).toBeNull();
+    expect(component.lastSyncedLine()).toBe('Never synced');
+  });
+
+  it('loads notifications on init', () => {
+    expect(notificationServiceMock.getNotifications).toHaveBeenCalled();
     expect(component.isLoading()).toBe(false);
     expect(component.notifications().length).toBe(3);
     expect(component.totalCount()).toBe(3);
@@ -150,25 +153,29 @@ describe('ReportsReactions', () => {
     expect(component.inBehandelingCount()).toBe(1);
   });
 
-  it('filteredNotifications respects severity and dismissed filters', () => {
-    component.setFilter('critical');
-    expect(component.filteredNotifications().every((n) => n.severity === 'critical')).toBe(true);
-
-    component.setFilter('all');
-    expect(component.filteredNotifications().length).toBe(3);
-
-    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(
+  it('merges active and solved notifications with instanceStatus', async () => {
+    notificationServiceMock.getNotifications.mockReturnValue(
       of({
-        active: [makeNotification({ id: 'x' })],
-        dismissed: [makeNotification({ id: 'd', severity: 'info' })],
+        active: [makeNotification({ id: 'open-n' })],
+        solved: [makeNotification({ id: 'solved-n' })],
       }),
     );
     fixture = TestBed.createComponent(ReportsReactions);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    component.setFilter('dismissed');
-    expect(component.filteredNotifications().length).toBe(1);
-    expect(component.filteredNotifications()[0].id).toBe('d');
+    await fixture.whenStable();
+
+    expect(component.notifications().length).toBe(2);
+    expect(component.notifications().find((x) => x.id === 'solved-n')?.instanceStatus).toBe('solved');
+    expect(component.solvedCount()).toBe(1);
+  });
+
+  it('filteredNotifications respects severity filters', () => {
+    component.setFilter('critical');
+    expect(component.filteredNotifications().every((n) => n.severity === 'critical')).toBe(true);
+
+    component.setFilter('all');
+    expect(component.filteredNotifications().length).toBe(3);
   });
 
   it('in-behandeling filter lists only reported items', () => {
@@ -266,45 +273,21 @@ describe('ReportsReactions', () => {
     expect(component.isFeedbackFormOpen(n.id)).toBe(false);
   });
 
-  it('markAsDismissed calls API and refreshes list', async () => {
-    const n = activeList[0];
-    const callsBefore = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
-    component.markAsDismissed(n);
-    await fixture.whenStable();
-
-    expect(dismissedServiceMock.markAsDismissed).toHaveBeenCalled();
-    expect(notificationServiceMock.getNotificationsAndDismissed.mock.calls.length).toBeGreaterThan(
-      callsBefore,
-    );
-  });
-
-  it('unDismiss calls API and refreshes', async () => {
-    const n = makeNotification();
-    const callsBefore = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
-    component.unDismiss(n);
-    await fixture.whenStable();
-    expect(dismissedServiceMock.unDismiss).toHaveBeenCalledWith('src', 'user-control');
-    expect(notificationServiceMock.getNotificationsAndDismissed.mock.calls.length).toBeGreaterThan(
-      callsBefore,
-    );
-  });
-
   it('clears lists and sets listLoadError when load fails', async () => {
-    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(throwError(() => new Error('boom')));
+    notificationServiceMock.getNotifications.mockReturnValue(throwError(() => new Error('boom')));
     fixture = TestBed.createComponent(ReportsReactions);
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(component.notifications()).toEqual([]);
-    expect(component.dismissedNotifications()).toEqual([]);
     expect(component.isLoading()).toBe(false);
     expect(component.listLoadError()).toBeTruthy();
     expect(component.listLoadError() ?? '').toContain('boom');
   });
 
   it('uses API error body for list load when HttpErrorResponse has string error', async () => {
-    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(
+    notificationServiceMock.getNotifications.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -322,7 +305,7 @@ describe('ReportsReactions', () => {
   });
 
   it('falls back to i18n when list load HttpErrorResponse has no string body', async () => {
-    notificationServiceMock.getNotificationsAndDismissed.mockReturnValue(
+    notificationServiceMock.getNotifications.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 500, error: { code: 'x' } })),
     );
     fixture = TestBed.createComponent(ReportsReactions);
@@ -336,28 +319,25 @@ describe('ReportsReactions', () => {
   it('reloads notifications when language changes', async () => {
     const transloco = TestBed.inject(TranslocoService);
     await firstValueFrom(transloco.load('nl'));
-    const callsAfterInit = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
+    const callsAfterInit = notificationServiceMock.getNotifications.mock.calls.length;
     transloco.setActiveLang('nl');
     await fixture.whenStable();
-    expect(notificationServiceMock.getNotificationsAndDismissed.mock.calls.length).toBeGreaterThan(
-      callsAfterInit,
-    );
+    expect(notificationServiceMock.getNotifications.mock.calls.length).toBeGreaterThan(callsAfterInit);
   });
 
-  it('refresh collapses expanded row and refetches list', async () => {
+  it('refresh collapses expanded row, syncs, and refetches list', async () => {
     const n = activeList[0];
     component.toggleExpand(n);
     await fixture.whenStable();
     expect(component.isExpanded(n.id)).toBe(true);
 
-    const callsBefore = notificationServiceMock.getNotificationsAndDismissed.mock.calls.length;
+    const callsBefore = notificationServiceMock.getNotifications.mock.calls.length;
     component.refresh();
     await fixture.whenStable();
 
+    expect(notificationServiceMock.syncNotifications).toHaveBeenCalled();
     expect(component.isExpanded(n.id)).toBe(false);
-    expect(notificationServiceMock.getNotificationsAndDismissed.mock.calls.length).toBeGreaterThan(
-      callsBefore,
-    );
+    expect(notificationServiceMock.getNotifications.mock.calls.length).toBeGreaterThan(callsBefore);
   });
 
   it('toggleExpand sets actionError when details request fails', async () => {
@@ -371,65 +351,6 @@ describe('ReportsReactions', () => {
     expect(component.actionError()).toBe('no details');
     expect(component.isExpanded(n.id)).toBe(true);
     expect(component.isLoadingDetails(n.id)).toBe(false);
-  });
-
-  it('ignores second markAsDismissed while first request is still pending', () => {
-    const release = new Subject<void>();
-    dismissedServiceMock.markAsDismissed.mockImplementation(
-      () =>
-        new Observable<void>((subscriber) => {
-          const sub = release.subscribe({
-            next: () => {
-              subscriber.next();
-              subscriber.complete();
-            },
-          });
-          return () => sub.unsubscribe();
-        }),
-    );
-    const n = activeList[0];
-    component.markAsDismissed(n);
-    component.markAsDismissed(n);
-    expect(dismissedServiceMock.markAsDismissed).toHaveBeenCalledTimes(1);
-    release.next();
-    release.complete();
-  });
-
-  it('sets actionError on markAsDismissed failure', async () => {
-    dismissedServiceMock.markAsDismissed.mockReturnValue(
-      throwError(() => new HttpErrorResponse({ status: 400, error: 'cannot dismiss' })),
-    );
-    component.markAsDismissed(activeList[0]);
-    await fixture.whenStable();
-    expect(component.actionError()).toBe('cannot dismiss');
-    expect(component.isDismissing(activeList[0])).toBe(false);
-  });
-
-  it('uses i18n when dismiss failure has no HTTP string body', async () => {
-    dismissedServiceMock.markAsDismissed.mockReturnValue(
-      throwError(() => new HttpErrorResponse({ status: 500, error: {} })),
-    );
-    component.markAsDismissed(activeList[0]);
-    await fixture.whenStable();
-    expect(component.actionError()).toBe('Dismiss failed (i18n)');
-  });
-
-  it('sets actionError on unDismiss failure', async () => {
-    dismissedServiceMock.unDismiss.mockReturnValue(
-      throwError(() => new Error('undo failed')),
-    );
-    component.unDismiss(makeNotification());
-    await fixture.whenStable();
-    expect(component.actionError()).toContain('undo failed');
-    expect(component.isUnDismissing(makeNotification())).toBe(false);
-  });
-
-  it('maps isDismissing and isUnDismissing to source:notificationType key', () => {
-    const n = makeNotification({ source: 's1', notificationType: 't1' });
-    component.dismissingIds.set(new Set(['s1:t1']));
-    expect(component.isDismissing(n)).toBe(true);
-    component.unDismissingIds.set(new Set(['s1:t1']));
-    expect(component.isUnDismissing(n)).toBe(true);
   });
 
   it('submitFeedback surfaces HttpErrorResponse string body as actionError', async () => {
@@ -456,4 +377,3 @@ describe('ReportsReactions', () => {
     expect(component.actionError()).toBe('Feedback failed (i18n)');
   });
 });
-

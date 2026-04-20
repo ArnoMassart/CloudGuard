@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.service.notification;
+package com.cloudmen.cloudguard.service.reminder;
 
 import com.cloudmen.cloudguard.configuration.NotificationReminderProperties;
 import org.springframework.scheduling.annotation.Scheduled;

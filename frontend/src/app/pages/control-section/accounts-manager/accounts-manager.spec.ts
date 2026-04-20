@@ -105,19 +105,16 @@ describe('AccountsManager', () => {
   });
 
   it('toggleRolesSummary flips the state in the Set correctly', () => {
-    const event = new Event('click');
-    event.stopPropagation = vi.fn();
-
     // Als de lengte niet > 2 is, gebeurt er niets
-    component.toggleRolesSummary('user@test.com', 2, event);
+    component.toggleRolesSummary('user@test.com', 2);
     expect(component.expandedRoles().has('user@test.com')).toBe(false);
 
     // Als de lengte > 2 is, wordt hij toegevoegd
-    component.toggleRolesSummary('user@test.com', 5, event);
+    component.toggleRolesSummary('user@test.com', 5);
     expect(component.expandedRoles().has('user@test.com')).toBe(true);
 
     // Tweede keer klikken verwijdert hem weer
-    component.toggleRolesSummary('user@test.com', 5, event);
+    component.toggleRolesSummary('user@test.com', 5);
     expect(component.expandedRoles().has('user@test.com')).toBe(false);
   });
 

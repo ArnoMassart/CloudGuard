@@ -3,12 +3,15 @@ package com.cloudmen.cloudguard.integration.controller;
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
 import com.cloudmen.cloudguard.controller.NotificationController;
+import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.notifications.NotificationsResponse;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
+import com.cloudmen.cloudguard.service.notification.NotificationProjectionSyncService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,12 +28,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,6 +72,12 @@ class NotificationControllerIT {
     @MockitoBean
     private JwtService jwtService;
 
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private NotificationProjectionSyncService projectionSyncService;
+
     static class MessageSourceTestConfig {
         @Bean
         org.springframework.context.MessageSource messageSource() {
@@ -87,8 +101,8 @@ class NotificationControllerIT {
                 "DNS",
                 "/domain-dns",
                 false,
-                false,
-                true);
+                true,
+                null);
     }
 
     @Test
@@ -101,8 +115,7 @@ class NotificationControllerIT {
     @Test
     void getNotifications_withCookie_returnsJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
-        var response =
-                new NotificationsResponse(List.of(sampleNotification()), List.of());
+        var response = new NotificationsResponse(List.of(sampleNotification()), List.of(), null);
         when(aggregationService.getNotifications(eq("admin@acme.com"), any(Locale.class)))
                 .thenReturn(response);
 
@@ -113,9 +126,76 @@ class NotificationControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.active[0].id").value("n1"))
-                .andExpect(jsonPath("$.active[0].source").value("domain-dns"))
-                .andExpect(jsonPath("$.dismissed").isArray());
+                .andExpect(jsonPath("$.active[0].source").value("domain-dns"));
 
         verify(aggregationService).getNotifications(eq("admin@acme.com"), any(Locale.class));
+    }
+
+    @Test
+    void syncNotifications_withoutCookie_returns401() throws Exception {
+        mockMvc.perform(post("/api/notifications/sync").contextPath("/api"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
+    }
+
+    @Test
+    void syncNotifications_withCookie_userHasOrganization_callsSyncAndReturns204() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
+        User u = new User();
+        u.setOrganizationId(42L);
+        when(userRepository.findByEmail("admin@acme.com")).thenReturn(Optional.of(u));
+
+        mockMvc.perform(
+                        post("/api/notifications/sync")
+                                .contextPath("/api")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isNoContent());
+
+        verify(projectionSyncService).syncOrganization(42L);
+    }
+
+    @Test
+    void syncNotifications_withCookie_noOrganization_skipsSync_returns204() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
+        User u = new User();
+        u.setOrganizationId(null);
+        when(userRepository.findByEmail("admin@acme.com")).thenReturn(Optional.of(u));
+
+        mockMvc.perform(
+                        post("/api/notifications/sync")
+                                .contextPath("/api")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isNoContent());
+
+        verify(projectionSyncService, never()).syncOrganization(anyLong());
+    }
+
+    @Test
+    void syncNotifications_withCookie_userNotFound_skipsSync_returns204() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("missing@acme.com");
+        when(userRepository.findByEmail("missing@acme.com")).thenReturn(Optional.empty());
+
+        mockMvc.perform(
+                        post("/api/notifications/sync")
+                                .contextPath("/api")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isNoContent());
+
+        verify(projectionSyncService, never()).syncOrganization(anyLong());
+    }
+
+    @Test
+    void syncNotifications_withCookie_syncThrows_returns500() throws Exception {
+        when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
+        User u = new User();
+        u.setOrganizationId(7L);
+        when(userRepository.findByEmail("admin@acme.com")).thenReturn(Optional.of(u));
+        doThrow(new RuntimeException("sync failed")).when(projectionSyncService).syncOrganization(7L);
+
+        mockMvc.perform(
+                        post("/api/notifications/sync")
+                                .contextPath("/api")
+                                .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
+                .andExpect(status().isInternalServerError());
     }
 }
