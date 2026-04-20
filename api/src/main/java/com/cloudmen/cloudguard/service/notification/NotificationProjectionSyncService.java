@@ -8,6 +8,8 @@ import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
+import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,14 +32,17 @@ public class NotificationProjectionSyncService {
     private final NotificationInstanceRepository instanceRepository;
     private final NotificationAggregationService aggregationService;
     private final UserRepository userRepository;
+    private final UserSecurityPreferenceService preferenceService;
 
     public NotificationProjectionSyncService(
             NotificationInstanceRepository instanceRepository,
             NotificationAggregationService aggregationService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            UserSecurityPreferenceService preferenceService) {
         this.instanceRepository = instanceRepository;
         this.aggregationService = aggregationService;
         this.userRepository = userRepository;
+        this.preferenceService = preferenceService;
     }
 
     /**
@@ -56,11 +61,14 @@ public class NotificationProjectionSyncService {
             return;
         }
         User actor = superAdmins.get(0);
+        String actorEmail = actor.getEmail();
         String lang = actor.getLanguage() != null ? actor.getLanguage() : "nl";
         Locale locale = Locale.forLanguageTag(lang.replace('_', '-'));
 
+        Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(actorEmail);
+
         List<NotificationDto> snapshot =
-                aggregationService.buildActiveSnapshot(actor.getEmail(), locale);
+                aggregationService.buildActiveSnapshot(actorEmail, locale);
 
         List<NotificationInstance> existing = instanceRepository.findByOrganizationId(organizationId);
         Map<String, NotificationInstance> byKey = new HashMap<>();
@@ -75,6 +83,10 @@ public class NotificationProjectionSyncService {
             String key = dto.source() + ":" + dto.notificationType();
             snapshotKeys.add(key);
 
+            boolean disabledInPreferences =
+                    PreferenceToNotificationMapping.isDisabledByPreference(
+                            dto.source(), dto.notificationType(), disabledPreferenceKeys);
+
             NotificationInstance row = byKey.get(key);
             if (row == null) {
                 row = new NotificationInstance();
@@ -82,17 +94,25 @@ public class NotificationProjectionSyncService {
                 row.setSource(dto.source());
                 row.setNotificationType(dto.notificationType());
                 row.setFirstObservedAt(now);
-                row.setStatus(NotificationInstanceStatus.ACTIVE);
+                row.setStatus(
+                        disabledInPreferences
+                                ? NotificationInstanceStatus.DISABLED
+                                : NotificationInstanceStatus.ACTIVE);
                 byKey.put(key, row);
-            } else if (row.getStatus() == NotificationInstanceStatus.SOLVED) {
-                row.setStatus(NotificationInstanceStatus.ACTIVE);
+            } else if (disabledInPreferences) {
+                row.setStatus(NotificationInstanceStatus.DISABLED);
                 row.setSolvedAt(null);
+            } else {
+                if (row.getStatus() == NotificationInstanceStatus.SOLVED
+                        || row.getStatus() == NotificationInstanceStatus.DISABLED) {
+                    row.setStatus(NotificationInstanceStatus.ACTIVE);
+                    row.setSolvedAt(null);
+                }
             }
 
             row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));
             row.setTitle(dto.title());
             row.setDescription(dto.description());
-            // Hibernate mutates this @ElementCollection on merge/save — must be mutable (not List.of / unmodifiable).
             row.setRecommendedActions(
                     dto.recommendedActions() != null
                             ? new ArrayList<>(dto.recommendedActions())
@@ -105,11 +125,18 @@ public class NotificationProjectionSyncService {
         }
 
         for (NotificationInstance row : existing) {
-            if (row.getStatus() != NotificationInstanceStatus.ACTIVE) {
+            String key = row.getSource() + ":" + row.getNotificationType();
+            if (snapshotKeys.contains(key)) {
                 continue;
             }
-            String key = row.getSource() + ":" + row.getNotificationType();
-            if (!snapshotKeys.contains(key)) {
+            boolean disabledInPreferences =
+                    PreferenceToNotificationMapping.isDisabledByPreference(
+                            row.getSource(), row.getNotificationType(), disabledPreferenceKeys);
+            if (disabledInPreferences) {
+                row.setStatus(NotificationInstanceStatus.DISABLED);
+                row.setSolvedAt(null);
+                instanceRepository.save(row);
+            } else if (row.getStatus() == NotificationInstanceStatus.ACTIVE) {
                 row.setStatus(NotificationInstanceStatus.SOLVED);
                 row.setSolvedAt(now);
                 instanceRepository.save(row);
