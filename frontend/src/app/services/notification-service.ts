@@ -32,13 +32,18 @@ export class NotificationService {
     return this.#http.post<void>(`${this.#API_URL}/sync`, null, { withCredentials: true });
   }
 
-  getNotifications(): Observable<{ active: Notification[]; solved: Notification[] }> {
+  getNotifications(): Observable<{
+    active: Notification[];
+    solved: Notification[];
+    lastNotificationSyncAt: string | null;
+  }> {
     return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true }).pipe(
       map((res) => ({
         active: res.active ?? [],
         solved: res.solved ?? [],
+        lastNotificationSyncAt: res.lastNotificationSyncAt ?? null,
       })),
-      catchError(() => of({ active: [], solved: [] })),
+      catchError(() => of({ active: [], solved: [], lastNotificationSyncAt: null })),
     );
   }
 

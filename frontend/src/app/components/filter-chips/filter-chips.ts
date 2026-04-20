@@ -20,6 +20,8 @@ export class FilterChips {
   @Input() showRefresh: boolean = false;
   @Input() isRefreshing: boolean = false;
   @Input() refreshLabel: string = 'refresh';
+  /** Optional org-wide line (e.g. last projection sync), shown left of the refresh button when set. */
+  @Input() lastSyncedSummary: string | null = null;
 
   private readonly pilledInactiveClass = 'bg-gray-100 text-gray-700 hover:bg-gray-200';
 

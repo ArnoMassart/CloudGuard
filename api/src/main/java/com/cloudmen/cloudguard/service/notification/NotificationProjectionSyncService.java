@@ -7,6 +7,7 @@ import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceSta
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
@@ -33,16 +34,19 @@ public class NotificationProjectionSyncService {
     private final NotificationAggregationService aggregationService;
     private final UserRepository userRepository;
     private final UserSecurityPreferenceService preferenceService;
+    private final OrganizationRepository organizationRepository;
 
     public NotificationProjectionSyncService(
             NotificationInstanceRepository instanceRepository,
             NotificationAggregationService aggregationService,
             UserRepository userRepository,
-            UserSecurityPreferenceService preferenceService) {
+            UserSecurityPreferenceService preferenceService,
+            OrganizationRepository organizationRepository) {
         this.instanceRepository = instanceRepository;
         this.aggregationService = aggregationService;
         this.userRepository = userRepository;
         this.preferenceService = preferenceService;
+        this.organizationRepository = organizationRepository;
     }
 
     /**
@@ -142,5 +146,13 @@ public class NotificationProjectionSyncService {
                 instanceRepository.save(row);
             }
         }
+
+        organizationRepository
+                .findById(organizationId)
+                .ifPresent(
+                        org -> {
+                            org.setLastNotificationSyncAt(now);
+                            organizationRepository.save(org);
+                        });
     }
 }

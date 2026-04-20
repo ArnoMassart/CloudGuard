@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service.notification;
 
 import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
+import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstance;
@@ -23,6 +24,7 @@ import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
@@ -33,6 +35,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -75,6 +78,7 @@ public class NotificationAggregationService {
     private final NotificationInstanceRepository notificationInstanceRepository;
     private final NotificationProjectionProperties notificationProjectionProperties;
     private final UserService userService;
+    private final OrganizationRepository organizationRepository;
 
     public NotificationAggregationService(
             GoogleDomainService domainService,
@@ -90,7 +94,9 @@ public class NotificationAggregationService {
             NotificationFeedbackService feedbackService,
             UserSecurityPreferenceService preferenceService,
             NotificationInstanceRepository notificationInstanceRepository,
-            NotificationProjectionProperties notificationProjectionProperties, UserService userService) {
+            NotificationProjectionProperties notificationProjectionProperties,
+            UserService userService,
+            OrganizationRepository organizationRepository) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -106,6 +112,7 @@ public class NotificationAggregationService {
         this.notificationInstanceRepository = notificationInstanceRepository;
         this.notificationProjectionProperties = notificationProjectionProperties;
         this.userService = userService;
+        this.organizationRepository = organizationRepository;
     }
 
     /** Live aggregation snapshot (used by the scheduled sync job). */
@@ -145,7 +152,17 @@ public class NotificationAggregationService {
         List<NotificationDto> solvedFiltered =
                 solved.stream().map(n -> withStatus(n, feedbackKeys)).toList();
 
-        return new NotificationsResponse(filtered, solvedFiltered);
+        String lastNotificationSyncAt = null;
+        if (user != null && user.getOrganizationId() != null) {
+            lastNotificationSyncAt =
+                    organizationRepository
+                            .findById(user.getOrganizationId())
+                            .map(Organization::getLastNotificationSyncAt)
+                            .map(ldt -> ldt.atZone(ZoneId.systemDefault()).toInstant().toString())
+                            .orElse(null);
+        }
+
+        return new NotificationsResponse(filtered, solvedFiltered, lastNotificationSyncAt);
     }
 
     /**

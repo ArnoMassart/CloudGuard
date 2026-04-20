@@ -37,6 +37,8 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly #translocoService = inject(TranslocoService);
 
   readonly notifications = signal<Notification[]>([]);
+  /** ISO instant from API; null if never synced */
+  readonly lastNotificationSyncAt = signal<string | null>(null);
   readonly isLoading = signal(true);
   readonly listLoadError = signal<string | null>(null);
   readonly syncWarning = signal<string | null>(null);
@@ -187,6 +189,24 @@ export class ReportsReactions implements OnInit, OnDestroy {
     return n.instanceStatus === 'solved';
   }
 
+  /** Shown next to the clock icon for open items (org-wide projection sync time). */
+  lastSyncedLine(): string {
+    const iso = this.lastNotificationSyncAt();
+    const lang = this.#translocoService.getActiveLang() ?? 'en';
+    if (!iso) {
+      return this.#translocoService.translate('feedback.last-sync-never');
+    }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+      return this.#translocoService.translate('feedback.last-sync-never');
+    }
+    const formatted = new Intl.DateTimeFormat(lang.replace('_', '-'), {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(d);
+    return this.#translocoService.translate('feedback.last-sync-at', { time: formatted });
+  }
+
   #loadNotifications(syncFirst = false) {
     this.listLoadError.set(null);
     this.syncWarning.set(null);
@@ -210,23 +230,32 @@ export class ReportsReactions implements OnInit, OnDestroy {
             return of({ mode: 'failed', detail: this.#httpErrorDetail(err) });
           }),
           switchMap((syncMeta) =>
-            load$.pipe(map((data) => ({ active: data.active, solved: data.solved, syncMeta }))),
+            load$.pipe(
+              map((data) => ({
+                active: data.active,
+                solved: data.solved,
+                lastNotificationSyncAt: data.lastNotificationSyncAt,
+                syncMeta,
+              })),
+            ),
           ),
         )
       : load$.pipe(
           map((data) => ({
             active: data.active,
             solved: data.solved,
+            lastNotificationSyncAt: data.lastNotificationSyncAt,
             syncMeta: { mode: 'skipped' } as const,
           })),
         );
     pipeline$.subscribe({
-      next: ({ active, solved, syncMeta }) => {
+      next: ({ active, solved, lastNotificationSyncAt, syncMeta }) => {
         const merged: Notification[] = [
           ...active.map((n) => ({ ...n, instanceStatus: 'active' as const })),
           ...solved.map((n) => ({ ...n, instanceStatus: 'solved' as const })),
         ];
         this.notifications.set(merged);
+        this.lastNotificationSyncAt.set(lastNotificationSyncAt ?? null);
         this.isLoading.set(false);
         this.listLoadError.set(null);
         if (syncMeta.mode === 'failed') {
@@ -241,6 +270,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Notifications load failed: ', err);
         this.notifications.set([]);
+        this.lastNotificationSyncAt.set(null);
         const msg = this.#httpErrorDetail(err);
         this.listLoadError.set(
           msg || this.#translocoService.translate('reports-reactions.error.load-failed'),

@@ -397,6 +397,8 @@
   "feedback.processing": "In behandeling",
   "feedback.solved": "Opgelost",
   "feedback.solved-detail": "Niet meer gedetecteerd in je workspace",
+  "feedback.last-sync-at": "Laatst gesynchroniseerd: {{time}}",
+  "feedback.last-sync-never": "Nog niet gesynchroniseerd",
   "feedback.warning": "Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.",
   "feedback.loading": "Meldingen worden geladen",
   "feedback.none": "Geen meldingen",

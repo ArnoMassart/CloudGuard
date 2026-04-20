@@ -28,8 +28,8 @@
 
         <!-- Filter section -->
         <app-filter-chips [options]="filterOptions()" [selectedValue]="filterSeverity()" variant="pilled"
-            [showRefresh]="true" [isRefreshing]="isLoading()" (filterChange)="setFilter($event)"
-            (refresh)="refresh()" />
+            [showRefresh]="true" [isRefreshing]="isLoading()" [lastSyncedSummary]="lastSyncedLine()"
+            (filterChange)="setFilter($event)" (refresh)="refresh()" />
 
         @if (syncWarning()) {
         <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">

@@ -15,6 +15,7 @@ import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
@@ -76,6 +77,8 @@ class NotificationAggregationServiceTest {
     NotificationProjectionProperties notificationProjectionProperties;
     @Mock
     UserService userService;
+    @Mock
+    OrganizationRepository organizationRepository;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -104,7 +107,9 @@ class NotificationAggregationServiceTest {
                 preferenceService,
                 notificationInstanceRepository,
                 notificationProjectionProperties,
-                userService);
+                userService,
+                organizationRepository);
+        lenient().when(organizationRepository.findById(any())).thenReturn(Optional.empty());
     }
 
     @AfterEach
