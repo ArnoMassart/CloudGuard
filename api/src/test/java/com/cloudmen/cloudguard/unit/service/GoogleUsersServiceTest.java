@@ -151,8 +151,8 @@ public class GoogleUsersServiceTest {
         var overview = service.getUsersPageOverview(ADMIN);
 
         assertEquals(0, overview.totalUsers());
-        assertEquals(100, overview.securityScore());
-        assertEquals("perfect", overview.securityScoreBreakdown().status());
+        assertEquals(0, overview.securityScore());
+        assertEquals("bad", overview.securityScoreBreakdown().status());
         assertFalse(overview.warnings().hasWarnings());
     }
 

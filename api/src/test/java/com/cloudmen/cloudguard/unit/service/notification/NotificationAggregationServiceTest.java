@@ -56,7 +56,6 @@ class NotificationAggregationServiceTest {
     @Mock GoogleGroupsService groupsService;
     @Mock GoogleOAuthService oAuthService;
     @Mock PasswordSettingsService passwordSettingsService;
-    @Mock DismissedNotificationService dismissedService;
     @Mock NotificationFeedbackService feedbackService;
     @Mock UserSecurityPreferenceService preferenceService;
     @Mock NotificationInstanceRepository notificationInstanceRepository;

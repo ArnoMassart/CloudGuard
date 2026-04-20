@@ -162,7 +162,7 @@ public class NotificationAggregationService {
         String lastNotificationSyncAt = null;
         if (user != null && user.getOrganizationId() != null) {
             lastNotificationSyncAt =
-                    organizationRepository
+                    organizationService
                             .findById(user.getOrganizationId())
                             .map(Organization::getLastNotificationSyncAt)
                             .map(ldt -> ldt.atZone(ZoneId.systemDefault()).toInstant().toString())

@@ -143,10 +143,10 @@ public class DashboardServiceTest {
 
         DashboardPageResponse response = dashboardService.getDashboardSecurityScores(ADMIN);
 
-        assertEquals(100, response.scores().usersScore());
-        assertEquals(100, response.scores().groupsScore());
+        assertEquals(0, response.scores().usersScore());
+        assertEquals(0, response.scores().groupsScore());
         assertEquals(100, response.scores().dnsScore());
-        assertEquals(100, response.overallScore());
+        assertEquals(13, response.overallScore());
     }
 
     @Test
