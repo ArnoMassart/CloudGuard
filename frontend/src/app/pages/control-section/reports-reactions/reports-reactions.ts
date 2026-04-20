@@ -14,6 +14,7 @@ import { PageWarningsItem } from '../../../components/page-warnings/page-warning
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ApiError } from '../../../components/api-error/api-error';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -25,6 +26,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     PageWarningsItem,
     FilterChips,
     TranslocoPipe,
+    ApiError,
   ],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
@@ -79,6 +81,8 @@ export class ReportsReactions implements OnInit, OnDestroy {
   );
 
   readonly isWarningExpanded = signal(true);
+
+  readonly errorMessage = signal<string | null>(null);
 
   toggleExpanded() {
     this.isWarningExpanded.update((v) => !v);
@@ -179,6 +183,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
 
   #loadNotifications() {
     this.listLoadError.set(null);
+    this.errorMessage.set(null);
     this.isLoading.set(true);
     this.expandedIds.set(new Set());
     this.detailsCache.set({});
@@ -193,13 +198,23 @@ export class ReportsReactions implements OnInit, OnDestroy {
         this.listLoadError.set(null);
       },
       error: (err) => {
+        const backendMessage = typeof err.error === 'string' ? err.error : err.message || '';
+
+        // 2. Controleer op de specifieke backend tekst
         console.error('Notifications load failed: ', err);
+
+        if (backendMessage.includes('No Admin email')) {
+          this.errorMessage.set(backendMessage);
+        } else {
+          const msg = this.#httpErrorDetail(err);
+          this.listLoadError.set(
+            msg || this.#translocoService.translate('reports-reactions.error.load-failed')
+          );
+        }
+
         this.notifications.set([]);
         this.dismissedNotifications.set([]);
-        const msg = this.#httpErrorDetail(err);
-        this.listLoadError.set(
-          msg || this.#translocoService.translate('reports-reactions.error.load-failed')
-        );
+
         this.isLoading.set(false);
       },
     });

@@ -199,6 +199,7 @@ export class GroupsSection implements OnInit, OnDestroy {
   private loadGroups(pageToken: string | null): void {
     this.loading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#groupService
       .getOrgGroups(this.searchQuery() || undefined, pageToken ?? undefined, this.pageSize)

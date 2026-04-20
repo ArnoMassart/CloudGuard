@@ -32,9 +32,7 @@ export class NotificationService {
     active: Notification[];
     dismissed: Notification[];
   }> {
-    return this.#http
-      .get<NotificationsResponse>(this.#API_URL, { withCredentials: true })
-      .pipe(catchError(() => of({ active: [], dismissed: [] })));
+    return this.#http.get<NotificationsResponse>(this.#API_URL, { withCredentials: true });
   }
 
   getNotificationDetails(notification: Notification): Observable<string[]> {
@@ -92,7 +90,7 @@ export class NotificationService {
                       d.externalMembers > 1
                         ? this.#translocoService.translate('external-members')
                         : this.#translocoService.translate('external-member')
-                    })`,
+                    })`
                 );
             }
             if (notification.notificationType === 'drive-outside-domain') {

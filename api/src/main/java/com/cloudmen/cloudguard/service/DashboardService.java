@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardOverviewResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardPageResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardScores;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
@@ -15,8 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
@@ -54,138 +55,156 @@ public class DashboardService {
     }
 
     public DashboardPageResponse getDashboardSecurityScores(String loggedInEmail) {
-        DashboardScores scores = getAllScores(loggedInEmail);
+        try {
+            DashboardScores scores = getAllScores(loggedInEmail);
+            int overallScore = calculateTotalScore(scores);
+            LocalDateTime lastUpdated = LocalDateTime.now();
 
-        int overallScore = calculateTotalScore(scores);
+            return new DashboardPageResponse(
+                    scores,
+                    overallScore,
+                    DateTimeConverter.parseWithPattern(lastUpdated, "d MMMM yyyy, HH:mm")
+            );
+        } catch (Exception ex) {
+            // Pak de originele error (ontmantel de CompletionException van de async taken)
+            Throwable cause = (ex instanceof CompletionException) ? ex.getCause() : ex;
 
-        LocalDateTime lastUpdated = LocalDateTime.now();
+            // Als het onze specifieke Google error is, gooi deze 1-op-1 door naar de GlobalExceptionHandler!
+            if (cause instanceof GoogleWorkspaceSyncException) {
+                throw (GoogleWorkspaceSyncException) cause;
+            }
 
-        return new DashboardPageResponse(
-                scores,
-                overallScore,
-                DateTimeConverter.parseWithPattern(lastUpdated, "d MMMM yyyy, HH:mm")
-        );
+            log.error("Error with getting the dashboard data: {}", cause.getMessage());
+            throw new GoogleWorkspaceSyncException("Error with getting the dashboard data: " + cause.getMessage(), cause);
+        }
     }
 
     public DashboardOverviewResponse getDashboardOverview(String loggedInEmail) {
-        int totalNotifications = 0;
-        int criticalNotifications = 0;
-
-        // Vang fouten hier af zodat de notificatie-widget het dashboard niet breekt
         try {
-            totalNotifications = (int) notificationService.getNotificationsCount(loggedInEmail);
-            criticalNotifications = (int) notificationService.getNotificationsCriticalCount(loggedInEmail);
+            int totalNotifications = (int) notificationService.getNotificationsCount(loggedInEmail);
+            int criticalNotifications = (int) notificationService.getNotificationsCriticalCount(loggedInEmail);
+            return new DashboardOverviewResponse(totalNotifications, criticalNotifications);
         } catch (Exception e) {
-            log.error("Fout bij ophalen notificaties voor dashboard: {}", e.getMessage());
-        }
+            Throwable cause = (e instanceof CompletionException) ? e.getCause() : e;
 
-        return new DashboardOverviewResponse(totalNotifications, criticalNotifications);
+            // Gooi de error naar de frontend als het de specifieke "No Admin" melding betreft
+            if (cause instanceof GoogleWorkspaceSyncException && cause.getMessage() != null && cause.getMessage().contains("No Admin email")) {
+                throw (GoogleWorkspaceSyncException) cause;
+            }
+
+            log.error("Fout bij ophalen notificaties voor dashboard: {}", cause.getMessage());
+            return new DashboardOverviewResponse(0, 0);
+        }
     }
 
     private DashboardScores getAllScores(String loggedInEmail) {
-        User user = userService.findByEmail(loggedInEmail);
-        List<UserRole> roles = user.getRoles();
+        try {
+            User user = userService.findByEmail(loggedInEmail);
+            List<UserRole> roles = user.getRoles();
 
-        var disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
+            var disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
 
-        CompletableFuture<Integer> usersFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.USERS_GROUPS_VIEWER,
-                () -> usersService.getUsersPageOverview(loggedInEmail, disabled).securityScore(),
-                "Users"
-        );
+            CompletableFuture<Integer> usersFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.USERS_GROUPS_VIEWER,
+                    () -> usersService.getUsersPageOverview(loggedInEmail, disabled).securityScore(),
+                    "Users"
+            );
 
-        CompletableFuture<Integer> groupsFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.USERS_GROUPS_VIEWER,
-                () -> groupsService.getGroupsOverview(loggedInEmail, disabled).securityScore(),
-                "Groups"
-        );
+            CompletableFuture<Integer> groupsFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.USERS_GROUPS_VIEWER,
+                    () -> groupsService.getGroupsOverview(loggedInEmail, disabled).securityScore(),
+                    "Groups"
+            );
 
-        CompletableFuture<Integer> drivesFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.SHARED_DRIVES_VIEWER,
-                () -> sharedDriveService.getDrivesPageOverview(loggedInEmail, disabled).securityScore(),
-                "Drives"
-                );
+            CompletableFuture<Integer> drivesFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.SHARED_DRIVES_VIEWER,
+                    () -> sharedDriveService.getDrivesPageOverview(loggedInEmail, disabled).securityScore(),
+                    "Drives"
+            );
 
-        CompletableFuture<Integer> devicesFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.DEVICES_VIEWER,
-                () -> googleDeviceService.getDevicesPageOverview(loggedInEmail, disabled).securityScore(),
-                "Devices"
-        );
+            CompletableFuture<Integer> devicesFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.DEVICES_VIEWER,
+                    () -> googleDeviceService.getDevicesPageOverview(loggedInEmail, disabled).securityScore(),
+                    "Devices"
+            );
 
-        CompletableFuture<Integer> appAccessFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.APP_ACCESS_VIEWER,
-                () -> oAuthService.getOAuthPageOverview(loggedInEmail, disabled).securityScore(),
-                "App Access"
-        );
+            CompletableFuture<Integer> appAccessFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.APP_ACCESS_VIEWER,
+                    () -> oAuthService.getOAuthPageOverview(loggedInEmail, disabled).securityScore(),
+                    "App Access"
+            );
 
-        CompletableFuture<Integer> appPasswordsFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.APP_PASSWORDS_VIEWER,
-                () -> passwordsService.getOverview(loggedInEmail, IS_TESTMODE ,disabled).securityScore(),
-                "App Passwords"
-                );
+            CompletableFuture<Integer> appPasswordsFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.APP_PASSWORDS_VIEWER,
+                    () -> passwordsService.getOverview(loggedInEmail, IS_TESTMODE ,disabled).securityScore(),
+                    "App Passwords"
+            );
 
-        CompletableFuture<Integer> passwordSettingsFuture = fetchScoreIfAllowed(
-                roles,
-                UserRole.PASSWORD_SETTINGS_VIEWER,
-                () -> passwordSettingsService.getPasswordSettings(loggedInEmail).securityScore(),
-                "Password Settings"
-        );
+            CompletableFuture<Integer> passwordSettingsFuture = fetchScoreIfAllowed(
+                    roles,
+                    UserRole.PASSWORD_SETTINGS_VIEWER,
+                    () -> passwordSettingsService.getPasswordSettings(loggedInEmail).securityScore(),
+                    "Password Settings"
+            );
 
-        CompletableFuture<Integer> dnsAverageFuture;
-        if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
-            dnsAverageFuture = CompletableFuture.supplyAsync(() -> domainService.getAllDomains(loggedInEmail))
-                    .thenCompose(domains -> {
-                        if (domains == null || domains.isEmpty()) return CompletableFuture.completedFuture(0);
+            CompletableFuture<Integer> dnsAverageFuture;
+            if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
+                dnsAverageFuture = CompletableFuture.supplyAsync(() -> domainService.getAllDomains(loggedInEmail))
+                        .thenCompose(domains -> {
+                            if (domains == null || domains.isEmpty()) return CompletableFuture.completedFuture(0);
 
-                        var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
-                        List<CompletableFuture<Integer>> dnsTasks = domains.stream()
-                                .map(dto -> CompletableFuture.supplyAsync(() ->
-                                        dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
-                                ).exceptionally(ex -> 100))
-                                .toList();
+                            var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
+                            List<CompletableFuture<Integer>> dnsTasks = domains.stream()
+                                    .map(dto -> CompletableFuture.supplyAsync(() ->
+                                            dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
+                                    ).exceptionally(ex -> handleAsyncError(ex, "Individuele DNS", 0))) // <-- Gebruik helper
+                                    .toList();
 
-                        return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
-                                .thenApply(v -> {
-                                    int totalScore = dnsTasks.stream().mapToInt(CompletableFuture::join).sum();
-                                    return Math.round((float) totalScore / domains.size());
-                                });
-                    }).exceptionally(ex -> {
-                        log.error("Fout in globale DNS Average logica: {}", ex.getMessage());
-                        return 100;
-                    });
-        } else {
-            dnsAverageFuture = CompletableFuture.completedFuture(-1);
+                            return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
+                                    .thenApply(v -> {
+                                        int totalScore = dnsTasks.stream().mapToInt(CompletableFuture::join).sum();
+                                        return Math.round((float) totalScore / domains.size());
+                                    });
+                        }).exceptionally(ex -> handleAsyncError(ex, "Globale DNS Average", 100)); // <-- Gebruik helper
+            } else {
+                dnsAverageFuture = CompletableFuture.completedFuture(-1);
+            }
+
+            CompletableFuture.allOf(
+                    usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture,
+                    passwordSettingsFuture, dnsAverageFuture
+            ).join();
+
+            int usersScore = usersFuture.join();
+            int groupsScore = groupsFuture.join();
+            int drivesScore = drivesFuture.join();
+            int devicesScore = devicesFuture.join();
+            int appAccessScore = appAccessFuture.join();
+            int appPasswordsScore = appPasswordsFuture.join();
+            int passwordSettingsScore = passwordSettingsFuture.join();
+            int dnsScore = dnsAverageFuture.join();
+
+            return new DashboardScores(usersScore, groupsScore, drivesScore,
+                    devicesScore, appAccessScore, appPasswordsScore, passwordSettingsScore, dnsScore);
+        } catch (Exception ex) {
+            Throwable cause = (ex instanceof CompletionException) ? ex.getCause() : ex;
+            if (cause instanceof GoogleWorkspaceSyncException) {
+                throw (GoogleWorkspaceSyncException) cause;
+            }
+            throw new GoogleWorkspaceSyncException("Error with getting the dashboard scores: " + cause.getMessage(), cause);
         }
-
-        CompletableFuture.allOf(
-                usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture,
-                passwordSettingsFuture, dnsAverageFuture
-        ).join();
-
-        int usersScore = usersFuture.join();
-        int groupsScore = groupsFuture.join();
-        int drivesScore = drivesFuture.join();
-        int devicesScore = devicesFuture.join();
-        int appAccessScore = appAccessFuture.join();
-        int appPasswordsScore = appPasswordsFuture.join();
-        int passwordSettingsScore = passwordSettingsFuture.join();
-        int dnsScore = dnsAverageFuture.join();
-
-        return new DashboardScores(usersScore, groupsScore, drivesScore,
-                devicesScore, appAccessScore, appPasswordsScore, passwordSettingsScore, dnsScore);
     }
 
     private int calculateTotalScore(DashboardScores scores) {
         int totalScore = 0;
         int categoriesCount = 0;
 
-        // Tel score alleen mee als deze niet -1 is
         if (scores.usersScore() >= 0) { totalScore += scores.usersScore(); categoriesCount++; }
         if (scores.groupsScore() >= 0) { totalScore += scores.groupsScore(); categoriesCount++; }
         if (scores.drivesScore() >= 0) { totalScore += scores.drivesScore(); categoriesCount++; }
@@ -195,7 +214,6 @@ public class DashboardService {
         if (scores.passwordSettingsScore() >= 0) { totalScore += scores.passwordSettingsScore(); categoriesCount++; }
         if (scores.dnsScore() >= 0) { totalScore += scores.dnsScore(); categoriesCount++; }
 
-        // Voorkom 'divide by zero' als de gebruiker nergens rechten voor heeft
         if (categoriesCount == 0) {
             return 0;
         }
@@ -206,13 +224,24 @@ public class DashboardService {
     private CompletableFuture<Integer> fetchScoreIfAllowed(List<UserRole> roles, UserRole requiredRole, java.util.function.Supplier<Integer> scoreSupplier, String moduleName) {
         if (hasAccessToModule(roles, requiredRole)) {
             return CompletableFuture.supplyAsync(scoreSupplier)
-                    .exceptionally(ex -> {
-                        log.error("Fout bij laden {} score: {}", moduleName, ex.getMessage());
-                        return 100; // Fallback score bij error
-                    });
+                    .exceptionally(ex -> handleAsyncError(ex, moduleName, 0)); // <-- Gebruik helper
         }
-
         return CompletableFuture.completedFuture(-1);
     }
-}
 
+    /**
+     * Hulpmethode om asynchrone errors af te handelen.
+     * Slikt normale fouten in (geeft fallbackScore terug), maar gooit "No Admin" fouten wél op!
+     */
+    private int handleAsyncError(Throwable ex, String moduleName, int fallbackScore) {
+        Throwable root = ex.getCause() != null ? ex.getCause() : ex;
+
+        // Als het de specifieke admin-fout is, gooi hem dan opnieuw op zodat de join() hem afvangt
+        if (root instanceof GoogleWorkspaceSyncException && root.getMessage() != null && root.getMessage().contains("No Admin email")) {
+            throw new CompletionException(root);
+        }
+
+        log.error("Fout bij laden {} score/logica: {}", moduleName, root.getMessage());
+        return fallbackScore;
+    }
+}

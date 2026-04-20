@@ -16,6 +16,7 @@ import { ReportService } from '../../services/report-service';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { PageContentWrapper } from '../../components/page-content-wrapper/page-content-wrapper';
+import { ApiError } from '../../components/api-error/api-error';
 
 @Component({
   selector: 'app-home',
@@ -29,6 +30,7 @@ import { PageContentWrapper } from '../../components/page-content-wrapper/page-c
     PageWarningsItem,
     TranslocoPipe,
     PageContentWrapper,
+    ApiError,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -54,6 +56,9 @@ export class Home implements OnInit, OnDestroy {
   readonly isGenerating = signal<boolean>(false);
 
   readonly hasWarnings = signal(false);
+
+  readonly apiError = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   pageResponse = signal<DashboardPageResponse | null>(null);
   pageOverview = signal<DashboardOverviewResponse | null>(null);
@@ -128,7 +133,9 @@ export class Home implements OnInit, OnDestroy {
         this.isLoading.set(false);
       },
       error: (err) => {
+        this.errorMessage.set(err.error);
         console.error('Failed to load dashboard data', err);
+        this.apiError.set(true);
         this.isLoading.set(false);
       },
     });

@@ -93,6 +93,11 @@ public class GoogleGroupsService {
         GroupOverviewResponse base = getGroupsOverview(loggedInEmail);
         boolean ignoreGroupRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "groupExternal");
         int securityScore = ignoreGroupRisk ? 100 : base.securityScore();
+
+        if (base.totalGroups() == 0) {
+            securityScore = 0;
+        }
+
         SecurityScoreBreakdownDto breakdown = ignoreGroupRisk
                 ? buildGroupsBreakdown(base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
                 base.mediumRiskGroups(), base.lowRiskGroups(), 100, true)

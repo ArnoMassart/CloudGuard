@@ -218,6 +218,7 @@ export class UsersSection implements OnInit {
   loadUsers(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#userService
       .getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())

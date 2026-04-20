@@ -9,8 +9,9 @@
                 [Icon]="Icons.Bell" BackgroundColor="#dbeafe" IconColor="#155dfc" />
             <app-section-top-card class="min-w-0" Title="{{ 'feedback.new' | transloco }}" [Value]="0"
                 [Icon]="Icons.CircleQuestionMark" BackgroundColor="#dbeafe" IconColor="#155dfc" />
-            <app-section-top-card class="min-w-0" Title="{{ 'feedback.critical' | transloco }}" [Value]="criticalCount()"
-                [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b" TextColor="#e7000b" />
+            <app-section-top-card class="min-w-0" Title="{{ 'feedback.critical' | transloco }}"
+                [Value]="criticalCount()" [Icon]="Icons.TriangleAlert" BackgroundColor="#ffe2e2" IconColor="#e7000b"
+                TextColor="#e7000b" />
             <app-section-top-card class="min-w-0" Title="{{ 'feedback.processing' | transloco }}"
                 [Value]="inBehandelingCount()" [Icon]="Icons.Clock" BackgroundColor="#d8f2ef" IconColor="#3abfad"
                 TextColor="#3abfad" />
@@ -32,26 +33,32 @@
             (refresh)="refresh()" />
 
         @if (actionError()) {
-            <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                {{ actionError() }}
-            </div>
-            }
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            {{ actionError() }}
+        </div>
+        }
 
         @if (isLoading()) {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
+        <div
+            class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
             <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             <span class="text-sm text-gray-500 mt-3 text-center">{{ 'feedback.loading' | transloco }}...</span>
         </div>
         } @else if (listLoadError()) {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
+        <div
+            class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
             <p class="text-sm text-red-600 text-center">{{listLoadError()}}</p>
         </div>
+        } @else if (errorMessage()) {
+        <app-api-error [errorMessage]="errorMessage()" [fullBorder]="true" />
         } @else if (filteredNotifications().length === 0) {
-        <div class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
+        <div
+            class="bg-white rounded-lg border-2 border-muted/50 flex flex-col items-center justify-center px-4 py-12 sm:p-12">
             <div class="w-16 h-16 flex items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-4">
                 <i-lucide [img]="Icons.CircleCheck" size="32" />
             </div>
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 text-center">{{ 'feedback.none' | transloco }}</h3>
+            <h3 class="text-base sm:text-lg font-medium text-gray-900 text-center">{{ 'feedback.none' | transloco }}
+            </h3>
             <p class="text-sm text-gray-500 mt-1 text-center max-w-md px-2">
                 @if (filterSeverity() === 'all') {
                 {{ 'feedback.severity.all' | transloco }} }

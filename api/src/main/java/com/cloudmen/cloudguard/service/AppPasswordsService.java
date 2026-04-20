@@ -98,7 +98,7 @@ public class AppPasswordsService {
                 .sum();
         int totalUserCount = entry.totalUserCount();
         boolean ignored = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-passwords", "appPassword");
-        int securityScore = ignored ? 100 : totalUserCount == 0 ? 100
+        int securityScore = ignored ? 100 : totalUserCount == 0 ? 0
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
         SecurityScoreBreakdownDto breakdown = buildAppPasswordsBreakdown(
                 totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore, ignored);

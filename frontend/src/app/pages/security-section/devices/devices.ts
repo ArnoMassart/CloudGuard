@@ -220,6 +220,7 @@ export class Devices implements OnInit, OnDestroy {
   loadDevices(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#deviceService
       .getDevices(

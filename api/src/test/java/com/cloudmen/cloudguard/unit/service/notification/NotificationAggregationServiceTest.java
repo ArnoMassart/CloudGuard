@@ -59,6 +59,7 @@ class NotificationAggregationServiceTest {
     @Mock NotificationInstanceRepository notificationInstanceRepository;
     @Mock NotificationProjectionProperties notificationProjectionProperties;
     @Mock UserService userService; // Nieuwe service die userRepository vervangt
+    @Mock OrganizationService organizationService;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -88,7 +89,8 @@ class NotificationAggregationServiceTest {
                 preferenceService,
                 notificationInstanceRepository,
                 notificationProjectionProperties,
-                userService);
+                userService,
+                organizationService);
     }
 
     @AfterEach

@@ -162,7 +162,7 @@ public class GoogleDeviceService {
             }
         }
 
-        int securityScore = totalDevices == 0 ? 100 : (int) Math.round((double) totalScoreSum / totalDevices);
+        int securityScore = totalDevices == 0 ? 0 : (int) Math.round((double) totalScoreSum / totalDevices);
 
         SecurityScoreBreakdownDto breakdown = buildDevicesBreakdown(
                 totalDevices, totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,

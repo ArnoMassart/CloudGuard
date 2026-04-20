@@ -180,6 +180,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   loadDrives(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#driveService.getDrives(ITEMS_PER_PAGE, token || undefined, this.searchQuery()).subscribe({
       next: (res) => {

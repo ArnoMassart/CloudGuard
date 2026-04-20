@@ -201,6 +201,7 @@ export class AppAccess implements OnInit, OnDestroy {
   loadApps(token?: string): void {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#oAuthService
       .getApps(ITEMS_PER_PAGE, this.riskFilter(), token || undefined, this.searchQuery())
