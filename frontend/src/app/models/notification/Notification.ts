@@ -12,6 +12,8 @@ export interface Notification {
   sourceRoute: string;
   hasReported?: boolean;
   supportsDetails?: boolean;
+  /** ISO-8601 instant from API (`tbl_notifications.created_at`); absent before first DB row. */
+  createdAt?: string | null;
   /** Present when API merges active + solved lists: open issues vs resolved in projection. */
   instanceStatus?: 'active' | 'solved';
 }

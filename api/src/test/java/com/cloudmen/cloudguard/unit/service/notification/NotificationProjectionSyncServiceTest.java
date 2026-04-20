@@ -68,7 +68,8 @@ class NotificationProjectionSyncServiceTest {
                         "Users",
                         "/users-groups",
                         false,
-                        true);
+                        true,
+                        null);
         when(aggregationService.buildActiveSnapshot("admin@example.com", Locale.ENGLISH)).thenReturn(List.of(dto));
 
         when(instanceRepository.findByOrganizationId(ORG_ID)).thenReturn(List.of());

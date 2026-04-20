@@ -279,6 +279,10 @@ public class NotificationAggregationService {
                 f.getRecommendedActions() != null ? f.getRecommendedActions() : List.of();
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(f.getNotificationType());
         String severityStr = NotificationSeverity.toDtoString(f.getSeverity());
+        String createdAtIso =
+                f.getCreatedAt() == null
+                        ? null
+                        : f.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant().toString();
         return new NotificationDto(
                 "nf-" + f.getId(),
                 severityStr,
@@ -290,7 +294,8 @@ public class NotificationAggregationService {
                 f.getSourceLabel(),
                 f.getSourceRoute(),
                 false,
-                supportsDetails);
+                supportsDetails,
+                createdAtIso);
     }
 
     private boolean isHiddenByPreference(String source, String notificationType, Set<String> disabledPreferenceKeys) {
@@ -316,8 +321,19 @@ public class NotificationAggregationService {
 
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         boolean hasReported = feedbackKeys.contains(n.source() + ":" + n.notificationType());
-        return new NotificationDto(n.id(), n.severity(), n.title(), n.description(), n.recommendedActions(),
-                n.notificationType(), n.source(), n.sourceLabel(), n.sourceRoute(), hasReported, n.supportsDetails());
+        return new NotificationDto(
+                n.id(),
+                n.severity(),
+                n.title(),
+                n.description(),
+                n.recommendedActions(),
+                n.notificationType(),
+                n.source(),
+                n.sourceLabel(),
+                n.sourceRoute(),
+                hasReported,
+                n.supportsDetails(),
+                n.createdAt());
     }
 
     private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
@@ -605,8 +621,19 @@ public class NotificationAggregationService {
                                   List<String> recommendedActions, String notificationType,
                                   String source, String sourceLabel, String sourceRoute) {
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(notificationType);
-        return new NotificationDto("n-" + id, severity, title, description, recommendedActions,
-                notificationType, source, sourceLabel, sourceRoute, false, supportsDetails);
+        return new NotificationDto(
+                "n-" + id,
+                severity,
+                title,
+                description,
+                recommendedActions,
+                notificationType,
+                source,
+                sourceLabel,
+                sourceRoute,
+                false,
+                supportsDetails,
+                null);
     }
 
 }

@@ -191,20 +191,31 @@ export class ReportsReactions implements OnInit, OnDestroy {
 
   /** Shown next to the clock icon for open items (org-wide projection sync time). */
   lastSyncedLine(): string {
-    const iso = this.lastNotificationSyncAt();
-    const lang = this.#translocoService.getActiveLang() ?? 'en';
-    if (!iso) {
+    const formatted = this.#formatIsoInstant(this.lastNotificationSyncAt());
+    if (formatted === null) {
       return this.#translocoService.translate('feedback.last-sync-never');
     }
+    return this.#translocoService.translate('feedback.last-sync-at', { time: formatted });
+  }
+
+  /** Creation time from `tbl_notifications.created_at` (next to clock on open cards). */
+  formatNotificationCreatedAt(n: Notification): string {
+    const formatted = this.#formatIsoInstant(n.createdAt ?? null);
+    if (formatted === null) {
+      return this.#translocoService.translate('feedback.notification-created-unknown');
+    }
+    return formatted;
+  }
+
+  #formatIsoInstant(iso: string | null): string | null {
+    if (!iso) return null;
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) {
-      return this.#translocoService.translate('feedback.last-sync-never');
-    }
-    const formatted = new Intl.DateTimeFormat(lang.replace('_', '-'), {
+    if (Number.isNaN(d.getTime())) return null;
+    const lang = this.#translocoService.getActiveLang() ?? 'en';
+    return new Intl.DateTimeFormat(lang.replace('_', '-'), {
       dateStyle: 'short',
       timeStyle: 'short',
     }).format(d);
-    return this.#translocoService.translate('feedback.last-sync-at', { time: formatted });
   }
 
   #loadNotifications(syncFirst = false) {

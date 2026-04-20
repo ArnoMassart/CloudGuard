@@ -130,7 +130,8 @@
                             {{ 'feedback.solved-detail' | transloco }}
                             } @else {
                             <i-lucide [img]="Icons.Clock" size="12" />
-                            {{ (n.hasReported ? 'feedback.processing' : 'today') | transloco }}
+                            Created at:
+                            {{ formatNotificationCreatedAt(n) }}
                             }
                         </p>
                         @if (n.supportsDetails) {

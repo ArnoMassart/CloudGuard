@@ -87,7 +87,8 @@ class NotificationControllerIT {
                 "DNS",
                 "/domain-dns",
                 false,
-                true);
+                true,
+                null);
     }
 
     @Test
