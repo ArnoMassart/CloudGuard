@@ -9,7 +9,10 @@ import {
 import { AppIcons } from '../../shared/AppIcons';
 import { SecurityScoreDetailComponent, SecurityScoreDetailData } from './security-score-detail';
 
-const I18N_MOCK = { 'score-detail.title': 'Score Details' };
+const I18N_MOCK = {
+  'score-detail.title': 'Score Details',
+  'security-score.no-applicable-factors': 'No separate criteria apply.',
+};
 
 class TestLoader implements TranslocoLoader {
   getTranslation() {
@@ -78,6 +81,21 @@ describe('SecurityScoreDetail', () => {
 
   it('should get breakdown from injected data', () => {
     expect(component.breakdown).toEqual(mockBreakdown);
+  });
+
+  it('visibleFactors omits criteria with maxScore 0', () => {
+    (component as any).data = {
+      breakdown: {
+        totalScore: 100,
+        status: 'perfect',
+        factors: [
+          { title: 'A', description: '', score: 100, maxScore: 100, severity: 'success' },
+          { title: 'B', description: '', score: 0, maxScore: 0, severity: 'success' },
+        ],
+      },
+    };
+    expect(component.visibleFactors().length).toBe(1);
+    expect(component.visibleFactors()[0].title).toBe('A');
   });
 
   describe('Status and Score Colors', () => {

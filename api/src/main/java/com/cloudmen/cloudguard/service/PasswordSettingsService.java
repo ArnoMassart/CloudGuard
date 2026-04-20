@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
@@ -467,13 +468,48 @@ public class PasswordSettingsService {
         int dispExp = muteExp ? 100 : (int) Math.round(expirationScore);
         int dispStr = muteStr ? 100 : (int) Math.round(strengthScore);
 
+        boolean showAdmin = totalAdmins > 0 || muteAdmin;
+        boolean showUserChange = summary.totalUsers() > 0;
+        boolean show2fa = totalUsers2Fa > 0 || mute2sv;
+        boolean showLen = totalPolicyUsers > 0 || muteLen;
+        boolean showExp = totalPolicyUsers > 0 || muteExp;
+        boolean showStr = totalPolicyUsers > 0 || muteStr;
+
         List<SecurityScoreFactorDto> factors = List.of(
-                new SecurityScoreFactorDto("Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin), muteAdmin),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale), usersNeedChangeDesc, (int) Math.round(usersNeedChangeScore), 100, severity(usersNeedChangeScore), false),
-                new SecurityScoreFactorDto("2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa), mute2sv),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.length.title", null, locale), lengthDesc, dispLen, 100, severity(dispLen), muteLen),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale), expirationDesc, dispExp, 100, severity(dispExp), muteExp),
-                new SecurityScoreFactorDto(messageSource.getMessage("password-settings.score.factor.strength.title", null, locale), strengthDesc, dispStr, 100, severity(dispStr), muteStr)
+                securityScoreFactorForDetail(showAdmin, "Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin), muteAdmin),
+                securityScoreFactorForDetail(
+                        showUserChange,
+                        messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale),
+                        usersNeedChangeDesc,
+                        (int) Math.round(usersNeedChangeScore),
+                        100,
+                        severity(usersNeedChangeScore),
+                        false),
+                securityScoreFactorForDetail(show2fa, "2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa), mute2sv),
+                securityScoreFactorForDetail(
+                        showLen,
+                        messageSource.getMessage("password-settings.score.factor.length.title", null, locale),
+                        lengthDesc,
+                        dispLen,
+                        100,
+                        severity(dispLen),
+                        muteLen),
+                securityScoreFactorForDetail(
+                        showExp,
+                        messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale),
+                        expirationDesc,
+                        dispExp,
+                        100,
+                        severity(dispExp),
+                        muteExp),
+                securityScoreFactorForDetail(
+                        showStr,
+                        messageSource.getMessage("password-settings.score.factor.strength.title", null, locale),
+                        strengthDesc,
+                        dispStr,
+                        100,
+                        severity(dispStr),
+                        muteStr)
         );
 
         String status = totalScore == 100 ? "perfect" : totalScore >= 75 ? "good" : totalScore > 50 ? "average" : "bad";

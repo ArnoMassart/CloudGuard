@@ -19,12 +19,16 @@ export interface SecurityScoreDetailData {
 })
 export class SecurityScoreDetailComponent {
   readonly Icons = AppIcons;
-  readonly Math = Math;
   readonly data: SecurityScoreDetailData = inject(MAT_DIALOG_DATA);
   readonly dialogRef = inject(MatDialogRef<SecurityScoreDetailComponent>);
 
   get breakdown(): SecurityScoreBreakdown {
     return this.data.breakdown;
+  }
+
+  /** Factors with no weight (maxScore 0) are omitted */
+  visibleFactors(): SecurityScoreFactor[] {
+    return this.breakdown.factors.filter((f) => f.maxScore > 0);
   }
 
   getStatusColor(): string {

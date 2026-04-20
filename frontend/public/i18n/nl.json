@@ -64,6 +64,7 @@
   "current": "Huidige",
   "closing": "Sluiten",
   "security-score.calculation-factor": "Berekeningsfactoren",
+  "security-score.no-applicable-factors": "Er zijn in dit geval geen aparte criteria van toepassing.",
   "overall-score": "Algemene score",
   "score-detail.description": "Gedetailleerde berekeningsfactoren zijn niet beschikbaar voor dit onderdeel",
   "perfect": "Perfect",

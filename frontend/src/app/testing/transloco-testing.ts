@@ -72,6 +72,7 @@ export const I18N_MOCK = {
   overall: 'General',
   'score-detail.description': 'Detailed calculation factors are not available for this component',
   'security-score.calculation-factor': 'Calculation factors',
+  'security-score.no-applicable-factors': 'No separate criteria apply in this situation.',
   'security-score.password-settings': 'Password Settings',
   'overall-score': 'Overall score',
   perfect: 'Perfect',

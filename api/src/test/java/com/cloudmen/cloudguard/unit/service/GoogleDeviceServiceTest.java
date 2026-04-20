@@ -30,7 +30,7 @@ public class GoogleDeviceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleDeviceService(deviceCacheService, getMessageSource());
+        service = new GoogleDeviceService(deviceCacheService);
     }
 
     @AfterEach

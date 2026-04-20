@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Locale;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
@@ -196,16 +197,34 @@ public class GoogleUsersService {
 
         Locale locale = LocaleContextHolder.getLocale();
 
+        boolean show2faFactor = totalUsers > 0 || ignore2fa;
+        boolean showActivityFactors = totalUsers > 0 || ignoreActivity;
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto(messageSource.getMessage("users.overview.2step-title", null, locale),
+                securityScoreFactorForDetail(
+                        show2faFactor,
+                        messageSource.getMessage("users.overview.2step-title", null, locale),
                         no2FACount == 0 ? messageSource.getMessage("users.overview.2step.compliant", null, locale) : messageSource.getMessage("users.overview.2step.non_compliant", new Object[]{no2FACount}, locale),
-                        score1, 100, severity(score1), ignore2fa),
-                new SecurityScoreFactorDto(messageSource.getMessage("users.overview.activeLongNoLogin-title", null, locale),
+                        score1,
+                        100,
+                        severity(score1),
+                        ignore2fa),
+                securityScoreFactorForDetail(
+                        showActivityFactors,
+                        messageSource.getMessage("users.overview.activeLongNoLogin-title", null, locale),
                         longNoLoginCount == 0 ? messageSource.getMessage("users.overview.no_login.compliant", null, locale) : messageSource.getMessage("users.overview.no_login.non_compliant", new Object[]{longNoLoginCount}, locale),
-                        score2, 100, severity(score2), ignoreActivity),
-                new SecurityScoreFactorDto(messageSource.getMessage("users.overview.deactivatedRecentLogin-title", null, locale),
+                        score2,
+                        100,
+                        severity(score2),
+                        ignoreActivity),
+                securityScoreFactorForDetail(
+                        showActivityFactors,
+                        messageSource.getMessage("users.overview.deactivatedRecentLogin-title", null, locale),
                         inactiveRecentCount == 0 ? messageSource.getMessage("users.overview.recent_login.compliant", null, locale) : messageSource.getMessage("users.overview.recent_login.non_compliant", new Object[]{inactiveRecentCount}, locale),
-                        score3, 100, severity(score3), ignoreActivity)
+                        score3,
+                        100,
+                        severity(score3),
+                        ignoreActivity)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
