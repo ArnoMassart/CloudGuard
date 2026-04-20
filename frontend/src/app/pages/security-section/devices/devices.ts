@@ -20,6 +20,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
+import { ApiError } from '../../../components/api-error/api-error';
 
 // ==========================================
 // CONSTANTS
@@ -40,6 +41,7 @@ const ITEMS_PER_PAGE = 4;
     TranslocoPipe,
     PageContentWrapper,
     PaginationBar,
+    ApiError,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.css',
@@ -63,6 +65,7 @@ export class Devices implements OnInit, OnDestroy {
   // ==========================================
   readonly isExpanded = signal(true);
   readonly apiError = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   readonly devices = signal<Device[]>([]);
   readonly pageOverview = signal<DevicesOverviewResponse | null>(null);
@@ -217,6 +220,7 @@ export class Devices implements OnInit, OnDestroy {
   loadDevices(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#deviceService
       .getDevices(
@@ -232,6 +236,7 @@ export class Devices implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: (err) => {
+          this.errorMessage.set(err.error);
           console.error('Failed to load devices', err);
           this.isLoading.set(false);
           this.apiError.set(true);

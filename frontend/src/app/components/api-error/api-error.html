@@ -1,0 +1,22 @@
+<div class="flex flex-col items-center justify-center p-10 text-center bg-red-50/50 border-red-100 rounded-b-lg"
+    [class.border-t]="!fullBorder" [class.border]="fullBorder">
+    <div class="bg-red-100 p-3 rounded-full mb-3">
+        <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
+    </div>
+
+    <span class="md:text-lg text-[17px] font-medium text-slate-800">
+        @if (isNoAdminError()) {
+        {{ 'error.admin_required.title' | transloco }}
+        } @else {
+        {{ 'error.title' | transloco }}
+        }
+    </span>
+
+    <span class="text-sm text-slate-600 mt-1 max-w-md">
+        @if (isNoAdminError()) {
+        {{ 'error.admin_required.description' | transloco }}
+        } @else {
+        {{ descriptionKey() | transloco }}
+        }
+    </span>
+</div>

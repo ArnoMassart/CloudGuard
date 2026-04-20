@@ -167,7 +167,7 @@ public class GoogleSharedDriveService {
     private static int combinedDriveSecurityScore(int totalDrives, int riskOnlyScore, int orphanScore,
                                                   int domainOnlyScore, int membersOnlyScore, Set<String> off) {
         if (totalDrives == 0) {
-            return 100;
+            return 0;
         }
         double sum = 0;
         int parts = 0;

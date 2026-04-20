@@ -121,4 +121,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
         return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+
+    @ExceptionHandler(NoAdminEmailConfiguredException.class)
+    public ResponseEntity<String> handleNoAdminEmailConfiguredException(NoAdminEmailConfiguredException ex) {
+        return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }

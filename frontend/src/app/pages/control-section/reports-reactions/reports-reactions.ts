@@ -12,6 +12,7 @@ import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ApiError } from '../../../components/api-error/api-error';
 
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -26,6 +27,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
     PageWarningsItem,
     FilterChips,
     TranslocoPipe,
+    ApiError,
   ],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',
@@ -43,7 +45,9 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly listLoadError = signal<string | null>(null);
   readonly syncWarning = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'in-behandeling' | 'solved'>('all');
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'in-behandeling' | 'solved'>(
+    'all'
+  );
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
@@ -59,9 +63,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
     if (filter === 'in-behandeling')
       return list.filter((n) => n.hasReported && n.instanceStatus !== 'solved');
     if (filter === 'all') return list;
-    return list.filter(
-      (n) => n.instanceStatus !== 'solved' && n.severity === filter,
-    );
+    return list.filter((n) => n.instanceStatus !== 'solved' && n.severity === filter);
   });
 
   readonly totalCount = computed(() => this.notifications().length);
@@ -69,26 +71,28 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly criticalCount = computed(
     () =>
       this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'critical')
-        .length,
+        .length
   );
   readonly warningCount = computed(
     () =>
       this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'warning')
-        .length,
+        .length
   );
   readonly infoCount = computed(
     () =>
-      this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'info').length,
+      this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'info')
+        .length
   );
   readonly solvedCount = computed(
-    () => this.notifications().filter((n) => n.instanceStatus === 'solved').length,
+    () => this.notifications().filter((n) => n.instanceStatus === 'solved').length
   );
   readonly inBehandelingCount = computed(
-    () =>
-      this.notifications().filter((n) => n.hasReported && n.instanceStatus !== 'solved').length,
+    () => this.notifications().filter((n) => n.hasReported && n.instanceStatus !== 'solved').length
   );
 
   readonly isWarningExpanded = signal(true);
+
+  readonly errorMessage = signal<string | null>(null);
 
   toggleExpanded() {
     this.isWarningExpanded.update((v) => !v);
@@ -220,6 +224,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
 
   #loadNotifications(syncFirst = false) {
     this.listLoadError.set(null);
+    this.errorMessage.set(null);
     this.syncWarning.set(null);
     this.isLoading.set(true);
     this.expandedIds.set(new Set());
@@ -227,10 +232,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
     this.loadingDetailsIds.set(new Set());
     this.feedbackFormOpenIds.set(new Set());
 
-    type SyncMeta =
-      | { mode: 'skipped' }
-      | { mode: 'ok' }
-      | { mode: 'failed'; detail: string };
+    type SyncMeta = { mode: 'skipped' } | { mode: 'ok' } | { mode: 'failed'; detail: string };
 
     const load$ = this.#notificationService.getNotifications();
     const pipeline$ = syncFirst
@@ -247,9 +249,9 @@ export class ReportsReactions implements OnInit, OnDestroy {
                 solved: data.solved,
                 lastNotificationSyncAt: data.lastNotificationSyncAt,
                 syncMeta,
-              })),
-            ),
-          ),
+              }))
+            )
+          )
         )
       : load$.pipe(
           map((data) => ({
@@ -257,7 +259,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
             solved: data.solved,
             lastNotificationSyncAt: data.lastNotificationSyncAt,
             syncMeta: { mode: 'skipped' } as const,
-          })),
+          }))
         );
     pipeline$.subscribe({
       next: ({ active, solved, lastNotificationSyncAt, syncMeta }) => {
@@ -272,20 +274,30 @@ export class ReportsReactions implements OnInit, OnDestroy {
         if (syncMeta.mode === 'failed') {
           this.syncWarning.set(
             syncMeta.detail ||
-              this.#translocoService.translate('reports-reactions.error.sync-failed'),
+              this.#translocoService.translate('reports-reactions.error.sync-failed')
           );
         } else {
           this.syncWarning.set(null);
         }
       },
       error: (err) => {
+        const backendMessage = typeof err.error === 'string' ? err.error : err.message || '';
+
+        // 2. Controleer op de specifieke backend tekst
         console.error('Notifications load failed: ', err);
+
+        if (backendMessage.includes('No Admin email')) {
+          this.errorMessage.set(backendMessage);
+        } else {
+          const msg = this.#httpErrorDetail(err);
+          this.listLoadError.set(
+            msg || this.#translocoService.translate('reports-reactions.error.load-failed')
+          );
+        }
+
         this.notifications.set([]);
         this.lastNotificationSyncAt.set(null);
-        const msg = this.#httpErrorDetail(err);
-        this.listLoadError.set(
-          msg || this.#translocoService.translate('reports-reactions.error.load-failed'),
-        );
+
         this.isLoading.set(false);
       },
     });
@@ -333,7 +345,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
             console.error('Get details failed: ', err);
             const msg = this.#httpErrorDetail(err);
             this.actionError.set(
-              msg || this.#translocoService.translate('reports-reactions.error.get-details-failed'),
+              msg || this.#translocoService.translate('reports-reactions.error.get-details-failed')
             );
             this.loadingDetailsIds.update((s) => {
               const next = new Set(s);
@@ -367,7 +379,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
     this.#notificationFeedbackService.submitFeedback(n.source, n.notificationType, text).subscribe({
       next: () => {
         this.notifications.update((list) =>
-          list.map((item) => (item.id === n.id ? { ...item, hasReported: true } : item)),
+          list.map((item) => (item.id === n.id ? { ...item, hasReported: true } : item))
         );
         this.feedbackFormOpenIds.update((s) => {
           const next = new Set(s);
@@ -390,7 +402,7 @@ export class ReportsReactions implements OnInit, OnDestroy {
         console.error('Submit feedback failed: ', err);
         const msg = this.#httpErrorDetail(err);
         this.actionError.set(
-          msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed'),
+          msg || this.#translocoService.translate('reports-reactions.error.submit-feedback-failed')
         );
         this.submittingIds.update((s) => {
           const next = new Set(s);

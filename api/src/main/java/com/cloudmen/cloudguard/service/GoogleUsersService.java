@@ -213,7 +213,7 @@ public class GoogleUsersService {
 
     private int calculateSecurityScoreWithPreferenceMask(List<User> googleUsers, boolean ignore2fa, boolean ignoreActivity) {
         if (googleUsers.isEmpty()) {
-            return 100;
+            return 0;
         }
         int parts = 0;
         long sum = 0;

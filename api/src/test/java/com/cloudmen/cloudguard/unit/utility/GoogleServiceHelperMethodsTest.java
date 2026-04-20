@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.UserSecurityEvaluation;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.exception.NoAdminEmailConfiguredException;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -249,7 +250,7 @@ public class GoogleServiceHelperMethodsTest {
         when(userService.findByEmailOptional("user@cloudmen.com")).thenReturn(Optional.of(user));
         when(orgService.findById(1L)).thenReturn(Optional.of(org));
 
-        GoogleWorkspaceSyncException ex = assertThrows(GoogleWorkspaceSyncException.class, () ->
+        NoAdminEmailConfiguredException ex = assertThrows(NoAdminEmailConfiguredException.class, () ->
                 GoogleServiceHelperMethods.getAdminEmailForUser("user@cloudmen.com", userService, orgService)
         );
 

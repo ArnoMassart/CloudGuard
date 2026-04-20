@@ -14,10 +14,11 @@ import { SecurityPreferencesFacade } from '../../../services/security-preference
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { ApiError } from '../../../components/api-error/api-error';
 
 @Component({
   selector: 'app-domain-dns',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule, TranslocoPipe],
+  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule, TranslocoPipe, ApiError],
   templateUrl: './domain-dns.html',
   styleUrl: './domain-dns.css',
 })
@@ -36,6 +37,8 @@ export class DomainDns implements OnInit, OnDestroy {
   readonly isLoadingDns = signal(false);
   readonly selectedDnsDomain = signal<string | null>(null);
   readonly expandedDnsRow = signal<string | null>(null);
+
+  readonly errorMessage = signal<string | null>(null);
 
   readonly totalDomains = computed(() => this.domains().length);
   readonly validDnsRecords = computed(() => this.rows().filter((r) => r.status === 'VALID').length);
@@ -256,6 +259,7 @@ export class DomainDns implements OnInit, OnDestroy {
   }
 
   #loadDomains() {
+    this.errorMessage.set(null);
     this.#preferencesFacade.loadWithPrefs$(this.#domainService.getDomains()).subscribe({
       next: (domains) => {
         this.domains.set(domains);
@@ -267,6 +271,7 @@ export class DomainDns implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to load domains', err);
+        this.errorMessage.set(err.error);
         this.isLoading.set(false);
       },
     });

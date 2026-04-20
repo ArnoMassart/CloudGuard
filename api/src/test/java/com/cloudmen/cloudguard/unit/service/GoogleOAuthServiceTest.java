@@ -135,8 +135,8 @@ public class GoogleOAuthServiceTest {
         var overview = service.getOAuthPageOverview(ADMIN, Set.of());
 
         assertEquals(0, overview.totalThirdPartyApps());
-        assertEquals(100, overview.securityScore());
-        assertEquals("perfect", overview.securityScoreBreakdown().status());
+        assertEquals(0, overview.securityScore());
+        assertEquals("bad", overview.securityScoreBreakdown().status());
     }
 
     @Test

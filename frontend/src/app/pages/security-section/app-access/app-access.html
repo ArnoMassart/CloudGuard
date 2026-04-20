@@ -25,6 +25,10 @@
                 </div>
             </div>
 
+            @if (errorMessage()) {
+            <app-api-error [errorMessage]="errorMessage()" descriptionKey="app-access.error.description" />
+
+            } @else {
             <div class="flex flex-wrap items-center gap-10">
                 <app-search-bar placeholder="{{ 'app-access.search' | transloco }}..." class="flex-1 min-w-50"
                     (searchChange)="onSearch($event)" />
@@ -59,19 +63,6 @@
                             {{ 'app-access.loading' | transloco }}...
                         </span>
                     </div>
-                </div>
-                }
-                @else if (apiError()) {
-                <div
-                    class="flex flex-col items-center justify-center p-10 mt-4 text-center bg-red-50/50 border-t border-red-100 rounded-b-lg">
-                    <div class="bg-red-100 p-3 rounded-full mb-3">
-                        <lucide-icon [img]="Icons.TriangleAlert" size="28" class="text-red-600"></lucide-icon>
-                    </div>
-                    <span class="md:text-lg text-[17px] font-medium text-slate-800">{{ 'error.title' | transloco
-                        }}</span>
-                    <span class="text-sm text-slate-600 mt-1 max-w-md">
-                        {{ 'app-access.error.description' | transloco }}
-                    </span>
                 </div>
                 }
                 @else if (apps().length > 0) {
@@ -261,6 +252,7 @@ UtilityMethods.openAdminPage('https://admin.google.com/ac/owl/list')
                         (loadData)="loadApps($event)" />
                 </div>
             </div>
+            }
         </div>
     </div>
 </app-page-content-wrapper>

@@ -47,36 +47,21 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class NotificationAggregationServiceTest {
 
-    @Mock
-    GoogleDomainService domainService;
-    @Mock
-    DnsRecordsService dnsRecordsService;
-    @Mock
-    GoogleUsersService usersService;
-    @Mock
-    GoogleSharedDriveService driveService;
-    @Mock
-    GoogleDeviceService deviceService;
-    @Mock
-    AppPasswordsService appPasswordsService;
-    @Mock
-    GoogleGroupsService groupsService;
-    @Mock
-    GoogleOAuthService oAuthService;
-    @Mock
-    PasswordSettingsService passwordSettingsService;
-    @Mock
-    NotificationFeedbackService feedbackService;
-    @Mock
-    UserSecurityPreferenceService preferenceService;
-    @Mock
-    NotificationInstanceRepository notificationInstanceRepository;
-    @Mock
-    NotificationProjectionProperties notificationProjectionProperties;
-    @Mock
-    UserService userService;
-    @Mock
-    OrganizationRepository organizationRepository;
+    @Mock GoogleDomainService domainService;
+    @Mock DnsRecordsService dnsRecordsService;
+    @Mock GoogleUsersService usersService;
+    @Mock GoogleSharedDriveService driveService;
+    @Mock GoogleDeviceService deviceService;
+    @Mock AppPasswordsService appPasswordsService;
+    @Mock GoogleGroupsService groupsService;
+    @Mock GoogleOAuthService oAuthService;
+    @Mock PasswordSettingsService passwordSettingsService;
+    @Mock NotificationFeedbackService feedbackService;
+    @Mock UserSecurityPreferenceService preferenceService;
+    @Mock NotificationInstanceRepository notificationInstanceRepository;
+    @Mock NotificationProjectionProperties notificationProjectionProperties;
+    @Mock UserService userService; // Nieuwe service die userRepository vervangt
+    @Mock OrganizationService organizationService;
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -106,8 +91,7 @@ class NotificationAggregationServiceTest {
                 notificationInstanceRepository,
                 notificationProjectionProperties,
                 userService,
-                organizationRepository);
-        lenient().when(organizationRepository.findById(any())).thenReturn(Optional.empty());
+                organizationService);
     }
 
     @AfterEach

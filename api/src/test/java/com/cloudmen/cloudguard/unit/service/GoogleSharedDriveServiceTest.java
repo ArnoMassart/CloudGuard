@@ -121,8 +121,8 @@ public class GoogleSharedDriveServiceTest {
         var overview = service.getDrivesPageOverview(ADMIN, null);
 
         assertEquals(0, overview.totalDrives());
-        assertEquals(100, overview.securityScore());
-        assertEquals("perfect", overview.securityScoreBreakdown().status());
+        assertEquals(0, overview.securityScore());
+        assertEquals("bad", overview.securityScoreBreakdown().status());
         assertFalse(overview.warnings().hasWarnings());
     }
 

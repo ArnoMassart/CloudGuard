@@ -19,6 +19,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
+import { ApiError } from '../../../components/api-error/api-error';
 
 // ==========================================
 // CONSTANTS
@@ -37,6 +38,7 @@ const ITEMS_PER_PAGE = 3;
     TranslocoPipe,
     PageContentWrapper,
     PaginationBar,
+    ApiError,
   ],
   templateUrl: './app-access.html',
   styleUrl: './app-access.css',
@@ -59,6 +61,7 @@ export class AppAccess implements OnInit, OnDestroy {
   // ==========================================
   readonly isExpanded = signal(true);
   readonly apiError = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   readonly apps = signal<AggregatedAppDto[]>([]);
   readonly isLoading = signal(false);
@@ -198,6 +201,7 @@ export class AppAccess implements OnInit, OnDestroy {
   loadApps(token?: string): void {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#oAuthService
       .getApps(ITEMS_PER_PAGE, this.riskFilter(), token || undefined, this.searchQuery())
@@ -211,6 +215,7 @@ export class AppAccess implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: (err) => {
+          this.errorMessage.set(err.error);
           console.error('Failed to load oAuth apps', err);
           this.apiError.set(true);
           this.isLoading.set(false);

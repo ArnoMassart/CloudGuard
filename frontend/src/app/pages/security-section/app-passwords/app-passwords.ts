@@ -17,6 +17,7 @@ import { SecurityPreferencesFacade } from '../../../services/security-preference
 import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ApiError } from '../../../components/api-error/api-error';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -31,6 +32,7 @@ const ITEMS_PER_PAGE = 4;
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    ApiError,
   ],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',
@@ -53,6 +55,8 @@ export class AppPasswords implements OnInit, OnDestroy {
   readonly listLoadError = signal<string | null>(null);
   readonly overviewError = signal<string | null>(null);
   readonly refreshError = signal<string | null>(null);
+
+  readonly errorMessage = signal<string | null>(null);
 
   readonly searchQuery = signal('');
   readonly filteredUserAppPasswords = computed(() => {
@@ -220,6 +224,8 @@ export class AppPasswords implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.listLoadError.set(null);
     this.expandedAppPassword.set(null);
+    this.errorMessage.set(null);
+
     this.#appPasswordsService
       .getAppPasswords(ITEMS_PER_PAGE, pageToken ?? undefined, this.searchQuery())
       .subscribe({
@@ -231,13 +237,20 @@ export class AppPasswords implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
         error: (err) => {
+          const backendMessage = typeof err.error === 'string' ? err.error : err.message || '';
+
           console.error('App passwords list failed: ', err);
           this.userAppPasswords.set([]);
           this.nextPageToken.set(null);
-          const msg = this.#httpErrorDetail(err);
-          this.listLoadError.set(
-            msg || this.#translocoService.translate('app-passwords.error.list-failed')
-          );
+
+          if (backendMessage.includes('No Admin email')) {
+            this.errorMessage.set(backendMessage);
+          } else {
+            const msg = this.#httpErrorDetail(err);
+            this.listLoadError.set(
+              msg || this.#translocoService.translate('app-passwords.error.list-failed')
+            );
+          }
           this.isLoading.set(false);
         },
       });

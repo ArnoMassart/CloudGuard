@@ -18,6 +18,7 @@ import { KPI_COLORS, kpiColors } from '../../../../shared/KpiColors';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
+import { ApiError } from '../../../../components/api-error/api-error';
 
 // ==========================================
 // CONSTANTS
@@ -37,6 +38,7 @@ const ITEMS_PER_PAGE = 4;
     SearchBar,
     TranslocoPipe,
     PaginationBar,
+    ApiError,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
@@ -58,6 +60,7 @@ export class UsersSection implements OnInit {
   // ==========================================
   readonly isExpanded = signal(true);
   readonly apiError = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   readonly orgUsers = signal<UserOrgDetail[]>([]);
   readonly isLoading = signal(false);
@@ -212,12 +215,10 @@ export class UsersSection implements OnInit {
     });
   }
 
-  // ==========================================
-  // PRIVATE METHODS
-  // ==========================================
   loadUsers(token?: string) {
     this.isLoading.set(true);
     this.apiError.set(false);
+    this.errorMessage.set(null);
 
     this.#userService
       .getOrgUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
@@ -228,6 +229,7 @@ export class UsersSection implements OnInit {
           this.isLoading.set(false);
         },
         error: (err) => {
+          this.errorMessage.set(err.error);
           console.error('Failed to load users', err);
           this.apiError.set(true);
           this.isLoading.set(false);
@@ -235,6 +237,9 @@ export class UsersSection implements OnInit {
       });
   }
 
+  // ==========================================
+  // PRIVATE METHODS
+  // ==========================================
   #loadPageOverview() {
     this.#preferencesFacade.loadWithPrefs$(this.#userService.getUsersPageOverview()).subscribe({
       next: (overview) => this.pageOverview.set(overview),

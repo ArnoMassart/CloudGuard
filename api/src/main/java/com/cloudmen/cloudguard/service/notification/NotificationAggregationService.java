@@ -21,6 +21,7 @@ import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
+import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
@@ -28,6 +29,7 @@ import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -78,7 +80,7 @@ public class NotificationAggregationService {
     private final NotificationInstanceRepository notificationInstanceRepository;
     private final NotificationProjectionProperties notificationProjectionProperties;
     private final UserService userService;
-    private final OrganizationRepository organizationRepository;
+    private final OrganizationService organizationService;
 
     public NotificationAggregationService(
             GoogleDomainService domainService,
@@ -94,9 +96,7 @@ public class NotificationAggregationService {
             NotificationFeedbackService feedbackService,
             UserSecurityPreferenceService preferenceService,
             NotificationInstanceRepository notificationInstanceRepository,
-            NotificationProjectionProperties notificationProjectionProperties,
-            UserService userService,
-            OrganizationRepository organizationRepository) {
+            NotificationProjectionProperties notificationProjectionProperties, UserService userService, OrganizationService organizationService) {
         this.domainService = domainService;
         this.dnsRecordsService = dnsRecordsService;
         this.usersService = usersService;
@@ -112,7 +112,7 @@ public class NotificationAggregationService {
         this.notificationInstanceRepository = notificationInstanceRepository;
         this.notificationProjectionProperties = notificationProjectionProperties;
         this.userService = userService;
-        this.organizationRepository = organizationRepository;
+        this.organizationService = organizationService;
     }
 
     /** Live aggregation snapshot (used by the scheduled sync job). */
@@ -127,6 +127,13 @@ public class NotificationAggregationService {
 
     public NotificationsResponse getNotifications(String userId, Locale locale) {
         User user = userService.findByEmailOptional(userId).orElse(null);
+
+        // Check for admin email before getting the notifications
+        String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(userId, userService, organizationService);
+        if (adminEmail == null || adminEmail.isEmpty()) {
+            throw new GoogleWorkspaceSyncException("Error getting the notifications: No Admin email configured");
+        }
+
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
         List<UserRole> viewerRoles = user != null && user.getRoles() != null ? user.getRoles() : null;
 
@@ -155,7 +162,7 @@ public class NotificationAggregationService {
         String lastNotificationSyncAt = null;
         if (user != null && user.getOrganizationId() != null) {
             lastNotificationSyncAt =
-                    organizationRepository
+                    organizationService
                             .findById(user.getOrganizationId())
                             .map(Organization::getLastNotificationSyncAt)
                             .map(ldt -> ldt.atZone(ZoneId.systemDefault()).toInstant().toString())
@@ -335,6 +342,7 @@ public class NotificationAggregationService {
 
     private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
         List<NotificationDto> notifications = new ArrayList<>();
+
         int id = 0;
 
         UserOverviewResponse users = null;

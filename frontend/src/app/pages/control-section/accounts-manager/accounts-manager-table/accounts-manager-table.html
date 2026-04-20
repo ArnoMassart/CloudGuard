@@ -47,15 +47,15 @@
       }
 
       <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 cursor-pointer group"
-        (click)="$event.stopPropagation(); toggleRoles.emit({ email: user.email, length: user.roles.length })"
+        (click)="$event.stopPropagation(); user.roles.length > 2 && toggleRoles.emit({ email: user.email, length: user.roles.length })"
         [title]="(user.roles.length > 2 ? (expandedRoles().has(user.email) ? 'account-manager.minimize' : 'account-manager.view-all') : '') | transloco">
         <div class="flex flex-wrap gap-2 items-center">
 
-          @if (expandedRoles().has(user.email)) {
+          @if (expandedRoles().has(user.email) && user.roles.length > 2) {
           @for (role of getRolesTranslated(user); track role.value) {
           <span class="px-3 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap"
             [ngClass]="getRoleColorClasses(role.value, user)">
-            {{ role.label | transloco }}
+            {{ checkCLOUDMENSuperAdmin(user) ? "CLOUDMEN Super Admin" : role.label | transloco }}
           </span>
           }
           <span class="text-[10px] text-slate-400 uppercase font-bold ml-1 group-hover:text-primary transition-colors">
