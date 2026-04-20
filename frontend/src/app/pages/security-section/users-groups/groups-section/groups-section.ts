@@ -15,6 +15,7 @@ import { KPI_COLORS, kpiColors } from '../../../../shared/KpiColors';
 import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
+import { ApiError } from '../../../../components/api-error/api-error';
 
 type GroupRisk = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -42,6 +43,7 @@ interface GroupSummary {
     PageWarnings,
     PageWarningsItem,
     TranslocoPipe,
+    ApiError,
   ],
   templateUrl: './groups-section.html',
   styleUrl: './groups-section.css',
@@ -68,6 +70,8 @@ export class GroupsSection implements OnInit, OnDestroy {
   private readonly pageSize = 2;
 
   readonly isExpanded = signal(true);
+
+  readonly errorMessage = signal<string | null>(null);
 
   readonly hasWarnings = computed(() => this.pageOverview()?.warnings?.hasWarnings ?? false);
   readonly hasMultipleWarnings = computed(
@@ -205,6 +209,7 @@ export class GroupsSection implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (error) => {
+          this.errorMessage.set(error.error);
           console.error('Error fetching groups:', error);
           this.groups.set([]);
           this.loading.set(false);

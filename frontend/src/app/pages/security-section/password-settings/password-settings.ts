@@ -20,6 +20,7 @@ import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ApiError } from '../../../components/api-error/api-error';
 
 @Component({
   selector: 'app-password-settings',
@@ -31,6 +32,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     PageWarningsItem,
     LucideAngularModule,
     TranslocoPipe,
+    ApiError,
   ],
   templateUrl: './password-settings.html',
 })

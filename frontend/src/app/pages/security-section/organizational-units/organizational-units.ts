@@ -9,6 +9,7 @@ import { AppIcons } from '../../../shared/AppIcons';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ApiError } from '../../../components/api-error/api-error';
 
 export interface OrgUnitNode {
   id: string;
@@ -22,7 +23,7 @@ export interface OrgUnitNode {
 @Component({
   selector: 'app-organizational-units',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, PageHeader, TranslocoPipe],
+  imports: [CommonModule, LucideAngularModule, PageHeader, TranslocoPipe, ApiError],
   templateUrl: './organizational-units.html',
   styleUrl: './organizational-units.css',
 })

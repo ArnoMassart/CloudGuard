@@ -562,5 +562,9 @@
   "assign-org": "Organization Assign",
   "required-changes": "RequestType",
   "account-manager.description": "As an administrator of CLOUDMEN, manage all CloudGuard accounts with roles and organizations here",
-  "account-manager.table-without.title": "To request"
+  "account-manager.table-without.title": "To request",
+  "error.admin_required.description": "To retrieve this data, a Google Workspace administrator from your organization must log in at least once. \nAsk your IT administrator to do this once.",
+  "error.admin_required.title": "Action required: Administrator must log in",
+  "groups.error.description": "We were temporarily unable to pick up the groups. \nCheck your configuration or try refreshing the data.",
+  "org-units.error.description": "We were temporarily unable to collect the organizational units. \nCheck your configuration or try refreshing the data."
 }

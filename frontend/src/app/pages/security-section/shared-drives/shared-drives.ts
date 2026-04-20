@@ -16,9 +16,10 @@ import { SecurityScoreDetailService } from '../../../services/security-score-det
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
 import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { Subscription } from 'rxjs';
+import { single, Subscription } from 'rxjs';
 import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 import { PaginationBar } from '../../../components/pagination-bar/pagination-bar';
+import { ApiError } from '../../../components/api-error/api-error';
 
 // ==========================================
 // CONSTANTS
@@ -38,6 +39,7 @@ const ITEMS_PER_PAGE = 2;
     TranslocoPipe,
     PageContentWrapper,
     PaginationBar,
+    ApiError,
   ],
   templateUrl: './shared-drives.html',
   styleUrl: './shared-drives.css',
@@ -60,6 +62,7 @@ export class SharedDrives implements OnInit, OnDestroy {
   // ==========================================
   readonly isExpanded = signal(true);
   readonly apiError = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   drives = signal<SharedDrive[]>([]);
   readonly isLoading = signal(false);
@@ -187,6 +190,7 @@ export class SharedDrives implements OnInit, OnDestroy {
         this.isLoading.set(false);
       },
       error: (err) => {
+        this.errorMessage.set(err.error);
         console.error('Failed to load shared drives', err);
         this.isLoading.set(false);
         this.apiError.set(true);
