@@ -1,15 +1,6 @@
 package com.cloudmen.cloudguard.exception.handler;
 
-import com.cloudmen.cloudguard.exception.AccessTokenEmptyException;
-import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
-import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
-import com.cloudmen.cloudguard.exception.InvalidExternalTokenException;
-import com.cloudmen.cloudguard.exception.NotificationFeedbackValidationException;
-import com.cloudmen.cloudguard.exception.OrganizationRequiredException;
-import com.cloudmen.cloudguard.exception.PdfGenerationException;
-import com.cloudmen.cloudguard.exception.RefreshTokenEmptyException;
-import com.cloudmen.cloudguard.exception.SecurityPreferenceValidationException;
-import com.cloudmen.cloudguard.exception.UnauthorizedException;
+import com.cloudmen.cloudguard.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -119,5 +110,15 @@ public class GlobalExceptionHandler {
         return plainText(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 messageSource.getMessage("api.error.unexpected", null, LocaleContextHolder.getLocale()));
+    }
+
+    @ExceptionHandler(OrganizationNotNullException.class)
+    public ResponseEntity<String> handleOrganizationNotNullException(OrganizationNotNullException ex) {
+        return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
+        return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 }

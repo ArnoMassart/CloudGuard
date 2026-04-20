@@ -1,15 +1,21 @@
 package com.cloudmen.cloudguard.service.cache;
 
-import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
-import com.cloudmen.cloudguard.service.AppPasswordsService;
-import com.cloudmen.cloudguard.service.PasswordSettingsService;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
+import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.policy.MobileManagementPolicyProvider;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
 @Service
 public class CacheWarmupService {
@@ -32,8 +38,10 @@ public class CacheWarmupService {
 
     private final GoogleLicenseCacheService licenseCacheService;
     private final GoogleDomainCacheService domainCacheService;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, AdminSecurityKeysService adminSecurityKeysService, GoogleOAuthCacheService oAuthCacheService, PasswordSettingsService passwordSettingsService, TSVPolicyProvider tsvPolicyProvider, MobileManagementPolicyProvider mobileManagementPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService) {
+    public CacheWarmupService(GoogleUsersCacheService usersCacheService, GoogleGroupsCacheService groupsCacheService, GoogleOrgUnitCacheService orgUnitCacheService, GoogleSharedDriveCacheService sharedDriveCacheService, GoogleDeviceCacheService mobileDeviceCacheService, AppPasswordsService appPasswordsService, AdminSecurityKeysService adminSecurityKeysService, GoogleOAuthCacheService oAuthCacheService, PasswordSettingsService passwordSettingsService, TSVPolicyProvider tsvPolicyProvider, MobileManagementPolicyProvider mobileManagementPolicyProvider, PolicyApiCacheService policyApiCacheService, GoogleLicenseCacheService licenseCacheService, GoogleDomainCacheService domainCacheService, UserService userService, OrganizationService organizationService) {
         this.usersCacheService = usersCacheService;
         this.groupsCacheService = groupsCacheService;
         this.orgUnitCacheService = orgUnitCacheService;
@@ -48,6 +56,8 @@ public class CacheWarmupService {
         this.policyApiCacheService = policyApiCacheService;
         this.licenseCacheService = licenseCacheService;
         this.domainCacheService = domainCacheService;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     @FunctionalInterface
@@ -65,29 +75,72 @@ public class CacheWarmupService {
         });
     }
 
-//    Force refresh cache of tsvPolicyProvider, adminSecurityKeysService needs the adminEmail
-
     public CompletableFuture<Void> warmupAllCachesAsync(String loggedInEmail) {
-        CompletableFuture<?>[] tasks = new CompletableFuture<?>[] {
-          runSafeAsync(() -> usersCacheService.forceRefreshCache(loggedInEmail), "Users"),
-          runSafeAsync(() -> groupsCacheService.forceRefreshCache(loggedInEmail), "Groups"),
-          runSafeAsync(() -> orgUnitCacheService.forceRefreshCache(loggedInEmail), "Org units"),
-          runSafeAsync(() -> sharedDriveCacheService.forceRefreshCache(loggedInEmail), "Drives"),
-          runSafeAsync(() -> mobileDeviceCacheService.forceRefreshCache(loggedInEmail), "Devices"),
-          runSafeAsync(() -> appPasswordsService.forceRefreshCache(loggedInEmail), "App passwords"),
-          runSafeAsync(() -> adminSecurityKeysService.forceRefreshCache(loggedInEmail), "Admin security keys"),
-          runSafeAsync(() -> passwordSettingsService.getPasswordSettings(loggedInEmail), "Password settings"),
-          runSafeAsync(() -> tsvPolicyProvider.forceRefreshCache(loggedInEmail), "TSV Policy"),
-          runSafeAsync(() -> mobileManagementPolicyProvider.forceRefreshCache(loggedInEmail), "Mobile Management Policy"),
-          runSafeAsync(() -> {
-              policyApiCacheService.getAllPolicies(loggedInEmail);
-              policyApiCacheService.getOuIdToPathMap(loggedInEmail);
-          }, "Policy API"),
-                runSafeAsync(() -> licenseCacheService.forceRefreshCache(loggedInEmail), "Licenses"),
-                runSafeAsync(() -> oAuthCacheService.forceRefreshCache(loggedInEmail), "OAuth"),
-                runSafeAsync(() -> domainCacheService.forceRefreshCache(loggedInEmail), "Domain"),
-        };
+        Optional<User> user = userService.findByEmailOptional(loggedInEmail);
+        String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
-        return CompletableFuture.allOf(tasks).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle modules voor: {}", loggedInEmail));
+        if (user.isEmpty()) return CompletableFuture.completedFuture(null);
+
+        List<UserRole> roles = user.get().getRoles();
+
+        if (roles.isEmpty() || roles.contains(UserRole.UNASSIGNED)) {
+            log.info("⏭️ Geen cache warm-up nodig (gebruiker heeft geen rechten): {}", loggedInEmail);
+            return CompletableFuture.completedFuture(null);
+        }
+
+        List<CompletableFuture<?>> tasks = new ArrayList<>();
+
+        if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
+            tasks.add(runSafeAsync(() -> usersCacheService.forceRefreshCache(loggedInEmail), "Users"));
+            tasks.add(runSafeAsync(() -> groupsCacheService.forceRefreshCache(loggedInEmail), "Groups"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.ORG_UNITS_VIEWER)) {
+            tasks.add(runSafeAsync(() -> orgUnitCacheService.forceRefreshCache(loggedInEmail), "Org units"));
+            tasks.add(runSafeAsync(() -> tsvPolicyProvider.forceRefreshCache(adminEmail), "TSV Policy"));
+            tasks.add(runSafeAsync(() -> mobileManagementPolicyProvider.forceRefreshCache(adminEmail), "Mobile Management Policy"));
+            tasks.add(runSafeAsync(() -> {
+                policyApiCacheService.getAllPolicies(adminEmail);
+                policyApiCacheService.getOuIdToPathMap(adminEmail);
+            }, "Policy API"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER)) {
+            tasks.add(runSafeAsync(() -> sharedDriveCacheService.forceRefreshCache(loggedInEmail), "Drives"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.DEVICES_VIEWER)){
+            tasks.add(runSafeAsync(() -> mobileDeviceCacheService.forceRefreshCache(loggedInEmail), "Devices"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER)) {
+            tasks.add(runSafeAsync(() -> oAuthCacheService.forceRefreshCache(loggedInEmail), "OAuth"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER)) {
+            tasks.add(runSafeAsync(() -> appPasswordsService.forceRefreshCache(loggedInEmail), "App passwords"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER)) {
+            tasks.add(runSafeAsync(() -> passwordSettingsService.getPasswordSettings(loggedInEmail), "Password settings"));
+            tasks.add(runSafeAsync(() -> adminSecurityKeysService.forceRefreshCache(loggedInEmail), "Admin security keys"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
+            tasks.add(runSafeAsync(() -> domainCacheService.forceRefreshCache(loggedInEmail), "Domain"));
+        }
+
+        if (hasAccessToModule(roles, UserRole.LICENSES_VIEWER)) {
+            tasks.add(runSafeAsync(() -> licenseCacheService.forceRefreshCache(loggedInEmail), "Licenses"));
+        }
+
+        if (tasks.isEmpty()) {
+            log.info("⏭️ Geen cache warm-up nodig (gebruiker heeft geen rechten): {}", loggedInEmail);
+            return CompletableFuture.completedFuture(null);
+        }
+
+        CompletableFuture<?>[] tasksArray = tasks.toArray(new CompletableFuture[0]);
+
+        return CompletableFuture.allOf(tasksArray).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle {} modules voor: {}", tasks.size() ,loggedInEmail));
     }
 }

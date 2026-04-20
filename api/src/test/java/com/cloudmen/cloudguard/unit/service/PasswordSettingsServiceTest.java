@@ -1,5 +1,7 @@
 package com.cloudmen.cloudguard.service;
 
+import com.cloudmen.cloudguard.domain.model.Organization;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminSecurityKeysResponse;
 import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
@@ -58,8 +60,25 @@ class PasswordSettingsServiceTest {
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setFallbackToSystemLocale(false);
         LocaleContextHolder.setLocale(Locale.ENGLISH);
+
         service = new PasswordSettingsService(
-                policyCache, usersCache, orgUnitCache, adminSecurityKeysService, userSecurityPreferenceService, messageSource, userService, organizationService);
+                policyCache, usersCache, orgUnitCache, adminSecurityKeysService,
+                userSecurityPreferenceService, messageSource, userService, organizationService);
+
+        // 1. Mock de Organisatie om crashes in HelperMethods te voorkomen
+        Organization org = new Organization();
+        org.setId(1L);
+        org.setAdminEmail(ADMIN);
+
+        // 2. Mock de Domain User (volledig pad om class-clash met Google's User te voorkomen)
+        com.cloudmen.cloudguard.domain.model.User domainUser = new com.cloudmen.cloudguard.domain.model.User();
+        domainUser.setEmail(ADMIN);
+        domainUser.setOrganizationId(1L);
+        domainUser.setRoles(List.of(UserRole.SUPER_ADMIN));
+
+        // 3. BULLETPROOF Mocks: Gebruik anyString() en anyLong()
+        lenient().when(userService.findByEmailOptional(anyString())).thenReturn(Optional.of(domainUser));
+        lenient().when(organizationService.findById(anyLong())).thenReturn(Optional.of(org));
     }
 
     @AfterEach

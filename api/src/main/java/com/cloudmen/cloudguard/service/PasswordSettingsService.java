@@ -59,12 +59,12 @@ public class PasswordSettingsService {
         this.organizationService = organizationService;
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        cache.invalidate(adminEmail);
+    public void forceRefreshCache(String loggedInEmail) {
+        cache.invalidate(loggedInEmail);
         policyCache.forceRefreshCache();
-        usersCache.forceRefreshCache(adminEmail);
-        orgUnitCache.forceRefreshCache(adminEmail);
-        adminSecurityKeysService.forceRefreshCache(adminEmail);
+        usersCache.forceRefreshCache(loggedInEmail);
+        orgUnitCache.forceRefreshCache(loggedInEmail);
+        adminSecurityKeysService.forceRefreshCache(loggedInEmail);
     }
 
     public PasswordSettingsDto getPasswordSettings(String loggedInEmail) {
@@ -89,7 +89,7 @@ public class PasswordSettingsService {
         PasswordSettingsSummaryDto summary = new PasswordSettingsSummaryDto(
                 forcedChange.size(), enrolled, enforced, total);
 
-        var adminSecurityKeysResponse = adminSecurityKeysService.getAdminsWithSecurityKeys(adminEmail);
+        var adminSecurityKeysResponse = adminSecurityKeysService.getAdminsWithSecurityKeys(loggedInEmail);
         List<AdminWithSecurityKeyDto> adminsWithoutSecurityKeys = adminSecurityKeysResponse.admins() != null
                 ? adminSecurityKeysResponse.admins() : List.of();
         String adminsSecurityKeysErrorMessage = adminSecurityKeysResponse.errorMessage();

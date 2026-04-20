@@ -67,10 +67,10 @@ public class UserSecurityPreferenceController {
     public ResponseEntity<?> setPreference(
             @CookieValue(name = "AuthToken") String token,
             @RequestBody SetPreferenceRequest request) {
-        String userId = jwtService.validateInternalToken(token);
-        preferenceService.setPreference(userId, request.section(), request.preferenceKey(), request.enabled(), request.value());
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        preferenceService.setPreference(loggedInEmail, request.section(), request.preferenceKey(), request.enabled(), request.value());
         if ("password-settings".equals(request.section())) {
-            passwordSettingsService.forceRefreshCache(userId);
+            passwordSettingsService.forceRefreshCache(loggedInEmail);
         }
         return ResponseEntity.ok().build();
     }

@@ -42,8 +42,8 @@ public class GoogleOrgUnitCacheService {
         this.organizationService = organizationService;
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        cache.asMap().compute(adminEmail, this::fetchFromGoogle);
+    public void forceRefreshCache(String loggedInEmail) {
+        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
     public OrgUnitCacheEntry getOrFetchOrgUnitData(String loggedInEmail) {

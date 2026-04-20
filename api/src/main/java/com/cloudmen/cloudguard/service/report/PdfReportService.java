@@ -1,6 +1,8 @@
 package com.cloudmen.cloudguard.service.report;
 
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
@@ -23,6 +25,7 @@ import com.cloudmen.cloudguard.service.notification.NotificationAggregationServi
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;
 import org.jsoup.Jsoup;
@@ -42,6 +45,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 import static java.util.Map.entry;
 
 @Service
@@ -64,8 +68,10 @@ public class PdfReportService {
     private final TeamleaderService teamleaderService;
     private final MessageSource messageSource;
     private final UserSecurityPreferenceService userSecurityPreferenceService;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
-    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService, MessageSource messageSource, UserSecurityPreferenceService userSecurityPreferenceService) {
+    public PdfReportService(TemplateEngine templateEngine, DashboardService dashboardService, NotificationAggregationService notificationAggregationService, GoogleUsersService googleUsersService, GoogleGroupsService googleGroupsService, GoogleSharedDriveService googleSharedDriveService, GoogleDeviceService googleDeviceService, GoogleOAuthService googleOAuthService, AppPasswordsService appPasswordsService, DnsRecordsService dnsRecordsService, GoogleDomainService googleDomainService, PasswordSettingsService passwordSettingsService, TeamleaderCompanyService teamleaderCompanyService, TeamleaderService teamleaderService, MessageSource messageSource, UserSecurityPreferenceService userSecurityPreferenceService, UserService userService, OrganizationService organizationService) {
         this.templateEngine = templateEngine;
         this.dashboardService = dashboardService;
         this.notificationAggregationService = notificationAggregationService;
@@ -82,12 +88,19 @@ public class PdfReportService {
         this.teamleaderService = teamleaderService;
         this.messageSource = messageSource;
         this.userSecurityPreferenceService = userSecurityPreferenceService;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
-    public ReportResponse generateSecurityReport(String adminEmail, Locale locale) {
+    public ReportResponse generateSecurityReport(String loggedInEmail, Locale locale) {
         log.info("Starting pdf generation");
 
         try {
+            User user = userService.findByEmail(loggedInEmail);
+            List<UserRole> roles = user.getRoles();
+
+            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
+
             byte[] imageBytes = new ClassPathResource("static/logo.png").getInputStream().readAllBytes();
             String base64Logo = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
 
@@ -98,7 +111,7 @@ public class PdfReportService {
 
             String companyName = teamleaderCompanyService.getCompanyNameByEmail(adminEmail, headers);
 
-            FullSecurityReport reportData = getFullSecurityReport(adminEmail, locale);
+            FullSecurityReport reportData = getFullSecurityReport(adminEmail, locale, roles);
 
             Context context = new Context(locale);
 
@@ -107,6 +120,14 @@ public class PdfReportService {
             context.setVariable("clientName", companyName);
             context.setVariable("reportDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             context.setVariable("report", reportData);
+
+            context.setVariable("showUsersGroups", hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER));
+            context.setVariable("showDrives", hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER));
+            context.setVariable("showDevices", hasAccessToModule(roles, UserRole.DEVICES_VIEWER));
+            context.setVariable("showAppAccess", hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER));
+            context.setVariable("showAppPasswords", hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER));
+            context.setVariable("showPasswordSettings", hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER));
+            context.setVariable("showDns", hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER));
 
             // 2. Spring Boot vindt je template nu wél succesvol
             String renderedHtml = templateEngine.process("security-template_"+locale.getLanguage(), context);
@@ -133,7 +154,7 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport getFullSecurityReport(String adminEmail, Locale locale) {
+    private FullSecurityReport getFullSecurityReport(String adminEmail, Locale locale, List<UserRole> roles) {
         // Haal de overall score veilig op
         int overallScore = 100;
         try {
@@ -147,14 +168,14 @@ public class PdfReportService {
         return new FullSecurityReport(
                 overallScore,
                 getSecurityReportRiskItems(adminEmail, locale),
-                getSecurityReportUsersMetrics(adminEmail, disabled),
-                getSecurityReportGroupsMetrics(adminEmail, disabled),
-                getSecurityReportDriveMetrics(adminEmail, disabled),
-                getSecurityReportDeviceMetrics(adminEmail, disabled),
-                getSecurityReportAppAccessMetrics(adminEmail, disabled),
-                getSecurityReportAppPasswordMetrics(adminEmail, disabled),
-                getSecurityReportPasswordMetrics(adminEmail),
-                getSecurityReportDomainData(adminEmail, locale)
+                hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER) ? getSecurityReportUsersMetrics(adminEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER) ? getSecurityReportGroupsMetrics(adminEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER) ? getSecurityReportDriveMetrics(adminEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.DEVICES_VIEWER) ? getSecurityReportDeviceMetrics(adminEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER) ? getSecurityReportAppAccessMetrics(adminEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER) ? getSecurityReportAppPasswordMetrics(adminEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER) ? getSecurityReportPasswordMetrics(adminEmail) : null,
+                hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER) ? getSecurityReportDomainData(adminEmail, locale) : null
         );
     }
 
@@ -236,7 +257,7 @@ public class PdfReportService {
 
     private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics(String adminEmail, Set<String> disabled) {
         try {
-            AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, true, disabled);
+            AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, false, disabled);
             return new FullSecurityReport.AppPasswordMetrics(response.totalAppPasswords(), response.usersWithAppPasswords(), response.securityScore(), false);
         } catch (Exception e) {
             log.error("Fout bij ophalen App Password Metrics voor rapport: {}", e.getMessage());

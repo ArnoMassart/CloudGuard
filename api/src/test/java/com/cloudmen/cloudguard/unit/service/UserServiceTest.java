@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.service.AccessRequestEmailService;
 import com.cloudmen.cloudguard.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,10 +36,11 @@ public class UserServiceTest {
     private MessageSource messageSource;
 
     private UserService userService;
+    private AccessRequestEmailService accessRequestEmailService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, organizationRepository, messageSource);
+        userService = new UserService(userRepository, organizationRepository, messageSource, accessRequestEmailService);
     }
 
     @Test
@@ -97,11 +99,11 @@ public class UserServiceTest {
     }
 
     @Test
-    void findByEmail_delegatesToRepository() {
+    void findByEmail_Optional_delegatesToRepository() {
         User user = createDbUser(ADMIN, "John", "Doe", "nl");
         when(userRepository.findByEmail(ADMIN)).thenReturn(Optional.of(user));
 
-        Optional<User> result = userService.findByEmail(ADMIN);
+        Optional<User> result = userService.findByEmailOptional(ADMIN);
 
         assertTrue(result.isPresent());
         assertEquals(ADMIN, result.get().getEmail());

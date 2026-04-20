@@ -7,16 +7,10 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
-import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -47,7 +41,7 @@ public class AuthService {
         String email = jwt.getClaimAsString("email");
 
         // 2. Try to find user, OR create a new one if missing
-        User user = userService.findByEmail(email)
+        User user = userService.findByEmailOptional(email)
                 .orElseGet(() -> registerNewUser(jwt));
 
         boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
@@ -169,7 +163,7 @@ public class AuthService {
         try {
             String email = jwtService.validateInternalToken(token);
 
-            return userService.findByEmail(email)
+            return userService.findByEmailOptional(email)
                     .map(userService::convertToDto);
         } catch (Exception e) {
             return java.util.Optional.empty();

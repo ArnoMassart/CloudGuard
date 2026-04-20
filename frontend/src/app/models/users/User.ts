@@ -24,7 +24,6 @@ export enum Role {
   PASSWORD_SETTINGS_VIEWER = 'PASSWORD_SETTINGS_VIEWER',
   DOMAIN_DNS_VIEWER = 'DOMAIN_DNS_VIEWER',
   LICENSES_VIEWER = 'LICENSES_VIEWER',
-  NOTIFICATIONS_FEEDBACK_VIEWER = 'NOTIFICATIONS_FEEDBACK_VIEWER',
   SECURITY_PREFERENCES_VIEWER = 'SECURITY_PREFERENCES_VIEWER',
 }
 
@@ -40,13 +39,11 @@ export const RoleLabels: Record<Role, string> = {
   [Role.PASSWORD_SETTINGS_VIEWER]: 'user.role.password-settings',
   [Role.DOMAIN_DNS_VIEWER]: 'user.role.domain-dns',
   [Role.LICENSES_VIEWER]: 'user.role.licenses',
-  [Role.NOTIFICATIONS_FEEDBACK_VIEWER]: 'user.role.notifications-feedback',
   [Role.SECURITY_PREFERENCES_VIEWER]: 'user.role.security-preferences',
 };
 
 export const RolePriority: Record<Role, number> = {
   [Role.SUPER_ADMIN]: 1,
-  [Role.NOTIFICATIONS_FEEDBACK_VIEWER]: 3,
   [Role.SECURITY_PREFERENCES_VIEWER]: 4,
   [Role.USERS_GROUPS_VIEWER]: 5,
   [Role.ORG_UNITS_VIEWER]: 6,

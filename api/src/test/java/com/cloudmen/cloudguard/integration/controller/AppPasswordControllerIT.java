@@ -46,23 +46,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
 @TestPropertySource(
         properties = {
-            "server.servlet.context-path=/api",
-            "spring.main.allow-bean-definition-overriding=true"
+                "server.servlet.context-path=/api",
+                "spring.main.allow-bean-definition-overriding=true"
         })
 @Import({
-    SecurityConfig.class,
-    WebConfig.class,
-    AuthInterceptor.class,
-    GlobalExceptionHandler.class,
-    AppPasswordControllerIT.MessageSourceTestConfig.class
+        SecurityConfig.class,
+        WebConfig.class,
+        AuthInterceptor.class,
+        GlobalExceptionHandler.class,
+        AppPasswordControllerIT.MessageSourceTestConfig.class
 })
 class AppPasswordControllerIT {
 
     private static final String AUTH_COOKIE = "AuthToken";
     private static final String VALID_TOKEN = "internal-jwt";
 
-    /** Matches {@link AppPasswordController} {@code IS_TESTMODE}. */
-    private static final boolean TEST_MODE = true;
+    /** Aangepast naar false zodat deze exact matcht met de controller (IS_TESTMODE = false) */
+    private static final boolean TEST_MODE = false;
 
     @Autowired
     private MockMvc mockMvc;
@@ -101,7 +101,7 @@ class AppPasswordControllerIT {
                 new UserAppPasswordsDto(
                         "u1", "Alice", "alice@acme.com", "USER", true, List.of());
         when(appPasswordsService.getAppPasswordsPaged(
-                        eq("admin@acme.com"), isNull(), eq(10), isNull(), eq(TEST_MODE)))
+                eq("admin@acme.com"), isNull(), eq(10), isNull(), eq(TEST_MODE)))
                 .thenReturn(new AppPasswordPageResponse(List.of(user), "next"));
 
         mockMvc.perform(
@@ -118,7 +118,7 @@ class AppPasswordControllerIT {
     void getAppPasswords_passesPageTokenSizeAndQuery() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
         when(appPasswordsService.getAppPasswordsPaged(
-                        "admin@acme.com", "pt-1", 20, "mail", TEST_MODE))
+                "admin@acme.com", "pt-1", 20, "mail", TEST_MODE))
                 .thenReturn(new AppPasswordPageResponse(List.of(), null));
 
         mockMvc.perform(
@@ -147,7 +147,7 @@ class AppPasswordControllerIT {
                                 new SecurityScoreFactorDto(
                                         "t", "d", 10, 20, "low")));
         when(appPasswordsService.getOverview(
-                        "admin@acme.com", TEST_MODE, Set.of("pref-a")))
+                "admin@acme.com", TEST_MODE, Set.of("pref-a")))
                 .thenReturn(new AppPasswordOverviewResponse(true, 5, 2, 75, breakdown));
 
         mockMvc.perform(

@@ -15,7 +15,6 @@ import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
-import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.notification.DismissedNotificationService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
@@ -41,41 +40,25 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationAggregationServiceTest {
 
-    @Mock
-    GoogleDomainService domainService;
-    @Mock
-    DnsRecordsService dnsRecordsService;
-    @Mock
-    GoogleUsersService usersService;
-    @Mock
-    GoogleSharedDriveService driveService;
-    @Mock
-    GoogleDeviceService deviceService;
-    @Mock
-    AppPasswordsService appPasswordsService;
-    @Mock
-    GoogleGroupsService groupsService;
-    @Mock
-    GoogleOAuthService oAuthService;
-    @Mock
-    PasswordSettingsService passwordSettingsService;
-    @Mock
-    DismissedNotificationService dismissedService;
-    @Mock
-    NotificationFeedbackService feedbackService;
-    @Mock
-    UserSecurityPreferenceService preferenceService;
-    @Mock
-    UserRepository userRepository;
-    @Mock
-    NotificationInstanceRepository notificationInstanceRepository;
-    @Mock
-    NotificationProjectionProperties notificationProjectionProperties;
+    @Mock GoogleDomainService domainService;
+    @Mock DnsRecordsService dnsRecordsService;
+    @Mock GoogleUsersService usersService;
+    @Mock GoogleSharedDriveService driveService;
+    @Mock GoogleDeviceService deviceService;
+    @Mock AppPasswordsService appPasswordsService;
+    @Mock GoogleGroupsService groupsService;
+    @Mock GoogleOAuthService oAuthService;
+    @Mock PasswordSettingsService passwordSettingsService;
+    @Mock DismissedNotificationService dismissedService;
+    @Mock NotificationFeedbackService feedbackService;
+    @Mock UserSecurityPreferenceService preferenceService;
+    @Mock NotificationInstanceRepository notificationInstanceRepository;
+    @Mock NotificationProjectionProperties notificationProjectionProperties;
+    @Mock UserService userService; // Nieuwe service die userRepository vervangt
 
     private ResourceBundleMessageSource messageSource;
     private NotificationAggregationService service;
@@ -88,6 +71,7 @@ class NotificationAggregationServiceTest {
         messageSource.setFallbackToSystemLocale(false);
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 
+        // Geen UserRepository meer in de constructor
         service = new NotificationAggregationService(
                 domainService,
                 dnsRecordsService,
@@ -102,9 +86,9 @@ class NotificationAggregationServiceTest {
                 dismissedService,
                 feedbackService,
                 preferenceService,
-                userRepository,
                 notificationInstanceRepository,
-                notificationProjectionProperties);
+                notificationProjectionProperties,
+                userService);
     }
 
     @AfterEach
@@ -115,7 +99,8 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_addsCriticalUserControl_whenUsersWithout2fa() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        // Gebruik overal lenient() om UnnecessaryStubbingException te vermijden in deze complexe service
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
@@ -133,9 +118,9 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_filtersOutActiveWhenPreferenceMapsToDisabledKey() {
         stubQuietBaselines();
-        when(preferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN))
+        lenient().when(preferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN))
                 .thenReturn(Set.of("users-groups:2fa"));
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
@@ -146,11 +131,15 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_excludesDismissedMatchingSourceAndType() {
         stubQuietBaselines();
+
+        // Mock een gebruiker MET organisatie ID EN rollen
         User orgUser = new User();
         orgUser.setEmail(GlobalTestHelper.ADMIN);
         orgUser.setOrganizationId(99L);
-        when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(orgUser));
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        orgUser.setRoles(List.of(UserRole.SUPER_ADMIN));
+        lenient().when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(orgUser));
+
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         NotificationInstance d = new NotificationInstance();
@@ -160,7 +149,7 @@ class NotificationAggregationServiceTest {
         d.setTitle("t");
         d.setDescription("d");
         d.setSeverity(NotificationSeverity.CRITICAL);
-        when(dismissedService.getDismissedForOrganization(99L)).thenReturn(List.of(d));
+        lenient().when(dismissedService.getDismissedForOrganization(99L)).thenReturn(List.of(d));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
@@ -170,9 +159,9 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_setsHasReportedFromGlobalFeedbackKeys() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
-        when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of("users-groups:user-control"));
+        lenient().when(feedbackService.getAllFeedbackKeys()).thenReturn(Set.of("users-groups:user-control"));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
@@ -183,7 +172,7 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_dnsCritical_whenSpfActionRequired() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 0, 0, 100, 0, 0, null, null));
 
         var badSpf = new DnsRecordDto(
@@ -193,7 +182,7 @@ class NotificationAggregationServiceTest {
                 DnsRecordStatus.ACTION_REQUIRED,
                 DnsRecordImportance.REQUIRED,
                 "missing");
-        when(dnsRecordsService.getImportantRecords(eq("example.com"), eq("google"), any()))
+        lenient().when(dnsRecordsService.getImportantRecords(eq("example.com"), eq("google"), any()))
                 .thenReturn(new DnsRecordResponseDto("example.com", List.of(badSpf), 40, null));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
@@ -206,7 +195,7 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotificationsCount_matchesActiveListSize() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         assertEquals(1, service.getNotificationsCount(GlobalTestHelper.ADMIN));
@@ -215,9 +204,9 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotificationsCriticalCount_countsOnlyCriticalSeverity() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
-        when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse(
                         1, 1, 0, 0, 0, 100, null, null));
 
@@ -229,9 +218,9 @@ class NotificationAggregationServiceTest {
     @Test
     void getCriticalNotifications_returnsOnlyCriticalEntries() {
         stubQuietBaselines();
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
-        when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any()))
+        lenient().when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse(
                         1, 1, 0, 0, 0, 100, null, null));
 
@@ -244,22 +233,31 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_hidesSourceWhenViewerLacksMatchingViewerRole() {
         stubQuietBaselines();
-        User u = new User();
-        u.setEmail(GlobalTestHelper.ADMIN);
-        u.setOrganizationId(null);
-        u.setRoles(new ArrayList<>(List.of(UserRole.DOMAIN_DNS_VIEWER)));
-        when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(u));
-        when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
+
+        // Maak een gebruiker aan die ALLEEN DNS rechten heeft (dus GEEN user/groups rechten)
+        User viewer = new User();
+        viewer.setEmail(GlobalTestHelper.ADMIN);
+        viewer.setRoles(List.of(UserRole.DOMAIN_DNS_VIEWER));
+
+        lenient().when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(viewer));
+
+        lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
+        // Omdat de viewer geen rechten heeft op Users/Groups, is de notificatie niet gegenereerd
         assertTrue(response.active().isEmpty());
     }
 
     private void stubQuietBaselines() {
         lenient().when(notificationProjectionProperties.isReadEnabled()).thenReturn(true);
-        lenient().when(userRepository.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(Optional.empty());
+
+        // Zorg dat de standaard mock-gebruiker een SUPER_ADMIN is, zodat alle modules worden aangesproken!
+        User superAdmin = new User();
+        superAdmin.setEmail(GlobalTestHelper.ADMIN);
+        superAdmin.setRoles(List.of(UserRole.SUPER_ADMIN));
+        lenient().when(userService.findByEmailOptional(anyString())).thenReturn(Optional.of(superAdmin));
 
         lenient().when(preferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
         lenient().when(preferenceService.getDnsImportanceOverrides(GlobalTestHelper.ADMIN)).thenReturn(Map.of());

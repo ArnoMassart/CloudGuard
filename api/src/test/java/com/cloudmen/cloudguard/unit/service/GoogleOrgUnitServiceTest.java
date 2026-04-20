@@ -1,7 +1,8 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitNodeDto;
+import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.google.api.services.admin.directory.model.OrgUnit;
 import org.junit.jupiter.api.AfterEach;
