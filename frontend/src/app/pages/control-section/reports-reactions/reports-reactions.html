@@ -63,6 +63,8 @@
                 {{ 'feedback.severity.all' | transloco }} }
                 @else if (filterSeverity() === 'in-behandeling') {
                 {{ 'feedback.severity.processing' | transloco }}
+                } @else if (filterSeverity() === 'solved') {
+                {{ 'feedback.severity.resolved' | transloco }}
                 } @else {
                 {{ 'feedback.severity.none' | transloco }}
                 }
@@ -104,7 +106,13 @@
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 {{ n.notificationType }}
                             </span>
-                            @if (n.hasReported) {
+                            @if (isSolvedNotification(n)) {
+                            <span
+                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                <i-lucide [img]="Icons.CircleCheck" size="12" />
+                                {{ 'feedback.solved' | transloco }}
+                            </span>
+                            } @else if (n.hasReported) {
                             <span
                                 class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
                                 <i-lucide [img]="Icons.Clock" size="12" />
@@ -114,9 +122,16 @@
                         </div>
                         <h3 class="font-medium text-gray-900 text-base sm:text-lg break-words">{{ n.title }}</h3>
                         <p class="text-sm text-gray-600 mt-1 break-words">{{ n.description }}</p>
-                        <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        <p class="text-xs mt-2 flex items-center gap-1"
+                            [class.text-emerald-700]="isSolvedNotification(n)"
+                            [class.text-gray-500]="!isSolvedNotification(n)">
+                            @if (isSolvedNotification(n)) {
+                            <i-lucide [img]="Icons.CircleCheck" size="12" />
+                            {{ 'feedback.solved-detail' | transloco }}
+                            } @else {
                             <i-lucide [img]="Icons.Clock" size="12" />
                             {{ (n.hasReported ? 'feedback.processing' : 'today') | transloco }}
+                            }
                         </p>
                         @if (n.supportsDetails) {
                         <button (click)="toggleExpand(n); $event.stopPropagation()"
@@ -163,6 +178,7 @@
                         </div>
                         }
                         <div class="mt-4">
+                            @if (!isSolvedNotification(n)) {
                             @if (n.hasReported) {
                             <p class="text-sm text-teal-600 flex items-center gap-2">
                                 <i-lucide [img]="Icons.Clock" size="16" />
@@ -196,6 +212,7 @@
                                 <i-lucide [img]="Icons.MessageCircle" size="16" />
                                 {{ 'feedback.send' | transloco }}
                             </button>
+                            }
                             }
                         </div>
                     </div>

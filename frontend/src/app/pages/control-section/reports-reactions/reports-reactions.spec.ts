@@ -89,7 +89,7 @@ describe('ReportsReactions', () => {
 
   beforeEach(async () => {
     notificationServiceMock = {
-      getNotifications: vi.fn(() => of({ active: activeList })),
+      getNotifications: vi.fn(() => of({ active: activeList, solved: [] })),
       getNotificationDetails: vi.fn(() => of(['line one'])),
     };
     feedbackServiceMock = {

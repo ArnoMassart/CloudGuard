@@ -39,10 +39,9 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly notifications = signal<Notification[]>([]);
   readonly isLoading = signal(true);
   readonly listLoadError = signal<string | null>(null);
-  /** Shown when manual refresh sync fails but the notification list was still loaded (best-effort). */
   readonly syncWarning = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
-  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'in-behandeling'>('all');
+  readonly filterSeverity = signal<NotificationSeverity | 'all' | 'in-behandeling' | 'solved'>('all');
   readonly expandedIds = signal<Set<string>>(new Set());
   readonly detailsCache = signal<Record<string, string[]>>({});
   readonly loadingDetailsIds = signal<Set<string>>(new Set());
@@ -54,21 +53,37 @@ export class ReportsReactions implements OnInit, OnDestroy {
   readonly filteredNotifications = computed(() => {
     const filter = this.filterSeverity();
     const list = this.notifications();
-    if (filter === 'in-behandeling') return list.filter((n) => n.hasReported);
+    if (filter === 'solved') return list.filter((n) => n.instanceStatus === 'solved');
+    if (filter === 'in-behandeling')
+      return list.filter((n) => n.hasReported && n.instanceStatus !== 'solved');
     if (filter === 'all') return list;
-    return list.filter((n) => n.severity === filter);
+    return list.filter(
+      (n) => n.instanceStatus !== 'solved' && n.severity === filter,
+    );
   });
 
   readonly totalCount = computed(() => this.notifications().length);
+  /** Open (non-solved) items only — used for severity summary cards. */
   readonly criticalCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'critical').length,
+    () =>
+      this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'critical')
+        .length,
   );
   readonly warningCount = computed(
-    () => this.notifications().filter((n) => n.severity === 'warning').length,
+    () =>
+      this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'warning')
+        .length,
   );
-  readonly infoCount = computed(() => this.notifications().filter((n) => n.severity === 'info').length);
+  readonly infoCount = computed(
+    () =>
+      this.notifications().filter((n) => n.instanceStatus !== 'solved' && n.severity === 'info').length,
+  );
+  readonly solvedCount = computed(
+    () => this.notifications().filter((n) => n.instanceStatus === 'solved').length,
+  );
   readonly inBehandelingCount = computed(
-    () => this.notifications().filter((n) => n.hasReported).length,
+    () =>
+      this.notifications().filter((n) => n.hasReported && n.instanceStatus !== 'solved').length,
   );
 
   readonly isWarningExpanded = signal(true);
@@ -110,6 +125,13 @@ export class ReportsReactions implements OnInit, OnDestroy {
       label: 'feedback.processing',
       count: this.inBehandelingCount(),
       activeClass: 'bg-teal-100 text-teal-800',
+      inactiveClass: '',
+    },
+    {
+      value: 'solved',
+      label: 'feedback.solved',
+      count: this.solvedCount(),
+      activeClass: 'bg-emerald-100 text-emerald-800',
       inactiveClass: '',
     },
   ]);
@@ -158,7 +180,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
   }
 
   setFilter(filter: string) {
-    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'in-behandeling');
+    this.filterSeverity.set(filter as NotificationSeverity | 'all' | 'in-behandeling' | 'solved');
+  }
+
+  isSolvedNotification(n: Notification): boolean {
+    return n.instanceStatus === 'solved';
   }
 
   #loadNotifications(syncFirst = false) {
@@ -184,13 +210,23 @@ export class ReportsReactions implements OnInit, OnDestroy {
             return of({ mode: 'failed', detail: this.#httpErrorDetail(err) });
           }),
           switchMap((syncMeta) =>
-            load$.pipe(map((data) => ({ active: data.active, syncMeta }))),
+            load$.pipe(map((data) => ({ active: data.active, solved: data.solved, syncMeta }))),
           ),
         )
-      : load$.pipe(map((data) => ({ active: data.active, syncMeta: { mode: 'skipped' } as const })));
+      : load$.pipe(
+          map((data) => ({
+            active: data.active,
+            solved: data.solved,
+            syncMeta: { mode: 'skipped' } as const,
+          })),
+        );
     pipeline$.subscribe({
-      next: ({ active, syncMeta }) => {
-        this.notifications.set(active);
+      next: ({ active, solved, syncMeta }) => {
+        const merged: Notification[] = [
+          ...active.map((n) => ({ ...n, instanceStatus: 'active' as const })),
+          ...solved.map((n) => ({ ...n, instanceStatus: 'solved' as const })),
+        ];
+        this.notifications.set(merged);
         this.isLoading.set(false);
         this.listLoadError.set(null);
         if (syncMeta.mode === 'failed') {

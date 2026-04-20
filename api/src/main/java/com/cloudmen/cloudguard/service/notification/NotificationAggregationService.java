@@ -141,7 +141,40 @@ public class NotificationAggregationService {
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
-        return new NotificationsResponse(filtered);
+        List<NotificationDto> solved = resolveSolvedNotifications(user, viewerRoles);
+        List<NotificationDto> solvedFiltered =
+                solved.stream().map(n -> withStatus(n, feedbackKeys)).toList();
+
+        return new NotificationsResponse(filtered, solvedFiltered);
+    }
+
+    /**
+     * Solved projection rows (issue no longer detected); only when org has synced notification instances.
+     */
+    private List<NotificationDto> resolveSolvedNotifications(User user, List<UserRole> viewerRoles) {
+        if (!notificationProjectionProperties.isReadEnabled()) {
+            return List.of();
+        }
+        if (user == null || user.getOrganizationId() == null) {
+            return List.of();
+        }
+        Long orgId = user.getOrganizationId();
+        if (!notificationInstanceRepository.existsByOrganizationId(orgId)) {
+            return List.of();
+        }
+        List<NotificationInstance> solvedRows =
+                notificationInstanceRepository.findByOrganizationIdAndStatus(
+                        orgId, NotificationInstanceStatus.SOLVED);
+        solvedRows.sort(
+                Comparator.comparing(
+                        NotificationInstance::getSolvedAt, Comparator.nullsLast(Comparator.reverseOrder())));
+        List<NotificationDto> dtos = solvedRows.stream().map(this::toDtoFromProjection).toList();
+        if (viewerRoles == null) {
+            return dtos;
+        }
+        return dtos.stream()
+                .filter(n -> NotificationSourceViewerRoles.isSourceVisibleToRoles(n.source(), viewerRoles))
+                .toList();
     }
 
     /**

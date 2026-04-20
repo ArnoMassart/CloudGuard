@@ -395,6 +395,8 @@
   "feedback.new": "New notifications",
   "feedback.none": "No notifications",
   "feedback.processing": "In progress",
+  "feedback.solved": "Solved",
+  "feedback.solved-detail": "No longer detected in your workspace",
   "feedback.severity.all": "There are no critical notifications or warnings for this Workspace.",
   "feedback.severity.none": "No notifications with this filter. \nTry a different filter.",
   "feedback.severity.processing": "No reports pending.",

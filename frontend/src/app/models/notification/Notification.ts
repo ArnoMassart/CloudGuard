@@ -12,4 +12,6 @@ export interface Notification {
   sourceRoute: string;
   hasReported?: boolean;
   supportsDetails?: boolean;
+  /** Present when API merges active + solved lists: open issues vs resolved in projection. */
+  instanceStatus?: 'active' | 'solved';
 }

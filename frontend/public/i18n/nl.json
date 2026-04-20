@@ -395,6 +395,8 @@
   "feedback.new": "Nieuwe meldingen",
   "feedback.critical": "Kritiek",
   "feedback.processing": "In behandeling",
+  "feedback.solved": "Opgelost",
+  "feedback.solved-detail": "Niet meer gedetecteerd in je workspace",
   "feedback.warning": "Deze issues vereisen onmiddellijke aandacht om beveiligingsrisico's te voorkomen.",
   "feedback.loading": "Meldingen worden geladen",
   "feedback.none": "Geen meldingen",

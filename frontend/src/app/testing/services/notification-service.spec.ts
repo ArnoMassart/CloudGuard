@@ -176,8 +176,8 @@ describe('NotificationService', () => {
           sourceRoute: '/',
         },
       ];
-      const body: NotificationsResponse = { active };
-      service.getNotifications().subscribe((res) => expect(res).toEqual(body));
+      const body: NotificationsResponse = { active, solved: [] };
+      service.getNotifications().subscribe((res) => expect(res).toEqual({ active, solved: [] }));
 
       const req = httpMock.expectOne((r) => r.url === '/api/notifications');
       expect(req.request.method).toBe('GET');
@@ -188,6 +188,7 @@ describe('NotificationService', () => {
     it('returns empty active when HTTP fails', () => {
       service.getNotifications().subscribe((res) => {
         expect(res.active).toEqual([]);
+        expect(res.solved).toEqual([]);
       });
 
       const req = httpMock.expectOne((r) => r.url === '/api/notifications');

@@ -100,7 +100,7 @@ class NotificationControllerIT {
     @Test
     void getNotifications_withCookie_returnsJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
-        var response = new NotificationsResponse(List.of(sampleNotification()));
+        var response = new NotificationsResponse(List.of(sampleNotification()), List.of());
         when(aggregationService.getNotifications(eq("admin@acme.com"), any(Locale.class)))
                 .thenReturn(response);
 
