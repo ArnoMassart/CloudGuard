@@ -1,1 +1,0 @@
-export const CLOUDMEN_ADMIN_EMAIL = 'anna@labo.cloudmen.com';
