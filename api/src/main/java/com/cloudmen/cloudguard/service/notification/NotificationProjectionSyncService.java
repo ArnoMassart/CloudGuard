@@ -97,7 +97,6 @@ public class NotificationProjectionSyncService {
                 row.setOrganizationId(organizationId);
                 row.setSource(dto.source());
                 row.setNotificationType(dto.notificationType());
-                row.setFirstObservedAt(now);
                 row.setStatus(
                         disabledInPreferences
                                 ? NotificationInstanceStatus.DISABLED
@@ -123,7 +122,6 @@ public class NotificationProjectionSyncService {
                             : new ArrayList<>());
             row.setSourceLabel(dto.sourceLabel());
             row.setSourceRoute(dto.sourceRoute());
-            row.setLastObservedAt(now);
 
             instanceRepository.save(row);
         }

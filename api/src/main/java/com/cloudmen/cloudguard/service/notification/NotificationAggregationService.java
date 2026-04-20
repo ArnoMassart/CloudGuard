@@ -246,7 +246,6 @@ public class NotificationAggregationService {
      * without waiting for the daily sync job.
      */
     private void persistAggregatedNotifications(Long orgId, List<NotificationDto> dtos) {
-        LocalDateTime now = LocalDateTime.now();
         for (NotificationDto dto : dtos) {
             boolean exists = notificationInstanceRepository
                     .findByOrganizationIdAndSourceAndNotificationType(orgId, dto.source(), dto.notificationType())
@@ -268,8 +267,6 @@ public class NotificationAggregationService {
                             : new ArrayList<>());
             row.setSourceLabel(dto.sourceLabel());
             row.setSourceRoute(dto.sourceRoute());
-            row.setFirstObservedAt(now);
-            row.setLastObservedAt(now);
             notificationInstanceRepository.save(row);
         }
     }
