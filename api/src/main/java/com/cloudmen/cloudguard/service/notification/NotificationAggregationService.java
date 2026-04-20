@@ -62,6 +62,15 @@ public class NotificationAggregationService {
             "password-2sv-not-enforced", "password-weak-length", "password-strong-not-required",
             "password-never-expires", "password-admins-no-security-keys"
     );
+    private static final Map<String, String> SOURCE_LABEL_KEYS = Map.of(
+            "domain-dns", "notifications.dns.label",
+            "users-groups", "notifications.users_groups.label",
+            "shared-drives", "notifications.drives.label",
+            "devices", "notifications.devices.label",
+            "app-access", "notifications.app_access.label",
+            "app-passwords", "notifications.app_passwords.label",
+            "password-settings", "notifications.password_settings.label"
+    );
 
     private final GoogleDomainService domainService;
     private final DnsRecordsService dnsRecordsService;
@@ -148,7 +157,7 @@ public class NotificationAggregationService {
                 .map(n -> withStatus(n, feedbackKeys))
                 .toList();
 
-        List<NotificationDto> solved = resolveSolvedNotifications(user, viewerRoles);
+        List<NotificationDto> solved = resolveSolvedNotifications(user, viewerRoles, locale);
         List<NotificationDto> solvedFiltered =
                 solved.stream().map(n -> withStatus(n, feedbackKeys)).toList();
 
@@ -168,7 +177,8 @@ public class NotificationAggregationService {
     /**
      * Solved projection rows (issue no longer detected); only when org has synced notification instances.
      */
-    private List<NotificationDto> resolveSolvedNotifications(User user, List<UserRole> viewerRoles) {
+    private List<NotificationDto> resolveSolvedNotifications(
+            User user, List<UserRole> viewerRoles, Locale locale) {
         if (!notificationProjectionProperties.isReadEnabled()) {
             return List.of();
         }
@@ -185,7 +195,7 @@ public class NotificationAggregationService {
         solvedRows.sort(
                 Comparator.comparing(
                         NotificationInstance::getSolvedAt, Comparator.nullsLast(Comparator.reverseOrder())));
-        List<NotificationDto> dtos = solvedRows.stream().map(this::toDtoFromProjection).toList();
+        List<NotificationDto> dtos = solvedRows.stream().map(row -> toDtoFromProjection(row, locale)).toList();
         if (viewerRoles == null) {
             return dtos;
         }
@@ -238,7 +248,7 @@ public class NotificationAggregationService {
         List<NotificationInstance> projected =
                 notificationInstanceRepository.findByOrganizationIdAndStatus(
                         orgId, NotificationInstanceStatus.ACTIVE);
-        return projected.stream().map(this::toDtoFromProjection).toList();
+        return projected.stream().map(row -> toDtoFromProjection(row, locale)).toList();
     }
 
     /**
@@ -271,7 +281,7 @@ public class NotificationAggregationService {
         }
     }
 
-    private NotificationDto toDtoFromProjection(NotificationInstance f) {
+    private NotificationDto toDtoFromProjection(NotificationInstance f, Locale locale) {
         List<String> actions =
                 f.getRecommendedActions() != null ? f.getRecommendedActions() : List.of();
         boolean supportsDetails = NOTIFICATION_TYPES_WITH_DETAILS.contains(f.getNotificationType());
@@ -280,19 +290,188 @@ public class NotificationAggregationService {
                 f.getCreatedAt() == null
                         ? null
                         : f.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant().toString();
+        String localizedTitle = localizeProjectedTitle(f, locale);
+        String localizedDescription = localizeProjectedDescription(f, locale);
+        List<String> localizedActions = localizeProjectedActions(f, locale, actions);
+        String localizedSourceLabel = localizeProjectedSourceLabel(f, locale);
         return new NotificationDto(
                 "nf-" + f.getId(),
                 severityStr,
-                f.getTitle(),
-                f.getDescription(),
-                actions,
+                localizedTitle,
+                localizedDescription,
+                localizedActions,
                 f.getNotificationType(),
                 f.getSource(),
-                f.getSourceLabel(),
+                localizedSourceLabel,
                 f.getSourceRoute(),
                 false,
                 supportsDetails,
                 createdAtIso);
+    }
+
+    private String localizeProjectedTitle(NotificationInstance row, Locale locale) {
+        return switch (row.getNotificationType()) {
+            case "dns-critical" -> messageSource.getMessage("notifications.dns.critical.title", null, locale);
+            case "dns-attention" -> messageSource.getMessage("notifications.dns.attention.title", null, locale);
+            case "user-control" -> messageSource.getMessage("notifications.users.without_2fa.title", null, locale);
+            case "user-activity" -> isInactiveRecentVariant(row.getDescription())
+                    ? messageSource.getMessage("notifications.users.inactive_recent.title", null, locale)
+                    : messageSource.getMessage("notifications.users.active_no_login.title", null, locale);
+            case "group-external" -> messageSource.getMessage("notifications.groups.title", null, locale);
+            case "drive-orphan" -> messageSource.getMessage("notifications.drives.orphan.title", null, locale);
+            case "drive-external" -> messageSource.getMessage("notifications.drives.external.title", null, locale);
+            case "drive-outside-domain" -> messageSource.getMessage("notifications.drives.outside_domain.title", null, locale);
+            case "drive-non-member-access" -> messageSource.getMessage("notifications.drives.non_member_access.title", null, locale);
+            case "device-lockscreen" -> messageSource.getMessage("notifications.devices.lock.title", null, locale);
+            case "device-encryption" -> messageSource.getMessage("notifications.devices.enc.title", null, locale);
+            case "device-os" -> messageSource.getMessage("notifications.devices.os.title", null, locale);
+            case "device-integrity" -> messageSource.getMessage("notifications.devices.int.title", null, locale);
+            case "oauth-high-risk" -> messageSource.getMessage("notifications.app_access.title", null, locale);
+            case "app-password" -> messageSource.getMessage("notifications.app_passwords.title", null, locale);
+            case "password-2sv-not-enforced" ->
+                    messageSource.getMessage("notifications.password_settings.without_2SV.title", null, locale);
+            case "password-weak-length" ->
+                    messageSource.getMessage("notifications.password_settings.weak_length.title", null, locale);
+            case "password-strong-not-required" ->
+                    messageSource.getMessage("notifications.password_settings.no_strong.title", null, locale);
+            case "password-never-expires" ->
+                    messageSource.getMessage("notifications.password_settings.no_expiry.title", null, locale);
+            case "password-admins-no-security-keys" ->
+                    messageSource.getMessage("notifications.password_settings.without_keys.title", null, locale);
+            default -> row.getTitle();
+        };
+    }
+
+    private String localizeProjectedDescription(NotificationInstance row, Locale locale) {
+        if ("dns-critical".equals(row.getNotificationType()) || "dns-attention".equals(row.getNotificationType())) {
+            return row.getDescription();
+        }
+
+        Long count = extractFirstLong(row.getDescription());
+        if (count == null) {
+            return row.getDescription();
+        }
+
+        return switch (row.getNotificationType()) {
+            case "user-control" -> messageSource.getMessage(
+                    "notifications.users.without_2fa.description", new Object[] {count}, locale);
+            case "user-activity" -> {
+                String key = isInactiveRecentVariant(row.getDescription())
+                        ? "notifications.users.inactive_recent.description"
+                        : "notifications.users.active_no_login.description";
+                yield messageSource.getMessage(key, new Object[] {count}, locale);
+            }
+            case "group-external" -> messageSource.getMessage(
+                    "notifications.groups.description", new Object[] {count}, locale);
+            case "drive-orphan" -> messageSource.getMessage(
+                    "notifications.drives.orphan.description", new Object[] {count}, locale);
+            case "drive-external" -> messageSource.getMessage(
+                    "notifications.drives.external.description", new Object[] {count}, locale);
+            case "drive-outside-domain" -> messageSource.getMessage(
+                    "notifications.drives.outside_domain.description", new Object[] {count}, locale);
+            case "drive-non-member-access" -> messageSource.getMessage(
+                    "notifications.drives.non_member_access.description", new Object[] {count}, locale);
+            case "device-lockscreen" -> messageSource.getMessage(
+                    "notifications.devices.lock.description", new Object[] {count}, locale);
+            case "device-encryption" -> messageSource.getMessage(
+                    "notifications.devices.enc.description", new Object[] {count}, locale);
+            case "device-os" -> messageSource.getMessage(
+                    "notifications.devices.os.description", new Object[] {count}, locale);
+            case "device-integrity" -> messageSource.getMessage(
+                    "notifications.devices.int.description", new Object[] {count}, locale);
+            case "oauth-high-risk" -> messageSource.getMessage(
+                    "notifications.app_access.description", new Object[] {count}, locale);
+            case "app-password" -> messageSource.getMessage(
+                    "notifications.app_passwords.description", new Object[] {count}, locale);
+            case "password-2sv-not-enforced" -> messageSource.getMessage(
+                    "notifications.password_settings.without_2SV.description", new Object[] {count}, locale);
+            case "password-weak-length" -> messageSource.getMessage(
+                    "notifications.password_settings.weak_length.description", new Object[] {count}, locale);
+            case "password-strong-not-required" -> messageSource.getMessage(
+                    "notifications.password_settings.no_strong.description", new Object[] {count}, locale);
+            case "password-never-expires" -> messageSource.getMessage(
+                    "notifications.password_settings.no_expiry.description", new Object[] {count}, locale);
+            case "password-admins-no-security-keys" -> messageSource.getMessage(
+                    "notifications.password_settings.without_keys.description", new Object[] {count}, locale);
+            default -> row.getDescription();
+        };
+    }
+
+    private List<String> localizeProjectedActions(
+            NotificationInstance row, Locale locale, List<String> fallbackActions) {
+        return switch (row.getNotificationType()) {
+            case "dns-critical" -> List.of(messageSource.getMessage("notifications.dns.critical.actions", null, locale));
+            case "dns-attention" -> List.of(messageSource.getMessage("notifications.dns.attention.actions", null, locale));
+            case "user-control" -> List.of(
+                    messageSource.getMessage("notifications.users.without_2fa.actions.1", null, locale),
+                    messageSource.getMessage("notifications.users.without_2fa.actions.2", null, locale));
+            case "user-activity" -> {
+                String key = isInactiveRecentVariant(row.getDescription())
+                        ? "notifications.users.inactive_recent.actions"
+                        : "notifications.users.active_no_login.actions";
+                yield List.of(messageSource.getMessage(key, null, locale));
+            }
+            case "group-external" -> List.of(messageSource.getMessage("notifications.groups.actions", null, locale));
+            case "drive-orphan" -> List.of(messageSource.getMessage("notifications.drives.orphan.actions", null, locale));
+            case "drive-external" -> List.of(messageSource.getMessage("notifications.drives.external.actions", null, locale));
+            case "drive-outside-domain" ->
+                    List.of(messageSource.getMessage("notifications.drives.outside_domain.actions", null, locale));
+            case "drive-non-member-access" ->
+                    List.of(messageSource.getMessage("notifications.drives.non_member_access.actions", null, locale));
+            case "device-lockscreen" -> List.of(messageSource.getMessage("notifications.devices.lock.actions", null, locale));
+            case "device-encryption" -> List.of(messageSource.getMessage("notifications.devices.enc.actions", null, locale));
+            case "device-os" -> List.of(messageSource.getMessage("notifications.devices.os.actions", null, locale));
+            case "device-integrity" -> List.of(messageSource.getMessage("notifications.devices.int.actions", null, locale));
+            case "oauth-high-risk" -> List.of(
+                    messageSource.getMessage("notifications.app_access.actions.1", null, locale),
+                    messageSource.getMessage("notifications.app_access.actions.2", null, locale));
+            case "app-password" -> List.of(messageSource.getMessage("notifications.app_passwords.actions", null, locale));
+            case "password-2sv-not-enforced" ->
+                    List.of(messageSource.getMessage("notifications.password_settings.without_2SV.actions", null, locale));
+            case "password-weak-length" ->
+                    List.of(messageSource.getMessage("notifications.password_settings.weak_length.actions", null, locale));
+            case "password-strong-not-required" ->
+                    List.of(messageSource.getMessage("notifications.password_settings.no_strong.actions", null, locale));
+            case "password-never-expires" ->
+                    List.of(messageSource.getMessage("notifications.password_settings.no_expiry.actions", null, locale));
+            case "password-admins-no-security-keys" ->
+                    List.of(messageSource.getMessage("notifications.password_settings.without_keys.actions", null, locale));
+            default -> fallbackActions;
+        };
+    }
+
+    private String localizeProjectedSourceLabel(NotificationInstance row, Locale locale) {
+        String key = SOURCE_LABEL_KEYS.get(row.getSource());
+        if (key == null) {
+            return row.getSourceLabel();
+        }
+        return messageSource.getMessage(key, null, locale);
+    }
+
+    private Long extractFirstLong(String text) {
+        if (text == null) {
+            return null;
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(text);
+        if (!m.find()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(m.group(1));
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private boolean isInactiveRecentVariant(String description) {
+        if (description == null) {
+            return false;
+        }
+        String normalized = description.toLowerCase(Locale.ROOT);
+        return normalized.contains("inactive")
+                || normalized.contains("inactieve")
+                || normalized.contains("gedeactiveerd")
+                || normalized.contains("deactivated");
     }
 
     private boolean isHiddenByPreference(String source, String notificationType, Set<String> disabledPreferenceKeys) {
