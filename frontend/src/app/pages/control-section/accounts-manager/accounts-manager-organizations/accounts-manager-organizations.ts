@@ -26,7 +26,6 @@ const ITEMS_PER_PAGE = 4;
     PaginationBar,
     LucideAngularModule,
     FormsModule,
-    AccountsManagerTable,
     CommonModule,
   ],
   templateUrl: './accounts-manager-organizations.html',

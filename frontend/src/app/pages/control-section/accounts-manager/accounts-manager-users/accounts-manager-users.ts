@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -16,6 +16,7 @@ import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
+import { FilterChips } from '../../../../components/filter-chips/filter-chips';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -71,6 +72,9 @@ export class AccountsManagerUsers {
 
   readonly orgs = signal<Organization[]>([]);
 
+  readonly selectedOrganization = signal<string>('all');
+  readonly uniqueOrganizations = signal<string[]>(['all']);
+
   // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
@@ -96,6 +100,11 @@ export class AccountsManagerUsers {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
+  onOrgFilterChange(newType: string) {
+    this.selectedOrganization.set(newType);
+    // this.#resetAndLoad();
+  }
+
   onSearch(value: string) {
     this.searchQuery.set(value);
     this.pagination()?.reset();
@@ -244,7 +253,10 @@ export class AccountsManagerUsers {
 
   loadOrganizations() {
     this.#orgService.getAllOrgs().subscribe({
-      next: (orgs) => this.orgs.set(orgs),
+      next: (orgs) => {
+        this.orgs.set(orgs);
+        this.uniqueOrganizations.set(['all', ...orgs.map((o) => o.name)]);
+      },
       error: (err) => console.error('Fout bij laden organisaties', err),
     });
   }
