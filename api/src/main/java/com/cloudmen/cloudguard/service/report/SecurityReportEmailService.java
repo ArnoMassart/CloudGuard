@@ -13,15 +13,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.cloudmen.cloudguard.utility.SecurityEmailHtml;
+
 import java.util.Locale;
 
 @Service
 public class SecurityReportEmailService {
-    private static final String HEADER_BG = "#011624";
-    private static final String MUTED_BG = "#ececf0";
-    private static final String MUTED_TEXT = "#717182";
-    private static final String CARD_BG = "#ffffff";
-    private static final String FOREGROUND = "#030213";
 
     private final JavaMailSender mailSender;
     private final MessageSource messageSource;
@@ -77,41 +74,22 @@ public class SecurityReportEmailService {
             String signoff = messageSource.getMessage("email.report.signoff", null, locale);
             String footer = messageSource.getMessage("email.report.footer", null, locale);
 
-            return """
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                      <meta charset="UTF-8">
-                      <style>
-                        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f3f3f5; }
-                        .container { max-width: 600px; margin: 20px auto; background: %s; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
-                        .header { background: %s; padding: 24px 32px; text-align: center; color: white; }
-                        .content { padding: 32px; color: %s; line-height: 1.5; }
-                        .footer { background: %s; padding: 20px 32px; font-size: 12px; color: %s; text-align: center; }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="container">
-                        <div class="header">
-                          <h2 style="margin: 0;">CloudGuard Security</h2>
-                        </div>
-                        <div class="content">
+            String content =
+                    """
                           <h3 style="margin-top: 0; color: %s;">%s</h3>
                           <p>%s</p>
                           <p>%s</p>
                           <br>
                           <p>%s<br><strong>Het CloudGuard Team</strong></p>
-                        </div>
-                        <div class="footer">
-                          %s
-                        </div>
-                      </div>
-                    </body>
-                    </html>
-                    """.formatted(
-                    CARD_BG, HEADER_BG, FOREGROUND, MUTED_BG, MUTED_TEXT, HEADER_BG, // CSS Kleuren
-                    greeting, p1, p2, signoff, footer // Vertaalde teksten
-            );
+                          """
+                            .formatted(
+                                    SecurityEmailHtml.HEADER_BG,
+                                    greeting,
+                                    p1,
+                                    p2,
+                                    signoff);
+
+            return SecurityEmailHtml.document(content, footer);
         }
 
 

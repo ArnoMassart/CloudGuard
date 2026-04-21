@@ -262,6 +262,46 @@ class NotificationAggregationServiceTest {
         assertTrue(response.active().isEmpty());
     }
 
+    @Test
+    void getNotifications_localizesProjectedNotificationPerRequestLocale() {
+        stubQuietBaselines();
+        lenient().when(notificationProjectionProperties.isReadEnabled()).thenReturn(true);
+
+        User orgUser = new User();
+        orgUser.setEmail(GlobalTestHelper.ADMIN);
+        orgUser.setOrganizationId(7L);
+        orgUser.setRoles(List.of(UserRole.SUPER_ADMIN));
+        lenient().when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(orgUser));
+        lenient().when(notificationInstanceRepository.existsByOrganizationId(7L)).thenReturn(true);
+        lenient().when(notificationInstanceRepository.findByOrganizationIdAndStatus(
+                eq(7L), eq(NotificationInstanceStatus.DISABLED))).thenReturn(List.of());
+        lenient().when(notificationInstanceRepository.findByOrganizationIdAndStatus(
+                eq(7L), eq(NotificationInstanceStatus.SOLVED))).thenReturn(new ArrayList<>());
+
+        NotificationInstance row = new NotificationInstance();
+        row.setId(100L);
+        row.setOrganizationId(7L);
+        row.setSource("devices");
+        row.setSourceLabel("Devices");
+        row.setSourceRoute("/devices");
+        row.setNotificationType("device-os");
+        row.setSeverity(NotificationSeverity.WARNING);
+        row.setTitle("Devices with outdated OS version");
+        row.setDescription("3 device(s) are running an outdated operating system version.");
+        row.setRecommendedActions(List.of("Require a minimum OS version for all devices"));
+        lenient().when(notificationInstanceRepository.findByOrganizationIdAndStatus(
+                eq(7L), eq(NotificationInstanceStatus.ACTIVE))).thenReturn(List.of(row));
+
+        var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.forLanguageTag("nl"));
+
+        assertEquals(1, response.active().size());
+        var n = response.active().get(0);
+        assertEquals("Apparaten met verouderde OS versie", n.title());
+        assertTrue(n.description().contains("3"));
+        assertEquals("Apparaten", n.sourceLabel());
+        assertEquals(List.of("Vereis minimale OS-versie voor alle apparaten"), n.recommendedActions());
+    }
+
     private void stubQuietBaselines() {
         lenient().when(notificationProjectionProperties.isReadEnabled()).thenReturn(true);
 

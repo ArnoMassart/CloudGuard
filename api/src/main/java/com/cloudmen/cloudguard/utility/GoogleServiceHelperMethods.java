@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.utility;
 
 import com.cloudmen.cloudguard.domain.model.UserRole;
+import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.dto.users.UserSecurityEvaluation;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.exception.NoAdminEmailConfiguredException;
@@ -146,6 +147,24 @@ public class GoogleServiceHelperMethods {
             return 100;
         }
         return Math.max(0, 100 - (violationCount * 100 / total));
+    }
+
+    /**
+     * The security score detail UI omits factors with {@code maxScore == 0}. Use when a criterion does not apply
+     * (e.g. no inventory for a tier) so the row is not shown as a misleading {@code 0/N} failure.
+     */
+    public static SecurityScoreFactorDto securityScoreFactorForDetail(
+            boolean showInDetail,
+            String title,
+            String description,
+            int score,
+            int maxScore,
+            String severity,
+            boolean muted) {
+        if (!showInDetail) {
+            return new SecurityScoreFactorDto(title, description, 0, 0, "success", muted);
+        }
+        return new SecurityScoreFactorDto(title, description, score, maxScore, severity, muted);
     }
 
     public static String getAdminEmailForUser(String email, UserService userService, OrganizationService organizationService) {

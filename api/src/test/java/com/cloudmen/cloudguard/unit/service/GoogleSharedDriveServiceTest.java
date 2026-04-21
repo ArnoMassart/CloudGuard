@@ -124,6 +124,11 @@ public class GoogleSharedDriveServiceTest {
         assertEquals(0, overview.securityScore());
         assertEquals("bad", overview.securityScoreBreakdown().status());
         assertFalse(overview.warnings().hasWarnings());
+
+        var factors = overview.securityScoreBreakdown().factors();
+        long withZeroMax =
+                factors.stream().filter(f -> f.maxScore() == 0).count();
+        assertEquals(3, withZeroMax, "All risk tiers hidden when there are no drives; maxScore 0 for UI");
     }
 
     @Test

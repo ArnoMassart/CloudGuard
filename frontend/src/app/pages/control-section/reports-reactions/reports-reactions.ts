@@ -195,11 +195,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
 
   /** Shown next to the clock icon for open items (org-wide projection sync time). */
   lastSyncedLine(): string {
-    const formatted = this.#formatIsoInstant(this.lastNotificationSyncAt());
-    if (formatted === null) {
+    const relative = this.#formatRelativeAgo(this.lastNotificationSyncAt());
+    if (relative === null) {
       return this.#translocoService.translate('feedback.last-sync-never');
     }
-    return this.#translocoService.translate('feedback.last-sync-at', { time: formatted });
+    return this.#translocoService.translate('feedback.last-sync-ago', { value: relative });
   }
 
   /** Creation time from `tbl_notifications.created_at` (next to clock on open cards). */
@@ -220,6 +220,37 @@ export class ReportsReactions implements OnInit, OnDestroy {
       dateStyle: 'short',
       timeStyle: 'short',
     }).format(d);
+  }
+
+  #formatRelativeAgo(iso: string | null): string | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+
+    const diffMs = Math.max(0, Date.now() - d.getTime());
+    const minuteMs = 60_000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+
+    if (diffMs < minuteMs) {
+      return this.#translocoService.translate('feedback.last-sync-just-now');
+    }
+
+    if (diffMs < hourMs) {
+      const minutes = Math.floor(diffMs / minuteMs);
+      const unitKey = minutes === 1 ? 'feedback.last-sync-minute' : 'feedback.last-sync-minutes';
+      return `${minutes} ${this.#translocoService.translate(unitKey)}`;
+    }
+
+    if (diffMs < dayMs) {
+      const hours = Math.floor(diffMs / hourMs);
+      const unitKey = hours === 1 ? 'feedback.last-sync-hour' : 'feedback.last-sync-hours';
+      return `${hours} ${this.#translocoService.translate(unitKey)}`;
+    }
+
+    const days = Math.floor(diffMs / dayMs);
+    const unitKey = days === 1 ? 'feedback.last-sync-day' : 'feedback.last-sync-days';
+    return `${days} ${this.#translocoService.translate(unitKey)}`;
   }
 
   #loadNotifications(syncFirst = false) {

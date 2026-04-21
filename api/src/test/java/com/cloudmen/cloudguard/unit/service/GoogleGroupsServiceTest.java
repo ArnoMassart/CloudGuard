@@ -140,6 +140,9 @@ class GoogleGroupsServiceTest {
         assertEquals(100, overview.securityScore());
         assertEquals("perfect", overview.securityScoreBreakdown().status());
         assertNull(overview.warnings());
+        long zeroMaxTiers =
+                overview.securityScoreBreakdown().factors().stream().filter(f -> f.maxScore() == 0).count();
+        assertEquals(3, zeroMaxTiers, "All risk tiers omitted from detail UI when there are no groups");
     }
 
     @Test
@@ -157,6 +160,26 @@ class GoogleGroupsServiceTest {
         assertEquals(1, overview.mediumRiskGroups());
         assertEquals(1, overview.lowRiskGroups());
         assertEquals(60, overview.securityScore());
+    }
+
+    @Test
+    void getGroupsOverview_onlyLowRisk_hidesEmptyMediumAndHighTiersInBreakdown() {
+        List<CachedGroupItem> groups = List.of(
+                group("A", "a@x.com", "LOW", 0, false),
+                group("B", "b@x.com", "LOW", 0, false));
+        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+
+        var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
+        var factors = overview.securityScoreBreakdown().factors();
+
+        assertEquals(2, overview.totalGroups());
+        assertEquals(0, overview.mediumRiskGroups());
+        assertEquals(0, overview.highRiskGroups());
+        long hiddenRiskTiers = factors.stream().filter(f -> f.maxScore() == 0).count();
+        assertEquals(2, hiddenRiskTiers, "Medium and high tiers omitted when no groups in those tiers");
+        assertTrue(
+                factors.stream().anyMatch(f -> f.maxScore() == 100 && f.title().toLowerCase().contains("low")),
+                "Low tier still shown when at least one low-risk group exists");
     }
 
     @Test

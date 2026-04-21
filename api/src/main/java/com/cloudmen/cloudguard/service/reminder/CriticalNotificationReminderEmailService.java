@@ -12,6 +12,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import com.cloudmen.cloudguard.utility.SecurityEmailHtml;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -20,12 +22,6 @@ import java.util.Locale;
  */
 @Service
 public class CriticalNotificationReminderEmailService {
-
-    private static final String HEADER_BG = "#011624";
-    private static final String MUTED_BG = "#ececf0";
-    private static final String MUTED_TEXT = "#717182";
-    private static final String CARD_BG = "#ffffff";
-    private static final String FOREGROUND = "#030213";
 
     private final JavaMailSender mailSender;
     private final MessageSource messageSource;
@@ -104,7 +100,13 @@ public class CriticalNotificationReminderEmailService {
                     <span style="font-size: 14px; color: %s;">%s</span>
                     </p>
                     """
-                            .formatted(MUTED_BG, HEADER_BG, FOREGROUND, title, MUTED_TEXT, sub));
+                            .formatted(
+                                    SecurityEmailHtml.MUTED_BG,
+                                    SecurityEmailHtml.HEADER_BG,
+                                    SecurityEmailHtml.FOREGROUND,
+                                    title,
+                                    SecurityEmailHtml.MUTED_TEXT,
+                                    sub));
         }
 
         String link = appPublicUrl != null ? appPublicUrl.trim() : "";
@@ -116,51 +118,23 @@ public class CriticalNotificationReminderEmailService {
  <a href="%s" style="display: inline-block; background: %s; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">%s</a>
                             </p>
                             """
-                                .formatted(safeHref(link), HEADER_BG, buttonLabel);
+                                .formatted(safeHref(link), SecurityEmailHtml.HEADER_BG, buttonLabel);
 
-        return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <style>
-                    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f3f3f5; }
-                    .container { max-width: 600px; margin: 20px auto; background: %s; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
-                    .header { background: %s; padding: 24px 32px; text-align: center; color: white; }
-                    .content { padding: 32px; color: %s; line-height: 1.5; }
-                    .footer { background: %s; padding: 20px 32px; font-size: 12px; color: %s; text-align: center; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <div class="header">
-                      <h2 style="margin: 0;">CloudGuard Security</h2>
-                    </div>
-                    <div class="content">
+        String content =
+                """
                       <h3 style="margin-top: 0; color: %s;">%s</h3>
                       %s
                       <p style="margin: 24px 0 0 0;">%s</p>
                       %s
-                    </div>
-                    <div class="footer">
-                      %s
-                    </div>
-                  </div>
-                </body>
-                </html>
-                """
-                .formatted(
-                        CARD_BG,
-                        HEADER_BG,
-                        FOREGROUND,
-                        MUTED_BG,
-                        MUTED_TEXT,
-                        HEADER_BG,
-                        intro,
-                        itemBlocks,
-                        cta,
-                        buttonBlock,
-                        footer);
+                      """
+                        .formatted(
+                                SecurityEmailHtml.HEADER_BG,
+                                intro,
+                                itemBlocks,
+                                cta,
+                                buttonBlock);
+
+        return SecurityEmailHtml.document(content, footer);
     }
 
     private static String safeHref(String url) {

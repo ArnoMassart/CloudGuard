@@ -50,6 +50,14 @@ const FB_I18N: Record<string, string> = {
   'try-again': 'Try again',
   'feedback.last-sync-never': 'Never synced',
   'feedback.last-sync-at': 'Synced {{time}}',
+  'feedback.last-sync-ago': 'Synced {{value}} ago',
+  'feedback.last-sync-just-now': 'just now',
+  'feedback.last-sync-minute': 'minute',
+  'feedback.last-sync-minutes': 'minutes',
+  'feedback.last-sync-hour': 'hour',
+  'feedback.last-sync-hours': 'hours',
+  'feedback.last-sync-day': 'day',
+  'feedback.last-sync-days': 'days',
   'feedback.notification-created-unknown': '—',
   'notification.created-at': 'Created',
   'feedback.solved': 'Solved',
@@ -140,6 +148,13 @@ describe('ReportsReactions', () => {
   it('lastSyncedLine uses last-sync-never when never synced', () => {
     expect(component.lastNotificationSyncAt()).toBeNull();
     expect(component.lastSyncedLine()).toBe('Never synced');
+  });
+
+  it('lastSyncedLine shows relative elapsed time', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-01-01T10:00:00.000Z').getTime());
+    component.lastNotificationSyncAt.set('2026-01-01T08:00:00.000Z');
+    expect(component.lastSyncedLine()).toBe('Synced 2 hours ago');
+    vi.restoreAllMocks();
   });
 
   it('loads notifications on init', () => {

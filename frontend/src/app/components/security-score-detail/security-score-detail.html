@@ -34,8 +34,11 @@
 
   <div class="flex-1 overflow-y-auto px-6 pb-5 mt-4">
     <h3 class="text-m font-medium text-gray-800 mb-3">{{ 'security-score.calculation-factor' | transloco }}</h3>
+    @if (visibleFactors().length === 0) {
+    <p class="m-0 text-sm text-gray-500">{{ 'security-score.no-applicable-factors' | transloco }}</p>
+    }
     <div class="flex flex-col gap-3">
-      @for (factor of breakdown.factors; track factor.title) {
+      @for (factor of visibleFactors(); track factor.title) {
       <div class="rounded-lg p-4 border-2 transition-all duration-200"
         [style.border-color]="getFactorStyles(factor).borderColor"
         [style.background-color]="getFactorStyles(factor).bg">
@@ -49,13 +52,7 @@
             @if (factor.muted) {
             <p class="m-0 text-xs mt-1.5 text-gray-400 italic">Niet meegenomen in de security score</p>
             }
-            <div class="flex items-center gap-4 mt-3 text-xs" [class.text-gray-400]="factor.muted"
-              [class.text-gray-500]="!factor.muted" [style.opacity]="0.9">
-              <span>Score: {{ factor.score }} / {{ factor.maxScore }}</span>
-              <span>Percentage: {{ factor.maxScore > 0 ? Math.round((factor.score / factor.maxScore) * 100) : 0
-                }}%</span>
-            </div>
-            <div class="mt-2 h-2 rounded-full bg-gray-200 overflow-hidden">
+            <div class="mt-3 h-2 rounded-full bg-gray-200 overflow-hidden">
               <div class="h-full rounded-full transition-all"
                 [style.width.%]="factor.maxScore > 0 ? (factor.score / factor.maxScore) * 100 : 0"
                 [style.background-color]="getProgressColor(factor)"></div>

@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
@@ -113,17 +114,29 @@ public class AppPasswordsService {
 
         Locale locale = LocaleContextHolder.getLocale();
 
+        boolean showFactors = totalUserCount > 0 || ignorePref;
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto(messageSource.getMessage("app-passwords.score.factor.users_without.title", null, locale),
+                securityScoreFactorForDetail(
+                        showFactors,
+                        messageSource.getMessage("app-passwords.score.factor.users_without.title", null, locale),
                         usersWithAppPasswords == 0
                                 ? messageSource.getMessage("app-passwords.score.factor.users_without.description.none", null, locale)
                                 : messageSource.getMessage("app-passwords.score.factor.users_without.description", new Object[]{usersWithAppPasswords, totalUserCount}, locale),
-                        usersWithoutScore, 100, severity(usersWithoutScore), ignorePref),
-                new SecurityScoreFactorDto(messageSource.getMessage("app-passwords.score.factor.total.title", null, locale),
+                        usersWithoutScore,
+                        100,
+                        severity(usersWithoutScore),
+                        ignorePref),
+                securityScoreFactorForDetail(
+                        showFactors,
+                        messageSource.getMessage("app-passwords.score.factor.total.title", null, locale),
                         totalAppPasswords == 0
                                 ? messageSource.getMessage("app-passwords.score.factor.total.description.none", null, locale)
                                 : messageSource.getMessage("app-passwords.score.factor.total.description", new Object[]{totalAppPasswords}, locale),
-                        totalCountScore, 100, severity(totalCountScore), ignorePref)
+                        totalCountScore,
+                        100,
+                        severity(totalCountScore),
+                        ignorePref)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);

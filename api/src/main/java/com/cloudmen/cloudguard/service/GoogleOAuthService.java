@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
@@ -210,12 +211,19 @@ public class GoogleOAuthService {
 
         Locale locale = LocaleContextHolder.getLocale();
 
+        boolean showHighRiskFactor = totalThirdPartyApps > 0 || ignoreHighRiskPref;
+
         var factors = java.util.List.of(
-                new SecurityScoreFactorDto(messageSource.getMessage("apps.score.factor.without_high_risk.title", null, locale),
+                securityScoreFactorForDetail(
+                        showHighRiskFactor,
+                        messageSource.getMessage("apps.score.factor.without_high_risk.title", null, locale),
                         totalHighRiskApps == 0
                                 ? messageSource.getMessage("apps.score.factor.without_high_risk.description.none", null, locale)
                                 : messageSource.getMessage("apps.score.factor.without_high_risk.description", new Object[]{totalHighRiskApps, totalThirdPartyApps}, locale),
-                        highRiskScore, 100, severity(highRiskScore), ignoreHighRiskPref),
+                        highRiskScore,
+                        100,
+                        severity(highRiskScore),
+                        ignoreHighRiskPref),
                 new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore), false)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";

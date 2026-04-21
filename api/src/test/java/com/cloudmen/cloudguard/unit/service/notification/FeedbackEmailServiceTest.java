@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
 import com.cloudmen.cloudguard.service.notification.FeedbackEmailService;
+import com.cloudmen.cloudguard.utility.SecurityEmailHtml;
 import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Part;
@@ -101,6 +102,8 @@ class FeedbackEmailServiceTest {
         assertTrue(combined.contains("users-groups"));
         assertTrue(combined.contains("user-control"));
         assertTrue(combined.contains("My feedback"));
+        assertTrue(combined.contains(SecurityEmailHtml.DEFAULT_HEADER_TITLE));
+        assertTrue(combined.contains("margin: 20px auto"));
     }
 
     @Test
