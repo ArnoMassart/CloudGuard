@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   traefik:
     image: traefik:v3.1
@@ -9,47 +11,25 @@ services:
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
 
-      # EntryPoints
+      # EntryPoints (poort 80 voor frontend, 8081 voor backend API)
       - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
+      - --entrypoints.backend.address=:8081
 
-      # Let's Encrypt (HTTP challenge)
-      - --certificatesresolvers.le.acme.email=cloudguard.stage@gmail.com
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.le.acme.httpchallenge=true
-      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
-
-      # (Optional) Dashboard
+      # Dashboard aanzetten (onveilig voor productie, handig voor testen)
       - --api.insecure=true
       - --api=true
       - --api.dashboard=true
 
-      # (Optional) Redirect HTTP -> HTTPS
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+      - "80:80"       # Frontend
+      - "8081:8081"   # API
+      - "8080:8080"   # Traefik Dashboard
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt:/letsencrypt
 
     networks:
       - traefik
-
-    labels:
-      # Dashboard router (optional but useful)
-      - traefik.enable=true
-      - traefik.http.routers.traefik.rule=Host(`traefik.cloudguardstage.com`)
-      - traefik.http.routers.traefik.entrypoints=websecure
-      - traefik.http.routers.traefik.tls.certresolver=le
-      - traefik.http.routers.traefik.service=api@internal
-
-volumes:
-  letsencrypt:
 
 networks:
   traefik:

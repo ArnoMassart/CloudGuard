@@ -27,13 +27,11 @@ services:
       - internal
       - traefik
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.api.rule=Host(`api.cloudguardstage.com`)
-      - traefik.http.routers.api.entrypoints=websecure
-      - traefik.http.routers.api.tls.certresolver=le
-      - traefik.http.services.api.loadbalancer.server.port=8080
-    ports:
-      - "8081:8080"
+      - "traefik.enable=true"
+      # Vang alle requests af die op de 'backend' poort (8081) binnenkomen
+      - "traefik.http.routers.backend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.backend.entrypoints=backend"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080" # Interne Spring Boot poort
 
   frontend:
     build: ./frontend
@@ -41,18 +39,16 @@ services:
     depends_on:
       - backend
     environment:
-      - BACKEND_URL=http://backend:8080
+      # VUL HIER HET IP IN VAN JE VM
+      - BACKEND_URL=http://<JOUW_VM_IP_ADRES>:8081
     networks:
-      - internal
       - traefik
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.app.rule=Host(`app.cloudguardstage.com`)
-      - traefik.http.routers.app.entrypoints=websecure
-      - traefik.http.routers.app.tls.certresolver=le
-      - traefik.http.services.app.loadbalancer.server.port=80
-    ports:
-      - "4200:80"
+      - "traefik.enable=true"
+      # Vang alle requests af die op de 'web' poort (80) binnenkomen
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80" # Interne Angular/Nginx poort
 
 volumes:
   mysql_data:
