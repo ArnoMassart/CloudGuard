@@ -16,6 +16,8 @@ services:
   backend:
     build: ./api
     container_name: cloudguard-backend
+    volumes:
+      - ./api/.env:/app/.env
     depends_on:
       - mysql
     environment:
