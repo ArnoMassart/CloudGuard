@@ -24,11 +24,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             Pageable pageable);
 
     @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = false AND u.organizationRequested = false " +
+            "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<User> findAllWithoutRequested(
+            @Param("organizationId") Long organizationId,
             @Param("query") String query,
             Pageable pageable);
 

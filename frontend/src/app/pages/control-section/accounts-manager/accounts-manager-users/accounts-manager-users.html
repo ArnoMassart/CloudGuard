@@ -41,15 +41,17 @@
                     <div class="relative w-full sm:w-auto">
                         <select [ngModel]="selectedOrganization()" (ngModelChange)="onOrgFilterChange($event)"
                             class="w-full sm:w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
-                            [class.border-primary]="selectedOrganization() !== 'all'"
-                            [class.ring-1]="selectedOrganization() !== 'all'"
-                            [class.ring-primary]="selectedOrganization() !== 'all'">
-                            @for (org of uniqueOrganizations(); track org) {
-                            <option [value]="type">{{ type === 'all' ? ('account-manager.all-orgs' | transloco) : type
-                                }}
+                            [class.border-primary]="selectedOrganization() !== ''"
+                            [class.ring-1]="selectedOrganization() !== ''"
+                            [class.ring-primary]="selectedOrganization() !== ''">
+
+                            @for (org of uniqueOrganizations(); track org.id) {
+                            <option [value]="org.id">
+                                {{ org.id === '' ? (org.name | transloco) : org.name }}
                             </option>
                             }
                         </select>
+
                         <i-lucide [img]="Icons.ChevronDown" size="18"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
                         </i-lucide>

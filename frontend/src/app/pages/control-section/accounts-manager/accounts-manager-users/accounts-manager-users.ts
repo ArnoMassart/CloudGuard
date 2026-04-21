@@ -1,24 +1,26 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideAngularModule } from 'lucide-angular';
 import { Subscription } from 'rxjs';
 import { AssignRoleDialog } from '../../../../components/assign-role-dialog/assign-role-dialog';
-import { PageHeader } from '../../../../components/page-header/page-header';
 import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
-import { AccountSectionType } from '../../../../models/AccountSectionType';
 import { Organization } from '../../../../models/org/Organization';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
-import { FilterChips } from '../../../../components/filter-chips/filter-chips';
 
 const ITEMS_PER_PAGE = 4;
+
+type OrgFilter = {
+  id: number;
+  name: string;
+};
 
 @Component({
   selector: 'app-accounts-manager-users',
@@ -72,10 +74,10 @@ export class AccountsManagerUsers {
 
   readonly orgs = signal<Organization[]>([]);
 
-  readonly selectedOrganization = signal<string>('all');
-  readonly uniqueOrganizations = signal<string[]>(['all']);
-
-  // ==========================================
+  readonly selectedOrganization = signal<string>('');
+  readonly uniqueOrganizations = signal<{ id: string; name: string }[]>([
+    { id: '', name: 'account-manager.all-orgs' },
+  ]); // ==========================================
   // PRIVATE PROPERTIES
   // ==========================================
   private langSubscription?: Subscription;
@@ -100,9 +102,9 @@ export class AccountsManagerUsers {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
-  onOrgFilterChange(newType: string) {
-    this.selectedOrganization.set(newType);
-    // this.#resetAndLoad();
+  onOrgFilterChange(orgId: string) {
+    this.selectedOrganization.set(orgId);
+    this.#resetAndLoad();
   }
 
   onSearch(value: string) {
@@ -214,11 +216,15 @@ export class AccountsManagerUsers {
     this.isLoading.set(true);
 
     this.#userService
-      .getAllDatabaseUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
+      .getAllDatabaseUsers(
+        ITEMS_PER_PAGE,
+        token || undefined,
+        this.searchQuery(),
+        this.selectedOrganization()
+      )
       .subscribe({
         next: (page) => {
           this.users.set(page.users);
-          console.log(page);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
         },
@@ -255,7 +261,14 @@ export class AccountsManagerUsers {
     this.#orgService.getAllOrgs().subscribe({
       next: (orgs) => {
         this.orgs.set(orgs);
-        this.uniqueOrganizations.set(['all', ...orgs.map((o) => o.name)]);
+
+        const mappedOrgs = orgs.map((o) => ({
+          id: o.id.toString(),
+          name: o.name,
+        }));
+
+        // Dit overschrijft de startwaarde met de volledige lijst
+        this.uniqueOrganizations.set([{ id: '', name: 'account-manager.all-orgs' }, ...mappedOrgs]);
       },
       error: (err) => console.error('Fout bij laden organisaties', err),
     });
@@ -277,5 +290,11 @@ export class AccountsManagerUsers {
   isOrgInList(orgId: number | null): boolean {
     if (!orgId) return false;
     return this.orgs().some((org) => org.id === orgId);
+  }
+
+  #resetAndLoad() {
+    this.pagination()?.reset();
+
+    this.loadUsers();
   }
 }
