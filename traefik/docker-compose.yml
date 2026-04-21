@@ -1,8 +1,6 @@
-version: "3.9"
-
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.6
     container_name: traefik
     restart: unless-stopped
 
@@ -10,10 +8,21 @@ services:
       # Providers
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
 
-      # EntryPoints (poort 80 voor frontend, 8081 voor backend API)
+      # EntryPoints (poort 80 voor frontend, 443 for websecure)
       - --entrypoints.web.address=:80
-      - --entrypoints.backend.address=:8081
+      - --entrypoints.websecure.address=:443
+
+      # Auto redirect HTTP -> HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      # Let's Encrypt 
+      - --certificatesresolvers.le.acme.email=cloudguard.stage@gmail.com
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
 
       # Dashboard aanzetten (onveilig voor productie, handig voor testen)
       - --api.insecure=true
@@ -22,14 +31,18 @@ services:
 
     ports:
       - "80:80"       # Frontend
-      - "8081:8081"   # API
+      - "443:443"     # HTTPS
       - "8080:8080"   # Traefik Dashboard
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
 
     networks:
       - traefik
+
+volumes:
+  letsencrypt:
 
 networks:
   traefik:
