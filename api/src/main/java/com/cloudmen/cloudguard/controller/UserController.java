@@ -88,8 +88,9 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<DatabaseUsersResponse> getAllUsers(@RequestParam(required = false) String pageToken,
                                                              @RequestParam(defaultValue = "4") int size,
-                                                             @RequestParam(required = false) String query) {
-        return ResponseEntity.ok(userService.getAll(pageToken, size, query));
+                                                             @RequestParam(required = false) String query,
+                                                             @RequestParam(required = false) String orgFilter) {
+        return ResponseEntity.ok(userService.getAll(pageToken, size, query, orgFilter));
     }
 
     @GetMapping("/all/no-roles")

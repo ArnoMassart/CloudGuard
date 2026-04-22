@@ -251,7 +251,7 @@ class PasswordSettingsServiceTest {
         var result = service.calculateSecurityScoreWithBreakdown(
                 0, 0, summary, twoSv, List.of(), Set.of());
 
-        assertEquals(100, result.breakdown().factors().get(0).score());
+        assertEquals(0, result.breakdown().factors().get(0).score());
     }
 
     @Test

@@ -1,0 +1,57 @@
+<div class="w-full flex flex-col gap-8 mt-6">
+    <div class="w-full">
+        <app-search-bar placeholder="{{ 'account-manager.search-orgs' | transloco }}..."
+            (searchChange)="onSearch($event)" />
+
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-4">
+            <div class="mx-6 mb-6">
+                <span class="font-medium md:text-lg text-[17px] text-slate-900">
+                    {{ 'account-manager.all-orgs' | transloco }}
+                </span>
+            </div>
+
+            @if (isLoading()) {
+            } @else if (orgs().length > 0) {
+            <table class="w-full text-left border-collapse block xl:table">
+                <thead class="hidden xl:table-header-group">
+                    <tr class="border-b border-t border-gray-100 bg-gray-50/50">
+                        <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                            {{ 'name-caps' | transloco }}
+                        </th>
+
+                        <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                            {{ "account-manager.admin-email" | transloco }}
+                        </th>
+                        <th class="px-6 py-4"></th>
+                    </tr>
+                </thead>
+
+                <tbody class="block xl:table-row-group">
+                    @for (org of orgs(); track org.id) {
+                    <tr
+                        class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
+
+                        <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                            <div class="flex flex-col">
+                                <span class="font-medium text-slate-900 text-sm">{{ org.name }}</span>
+                                <span class="text-xs text-gray-400">{{ org.customerId }}</span>
+                            </div>
+                        </td>
+                        <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                            <span class="font-medium text-slate-600 text-sm">{{ org.adminEmail === null ?
+                                ('account-manager.no-email-bound' | transloco) : org.adminEmail }}</span>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+
+
+            <div [class.hidden]="orgs().length === 0">
+                <app-pagination-bar [nextPageToken]="nextPageToken()" [isLoading]="isLoading()"
+                    (loadData)="loadOrganizations($event)" />
+            </div>
+            }
+        </div>
+    </div>
+</div>

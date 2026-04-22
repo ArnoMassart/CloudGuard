@@ -1,0 +1,84 @@
+<div class="w-full flex flex-col gap-8 mt-6">
+    <div class="w-full" [class.hidden]="usersWithoutRoles().length === 0">
+        <app-search-bar placeholder="{{ 'users.search' | transloco }}..."
+            (searchChange)="onSearchWithoutRoles($event)" />
+
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-4">
+            <div class="mx-6 mb-6">
+                <span class="font-medium md:text-lg text-[17px] text-slate-900">
+                    {{ 'account-manager.table-without.title' | transloco }}
+                </span>
+            </div>
+
+            @if (isLoadingWithoutRoles()) {
+            } @else if (usersWithoutRoles().length > 0) {
+            <app-accounts-manager-table [users]="usersWithoutRoles()" [orgs]="orgs()" [hasExistingRoles]="false"
+                [expandedRoles]="expandedRoles()" (actionClick)="openRoleChangeDialog($event, false)"
+                (orgChange)="onOrganizationChange($event.user)"
+                (toggleRoles)="toggleRolesSummary($event.email, $event.length)" />
+            }
+
+            <div [class.hidden]="usersWithoutRoles().length === 0">
+                <app-pagination-bar [nextPageToken]="nextPageTokenWithoutRoles()" [isLoading]="isLoadingWithoutRoles()"
+                    (loadData)="loadUsersWithoutRoles($event)" />
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full">
+        <div class="flex flex-wrap items-center gap-10">
+            <app-search-bar placeholder="{{ 'users.search' | transloco }}..." class="flex-3 min-w-50"
+                (searchChange)="onSearch($event)" />
+
+            <div
+                class="flex flex-1 flex-col sm:flex-row w-full items-start sm:items-center justify-start sm:justify-end gap-3 sm:gap-4">
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <i-lucide [img]="Icons.Funnel" size="18" />
+                    <span>Filter:</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-auto">
+                        <select [ngModel]="selectedOrganization()" (ngModelChange)="onOrgFilterChange($event)"
+                            class="w-full sm:w-56 appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-sm"
+                            [class.border-primary]="selectedOrganization() !== ''"
+                            [class.ring-1]="selectedOrganization() !== ''"
+                            [class.ring-primary]="selectedOrganization() !== ''">
+
+                            @for (org of uniqueOrganizations(); track org.id) {
+                            <option [value]="org.id">
+                                {{ org.id === '' ? (org.name | transloco) : org.name }}
+                            </option>
+                            }
+                        </select>
+
+                        <i-lucide [img]="Icons.ChevronDown" size="18"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                        </i-lucide>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50 mt-4">
+            <div class="mx-6 mb-6">
+                <span class="font-medium md:text-lg text-[17px] text-slate-900">
+                    {{ 'users.all' | transloco }}
+                </span>
+            </div>
+
+            @if (isLoading()) {
+            } @else if (users().length > 0) {
+            <app-accounts-manager-table [users]="users()" [orgs]="orgs()" [hasExistingRoles]="true"
+                [expandedRoles]="expandedRoles()" (actionClick)="openRoleChangeDialog($event, true)"
+                (orgChange)="onOrganizationChange($event.user)"
+                (toggleRoles)="toggleRolesSummary($event.email, $event.length)" />
+            }
+
+            <div [class.hidden]="users().length === 0">
+                <app-pagination-bar [nextPageToken]="nextPageToken()" [isLoading]="isLoading()"
+                    (loadData)="loadUsers($event)" />
+            </div>
+        </div>
+    </div>
+</div>

@@ -581,5 +581,10 @@
   "no-org.desc": "Je bent succesvol ingelogd, maar er is nog geen organisatie aan je account toegewezen.",
   "required-changes": "Request Type",
   "assign-org": "Organisatie Toewijzen",
-  "notification.created-at": "Aangemaakt op:"
+  "notification.created-at": "Aangemaakt op:",
+  "account-manager.tab.org": "Organisaties",
+  "account-manager.search-orgs": "Zoek organisaties op naam",
+  "account-manager.all-orgs": "Alle organisaties",
+  "account-manager.admin-email": "Admin Email",
+  "account-manager.no-email-bound": "Geen email verbonden"
 }

@@ -199,15 +199,15 @@ public class UserService {
         return false;
     }
 
-    public DatabaseUsersResponse getAll(String pageToken, int size, String query) {
-        return fetchUsersFromDb(pageToken, size, query, true);
+    public DatabaseUsersResponse getAll(String pageToken, int size, String query, String orgIdFilter) {
+        return fetchUsersFromDb(pageToken, size, query, orgIdFilter, true);
     }
 
     public DatabaseUsersResponse getAllWithRequestedRoleAndOrganization(String pageToken, int size, String query) {
-        return fetchUsersFromDb(pageToken, size, query, false);
+        return fetchUsersFromDb(pageToken, size, query, "", false);
     }
 
-    private DatabaseUsersResponse fetchUsersFromDb(String pageToken, int size, String query, boolean withoutRequests) {
+    private DatabaseUsersResponse fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName").ascending());
@@ -215,7 +215,13 @@ public class UserService {
         Page<User> userPage;
 
         if (withoutRequests) {
-            userPage = userRepository.findAllWithoutRequested(query, pageable);
+            // Safely parse the String to a Long. If it's empty/null, keep it null.
+            Long parsedOrgId = null;
+            if (orgIdFilter != null && !orgIdFilter.trim().isEmpty() && !orgIdFilter.equals("all")) {
+                parsedOrgId = Long.parseLong(orgIdFilter);
+            }
+
+            userPage = userRepository.findAllWithoutRequested(parsedOrgId, query, pageable);
         } else {
             userPage = userRepository.findAllByRoleRequestedWithSearch(query, pageable);
         }
@@ -258,7 +264,7 @@ public class UserService {
     }
 
     public long getAllRequestedCount() {
-        return userRepository.countByRoleRequestedTrueAndOrganizationRequestedTrue();
+        return userRepository.countByRoleRequestedTrueOrOrganizationRequestedTrue();
     }
 
     @Transactional

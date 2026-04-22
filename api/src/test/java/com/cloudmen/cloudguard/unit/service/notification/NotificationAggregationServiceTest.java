@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.unit.service.notification;
 
 import com.cloudmen.cloudguard.configuration.NotificationProjectionProperties;
+import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
@@ -16,7 +17,6 @@ import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
-import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
@@ -42,7 +42,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationAggregationServiceTest {
@@ -60,7 +59,7 @@ class NotificationAggregationServiceTest {
     @Mock UserSecurityPreferenceService preferenceService;
     @Mock NotificationInstanceRepository notificationInstanceRepository;
     @Mock NotificationProjectionProperties notificationProjectionProperties;
-    @Mock UserService userService; // Nieuwe service die userRepository vervangt
+    @Mock UserService userService;
     @Mock OrganizationService organizationService;
 
     private ResourceBundleMessageSource messageSource;
@@ -74,7 +73,6 @@ class NotificationAggregationServiceTest {
         messageSource.setFallbackToSystemLocale(false);
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 
-        // Geen UserRepository meer in de constructor
         service = new NotificationAggregationService(
                 domainService,
                 dnsRecordsService,
@@ -102,7 +100,6 @@ class NotificationAggregationServiceTest {
     @Test
     void getNotifications_addsCriticalUserControl_whenUsersWithout2fa() {
         stubQuietBaselines();
-        // Gebruik overal lenient() om UnnecessaryStubbingException te vermijden in deze complexe service
         lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
@@ -139,11 +136,11 @@ class NotificationAggregationServiceTest {
         orgUser.setOrganizationId(99L);
         orgUser.setRoles(List.of(UserRole.SUPER_ADMIN));
         lenient().when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(orgUser));
+        lenient().when(userService.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(orgUser);
 
         lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
-        // First visit: aggregate from live APIs, then exclude rows marked DISABLED in projection table
         lenient().when(notificationInstanceRepository.existsByOrganizationId(99L)).thenReturn(false);
         lenient()
                 .when(notificationInstanceRepository.findByOrganizationIdAndSourceAndNotificationType(
@@ -246,19 +243,19 @@ class NotificationAggregationServiceTest {
     void getNotifications_hidesSourceWhenViewerLacksMatchingViewerRole() {
         stubQuietBaselines();
 
-        // Maak een gebruiker aan die ALLEEN DNS rechten heeft (dus GEEN user/groups rechten)
         User viewer = new User();
         viewer.setEmail(GlobalTestHelper.ADMIN);
         viewer.setRoles(List.of(UserRole.DOMAIN_DNS_VIEWER));
+        viewer.setOrganizationId(99L); // Noodzakelijk voor de admin validatie check!
 
         lenient().when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(viewer));
+        lenient().when(userService.findByEmail(GlobalTestHelper.ADMIN)).thenReturn(viewer);
 
         lenient().when(usersService.getUsersPageOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
 
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
-        // Omdat de viewer geen rechten heeft op Users/Groups, is de notificatie niet gegenereerd
         assertTrue(response.active().isEmpty());
     }
 
@@ -305,11 +302,19 @@ class NotificationAggregationServiceTest {
     private void stubQuietBaselines() {
         lenient().when(notificationProjectionProperties.isReadEnabled()).thenReturn(true);
 
-        // Zorg dat de standaard mock-gebruiker een SUPER_ADMIN is, zodat alle modules worden aangesproken!
+        // Zorg dat de mock-organisatie altijd een geldig Admin e-mailadres klaar heeft staan
+        Organization mockOrg = new Organization();
+        mockOrg.setId(99L);
+        mockOrg.setAdminEmail(GlobalTestHelper.ADMIN);
+        lenient().when(organizationService.findById(anyLong())).thenReturn(Optional.of(mockOrg));
+
+        // Zorg dat de mock-gebruiker correct is gekoppeld aan de organisatie
         User superAdmin = new User();
         superAdmin.setEmail(GlobalTestHelper.ADMIN);
         superAdmin.setRoles(List.of(UserRole.SUPER_ADMIN));
+        superAdmin.setOrganizationId(99L);
         lenient().when(userService.findByEmailOptional(anyString())).thenReturn(Optional.of(superAdmin));
+        lenient().when(userService.findByEmail(anyString())).thenReturn(superAdmin);
 
         lenient().when(preferenceService.getDisabledPreferenceKeys(GlobalTestHelper.ADMIN)).thenReturn(Set.of());
         lenient().when(preferenceService.getDnsImportanceOverrides(GlobalTestHelper.ADMIN)).thenReturn(Map.of());

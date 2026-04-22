@@ -53,7 +53,7 @@ export class UserService {
     return this.#http.post(
       `${this.#API_URL}/refresh`,
       {},
-      { responseType: 'text', withCredentials: true },
+      { responseType: 'text', withCredentials: true }
     );
   }
 
@@ -78,7 +78,7 @@ export class UserService {
       {
         responseType: 'text',
         withCredentials: true,
-      },
+      }
     );
   }
 
@@ -97,7 +97,7 @@ export class UserService {
       {
         responseType: 'text',
         withCredentials: true,
-      },
+      }
     );
   }
 
@@ -128,12 +128,14 @@ export class UserService {
     size: number,
     pageToken?: string,
     query?: string,
+    org?: string
   ): Observable<DatabaseUsersResponse> {
     const url = RouteService.getBackendUrl('/user/all');
     let params = new HttpParams().set('size', size.toString());
 
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
+    if (org) params = params.set('orgFilter', org);
 
     return this.#http.get<DatabaseUsersResponse>(url, {
       params: params,
@@ -143,7 +145,7 @@ export class UserService {
   getAllDatabaseUsersWithoutRoles(
     size: number,
     pageToken?: string,
-    query?: string,
+    query?: string
   ): Observable<DatabaseUsersResponse> {
     const url = RouteService.getBackendUrl('/user/all/no-roles');
     let params = new HttpParams().set('size', size.toString());
@@ -182,7 +184,7 @@ export class UserService {
       .pipe(
         tap(() => {
           this.refreshRequestedCount();
-        }),
+        })
       );
   }
 
@@ -230,7 +232,7 @@ export class UserService {
       .pipe(
         tap(() => {
           this.refreshRequestedCount();
-        }),
+        })
       );
   }
 }
