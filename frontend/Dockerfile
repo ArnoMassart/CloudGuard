@@ -1,20 +1,7 @@
-# ---- Build stage ----
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-# ---- Runtime stage ----
 FROM nginx:alpine
-
-COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
-
-# Nginx config 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+# Verwijder standaard bestanden
+RUN rm -rf /usr/share/nginx/html/*
+# Kopieer de inhoud van de dist map (die we via SCP hebben gestuurd)
+COPY dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

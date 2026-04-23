@@ -45,7 +45,7 @@ public class TestController {
      */
     @GetMapping
     public ResponseEntity<String> test() {
-        return ResponseEntity.ok("API connection works!");
+        return ResponseEntity.ok("API connection works! V3");
     }
 
 
