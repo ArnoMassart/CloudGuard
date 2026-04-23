@@ -140,9 +140,10 @@ public class UserController {
     }
 
     /**
-     * Verifies
+     * Verifies if the authenticated user is linked to an organization.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if the user has an organization assigned
      */
     @GetMapping("/has-organization")
     public ResponseEntity<Boolean> hasOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -151,6 +152,18 @@ public class UserController {
         return ResponseEntity.ok(userService.hasOrganization(loggedInEmail));
     }
 
+    /**
+     * Retrieves a paginated and conditionally filtered list of all users. <p>
+     *
+     * This endpoint is used to oversee all users across the system, with optional filters for search terms and
+     * organizations.
+     *
+     * @param pageToken an optional token indicating which page to fetch
+     * @param size      the maximum number of users to return (default is 4)
+     * @param query     an optional search term to filter the user list
+     * @param orgFilter an optional organization ID to filter users
+     * @return a {@link ResponseEntity} containing a {@link DatabaseUsersResponse} with user and pagination data
+     */
     @GetMapping("/all")
     public ResponseEntity<DatabaseUsersResponse> getAllUsers(@RequestParam(required = false) String pageToken,
                                                              @RequestParam(defaultValue = "4") int size,
@@ -159,6 +172,14 @@ public class UserController {
         return ResponseEntity.ok(userService.getAll(pageToken, size, query, orgFilter));
     }
 
+    /**
+     * Retrieves a paginated list of users who have requested a role assignment but currently lack one.
+     *
+     * @param pageToken an optional token indicating which page to fetch
+     * @param size      the maximum number of users to return (default is 4)
+     * @param query     an optional search term to filter the list
+     * @return a {@link ResponseEntity} containing a {@link DatabaseUsersResponse} with the requested users
+     */
     @GetMapping("/all/no-roles")
     public ResponseEntity<DatabaseUsersResponse> getAllUsersWithRequestedRole(@RequestParam(required = false) String pageToken,
                                                              @RequestParam(defaultValue = "4") int size,
@@ -166,15 +187,22 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllWithRequestedRoleAndOrganization(pageToken, size, query));
     }
 
+    /**
+     * Retrieves the total count of users who have requested a role assignment but currently lack one.
+     *
+     * @return a {@link ResponseEntity} containing the count as a {@link Long}
+     */
     @GetMapping("/all/requested-count")
     public ResponseEntity<Long> getAllRequestedCount() {
         return ResponseEntity.ok(userService.getAllRequestedCount());
     }
 
     /**
+     * Updates the assigned roles for a specific user.
      *
-     *
-     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param token     the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param request   the payload containing the user's email and new roles
+     * @return an empty {@link ResponseEntity} indicating success
      */
     @PostMapping("/roles")
     public ResponseEntity<Void> updateRoles(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserUpdateRoleRequest request) {
@@ -186,9 +214,12 @@ public class UserController {
     }
 
     /**
+     * Updates the assigned roles for a specific user who previously had no roles, and clears their pending request
+     * status.
      *
-     *
-     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param token     the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param request   the payload containing the user's email and new roles
+     * @return an empty {@link ResponseEntity} indicating success
      */
     @PostMapping("/roles-without")
     public ResponseEntity<Void> updateRolesForUserWithoutAny(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserUpdateRoleRequest request) {
@@ -200,9 +231,11 @@ public class UserController {
     }
 
     /**
-     *
+     * Updates the organization assignment for a specific user.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param request the payload containing the user's email and the new organization ID
+     * @return an empty {@link ResponseEntity} indicating success
      */
     @PostMapping("/org-change")
     public ResponseEntity<Void> updateUsersOrganization(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UsersUpdateOrganizationRequest request) {
@@ -214,9 +247,11 @@ public class UserController {
     }
 
     /**
-     *
+     * Checks if the organization associated with the authenticated user is fully configured (e.g., Domain-Wide
+     * Delegation is active).
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating the organization's setup status
      */
     @GetMapping("/org-setup-status")
     public ResponseEntity<Boolean> isOrganizationSetup(
