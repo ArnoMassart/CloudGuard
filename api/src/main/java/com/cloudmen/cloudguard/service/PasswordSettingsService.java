@@ -352,9 +352,9 @@ public class PasswordSettingsService {
      * - Password strength (10%): true→100, false→0
      * - Password history (5%): not used for score, always 100
      */
-    record SecurityScoreResult(int score, SecurityScoreBreakdownDto breakdown) {}
+    public record SecurityScoreResult(int score, SecurityScoreBreakdownDto breakdown) {}
 
-    SecurityScoreResult calculateSecurityScoreWithBreakdown(
+    public SecurityScoreResult calculateSecurityScoreWithBreakdown(
             int totalAdmins,
             int adminsWithoutKeys,
             PasswordSettingsSummaryDto summary,

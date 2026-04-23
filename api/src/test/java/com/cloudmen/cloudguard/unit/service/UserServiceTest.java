@@ -37,9 +37,16 @@ public class UserServiceTest {
     @Mock
     private MessageSource messageSource;
 
+    @Mock
     private UserService userService;
+
+    @Mock
     private AccessRequestEmailService accessRequestEmailService;
+
+    @Mock
     private GoogleApiFactory googleApiFactory;
+
+    @Mock
     private OrganizationService organizationService;
 
     @BeforeEach
