@@ -39,9 +39,17 @@ public class GoogleUsersController {
     }
 
     /**
+     * Retrieves a paginated and conditionally filtered list of users within the organization. <p>
      *
+     * This endpoint supports pagination via a page token and a customizable page size. It also allows searching for
+     * specific users using an optional query parameter.
      *
-     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param token     the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param pageToken the token indicating which page of results to fetch
+     * @param size      the maximum number of users to return (default is 3)
+     * @param query     an optional search term to filter the user list
+     * @return a {@link ResponseEntity} containing a {@link UserPageResponse} with the requested users and pagination
+     * details
      */
     @GetMapping
     public ResponseEntity<UserPageResponse> getOrgUsers(
@@ -54,9 +62,13 @@ public class GoogleUsersController {
     }
 
     /**
+     * Retrieves a list of users who currently do not have Two-Factor Authentication (2FA) enforced or enabled. <p>
      *
+     * This endpoint is primarily used by the notification system to alert administrators of potential security
+     * vulnerabilities within the organization's user base.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a {@link UsersWithoutTwoFactorResponse} with the non-compliant users
      */
     @GetMapping("/without-two-factor")
     public ResponseEntity<UsersWithoutTwoFactorResponse> getUsersWithoutTwoFactor(
@@ -66,9 +78,13 @@ public class GoogleUsersController {
     }
 
     /**
+     * Retrieves a high-level overview and security metrics regarding the organization's users. <p>
      *
+     * This includes aggregated data such as total active users, suspended accounts, and 2FA adoption rates. The
+     * response is tailored based on the authenticated user's disabled security preferences.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a {@link UserOverviewResponse} with the aggregated user metrics
      */
     @GetMapping("/overview")
     public ResponseEntity<UserOverviewResponse> getUsersPageOverview(
@@ -78,9 +94,13 @@ public class GoogleUsersController {
     }
 
     /**
+     * Forces a manual refresh of the Google Workspace users cache. <p>
      *
+     * This endpoint is useful when a user want to immediately synchronize the local system with the latest
+     * users data from Google Workspace, bypassing the scheduled caching intervals.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} confirming that the cache was successfully refreshed
      */
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshUsersCache(
