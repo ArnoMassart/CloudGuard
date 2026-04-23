@@ -24,7 +24,10 @@ public class OrganizationController {
     private final OrganizationService organizationService;
 
     /**
-     * Contructs a new {@link OrganizationController} with the required services
+     * Constructs a new {@link OrganizationController} with the required services.
+     *
+     * @param jwtService            the service used to validate the session token
+     * @param organizationService   the service handling organization data operations
      */
     public OrganizationController(JwtService jwtService, OrganizationService organizationService) {
         this.jwtService = jwtService;
@@ -32,9 +35,13 @@ public class OrganizationController {
     }
 
     /**
+     * Retrieves a comprehensive list of all organizations. <p>
      *
+     * This endpoint fetches all available organizations in the system without pagination. It is primarily used for
+     * retrieving a complete dataset for administrative overviews.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a {@link List} of all {@link Organization} entities
      */
     @GetMapping("/all")
     public ResponseEntity<List<Organization>> getAll(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -44,9 +51,15 @@ public class OrganizationController {
     }
 
     /**
+     * Retrieves a paginated and conditionally filtered list of organizations. <p>
      *
+     * This endpoint supports pagination via a page token and a customizable page size. It also allows searching for
+     * specific organizations using an optional query parameter.
      *
-     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param token     the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param pageToken the token indicating which page of results to fetch
+     * @param size      the maximum number of organizations to return (default is 4)
+     * @param query
      */
     @GetMapping("/all-paged")
     public ResponseEntity<DatabaseOrgResponse> getAllPaged(@CookieValue(name = "AuthToken", required = false) String token,
