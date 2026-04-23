@@ -71,15 +71,11 @@ deploy:production:
     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to /cloudguard on $SERVER_IP..."
-    # Kopieer docker-compose naar de juiste map
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:/cloudguard/
-
-    # Voer commando's uit in de root-map
-    - ssh $SERVER_USER@$SERVER_IP "
+    - |
+      ssh $SERVER_USER@$SERVER_IP "
         cd /cloudguard &&
-        # Herbouw en herstart de specifieke gewijzigde services
         docker compose up -d --build &&
-        # Verwijder oude images en gestopte containers om schijfruimte te besparen
         docker system prune -af
       "
   tags:
