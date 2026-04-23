@@ -35,7 +35,7 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=le"
       # Pas deze poort aan als je Spring Boot applicatie op een andere poort draait (standaard is vaak 8080)
-      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+      - "traefik.http.services.backend.loadbalancer.server.port=8081"
 
   frontend:
     build: ./frontend

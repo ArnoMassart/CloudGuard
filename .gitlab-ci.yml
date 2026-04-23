@@ -1,4 +1,7 @@
-stages: [test, build]
+stages:
+  - test
+  - build
+  - deploy
 
 backend:test:
   stage: test
@@ -51,5 +54,33 @@ frontend:build:
     paths:
       - frontend/dist/
     expire_in: 1 week
+  tags:
+    - docker
+
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+  script:
+    - echo "Deploying to /cloudguard on $SERVER_IP..."
+    # Kopieer docker-compose naar de juiste map
+    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:/cloudguard/
+
+    # Voer commando's uit in de root-map
+    - ssh $SERVER_USER@$SERVER_IP "
+        cd /cloudguard &&
+        # Herbouw en herstart de specifieke gewijzigde services
+        docker compose up -d --build &&
+        # Verwijder oude images en gestopte containers om schijfruimte te besparen
+        docker system prune -af
+      "
   tags:
     - docker
