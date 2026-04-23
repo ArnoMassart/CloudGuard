@@ -186,10 +186,6 @@ public class GoogleOAuthService {
             securityScore = (int) Math.max(0, 100 - Math.round(penalty));
         }
 
-        if (apps.isEmpty()) {
-            securityScore = 0;
-        }
-
         SecurityScoreBreakdownDto breakdown = buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, totalPermissionsGranted, securityScore, ignHighRisk);
 
         return new OAuthOverviewResponse(

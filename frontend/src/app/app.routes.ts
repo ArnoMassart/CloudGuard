@@ -26,6 +26,8 @@ import { Role } from './models/users/User';
 import { AccessDenied } from './pages/access-denied/access-denied';
 import { NoOrganization } from './pages/no-organization/no-organization';
 import { CLOUDMEN_ADMIN_EMAIL } from '../env';
+import { WorkspaceSetup } from './pages/workspace-setup/workspace-setup';
+import { PageAccessDenied } from './pages/page-access-denied/page-access-denied';
 
 export const routes: Routes = [
   {
@@ -49,6 +51,10 @@ export const routes: Routes = [
     component: AccessDenied,
   },
   {
+    path: 'no-page-access',
+    component: PageAccessDenied,
+  },
+  {
     path: 'request-access',
     component: RequestAccess,
   },
@@ -59,6 +65,10 @@ export const routes: Routes = [
   {
     path: 'server-error',
     component: ServerError,
+  },
+  {
+    path: 'setup',
+    component: WorkspaceSetup,
   },
   {
     path: '',

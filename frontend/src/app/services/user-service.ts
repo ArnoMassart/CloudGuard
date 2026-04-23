@@ -235,4 +235,12 @@ export class UserService {
         })
       );
   }
+
+  isOrganizationSetup(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/org-setup-status');
+
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
 }

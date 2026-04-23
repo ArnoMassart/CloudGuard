@@ -6,7 +6,9 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.AccessRequestEmailService;
+import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,10 +39,12 @@ public class UserServiceTest {
 
     private UserService userService;
     private AccessRequestEmailService accessRequestEmailService;
+    private GoogleApiFactory googleApiFactory;
+    private OrganizationService organizationService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, organizationRepository, messageSource, accessRequestEmailService);
+        userService = new UserService(userRepository, organizationRepository, messageSource, accessRequestEmailService, organizationService, googleApiFactory);
     }
 
     @Test

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mysql:
     image: mysql:8.3
@@ -16,6 +14,9 @@ services:
   backend:
     build: ./api
     container_name: cloudguard-backend
+    restart: unless-stopped
+    env_file:
+      - ./api/.env
     depends_on:
       - mysql
     environment:
@@ -27,32 +28,31 @@ services:
       - internal
       - traefik
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.api.rule=Host(`api.cloudguardstage.com`)
-      - traefik.http.routers.api.entrypoints=websecure
-      - traefik.http.routers.api.tls.certresolver=le
-      - traefik.http.services.api.loadbalancer.server.port=8080
-    ports:
-      - "8081:8080"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      # We zeggen hier: "Als het domein klopt, EN de URL begint met /api, stuur het naar de backend"
+      - "traefik.http.routers.backend.rule=Host(`cloudguard.cloudmen.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=le"
+      # Pas deze poort aan als je Spring Boot applicatie op een andere poort draait (standaard is vaak 8080)
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
 
   frontend:
     build: ./frontend
     container_name: cloudguard-frontend
+    restart: unless-stopped
     depends_on:
       - backend
-    environment:
-      - BACKEND_URL=http://backend:8080
     networks:
       - internal
       - traefik
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.app.rule=Host(`app.cloudguardstage.com`)
-      - traefik.http.routers.app.entrypoints=websecure
-      - traefik.http.routers.app.tls.certresolver=le
-      - traefik.http.services.app.loadbalancer.server.port=80
-    ports:
-      - "4200:80"
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.frontend.rule=Host(`cloudguard.cloudmen.net`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=le"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80" # Interne Angular/Nginx poort
 
 volumes:
   mysql_data:

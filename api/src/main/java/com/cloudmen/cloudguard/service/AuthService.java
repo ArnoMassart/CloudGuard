@@ -7,6 +7,11 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.google.api.services.admin.directory.Directory;
+import com.google.api.services.admin.directory.DirectoryScopes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -15,23 +20,26 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final OrganizationService organizationService;
     private final WorkspaceCustomerIdResolver workspaceCustomerIdResolver;
+    private final GoogleApiFactory googleApiFactory;
 
     public AuthService(
             UserService userService,
             JwtService jwtService,
             UserRepository userRepository,
             OrganizationService organizationService,
-            WorkspaceCustomerIdResolver workspaceCustomerIdResolver) {
+            WorkspaceCustomerIdResolver workspaceCustomerIdResolver, GoogleApiFactory googleApiFactory) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.organizationService = organizationService;
         this.workspaceCustomerIdResolver = workspaceCustomerIdResolver;
+        this.googleApiFactory = googleApiFactory;
     }
 
     public LoginResult processLogin(String externalIdToken) {
@@ -44,23 +52,19 @@ public class AuthService {
         User user = userService.findByEmailOptional(email)
                 .orElseGet(() -> registerNewUser(jwt));
 
-        boolean isGoogleSuperAdmin = jwtService.isGoogleAdmin(jwt);
-
-        if (isGoogleSuperAdmin) {
-            Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
-            String workspaceCustomerId = resolved
-                    .map(WorkspaceCustomer::id)
-                    .or(() -> Optional.ofNullable(jwt.getClaimAsString(WorkspaceIdentityClaims.GOOGLE_WORKSPACE_CUSTOMER_ID))
-                            .filter(s -> !s.isBlank())
-                            .map(String::trim))
-                    .orElse(null);
-            String workspaceDisplayName = resolved
-                    .map(WorkspaceCustomer::displayName)
-                    .orElse(null);
-            organizationService.ensureUserLinkedToOrganization(user, workspaceCustomerId, workspaceDisplayName);
+        if (user.getRoles().isEmpty()) {
+            user.getRoles().add(UserRole.UNASSIGNED); // Of UserRole.USER
+            userService.save(user);
         }
 
-        syncSuperAdminStatus(user, isGoogleSuperAdmin);
+        Optional<WorkspaceCustomer> resolved = workspaceCustomerIdResolver.resolveWorkspaceCustomer(email);
+        resolved.ifPresent(customer -> {
+            organizationService.ensureUserLinkedToOrganization(
+                    user, customer.id(), customer.displayName());
+
+            // AUTOMATISCHE SUPER-ADMIN CHECK (Multi-tenant DWD)
+            checkAndPromoteAdmin(user);
+        });
 
         // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");
@@ -79,6 +83,47 @@ public class AuthService {
         return new LoginResult(cookie, userDto);
     }
 
+    private void checkAndPromoteAdmin(User user) {
+        organizationService.findById(user.getOrganizationId()).ifPresent(org -> {
+            // Bepaal welk emailadres we gebruiken voor de DWD-test
+            String impersonationEmail = org.getAdminEmail();
+            boolean isFirstTimeSetup = false;
+
+            if (impersonationEmail == null || impersonationEmail.isBlank()) {
+                impersonationEmail = user.getEmail();
+                isFirstTimeSetup = true;
+            }
+
+            try {
+                // Bouw de Directory service via impersonatie
+                Directory directory = googleApiFactory.getDirectoryService(
+                        DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY,
+                        impersonationEmail
+                );
+
+                // Controleer of de inloggende gebruiker een admin is in Google Workspace
+                com.google.api.services.admin.directory.model.User googleUser =
+                        directory.users().get(user.getEmail()).execute();
+
+                if (Boolean.TRUE.equals(googleUser.getIsAdmin())) {
+                    // 1. Promoveer de gebruiker lokaal naar SUPER_ADMIN
+                    user.getRoles().clear();
+                    user.getRoles().add(UserRole.SUPER_ADMIN);
+                    userService.save(user);
+
+                    // 2. Als dit de eerste keer is, sla dit adres op als de org-admin
+                    if (isFirstTimeSetup) {
+                        organizationService.updateAdminEmailForOrg(user.getEmail(), org);
+                    }
+                }
+            } catch (Exception e) {
+                // De impersonatie faalt waarschijnlijk omdat DWD nog niet is ingesteld [cite: 4]
+                // We laten de gebruiker UNASSIGNED, de frontend stuurt ze naar /setup [cite: 12, 19]
+                System.err.println("DWD auto-discovery failed for: " + user.getEmail());
+            }
+        });
+    }
+
     private User registerNewUser(Jwt jwt) {
         User newUser = new User();
 
@@ -91,35 +136,6 @@ public class AuthService {
         newUser.setCreatedAt(java.time.LocalDateTime.now());
 
         return userService.save(newUser);
-    }
-
-    private void syncSuperAdminStatus(User user, boolean isGoogleAdmin) {
-        boolean hasSuperAdminRole = user.getRoles().contains(UserRole.SUPER_ADMIN);
-
-        if (isGoogleAdmin) {
-            if (user.getOrganizationId() != null) {
-                organizationService.findById(user.getOrganizationId()).ifPresent(org -> {
-                    organizationService.updateAdminEmailForOrg(user.getEmail(), org);
-                });
-            }
-
-            if (!hasSuperAdminRole) {
-                user.getRoles().clear();
-                user.getRoles().add(UserRole.SUPER_ADMIN);
-                userService.save(user);
-            }
-        } else {
-            boolean rolesUpdated = false;
-
-            if (user.getRoles().isEmpty()) {
-                user.getRoles().add(UserRole.UNASSIGNED);
-                rolesUpdated = true;
-            }
-
-            if (rolesUpdated) {
-                userService.save(user);
-            }
-        }
     }
 
     public UserDto validateSession(String token) {
