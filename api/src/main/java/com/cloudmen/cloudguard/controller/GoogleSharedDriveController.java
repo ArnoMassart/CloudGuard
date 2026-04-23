@@ -87,7 +87,7 @@ public class GoogleSharedDriveController {
      * shared drives data from Google Workspace, bypassing the scheduled caching intervals.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
-     * @return a {@link ResponseEntity} containing a {@link }
+     * @return a {@link ResponseEntity} confirming that the cache was successfully refreshed
      */
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshUsersCache(
