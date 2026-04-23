@@ -11,17 +11,28 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ *
+ */
 @RestController
 @RequestMapping("/user")
 public class UserController {
     private final JwtService jwtService;
     private final UserService userService;
 
+    /**
+     *
+     */
     public UserController(JwtService jwtService, UserService userService) {
         this.jwtService = jwtService;
         this.userService = userService;
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @GetMapping("/language")
     public ResponseEntity<String> getLanguage(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -29,6 +40,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getLanguage(loggedInEmail));
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @PostMapping("/language")
     public ResponseEntity<Void> updateLanguage(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody Map<String, String> request) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -40,6 +56,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @GetMapping("/request-access")
     public ResponseEntity<Boolean> getRequestRoleAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -47,6 +68,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getRoleRequested(loggedInEmail));
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @PostMapping("/request-access")
     public ResponseEntity<String> requestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -56,6 +82,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @GetMapping("/no-organization")
     public ResponseEntity<Boolean> getRequestNoOrganizationSent(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -63,6 +94,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getNoOrganizationRequested(loggedInEmail));
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @PostMapping("/no-organization")
     public ResponseEntity<String> requestNoOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -72,6 +108,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @GetMapping("/valid-role")
     public ResponseEntity<Boolean> hasValidRole(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -80,9 +121,9 @@ public class UserController {
     }
 
     /**
-     * Checks if a specific role is assigned to the authenticated user. <p>
-     * * This endpoint is crucial for the frontend callback to determine if
-     * the user has the 'UNASSIGNED' role and needs to be redirected to setup.
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
      */
     @GetMapping("/has-role")
     public ResponseEntity<Boolean> hasRole(
@@ -93,6 +134,11 @@ public class UserController {
         return ResponseEntity.ok(userService.hasRole(loggedInEmail, role));
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @GetMapping("/has-organization")
     public ResponseEntity<Boolean> hasOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -120,6 +166,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllRequestedCount());
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @PostMapping("/roles")
     public ResponseEntity<Void> updateRoles(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserUpdateRoleRequest request) {
        jwtService.validateInternalToken(token);
@@ -129,6 +180,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @PostMapping("/roles-without")
     public ResponseEntity<Void> updateRolesForUserWithoutAny(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserUpdateRoleRequest request) {
         jwtService.validateInternalToken(token);
@@ -138,6 +194,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @PostMapping("/org-change")
     public ResponseEntity<Void> updateUsersOrganization(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UsersUpdateOrganizationRequest request) {
         jwtService.validateInternalToken(token);
@@ -147,6 +208,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     *
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     */
     @GetMapping("/org-setup-status")
     public ResponseEntity<Boolean> isOrganizationSetup(
             @CookieValue(name = "AuthToken", required = false) String token) {
