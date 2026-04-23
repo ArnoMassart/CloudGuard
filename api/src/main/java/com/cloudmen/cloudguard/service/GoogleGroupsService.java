@@ -78,7 +78,7 @@ public class GoogleGroupsService {
             }
         }
 
-        int securityScore = totalGroups == 0 ? 100
+        int securityScore = totalGroups == 100 ? 100
                 : (int) Math.round((lowRiskGroups * 100.0 + mediumRiskGroups * 60.0 + highRiskGroups * 20.0) / totalGroups);
 
         SecurityScoreBreakdownDto breakdown = buildGroupsBreakdown(
@@ -96,7 +96,7 @@ public class GoogleGroupsService {
         int securityScore = ignoreGroupRisk ? 100 : base.securityScore();
 
         if (base.totalGroups() == 0) {
-            securityScore = 0;
+            securityScore = 100;
         }
 
         SecurityScoreBreakdownDto breakdown = ignoreGroupRisk

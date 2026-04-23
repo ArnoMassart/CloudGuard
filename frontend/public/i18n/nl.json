@@ -581,5 +581,16 @@
   "no-org.desc": "Je bent succesvol ingelogd, maar er is nog geen organisatie aan je account toegewezen.",
   "required-changes": "Request Type",
   "assign-org": "Organisatie Toewijzen",
-  "notification.created-at": "Aangemaakt op:"
+  "notification.created-at": "Aangemaakt op:",
+  "setup.title": "Configureer Google Workspace",
+  "setup.subtitle": "Koppel uw Google-omgeving aan CloudGuard om de beveiliging te activeren.",
+  "setup.step1_title": "Toegang tot Google Admin Console",
+  "setup.step1_desc": "Log in op de Google Admin Console van uw organisatie met een beheerderaccount.",
+  "setup.step2_title": "Domeinbrede delegatie instellen",
+  "setup.step2_desc": "Navigeer naar Beveiliging > API-instellingen > Domeinbrede delegatie en voeg een nieuwe client toe met de onderstaande gegevens.",
+  "setup.step3_title": "Configuratie verifiëren",
+  "setup.step3_desc": "Voer het e-mailadres in van een beheerder binnen uw Google Workspace om de verbinding te testen via impersonatie.",
+  "setup.btn_verify": "Verificatie Uitvoeren",
+  "setup.btn_verifying": "Bezig met controleren...",
+  "setup.error_verification_failed": "Verificatie mislukt. Controleer of de Client ID en alle OAuth Scopes correct zijn overgenomen in de Google Admin Console."
 }

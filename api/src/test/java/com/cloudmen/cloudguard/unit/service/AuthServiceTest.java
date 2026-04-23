@@ -13,6 +13,7 @@ import com.cloudmen.cloudguard.service.WorkspaceCustomerIdResolver;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.unit.helper.AuthTestHelper;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +50,7 @@ public class AuthServiceTest {
     private WorkspaceCustomerIdResolver workspaceCustomerIdResolver;
 
     private AuthService authService;
+    private GoogleApiFactory googleApiFactory;
 
     @BeforeEach
     void setUp() {
@@ -57,7 +59,8 @@ public class AuthServiceTest {
                 jwtService,
                 userRepository,
                 organizationService,
-                workspaceCustomerIdResolver);
+                workspaceCustomerIdResolver,
+                googleApiFactory);
         lenient().when(workspaceCustomerIdResolver.resolveWorkspaceCustomer(any())).thenReturn(Optional.empty());
     }
 

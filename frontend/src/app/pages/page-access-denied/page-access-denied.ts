@@ -1,23 +1,22 @@
 import { Component, inject } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideAngularModule } from 'lucide-angular';
-import { CustomAuthService } from '../../auth/custom-auth-service';
 import { LanguageBar } from '../../components/language-bar/language-bar';
 import { AppIcons } from '../../shared/AppIcons';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-access-denied',
+  selector: 'app-page-access-denied',
   imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
-  templateUrl: './access-denied.html',
-  styleUrl: './access-denied.css',
+  templateUrl: './page-access-denied.html',
+  styleUrl: './page-access-denied.css',
 })
-export class AccessDenied {
+export class PageAccessDenied {
   readonly Icons = AppIcons;
 
-  readonly #authService = inject(CustomAuthService);
+  readonly #router = inject(Router);
 
-  backToLogin() {
-    this.#authService.logout();
+  backToHome() {
+    this.#router.navigate(['/home']);
   }
 }

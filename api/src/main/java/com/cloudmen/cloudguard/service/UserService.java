@@ -7,6 +7,8 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.exception.UserNotFoundException;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.utility.GoogleApiFactory;
+import com.google.api.services.admin.directory.DirectoryScopes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -36,15 +38,19 @@ public class UserService {
     private final OrganizationRepository organizationRepository;
     private final MessageSource messageSource;
     private final AccessRequestEmailService accessRequestEmailService;
+    private final OrganizationService organizationService;
+    private final GoogleApiFactory googleApiFactory;
 
     public UserService(
             UserRepository userRepository,
             OrganizationRepository organizationRepository,
-            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService) {
+            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.messageSource = messageSource;
         this.accessRequestEmailService = accessRequestEmailService;
+        this.organizationService = organizationService;
+        this.googleApiFactory = googleApiFactory;
     }
 
     public UserDto convertToDto(User user) {
@@ -268,5 +274,42 @@ public class UserService {
            user.setOrganizationRequested(false);
            userRepository.save(user);
         });
+    }
+
+    public boolean hasRole(String userEmail, UserRole role) {
+        User user = findByEmail(userEmail);
+
+        return user.getRoles().contains(role);
+    }
+
+    public boolean isOrganizationSetup(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getOrganizationId)
+                .flatMap(organizationService::findById)
+                .map(org -> {
+                    String adminEmail = org.getAdminEmail();
+                    if (adminEmail == null || adminEmail.isBlank()) {
+                        return false; // Geen admin e-mail ingesteld [cite: 18]
+                    }
+                    // Controleer of de Domain-Wide Delegation effectief werkt [cite: 7, 16]
+                    return verifyDwdStatus(adminEmail);
+                })
+                .orElse(false);
+    }
+
+
+    private boolean verifyDwdStatus(String adminEmail) {
+        try {
+            var directory = googleApiFactory.getDirectoryService(
+                    DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY,
+                    adminEmail
+            );
+            // Test call: Haal 1 gebruiker op. Slaagt dit, dan staat DWD aan.
+            directory.users().list().setCustomer("my_customer").setMaxResults(1).execute();
+            return true;
+        } catch (Exception e) {
+            // DWD is mogelijk ingetrokken of onjuist geconfigureerd
+            return false;
+        }
     }
 }
