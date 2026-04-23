@@ -592,5 +592,10 @@
   "setup.step3_desc": "Enter the email address of an administrator within your Google Workspace to test the connection via impersonation.",
   "setup.step3_title": "Verify configuration",
   "setup.subtitle": "Connect your Google environment to CloudGuard to activate security.",
-  "setup.title": "Configure Google Workspace"
+  "setup.title": "Configure Google Workspace",
+  "account-manager.tab.org": "Organizations",
+  "account-manager.admin-email": "Admin Email",
+  "account-manager.all-orgs": "All organizations",
+  "account-manager.no-email-bound": "No email connected",
+  "account-manager.search-orgs": "Search organizations by name"
 }

@@ -2,12 +2,17 @@ package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.dto.organization.DatabaseOrgResponse;
 import com.cloudmen.cloudguard.exception.OrganizationNotNullException;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,5 +129,17 @@ public class OrganizationService {
 
     public List<Organization> getAll() {
         return organizationRepository.findAll();
+    }
+
+    public DatabaseOrgResponse getAllPaged(String pageToken, int size, String query) {
+        int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Page<Organization> orgPage = organizationRepository.findAllWithSearch(query, pageable);
+
+        String nextPageToken = orgPage.hasNext() ? String.valueOf(page + 1) : null;
+
+        return new DatabaseOrgResponse(orgPage.toList(), nextPageToken);
     }
 }

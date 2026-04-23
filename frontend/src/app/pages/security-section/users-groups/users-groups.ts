@@ -3,7 +3,7 @@ import { PageHeader } from '../../../components/page-header/page-header';
 import { LucideAngularModule } from 'lucide-angular';
 import { UsersSection } from './users-section/users-section';
 import { GroupsSection } from './groups-section/groups-section';
-import { SectionType } from '../../../models/SectionType';
+import { UserGroupSectionType } from '../../../models/UserGroupSectionType';
 import { CommonModule } from '@angular/common';
 import { AppIcons } from '../../../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -30,7 +30,7 @@ export class UsersGroups implements OnInit {
   // ==========================================
   // PUBLIC PROPERTIES & SIGNALS
   // ==========================================
-  currentSection = signal<SectionType>('USERS');
+  currentSection = signal<UserGroupSectionType>('USERS');
 
   // ==========================================
   // LIFECYCLE HOOKS
@@ -48,14 +48,14 @@ export class UsersGroups implements OnInit {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
-  togglePage(section: SectionType) {
+  togglePage(section: UserGroupSectionType) {
     if (this.currentSection() !== section) {
       this.currentSection.set(section);
       sessionStorage.setItem('user-group-section', section);
     }
   }
 
-  getTabClass(section: SectionType) {
+  getTabClass(section: UserGroupSectionType) {
     const isActive = this.currentSection() === section;
     return {
       'border-primary text-black': isActive,

@@ -592,5 +592,10 @@
   "setup.step3_desc": "Voer het e-mailadres in van een beheerder binnen uw Google Workspace om de verbinding te testen via impersonatie.",
   "setup.btn_verify": "Verificatie Uitvoeren",
   "setup.btn_verifying": "Bezig met controleren...",
-  "setup.error_verification_failed": "Verificatie mislukt. Controleer of de Client ID en alle OAuth Scopes correct zijn overgenomen in de Google Admin Console."
+  "setup.error_verification_failed": "Verificatie mislukt. Controleer of de Client ID en alle OAuth Scopes correct zijn overgenomen in de Google Admin Console.",
+  "account-manager.tab.org": "Organisaties",
+  "account-manager.search-orgs": "Zoek organisaties op naam",
+  "account-manager.all-orgs": "Alle organisaties",
+  "account-manager.admin-email": "Admin Email",
+  "account-manager.no-email-bound": "Geen email verbonden"
 }

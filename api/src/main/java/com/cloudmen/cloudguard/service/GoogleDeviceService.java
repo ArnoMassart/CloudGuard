@@ -112,7 +112,7 @@ public class GoogleDeviceService {
         }
 
         List<String> sortedTypes = new ArrayList<>(uniqueTypes);
-        Collections.sort(sortedTypes);
+        sortedTypes.sort(String.CASE_INSENSITIVE_ORDER);
         return sortedTypes;
     }
 

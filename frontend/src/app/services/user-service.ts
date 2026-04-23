@@ -127,13 +127,15 @@ export class UserService {
   getAllDatabaseUsers(
     size: number,
     pageToken?: string,
-    query?: string
+    query?: string,
+    org?: string
   ): Observable<DatabaseUsersResponse> {
     const url = RouteService.getBackendUrl('/user/all');
     let params = new HttpParams().set('size', size.toString());
 
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
+    if (org) params = params.set('orgFilter', org);
 
     return this.#http.get<DatabaseUsersResponse>(url, {
       params: params,

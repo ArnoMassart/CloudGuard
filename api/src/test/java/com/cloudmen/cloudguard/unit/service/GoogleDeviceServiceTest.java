@@ -62,7 +62,7 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile), List.of(chrome), List.of(endpoint));
 
-        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all", Set.of());
+        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "Alle apparaat typen", Set.of());
 
         assertEquals(3, page.devices().size());
         assertTrue(page.devices().stream().anyMatch(d -> d.os().contains("Android")));
@@ -78,7 +78,7 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile1, mobile2), List.of(chrome), List.of());
 
-        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "all", Set.of());
+        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "Alle apparaat typen", Set.of());
         assertEquals(2, pageStatus.devices().size());
 
         var pageType = service.getDevicesPaged(ADMIN, null, 10, "ALL", "ios", Set.of());
@@ -94,11 +94,11 @@ public class GoogleDeviceServiceTest {
         }
         mockCacheEntry(deviceCacheService, mobiles, List.of(), List.of());
 
-        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "all", Set.of());
+        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "Alle apparaat typen", Set.of());
         assertEquals(2, page1.devices().size());
         assertEquals("2", page1.nextPageToken());
 
-        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "all", Set.of());
+        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "Alle apparaat typen", Set.of());
         assertEquals(1, page3.devices().size());
         assertNull(page3.nextPageToken());
     }
@@ -106,7 +106,7 @@ public class GoogleDeviceServiceTest {
     @Test
     void getUniqueDeviceTypes_normalizesAndSortsOSNames() {
         var m1 = createMobileDevice("1", "a@x.com", "Android 14", "APPROVED", "x", "x", "x", daysAgo(1));
-        var m2 = createMobileDevice("2", "b@x.com", "ios 17.1", "APPROVED", "x", "x", "x", daysAgo(1));
+        var m2 = createMobileDevice("2", "b@x.com", "iOS 17.1", "APPROVED", "x", "x", "x", daysAgo(1));
         var m3 = createMobileDevice("3", "c@x.com", "Windows 11", "APPROVED", "x", "x", "x", daysAgo(1));
         var c1 = createChromeOsDevice("4", "d@x.com", "114.0", "ACTIVE", daysAgo(1));
 

@@ -21,7 +21,6 @@ import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
-import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
@@ -29,7 +28,6 @@ import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -137,11 +135,12 @@ public class NotificationAggregationService {
     public NotificationsResponse getNotifications(String userId, Locale locale) {
         User user = userService.findByEmailOptional(userId).orElse(null);
 
-        // Check for admin email before getting the notifications
-        String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(userId, userService, organizationService);
-        if (adminEmail == null || adminEmail.isEmpty()) {
-            throw new GoogleWorkspaceSyncException("Error getting the notifications: No Admin email configured");
-        }
+        /*
+         * Admin email is only needed when we actually call Google (live aggregation path).
+         * The DB projection path serves cached rows without it, so we no longer validate admin
+         * email here; downstream services (users/drives/...) resolve and enforce admin email
+         * themselves via GoogleServiceHelperMethods#getAdminEmailForUser when they run.
+         */
 
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
         List<UserRole> viewerRoles = user != null && user.getRoles() != null ? user.getRoles() : null;
