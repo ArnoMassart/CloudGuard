@@ -77,20 +77,26 @@ deploy:production:
     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to /cloudguard on $SERVER_IP..."
-    # Ensure target directories exist on the server
-    - ssh $SERVER_USER@$SERVER_IP "mkdir -p /cloudguard/api/target /cloudguard/frontend"
-    # Copy the docker-compose file
+    # 1. Maak de mappen schoon zodat er geen oude rommel achterblijft
+    - ssh $SERVER_USER@$SERVER_IP "mkdir -p /cloudguard/api/target /cloudguard/frontend/dist"
+
+    # 2. Kopieer de docker-compose
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:/cloudguard/
-    # Copy the Dockerfiles (assuming they are in the root of api/ and frontend/)
-    - scp api/Dockerfile $SERVER_USER@$SERVER_IP:/cloudguard/api/ || true
-    - scp frontend/Dockerfile $SERVER_USER@$SERVER_IP:/cloudguard/frontend/ || true
-    # Copy the built artifacts from the pipeline runner to the server
+
+    # 3. Kopieer de Dockerfiles naar de juiste submappen
+    - scp api/Dockerfile $SERVER_USER@$SERVER_IP:/cloudguard/api/
+    - scp frontend/Dockerfile $SERVER_USER@$SERVER_IP:/cloudguard/frontend/
+
+    # 4. Kopieer de ARTIFACTS (de inhoud van de mappen)
+    # De /. zorgt ervoor dat de inhoud wordt gekopieerd naar de doelmap
     - scp api/target/*.jar $SERVER_USER@$SERVER_IP:/cloudguard/api/target/
-    - scp -r frontend/dist $SERVER_USER@$SERVER_IP:/cloudguard/frontend/
-    # Spin up the containers
+    - scp -r frontend/dist/. $SERVER_USER@$SERVER_IP:/cloudguard/frontend/dist/
+
+    # 5. Herstart de boel
     - |
       ssh $SERVER_USER@$SERVER_IP "
         cd /cloudguard &&
+        docker compose down &&
         docker compose up -d --build &&
         docker system prune -af
       "
