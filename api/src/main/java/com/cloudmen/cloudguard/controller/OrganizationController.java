@@ -59,7 +59,9 @@ public class OrganizationController {
      * @param token     the {@code AuthToken} cookie provided by the client used to authenticate the request
      * @param pageToken the token indicating which page of results to fetch
      * @param size      the maximum number of organizations to return (default is 4)
-     * @param query
+     * @param query     an optional search term to filter the organization list
+     * @return a {@link ResponseEntity} containing a {@link DatabaseOrgResponse} with the requested organizations
+     * and pagination details
      */
     @GetMapping("/all-paged")
     public ResponseEntity<DatabaseOrgResponse> getAllPaged(@CookieValue(name = "AuthToken", required = false) String token,
