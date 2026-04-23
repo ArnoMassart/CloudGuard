@@ -72,7 +72,7 @@ public class UserController {
      * Checks if the authenticated user has already submitted a request for role assignment.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
-     * @return a {@link ResponseEntity} containing a boolean indicating 
+     * @return a {@link ResponseEntity} containing a boolean indicating if an access request is currently pending
      */
     @GetMapping("/request-access")
     public ResponseEntity<Boolean> getRequestRoleAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -82,9 +82,10 @@ public class UserController {
     }
 
     /**
-     *
+     * Submits a request for role assignment on behalf of the authenticated user.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
      */
     @PostMapping("/request-access")
     public ResponseEntity<String> requestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -96,9 +97,11 @@ public class UserController {
     }
 
     /**
-     *
+     * Checks if the authenticated user has already submitted a request indicating they lack an organization
+     * assignment.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if a "no organization" request is pending
      */
     @GetMapping("/no-organization")
     public ResponseEntity<Boolean> getRequestNoOrganizationSent(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -108,9 +111,10 @@ public class UserController {
     }
 
     /**
-     *
+     * Submits a request on behalf of the authenticated user indicating they are not linked to any organization.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
      */
     @PostMapping("/no-organization")
     public ResponseEntity<String> requestNoOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -122,9 +126,11 @@ public class UserController {
     }
 
     /**
-     *
+     * Verifies whether the authenticated user has a valid, active role assigned to their account
+     * (excluding 'UNASSIGNED').
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if the user has a valid role
      */
     @GetMapping("/valid-role")
     public ResponseEntity<Boolean> hasValidRole(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -134,21 +140,7 @@ public class UserController {
     }
 
     /**
-     *
-     *
-     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
-     */
-    @GetMapping("/has-role")
-    public ResponseEntity<Boolean> hasRole(
-            @CookieValue(name = "AuthToken", required = false) String token,
-            @RequestParam UserRole role) {
-        String loggedInEmail = jwtService.validateInternalToken(token);
-
-        return ResponseEntity.ok(userService.hasRole(loggedInEmail, role));
-    }
-
-    /**
-     *
+     * Verifies
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
      */

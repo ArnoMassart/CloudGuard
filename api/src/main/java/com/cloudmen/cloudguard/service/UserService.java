@@ -282,12 +282,6 @@ public class UserService {
         });
     }
 
-    public boolean hasRole(String userEmail, UserRole role) {
-        User user = findByEmail(userEmail);
-
-        return user.getRoles().contains(role);
-    }
-
     public boolean isOrganizationSetup(String email) {
         return userRepository.findByEmail(email)
                 .map(User::getOrganizationId)
