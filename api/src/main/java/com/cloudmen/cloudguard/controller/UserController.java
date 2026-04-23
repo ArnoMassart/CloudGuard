@@ -12,7 +12,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
+ * REST controller responsible for managing user profiles, roles and access requests. <p>
  *
+ * This controller provides endpoints to handle user preferences (like language), process requests for application
+ * access or organization assignment, and manage administrative tasks such as role updates and organization
+ * transfers. <p>
+ *
+ * All routes are mapped under the {@code /user} prefix.
  */
 @RestController
 @RequestMapping("/user")
@@ -21,7 +27,10 @@ public class UserController {
     private final UserService userService;
 
     /**
+     * Constructs a new {@link UserController} with the required services.
      *
+     * @param jwtService    the service used to validate the session token
+     * @param userService   the service handling user data operations and business logic
      */
     public UserController(JwtService jwtService, UserService userService) {
         this.jwtService = jwtService;
@@ -29,9 +38,10 @@ public class UserController {
     }
 
     /**
-     *
+     * Retrieves the preferred language setting of the authenticated user.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing the user's language code
      */
     @GetMapping("/language")
     public ResponseEntity<String> getLanguage(@CookieValue(name = "AuthToken", required = false) String token) {
@@ -41,9 +51,11 @@ public class UserController {
     }
 
     /**
+     * Updates the preferred language setting for the authenticated user.
      *
-     *
-     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param token     the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @param request   a map containing the new {@code language} code
+     * @return an empty {@link ResponseEntity} indicating a successful update
      */
     @PostMapping("/language")
     public ResponseEntity<Void> updateLanguage(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody Map<String, String> request) {
@@ -57,9 +69,10 @@ public class UserController {
     }
 
     /**
-     *
+     * Checks if the authenticated user has already submitted a request for role assignment.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating 
      */
     @GetMapping("/request-access")
     public ResponseEntity<Boolean> getRequestRoleAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
