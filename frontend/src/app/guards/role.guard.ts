@@ -34,7 +34,7 @@ export const roleGuard: CanActivateFn = (route, state) => {
         }
       }
 
-      if (!user.roles) {
+      if (!user.roles || user.roles.length === 0) {
         return router.createUrlTree(['/no-access']);
       }
 
@@ -48,7 +48,7 @@ export const roleGuard: CanActivateFn = (route, state) => {
         return true;
       }
 
-      return router.createUrlTree(['/no-access']);
+      return router.createUrlTree(['/no-page-access']);
     })
   );
 };

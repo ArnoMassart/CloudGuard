@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserUpdateRoleRequest;
 import com.cloudmen.cloudguard.dto.users.UsersUpdateOrganizationRequest;
@@ -78,6 +79,20 @@ public class UserController {
         return ResponseEntity.ok(userService.hasValidRole(loggedInEmail));
     }
 
+    /**
+     * Checks if a specific role is assigned to the authenticated user. <p>
+     * * This endpoint is crucial for the frontend callback to determine if
+     * the user has the 'UNASSIGNED' role and needs to be redirected to setup.
+     */
+    @GetMapping("/has-role")
+    public ResponseEntity<Boolean> hasRole(
+            @CookieValue(name = "AuthToken", required = false) String token,
+            @RequestParam UserRole role) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.hasRole(loggedInEmail, role));
+    }
+
     @GetMapping("/has-organization")
     public ResponseEntity<Boolean> hasOrganization(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
@@ -130,5 +145,17 @@ public class UserController {
         userService.updateUsersOrg(request.userEmail(), request.orgId());
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/org-setup-status")
+    public ResponseEntity<Boolean> isOrganizationSetup(
+            @CookieValue(name = "AuthToken", required = false) String token) {
+
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        // De check of de adminEmail is ingesteld voor de organisatie van deze gebruiker
+        boolean isSetup = userService.isOrganizationSetup(loggedInEmail);
+
+        return ResponseEntity.ok(isSetup);
     }
 }

@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
 import { UserService } from '../../services/user-service';
 import { WarmupCacheService } from '../../services/warmup-cache-service';
+import { Role } from '../../models/users/User';
 
 @Component({
   selector: 'app-callback',
@@ -45,6 +46,7 @@ export class Callback implements OnInit {
         return forkJoin({
           hasValidRole: this.userService.hasValidRole(),
           hasOrganization: this.userService.hasOrganization(),
+          isSetupActive: this.userService.isOrganizationSetup(),
         });
       })
     );
@@ -61,11 +63,12 @@ export class Callback implements OnInit {
         next: ({ loginData }) => {
           sessionStorage.removeItem('auth0_redirect_pending');
 
-          // Nu kun je gewoon loginData.hasValidRole en loginData.hasOrganization gebruiken
-          if (!loginData.hasValidRole) {
-            this.router.navigate(['/request-access']);
-          } else if (!loginData.hasOrganization) {
+          if (!loginData.hasOrganization) {
             this.router.navigate(['/no-organization']);
+          } else if (!loginData.isSetupActive) {
+            this.router.navigate(['/setup']);
+          } else if (!loginData.hasValidRole) {
+            this.router.navigate(['/request-access']);
           } else {
             this.warmupCacheService.triggerWarmup();
             this.router.navigate(['/home']);

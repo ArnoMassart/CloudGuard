@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideAuth0 } from '@auth0/auth0-angular';
+import { provideAuth0, authHttpInterceptorFn } from '@auth0/auth0-angular';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -13,7 +13,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([errorInterceptor, languageInterceptor])),
+    provideHttpClient(
+      withInterceptors([errorInterceptor, languageInterceptor, authHttpInterceptorFn])
+    ),
     provideAuth0({
       domain: 'dev-x2l40e775g2q2ot3.eu.auth0.com',
       clientId: '6RChZH73eEvLLEhwrk8DjTgDETGYTe4u',
@@ -23,6 +25,12 @@ export const appConfig: ApplicationConfig = {
       },
       cacheLocation: 'memory',
       skipRedirectCallback: globalThis.location.pathname.includes('/callback'),
+      httpInterceptor: {
+        allowedList: [
+          'http://localhost:8080/api/*', // Voor als je lokaal ontwikkelt
+          'https://cloudguard.cloudmen.net/api/*', // Voor je VM in Google Cloud
+        ],
+      },
     }),
     provideTransloco({
       config: {

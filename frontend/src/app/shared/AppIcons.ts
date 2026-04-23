@@ -47,6 +47,8 @@ import {
   X,
   Menu,
   UserPlus,
+  CircleAlert,
+  Copy,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -59,10 +61,12 @@ export class AppIcons {
   static readonly ChevronLeft = ChevronLeft;
   static readonly ChevronRight = ChevronRight;
   static readonly ChevronUp = ChevronUp;
+  static readonly CircleAlert = CircleAlert;
   static readonly CircleCheck = CircleCheck;
   static readonly CircleQuestionMark = CircleQuestionMark;
   static readonly CircleX = CircleX;
   static readonly Clock = Clock;
+  static readonly Copy = Copy;
   static readonly Cpu = Cpu;
   static readonly CreditCard = CreditCard;
   static readonly DollarSign = DollarSign;

@@ -1,4 +1,4 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.UserRole;
@@ -7,6 +7,10 @@ import com.cloudmen.cloudguard.dto.adminsecuritykeys.AdminWithSecurityKeyDto;
 import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
+import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.PasswordSettingsService;
+import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
@@ -181,7 +185,7 @@ class PasswordSettingsServiceTest {
                 10, 10, 10);
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
-        var result = service.calculateSecurityScoreWithBreakdown(
+        PasswordSettingsService.SecurityScoreResult result = service.calculateSecurityScoreWithBreakdown(
                 2, 0, summary, twoSv, policies, Set.of());
 
         assertEquals(100, result.score());

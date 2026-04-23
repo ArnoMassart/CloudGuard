@@ -23,7 +23,7 @@ export class App implements OnInit {
 
   hasSeenSplash = signal(
     sessionStorage.getItem('has_seen_splash') === 'true' ||
-      globalThis.location.pathname.includes('/callback'),
+      globalThis.location.pathname.includes('/callback')
   );
 
   onSplashEnded() {
@@ -41,6 +41,8 @@ export class App implements OnInit {
         !this.#router.url.includes('/server-error') &&
         !this.#router.url.includes('/request-access') &&
         !this.#router.url.includes('/no-organization') &&
+        !this.#router.url.includes('/setup') &&
+        !this.#router.url.includes('/no-page-access') &&
         !this.#router.url.includes('/callback');
     });
 

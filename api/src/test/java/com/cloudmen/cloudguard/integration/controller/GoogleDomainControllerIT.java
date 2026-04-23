@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         excludeAutoConfiguration = OAuth2ResourceServerAutoConfiguration.class)
 @TestPropertySource(
         properties = {
-            "server.servlet.context-path=/api",
+            "server.port=8080", "server.servlet.context-path=/api",
             "spring.main.allow-bean-definition-overriding=true"
         })
 @Import({
