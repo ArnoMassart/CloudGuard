@@ -77,12 +77,20 @@ deploy:production:
     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
   script:
     - echo "Deploying to /cloudguard on $SERVER_IP..."
+    # Ensure target directories exist on the server
+    - ssh $SERVER_USER@$SERVER_IP "mkdir -p /cloudguard/api/target /cloudguard/frontend"
+    # Copy the docker-compose file
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:/cloudguard/
+    # Copy the Dockerfiles (assuming they are in the root of api/ and frontend/)
+    - scp api/Dockerfile $SERVER_USER@$SERVER_IP:/cloudguard/api/ || true
+    - scp frontend/Dockerfile $SERVER_USER@$SERVER_IP:/cloudguard/frontend/ || true
+    # Copy the built artifacts from the pipeline runner to the server
+    - scp api/target/*.jar $SERVER_USER@$SERVER_IP:/cloudguard/api/target/
+    - scp -r frontend/dist $SERVER_USER@$SERVER_IP:/cloudguard/frontend/
+    # Spin up the containers
     - |
       ssh $SERVER_USER@$SERVER_IP "
         cd /cloudguard &&
-        git fetch origin main &&
-        git reset --hard origin/main &&
         docker compose up -d --build &&
         docker system prune -af
       "
