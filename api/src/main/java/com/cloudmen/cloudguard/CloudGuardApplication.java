@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties({NotificationProjectionProperties.class, NotificationReminderProperties.class})
 public class CloudGuardApplication {
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.configure().load();
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
         dotenv.entries().forEach(dotenvEntry -> System.setProperty(dotenvEntry.getKey(), dotenvEntry.getValue()));
 
         SpringApplication.run(CloudGuardApplication.class, args);
