@@ -7,6 +7,8 @@ backend:test:
   stage: test
   image: maven:3.9.9-eclipse-temurin-21
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
     - changes:
         - api/**/*
         - .gitlab-ci.yml
@@ -20,6 +22,8 @@ backend:build:
   stage: build
   image: maven:3.9.9-eclipse-temurin-21
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
     - changes:
         - api/**/*
         - .gitlab-ci.yml
@@ -38,6 +42,8 @@ frontend:build:
   stage: build
   image: node:20-alpine
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
     - changes:
         - frontend/**/*
         - .gitlab-ci.yml
