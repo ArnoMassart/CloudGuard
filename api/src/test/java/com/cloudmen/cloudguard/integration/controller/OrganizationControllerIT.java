@@ -6,10 +6,10 @@ import com.cloudmen.cloudguard.controller.OrganizationController;
 import com.cloudmen.cloudguard.exception.UnauthorizedException;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
+import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
-import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration;
@@ -28,8 +28,11 @@ import org.springframework.http.MediaType;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -65,6 +68,14 @@ public class OrganizationControllerIT {
 
     @MockitoBean
     private OrganizationService organizationService;
+
+    @MockitoBean
+    private CloudguardStaffService cloudguardStaffService;
+
+    @BeforeEach
+    void staffAllowlistOk() {
+        lenient().doNothing().when(cloudguardStaffService).requireCloudmenAdmin(anyString());
+    }
 
     static class MessageSourceTestConfig {
         @Bean
@@ -105,6 +116,7 @@ public class OrganizationControllerIT {
                 .andExpect(jsonPath("$[0].name").value("Acme Corp"));
 
         verify(jwtService).validateInternalToken(VALID_TOKEN);
+        verify(cloudguardStaffService).requireCloudmenAdmin(EMAIL);
         verify(organizationService).getAll();
     }
 
@@ -141,6 +153,7 @@ public class OrganizationControllerIT {
                 .andExpect(jsonPath("$.organizations[0].name").value("Test Org"));
 
         verify(jwtService).validateInternalToken(VALID_TOKEN);
+        verify(cloudguardStaffService).requireCloudmenAdmin(EMAIL);
         verify(organizationService).getAllPaged(null, 4, null);
     }
 
@@ -161,6 +174,7 @@ public class OrganizationControllerIT {
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk());
 
+        verify(cloudguardStaffService).requireCloudmenAdmin(EMAIL);
         verify(organizationService).getAllPaged("pt", 20, "searchQuery");
     }
 }

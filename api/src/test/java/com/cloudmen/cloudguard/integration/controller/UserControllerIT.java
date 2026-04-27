@@ -10,6 +10,7 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
 import com.cloudmen.cloudguard.service.AuthService;
+import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
@@ -79,6 +80,9 @@ public class UserControllerIT {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private CloudguardStaffService cloudguardStaffService;
 
     static class MessageSourceTestConfig {
         @Bean
