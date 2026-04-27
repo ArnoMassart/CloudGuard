@@ -6,7 +6,7 @@ import { Organization } from '../../../../models/org/Organization';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../../shared/AppIcons';
-import { CLOUDMEN_ADMIN_EMAIL } from '../../../../../env';
+import { CustomAuthService } from '../../../../auth/custom-auth-service';
 
 @Component({
   selector: 'app-accounts-manager-table',
@@ -17,6 +17,7 @@ import { CLOUDMEN_ADMIN_EMAIL } from '../../../../../env';
 export class AccountsManagerTable {
   readonly Icons = AppIcons;
 
+  readonly #auth = inject(CustomAuthService);
   readonly #translocoService = inject(TranslocoService);
 
   // Inputs
@@ -81,6 +82,6 @@ export class AccountsManagerTable {
   }
 
   checkCLOUDMENSuperAdmin(user: { email: string }): boolean {
-    return user.email === CLOUDMEN_ADMIN_EMAIL;
+    return this.#auth.isCloudmenStaff();
   }
 }

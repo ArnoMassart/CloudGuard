@@ -25,9 +25,9 @@ import { roleGuard } from './guards/role.guard';
 import { Role } from './models/users/User';
 import { AccessDenied } from './pages/access-denied/access-denied';
 import { NoOrganization } from './pages/no-organization/no-organization';
-import { CLOUDMEN_ADMIN_EMAIL } from '../env';
 import { WorkspaceSetup } from './pages/workspace-setup/workspace-setup';
 import { PageAccessDenied } from './pages/page-access-denied/page-access-denied';
+import { cloudmenStaffGuard } from './guards/cloudmen-staff.guard';
 
 export const routes: Routes = [
   {
@@ -168,11 +168,7 @@ export const routes: Routes = [
   {
     path: 'accounts-manager',
     component: AccountsManager,
-    canActivate: [authGuard, accessGuard, roleGuard],
-    data: {
-      requiredRoles: [Role.SUPER_ADMIN],
-      allowedEmails: [CLOUDMEN_ADMIN_EMAIL],
-    },
+    canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
   },
   {
     path: 'test',

@@ -238,4 +238,12 @@ export class UserService {
       withCredentials: true,
     });
   }
+
+  isCloudmenStaff(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/is-cloudmen-staff');
+
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
 }
