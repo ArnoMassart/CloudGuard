@@ -53,7 +53,6 @@ frontend:build:
     - npm config set fetch-retry-mintimeout 20000
     - npm config set fetch-retry-maxtimeout 120000
     - npm ci
-    - echo "export const CLOUDMEN_ADMIN_EMAIL = '${CLOUDMEN_ADMIN_EMAIL}';" > src/env.ts
     - npm run build
   artifacts:
     when: always
