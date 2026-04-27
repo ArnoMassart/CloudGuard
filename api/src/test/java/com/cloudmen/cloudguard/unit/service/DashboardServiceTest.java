@@ -102,7 +102,7 @@ public class DashboardServiceTest {
         when(sharedDriveService.getDrivesPageOverview(ADMIN, disabledPrefs)).thenReturn(driveMock);
         when(googleDeviceService.getDevicesPageOverview(ADMIN, disabledPrefs)).thenReturn(deviceMock);
         when(oAuthService.getOAuthPageOverview(ADMIN, disabledPrefs)).thenReturn(oauthMock);
-        when(passwordsService.getOverview(eq(ADMIN), anyBoolean(), eq(disabledPrefs))).thenReturn(passwordMock);
+        when(passwordsService.getOverview(eq(ADMIN), eq(disabledPrefs))).thenReturn(passwordMock);
         when(passwordSettingsService.getPasswordSettings(ADMIN)).thenReturn(passwordSettingsMock);
 
         var domain1 = mockDomainDto("domain1.com");
@@ -137,7 +137,7 @@ public class DashboardServiceTest {
         when(sharedDriveService.getDrivesPageOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("Error"));
         when(googleDeviceService.getDevicesPageOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("Error"));
         when(oAuthService.getOAuthPageOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("Error"));
-        when(passwordsService.getOverview(eq(ADMIN), anyBoolean(), eq(disabledPrefs))).thenThrow(new RuntimeException("Error"));
+        when(passwordsService.getOverview(eq(ADMIN), eq(disabledPrefs))).thenThrow(new RuntimeException("Error"));
         when(passwordSettingsService.getPasswordSettings(ADMIN)).thenThrow(new RuntimeException("Error"));
         when(domainService.getAllDomains(ADMIN)).thenThrow(new RuntimeException("DNS service down"));
 
@@ -171,7 +171,7 @@ public class DashboardServiceTest {
         when(sharedDriveService.getDrivesPageOverview(ADMIN, disabledPrefs)).thenReturn(driveMock);
         when(googleDeviceService.getDevicesPageOverview(ADMIN, disabledPrefs)).thenReturn(deviceMock);
         when(oAuthService.getOAuthPageOverview(ADMIN, disabledPrefs)).thenReturn(oauthMock);
-        when(passwordsService.getOverview(eq(ADMIN), anyBoolean(), eq(disabledPrefs))).thenReturn(passwordMock);
+        when(passwordsService.getOverview(eq(ADMIN), eq(disabledPrefs))).thenReturn(passwordMock);
         when(passwordSettingsService.getPasswordSettings(ADMIN)).thenReturn(passwordSettingsMock);
 
         when(domainService.getAllDomains(ADMIN)).thenReturn(List.of());

@@ -550,7 +550,7 @@ public class NotificationAggregationService {
 
         AppPasswordOverviewResponse appPasswords = null;
         if (hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER)) {
-            appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, true, disabled));
+            appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, disabled));
         }
 
         DnsRecordResponseDto dns = null;

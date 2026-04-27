@@ -330,7 +330,7 @@ class NotificationAggregationServiceTest {
         lenient().when(deviceService.getDevicesPageOverview(eq(GlobalTestHelper.ADMIN), any())).thenReturn(null);
         lenient().when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any())).thenReturn(null);
         lenient().when(oAuthService.getOAuthPageOverview(eq(GlobalTestHelper.ADMIN), any())).thenReturn(null);
-        lenient().when(appPasswordsService.getOverview(eq(GlobalTestHelper.ADMIN), eq(true), any()))
+        lenient().when(appPasswordsService.getOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new AppPasswordOverviewResponse(true, 0, 0, 100, null));
         lenient().when(passwordSettingsService.getPasswordSettings(GlobalTestHelper.ADMIN)).thenReturn(null);
 

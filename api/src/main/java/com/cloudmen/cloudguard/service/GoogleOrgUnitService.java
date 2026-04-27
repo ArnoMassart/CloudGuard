@@ -88,18 +88,18 @@ public class GoogleOrgUnitService {
         return dto;
     }
 
-    private static String normalizePath(String path) {
+    private String normalizePath(String path) {
         if (path == null || path.isBlank()) return "/";
         return path.trim();
     }
 
-    private static boolean isChildOf(String parent, String expectedParent) {
+    private boolean isChildOf(String parent, String expectedParent) {
         if (parent == null) return "/".equals(expectedParent);
         String norm = parent.trim();
         return norm.equals(expectedParent) || (norm.isEmpty() && "/".equals(expectedParent));
     }
 
-    private static OrgUnitNodeDto buildEmptyRoot(MessageSource messageSource) {
+    private OrgUnitNodeDto buildEmptyRoot(MessageSource messageSource) {
         OrgUnitNodeDto root = new OrgUnitNodeDto();
         root.setId("/");
 
