@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { DevicePageResponse } from '../models/devices/DevicePageResponse';
 import { DevicesOverviewResponse } from '../models/devices/DevicesOverviewResponse';
 
+const ALL_DEVICE_TYPES = 'all' as const;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -21,7 +23,9 @@ export class DeviceService {
     let params = new HttpParams().set('size', size.toString());
     if (pageToken) params = params.set('pageToken', pageToken);
     if (status) params = params.set('status', status);
-    if (type) params = params.set('deviceType', type);
+    if (type && type !== ALL_DEVICE_TYPES) {
+      params = params.set('deviceType', type);
+    }
 
     return this.#http.get<DevicePageResponse>(this.#API_URL, {
       params: params,
