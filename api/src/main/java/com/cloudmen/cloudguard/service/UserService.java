@@ -40,17 +40,19 @@ public class UserService {
     private final AccessRequestEmailService accessRequestEmailService;
     private final OrganizationService organizationService;
     private final GoogleApiFactory googleApiFactory;
+    private final CloudguardStaffService cloudguardStaffService;
 
     public UserService(
             UserRepository userRepository,
             OrganizationRepository organizationRepository,
-            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory) {
+            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory, CloudguardStaffService cloudguardStaffService) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.messageSource = messageSource;
         this.accessRequestEmailService = accessRequestEmailService;
         this.organizationService = organizationService;
         this.googleApiFactory = googleApiFactory;
+        this.cloudguardStaffService = cloudguardStaffService;
     }
 
     public UserDto convertToDto(User user) {
@@ -83,7 +85,8 @@ public class UserService {
                 user.isRoleRequested(),
                 user.isOrganizationRequested(),
                 orgId,
-                organizationName
+                organizationName,
+                cloudguardStaffService.isCloudmenAdmin(user.getEmail())
 
         );
     }

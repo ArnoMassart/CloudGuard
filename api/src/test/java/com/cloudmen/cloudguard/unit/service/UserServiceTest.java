@@ -6,6 +6,7 @@ import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.AccessRequestEmailService;
+import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
@@ -49,9 +50,13 @@ public class UserServiceTest {
     @Mock
     private OrganizationService organizationService;
 
+    @Mock
+    private CloudguardStaffService cloudguardStaffService;
+
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, organizationRepository, messageSource, accessRequestEmailService, organizationService, googleApiFactory);
+        lenient().when(cloudguardStaffService.isCloudmenAdmin(anyString())).thenReturn(false);
+        userService = new UserService(userRepository, organizationRepository, messageSource, accessRequestEmailService, organizationService, googleApiFactory, cloudguardStaffService);
     }
 
     @Test
@@ -68,6 +73,17 @@ public class UserServiceTest {
         assertEquals(user.getCreatedAt(), dto.createdAt());
         assertEquals(user.isRoleRequested(), dto.roleRequested()); // Toegevoegd voor compleetheid
         assertEquals("", dto.organizationName());
+        assertEquals(false, dto.isCloudmenStaff());
+    }
+
+    @Test
+    void convertToDto_setsIsCloudmenStaffFromAllowlist() {
+        User user = createDbUser(ADMIN, "John", "Doe", "en");
+        when(cloudguardStaffService.isCloudmenAdmin(ADMIN)).thenReturn(true);
+
+        UserDto dto = userService.convertToDto(user);
+
+        assertEquals(true, dto.isCloudmenStaff());
     }
 
     @Test

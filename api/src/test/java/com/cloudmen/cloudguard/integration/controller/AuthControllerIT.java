@@ -99,7 +99,8 @@ public class AuthControllerIT {
                 false,
                 false,
                 1L,
-                "Acme Corp"
+                "Acme Corp",
+                false
         );
     }
 

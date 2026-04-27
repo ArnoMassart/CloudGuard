@@ -27,8 +27,16 @@
       class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
 
       <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
-        <div class="flex flex-col">
-          <span class="font-medium text-slate-900 text-sm">{{ user.firstName }} {{ user.lastName }}</span>
+        <div class="flex flex-col gap-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-medium text-slate-900 text-sm">{{ user.firstName }} {{ user.lastName }}</span>
+            @if (user.isCloudmenStaff) {
+            <span
+              class="px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-primary/15 text-primary border border-primary/30 whitespace-nowrap">
+              {{ 'account-manager.cloudmen-staff-badge' | transloco }}
+            </span>
+            }
+          </div>
           <span class="text-xs text-gray-400">{{ user.email }}</span>
         </div>
       </td>
@@ -55,8 +63,7 @@
           @for (role of getRolesTranslated(user); track role.value) {
           <span class="px-3 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap"
             [ngClass]="getRoleColorClasses(role.value, user)">
-            {{ checkCLOUDMENSuperAdmin(user) ? "CLOUDMEN Super Admin" : role.label | transloco }}
-          </span>
+            {{ role.label | transloco }}          </span>
           }
           <span class="text-[10px] text-slate-400 uppercase font-bold ml-1 group-hover:text-primary transition-colors">
             {{ 'less' | transloco }}
@@ -65,7 +72,7 @@
           @for (role of getRolesTranslated(user).slice(0, 2); track role.value) {
           <span class="px-3 py-1 text-[11px] font-medium rounded-full border whitespace-nowrap"
             [ngClass]="getRoleColorClasses(role.value, user)">
-            {{ checkCLOUDMENSuperAdmin(user) ? "CLOUDMEN Super Admin" : role.label | transloco }}
+            {{ role.label | transloco }}
           </span>
           }
           @if (user.roles.length > 2) {
@@ -80,7 +87,7 @@
 
       <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
         <div class="flex flex-col min-w-37.5">
-          <select [disabled]="checkCLOUDMENSuperAdmin(user)" [(ngModel)]="user.organizationId"
+          <select [disabled]="isRowCloudmenStaffUser(user)" [(ngModel)]="user.organizationId"
             (change)="onOrgChange(user, $event)" (click)="$event.stopPropagation()"
             class="bg-transparent border-none p-0 font-medium text-slate-600 text-[13px] focus:ring-0 focus:outline-none cursor-pointer hover:text-primary transition-colors disabled:cursor-not-allowed disabled:hover:text-slate-600">
             <option [ngValue]="null">{{ 'select-org' | transloco }}</option>
@@ -92,7 +99,7 @@
       </td>
 
       <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 xl:text-right">
-        <button [disabled]="checkCLOUDMENSuperAdmin(user)" (click)="$event.stopPropagation(); actionClick.emit(user)"
+        <button [disabled]="isRowCloudmenStaffUser(user)" (click)="$event.stopPropagation(); actionClick.emit(user)"
           class="text-[11px] font-medium text-white uppercase py-2.5 px-5 bg-primary rounded-lg hover:bg-primary/90 transition-all shadow-sm disabled:bg-muted disabled:text-muted-foreground">
           {{ (hasExistingRoles() ? 'roles.edit-title' : 'account-manager.give-role') | transloco }}
         </button>
