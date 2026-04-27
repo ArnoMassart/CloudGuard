@@ -295,11 +295,4 @@ public class AuthServiceTest {
 
         assertTrue(result.isEmpty());
     }
-
-    @Test
-    void translateRoleName_mapsRolesCorrectly() {
-        assertEquals("Super Admin", authService.translateRoleName("_SEED_ADMIN_ROLE"));
-        assertEquals("Read Only Admin", authService.translateRoleName("_READ_ONLY_ADMIN_ROLE"));
-        assertEquals("User", authService.translateRoleName("ANY_OTHER_ROLE"));
-    }
 }

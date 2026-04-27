@@ -62,7 +62,7 @@ public class TeamleaderCompanyService {
     public String getCompanyIdByDomain(String email, HttpHeaders headers) {
         String domain = extractDomain(email);
 
-        if (domain == null || domain.isEmpty()) {
+        if (domain.isEmpty()) {
             return null;
         }
 
@@ -106,10 +106,6 @@ public class TeamleaderCompanyService {
         return null;
     }
 
-    // ==============================================================================
-    // VERGEET NIET OM DEZE METHODES AAN TE PASSEN ZODAT ZE DE NIEUWE NAAM GEBRUIKEN:
-    // ==============================================================================
-
     public String getCompanyNameByEmail(String loggedInEmail, HttpHeaders headers) {
         // AANGEPAST: Roept nu getCompanyIdByDomain aan
         String companyId = getCompanyIdByDomain(loggedInEmail, headers);
@@ -127,42 +123,6 @@ public class TeamleaderCompanyService {
         return "Onbekend Bedrijf";
     }
 
-    public boolean verifyUserDomainWithCompany(String loggedInEmail, HttpHeaders headers) {
-        // AANGEPAST: Roept nu getCompanyIdByDomain aan
-        String companyId = getCompanyIdByDomain(loggedInEmail, headers);
-
-        if (companyId == null) {
-            log.warn("Bedrijf niet gevonden op basis van domein voor email: {}", loggedInEmail);
-            return false;
-        }
-
-        // ... de rest van je verifyUserDomainWithCompany methode blijft hetzelfde ...
-        Map<String, Object> companyDetails = getCompanyDetails(companyId, headers);
-        if (companyDetails == null) {
-            return false;
-        }
-
-        String userDomain = extractDomain(loggedInEmail);
-
-        // 1. Check het Custom Field "Primair Domein"
-        String customFieldDomain = extractCustomFieldValue(companyDetails, primaryDomainFieldId);
-        if (customFieldDomain != null && !customFieldDomain.isBlank()) {
-            log.debug("Domein gevonden in custom field: {}", customFieldDomain);
-            return userDomain.equalsIgnoreCase(customFieldDomain.trim());
-        }
-
-        // 2. Fallback: Check het primaire e-mailadres van het bedrijf
-        String companyEmail = extractPrimaryEmail(companyDetails);
-        if (companyEmail != null && !companyEmail.isBlank()) {
-            String companyDomain = extractDomain(companyEmail);
-            log.debug("Geen custom field, controleer bedrijfs-email domein: {}", companyDomain);
-            return userDomain.equalsIgnoreCase(companyDomain);
-        }
-
-        log.warn("Geen Primair Domein custom field of bedrijfs-email gevonden voor bedrijf ID: {}", companyId);
-        return false;
-    }
-
     private String extractDomain(String email) {
         if (email == null || !email.contains("@")) {
             return "";
@@ -170,32 +130,4 @@ public class TeamleaderCompanyService {
         return email.substring(email.indexOf("@") + 1).toLowerCase();
     }
 
-    private String extractCustomFieldValue(Map<String, Object> companyDetails, String targetCustomFieldId) {
-        if (!companyDetails.containsKey("custom_fields")) {
-            return null;
-        }
-
-        List<Map<String, Object>> customFields = (List<Map<String, Object>>) companyDetails.get("custom_fields");
-        for (Map<String, Object> field : customFields) {
-            if (targetCustomFieldId.equals(field.get("id"))) {
-                Object value = field.get("value");
-                return value != null ? value.toString() : null;
-            }
-        }
-        return null;
-    }
-
-    private String extractPrimaryEmail(Map<String, Object> companyDetails) {
-        if (!companyDetails.containsKey("emails")) {
-            return null;
-        }
-
-        List<Map<String, Object>> emails = (List<Map<String, Object>>) companyDetails.get("emails");
-        for (Map<String, Object> emailObj : emails) {
-            if ("primary".equals(emailObj.get("type"))) {
-                return (String) emailObj.get("email");
-            }
-        }
-        return null;
-    }
 }

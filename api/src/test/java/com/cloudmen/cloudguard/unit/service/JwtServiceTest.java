@@ -95,22 +95,4 @@ public class JwtServiceTest {
     void validateInternalToken_invalidToken_throwsException() {
         assertThrows(UnauthorizedException.class, () -> service.validateInternalToken("invalid.internal.token.string"));
     }
-
-    @Test
-    void isGoogleAdmin_true() {
-        Jwt jwt = JwtTestHelper.mockJwtWithAdminClaim(true);
-        assertTrue(service.isGoogleAdmin(jwt));
-    }
-
-    @Test
-    void isGoogleAdmin_false() {
-        Jwt jwt = JwtTestHelper.mockJwtWithAdminClaim(false);
-        assertFalse(service.isGoogleAdmin(jwt));
-    }
-
-    @Test
-    void isGoogleAdmin_null() {
-        Jwt jwt = JwtTestHelper.mockJwtWithAdminClaim(null);
-        assertFalse(service.isGoogleAdmin(jwt));
-    }
 }

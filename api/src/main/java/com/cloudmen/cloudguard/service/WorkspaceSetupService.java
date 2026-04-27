@@ -21,12 +21,6 @@ public class WorkspaceSetupService {
     private final OrganizationService organizationService;
     private final GoogleApiFactory googleApiFactory;
 
-    @Value("${google.api.client-email}")
-    private String clientEmail;
-
-    @Value("${google.api.private-key}")
-    private String privateKey;
-
     public WorkspaceSetupService(UserService userService,
                                  OrganizationService organizationService,
                                  GoogleApiFactory googleApiFactory) {

@@ -74,7 +74,7 @@ public class GoogleDeviceService {
                     .toList();
         }
 
-        if (filterType != null && !filterType.equals("Alle apparaat typen")) {
+        if (filterType != null && !filterType.equals("all")) {
             filteredList = filteredList.stream()
                     .filter(d -> d.os() != null && d.os().toLowerCase().startsWith(filterType.toLowerCase()))
                     .toList();

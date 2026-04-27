@@ -185,14 +185,4 @@ public class AuthService {
             return java.util.Optional.empty();
         }
     }
-
-    public String translateRoleName(String googleName) {
-        return switch (googleName) {
-            case "_SEED_ADMIN_ROLE" -> "Super Admin";
-            case "_READ_ONLY_ADMIN_ROLE" -> "Read Only Admin";
-            default -> "User";
-        };
-    }
-
-
 }

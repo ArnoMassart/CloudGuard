@@ -61,9 +61,6 @@ class AppPasswordControllerIT {
     private static final String AUTH_COOKIE = "AuthToken";
     private static final String VALID_TOKEN = "internal-jwt";
 
-    /** Aangepast naar false zodat deze exact matcht met de controller (IS_TESTMODE = false) */
-    private static final boolean TEST_MODE = false;
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -101,7 +98,7 @@ class AppPasswordControllerIT {
                 new UserAppPasswordsDto(
                         "u1", "Alice", "alice@acme.com", "USER", true, List.of());
         when(appPasswordsService.getAppPasswordsPaged(
-                eq("admin@acme.com"), isNull(), eq(10), isNull(), eq(TEST_MODE)))
+                eq("admin@acme.com"), isNull(), eq(10), isNull()))
                 .thenReturn(new AppPasswordPageResponse(List.of(user), "next"));
 
         mockMvc.perform(
@@ -118,7 +115,7 @@ class AppPasswordControllerIT {
     void getAppPasswords_passesPageTokenSizeAndQuery() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn("admin@acme.com");
         when(appPasswordsService.getAppPasswordsPaged(
-                "admin@acme.com", "pt-1", 20, "mail", TEST_MODE))
+                "admin@acme.com", "pt-1", 20, "mail"))
                 .thenReturn(new AppPasswordPageResponse(List.of(), null));
 
         mockMvc.perform(
@@ -131,7 +128,7 @@ class AppPasswordControllerIT {
                 .andExpect(status().isOk());
 
         verify(appPasswordsService)
-                .getAppPasswordsPaged("admin@acme.com", "pt-1", 20, "mail", TEST_MODE);
+                .getAppPasswordsPaged("admin@acme.com", "pt-1", 20, "mail");
     }
 
     @Test
@@ -147,7 +144,7 @@ class AppPasswordControllerIT {
                                 new SecurityScoreFactorDto(
                                         "t", "d", 10, 20, "low")));
         when(appPasswordsService.getOverview(
-                "admin@acme.com", TEST_MODE, Set.of("pref-a")))
+                "admin@acme.com", Set.of("pref-a")))
                 .thenReturn(new AppPasswordOverviewResponse(true, 5, 2, 75, breakdown));
 
         mockMvc.perform(

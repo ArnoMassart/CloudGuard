@@ -24,7 +24,6 @@ import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAcce
 @Service
 public class DashboardService {
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
-    private static final boolean IS_TESTMODE = false;
 
     private final GoogleUsersService usersService;
     private final GoogleGroupsService groupsService;
@@ -142,7 +141,7 @@ public class DashboardService {
             CompletableFuture<Integer> appPasswordsFuture = fetchScoreIfAllowed(
                     roles,
                     UserRole.APP_PASSWORDS_VIEWER,
-                    () -> passwordsService.getOverview(loggedInEmail, IS_TESTMODE ,disabled).securityScore(),
+                    () -> passwordsService.getOverview(loggedInEmail ,disabled).securityScore(),
                     "App Passwords"
             );
 

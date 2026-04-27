@@ -122,7 +122,7 @@ public class PdfReportServiceTest {
         when(googleDeviceService.getDevicesPageOverview(ADMIN, disabledPrefs)).thenReturn(deviceMock);
         when(googleOAuthService.getOAuthPageOverview(ADMIN, disabledPrefs)).thenReturn(oAuthMock);
 
-        when(appPasswordsService.getOverview(ADMIN, false, disabledPrefs)).thenReturn(appPassMock);
+        when(appPasswordsService.getOverview(ADMIN, disabledPrefs)).thenReturn(appPassMock);
         when(passwordSettingsService.getPasswordSettings(ADMIN)).thenReturn(passSettingsMock);
 
         var domain = mockDomainDto("example.com");
@@ -172,7 +172,7 @@ public class PdfReportServiceTest {
         when(googleSharedDriveService.getDrivesPageOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("API down"));
         when(googleDeviceService.getDevicesPageOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("API down"));
         when(googleOAuthService.getOAuthPageOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("API down"));
-        when(appPasswordsService.getOverview(ADMIN, false, disabledPrefs)).thenThrow(new RuntimeException("API down"));
+        when(appPasswordsService.getOverview(ADMIN, disabledPrefs)).thenThrow(new RuntimeException("API down"));
         when(passwordSettingsService.getPasswordSettings(ADMIN)).thenThrow(new RuntimeException("API down"));
         when(googleDomainService.getAllDomains(ADMIN)).thenThrow(new RuntimeException("API down"));
 

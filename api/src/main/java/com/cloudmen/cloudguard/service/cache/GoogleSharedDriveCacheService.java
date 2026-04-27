@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.dto.drives.DriveMetrics;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
@@ -150,8 +151,6 @@ public class GoogleSharedDriveCacheService {
 
         return new DriveMetrics(totalMembers, externalMembers, totalOrganizers);
     }
-
-    private record DriveMetrics(int totalMembers, int externalMembers, int totalOrganizers) {}
 
     private String calculateRisk(int externalMembers, int totalOrganizers, boolean domainOnly, boolean membersOnly) {
         int riskCount = 0;

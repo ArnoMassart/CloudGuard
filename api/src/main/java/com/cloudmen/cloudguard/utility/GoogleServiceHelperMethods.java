@@ -180,7 +180,7 @@ public class GoogleServiceHelperMethods {
     }
 
     public static boolean hasAccessToModule(List<UserRole> roles, UserRole requiredRole) {
-        if (roles==null) return false;
+        if (roles == null) return false;
         return roles.contains(UserRole.SUPER_ADMIN) | roles.contains(requiredRole);
     }
 }
