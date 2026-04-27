@@ -12,9 +12,7 @@ export const roleGuard: CanActivateFn = (route, state) => {
   const allowedEmails = route.data['allowedEmails'] as string[];
 
   if (
-    (!requiredRoles || requiredRoles.length === 0) &&
-    (!allowedEmails || allowedEmails.length === 0)
-  ) {
+    (!requiredRoles || requiredRoles.length === 0)) {
     return true;
   }
 
@@ -26,12 +24,6 @@ export const roleGuard: CanActivateFn = (route, state) => {
 
       if (!user) {
         return router.createUrlTree(['/no-access']);
-      }
-
-      if (allowedEmails && allowedEmails.length > 0) {
-        if (!allowedEmails.includes(user.email)) {
-          return router.createUrlTree(['/no-access']); // Kick them out if email doesn't match
-        }
       }
 
       if (!user.roles || user.roles.length === 0) {
