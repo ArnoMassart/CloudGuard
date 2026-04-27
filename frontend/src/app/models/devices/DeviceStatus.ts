@@ -1,5 +1,5 @@
 export enum DeviceStatus {
-  All = 'devices.all-states',
+  All = 'All',
   Approved = 'Approved',
   Pending = 'Pending',
   Blocked = 'Blocked',
