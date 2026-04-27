@@ -48,7 +48,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         String orgUnitId = policyCache.resolvePathToOuId(path, ouMap);
 
         if (orgUnitId == null) {
-            return buildNotConfigured(path, false);
+            return buildNotConfigured(false);
         }
 
         Map<String, JsonNode> chromePolicies;
@@ -56,11 +56,11 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
             chromePolicies = chromePolicyApi.resolveChromePoliciesForOrgUnit(adminEmail, orgUnitId);
         } catch (Exception e) {
             log.warn("Chrome Policy API failed for OU {}: {}", path, e.getMessage());
-            return buildNotConfigured(path, true);
+            return buildNotConfigured(true);
         }
 
         if (chromePolicies.isEmpty()) {
-            return buildNotConfigured(path, false);
+            return buildNotConfigured(false);
         }
 
         ExtensionCounts counts = parseExtensionCounts(chromePolicies);
@@ -216,7 +216,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         return null;
     }
 
-    private OrgUnitPolicyDto buildNotConfigured(String path, boolean apiError) {
+    private OrgUnitPolicyDto buildNotConfigured(boolean apiError) {
         Locale locale = LocaleContextHolder.getLocale();
 
         String description = apiError

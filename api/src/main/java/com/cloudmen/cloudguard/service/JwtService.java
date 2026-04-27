@@ -82,9 +82,4 @@ public class JwtService {
                     messageSource.getMessage("api.auth.session_invalid", null, LocaleContextHolder.getLocale()));
         }
     }
-
-    public boolean isGoogleAdmin(Jwt jwt) {
-        Boolean isAdmin = jwt.getClaim("https://cloudguard.com/is_admin");
-        return Boolean.TRUE.equals(isAdmin);
-    }
 }

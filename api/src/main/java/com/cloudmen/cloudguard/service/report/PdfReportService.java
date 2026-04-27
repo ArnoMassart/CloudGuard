@@ -257,7 +257,7 @@ public class PdfReportService {
 
     private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics(String adminEmail, Set<String> disabled) {
         try {
-            AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, false, disabled);
+            AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, disabled);
             return new FullSecurityReport.AppPasswordMetrics(response.totalAppPasswords(), response.usersWithAppPasswords(), response.securityScore(), false);
         } catch (Exception e) {
             log.error("Fout bij ophalen App Password Metrics voor rapport: {}", e.getMessage());

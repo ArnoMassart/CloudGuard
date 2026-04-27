@@ -62,7 +62,7 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile), List.of(chrome), List.of(endpoint));
 
-        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "Alle apparaat typen", Set.of());
+        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all", Set.of());
 
         assertEquals(3, page.devices().size());
         assertTrue(page.devices().stream().anyMatch(d -> d.os().contains("Android")));
@@ -78,7 +78,7 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile1, mobile2), List.of(chrome), List.of());
 
-        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "Alle apparaat typen", Set.of());
+        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "all", Set.of());
         assertEquals(2, pageStatus.devices().size());
 
         var pageType = service.getDevicesPaged(ADMIN, null, 10, "ALL", "ios", Set.of());
@@ -94,11 +94,11 @@ public class GoogleDeviceServiceTest {
         }
         mockCacheEntry(deviceCacheService, mobiles, List.of(), List.of());
 
-        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "Alle apparaat typen", Set.of());
+        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "all", Set.of());
         assertEquals(2, page1.devices().size());
         assertEquals("2", page1.nextPageToken());
 
-        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "Alle apparaat typen", Set.of());
+        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "all", Set.of());
         assertEquals(1, page3.devices().size());
         assertNull(page3.nextPageToken());
     }
