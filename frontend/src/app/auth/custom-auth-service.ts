@@ -7,6 +7,7 @@ import { catchError, map, tap, timeout } from 'rxjs/operators';
 import { User } from '../models/users/User';
 import { AuthService } from '@auth0/auth0-angular';
 import { WarmupCacheService } from '../services/warmup-cache-service';
+import { UserService } from '../services/user-service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +24,9 @@ export class CustomAuthService {
 
   readonly #auth0 = inject(AuthService);
   readonly #warmupCacheService = inject(WarmupCacheService);
+
+  readonly isCloudmenStaff = signal(false);
+  readonly userService = inject(UserService);
 
   readonly currentUser = signal<User | null>(null);
 
@@ -48,6 +52,7 @@ export class CustomAuthService {
 
           if (isAuthenticated) {
             this.#fetchCurrentUser();
+            this.loadCloudmenStaffFlag();
           } else {
             this.#initializedStatus.next(true);
           }
@@ -66,6 +71,13 @@ export class CustomAuthService {
         // BELANGRIJK: Pas als de data in de signal zit, mag de guard doorlopen!
         this.#initializedStatus.next(true);
       });
+  }
+
+  private loadCloudmenStaffFlag(): void {
+    this.userService.isCloudmenStaff().subscribe({
+      next: (v)=> this.isCloudmenStaff.set(v),
+      error: () => this.isCloudmenStaff.set(false)
+    });
   }
 
   logout(): void {

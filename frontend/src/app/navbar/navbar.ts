@@ -13,7 +13,6 @@ import { AppIcons } from '../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../components/language-bar/language-bar';
 import { Role, RoleLabels } from '../models/users/User';
-import { CLOUDMEN_ADMIN_EMAIL } from '../../env';
 
 type NavItemsType = {
   Icon: LucideIconData;
@@ -151,7 +150,7 @@ export class Navbar {
     if (!user || !user.roles) return [];
 
     if (user.roles.includes(Role.SUPER_ADMIN)) {
-      if (user.email === CLOUDMEN_ADMIN_EMAIL) {
+      if (this.authService.isCloudmenStaff()) {
         return this.NavItemsControl;
       }
 
