@@ -188,14 +188,9 @@ export class UserService {
       );
   }
 
-  refreshRequestedCount(): void {
+  refreshRequestedCount(): Observable<number> {
     const url = RouteService.getBackendUrl('/user/all/requested-count');
-    this.#http.get<number>(url, { withCredentials: true }).subscribe({
-      next: (count) => {
-        this.requestedCount.set(count);
-      },
-      error: (err) => console.error('Error fetching requested count', err),
-    });
+    return this.#http.get<number>(url, { withCredentials: true });
   }
 
   getRole(roles: Role[]): string {
