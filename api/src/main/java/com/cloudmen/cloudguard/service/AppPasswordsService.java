@@ -54,8 +54,8 @@ public class AppPasswordsService {
         this.organizationService = organizationService;
     }
 
-    public AppPasswordPageResponse getAppPasswordsPaged(String loggedInEmail, String pageToken, int size, String query, boolean isTestMode) {
-        AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(loggedInEmail, this::fetchAllAppPasswords);
+    public AppPasswordPageResponse getAppPasswordsPaged(String loggedInEmail, String pageToken, int size, String query) {
+        AppPasswordCacheEntry entry = cache.get(loggedInEmail, this::fetchAllAppPasswords);
         List<UserAppPasswordsDto> allUsers = GoogleServiceHelperMethods.filterByNameOrEmail(
                 entry.users(),
                 query,
@@ -86,13 +86,16 @@ public class AppPasswordsService {
         return new AppPasswordPageResponse(pagedUsers, nextToken);
     }
 
-    public AppPasswordOverviewResponse getOverview(String adminEmail, boolean isTestMode) {
-        return getOverview(adminEmail, isTestMode, Set.of());
+    public AppPasswordOverviewResponse getOverview(String adminEmail) {
+        return getOverview(adminEmail, Set.of());
     }
 
-    public AppPasswordOverviewResponse getOverview(String adminEmail, boolean isTestMode, Set<String> disabledKeys) {
+    public AppPasswordOverviewResponse getOverview(String adminEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        AppPasswordCacheEntry entry = isTestMode ? createMockAppPasswords() : cache.get(adminEmail, this::fetchAllAppPasswords);
+        AppPasswordCacheEntry entry =  cache.get(adminEmail, this::fetchAllAppPasswords);
+        if (entry == null) {
+            throw new GoogleWorkspaceSyncException("Error with app passwords cache, cache is null");
+        }
         int usersWithAppPasswords = entry.users().size();
         int totalAppPasswords = entry.users().stream()
                 .mapToInt(u -> u.passwords().size())
@@ -201,28 +204,6 @@ public class AppPasswordsService {
             throw new GoogleWorkspaceSyncException(
                     "Fout bij ophalen app-wachtwoorden: " + e.getMessage());
         }
-    }
-
-    private AppPasswordCacheEntry createMockAppPasswords() {
-        long now = System.currentTimeMillis();
-        long dayMs = 24L * 60 * 60 * 1000;
-
-        AppPasswordDto p1 = new AppPasswordDto(101, "Outlook Desktop", String.valueOf(now - 350 * dayMs), DateTimeConverter.convertToTimeAgo(now - 27 * dayMs));
-        AppPasswordDto p2 = new AppPasswordDto(102, "Thunderbird", String.valueOf(now - 200 * dayMs), DateTimeConverter.convertToTimeAgo(now - 3 * dayMs));
-        AppPasswordDto p3a = new AppPasswordDto(103, "Apple Mail", String.valueOf(now - 180 * dayMs), DateTimeConverter.convertToTimeAgo(now - dayMs));
-        AppPasswordDto p3b = new AppPasswordDto(104, "Outlook Desktop", String.valueOf(now - 90 * dayMs), null);
-        AppPasswordDto p4 = new AppPasswordDto(105, "Google Calendar Sync", String.valueOf(now - 60 * dayMs), DateTimeConverter.convertToTimeAgo(now - 14 * dayMs));
-        AppPasswordDto p5a = new AppPasswordDto(106, "Thunderbird", String.valueOf(now - 400 * dayMs), DateTimeConverter.convertToTimeAgo(now - 45 * dayMs));
-        AppPasswordDto p5b = new AppPasswordDto(107, "Outlook Mobile", String.valueOf(now - 120 * dayMs), DateTimeConverter.convertToTimeAgo(now));
-
-        List<UserAppPasswordsDto> users = List.of(
-                new UserAppPasswordsDto("demo-1", "Pieter de Vries", "pieter.devries@bedrijf.nl", "User", false, List.of(p1)),
-                new UserAppPasswordsDto("demo-2", "Thomas Mulder", "thomas.mulder@bedrijf.nl", "User", true, List.of(p2)),
-                new UserAppPasswordsDto("demo-3", "Lisa van Berg", "lisa.vanberg@bedrijf.nl", "Admin", true, List.of(p3a, p3b)),
-                new UserAppPasswordsDto("demo-4", "Jan Bakker", "jan.bakker@bedrijf.nl", "User", true, List.of(p4)),
-                new UserAppPasswordsDto("demo-5", "Sophie Jansen", "sophie.jansen@bedrijf.nl", "User", false, List.of(p5a, p5b))
-        );
-        return new AppPasswordCacheEntry(users, 15);
     }
 
     private AppPasswordDto mapToDto(Asp asp) {

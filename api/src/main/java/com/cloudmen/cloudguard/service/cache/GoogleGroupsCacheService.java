@@ -129,7 +129,7 @@ public class GoogleGroupsCacheService {
                     int total = counts[0];
                     int external = counts[1];
                     boolean externalAllowed = external > 0;
-                    String risk = deriveRisk(external, total, externalAllowed);
+                    String risk = deriveRisk(external);
                     List<String> tags = new ArrayList<>(deriveRiskTags(risk));
 
                     if (cloudIdentity != null) {
@@ -188,7 +188,7 @@ public class GoogleGroupsCacheService {
         return new int[]{total, external};
     }
 
-    private String deriveRisk(int external, int total, boolean externalAllowed) {
+    private String deriveRisk(int external) {
         if (external > 0) return "HIGH";
         if (external < 0) return "MEDIUM";
         return "LOW";

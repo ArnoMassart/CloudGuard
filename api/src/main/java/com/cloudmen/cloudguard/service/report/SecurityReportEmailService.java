@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.service.report;
 
 import com.cloudmen.cloudguard.exception.FailedFeedbackEmailException;
+import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import com.cloudmen.cloudguard.utility.SecurityEmailHtml;
 
 import java.util.Locale;
+
+import static com.cloudmen.cloudguard.utility.UtilityFunctions.escapeHtml;
 
 @Service
 public class SecurityReportEmailService {
@@ -91,16 +94,5 @@ public class SecurityReportEmailService {
 
             return SecurityEmailHtml.document(content, footer);
         }
-
-
-    private String escapeHtml(String text) {
-        if (text == null) return "";
-        return text
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
-    }
 
 }
