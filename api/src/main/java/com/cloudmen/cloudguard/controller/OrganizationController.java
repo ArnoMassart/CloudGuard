@@ -2,6 +2,7 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.dto.organization.DatabaseOrgResponse;
+import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import org.springframework.http.ResponseEntity;
@@ -14,15 +15,18 @@ import java.util.List;
 public class OrganizationController {
     private final JwtService jwtService;
     private final OrganizationService organizationService;
+    private final CloudguardStaffService cloudguardStaffService;
 
-    public OrganizationController(JwtService jwtService, OrganizationService organizationService) {
+    public OrganizationController(JwtService jwtService, OrganizationService organizationService, CloudguardStaffService cloudguardStaffService) {
         this.jwtService = jwtService;
         this.organizationService = organizationService;
+        this.cloudguardStaffService = cloudguardStaffService;
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<Organization>> getAll(@CookieValue(name = "AuthToken", required = false) String token) {
-        jwtService.validateInternalToken(token);
+        String email = jwtService.validateInternalToken(token);
+        cloudguardStaffService.requireCloudmenAdmin(email);
 
         return ResponseEntity.ok(organizationService.getAll());
     }
@@ -32,8 +36,8 @@ public class OrganizationController {
             @RequestParam(required = false) String pageToken,
                                                            @RequestParam(defaultValue = "4") int size,
                                                            @RequestParam(required = false) String query) {
-        jwtService.validateInternalToken(token);
-
+        String email = jwtService.validateInternalToken(token);
+        cloudguardStaffService.requireCloudmenAdmin(email);
         return ResponseEntity.ok(organizationService.getAllPaged(pageToken, size, query));
     }
 }
