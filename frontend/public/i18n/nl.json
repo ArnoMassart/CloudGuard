@@ -543,6 +543,7 @@
   "accounts-manager": "Accountbeheer",
   "account-manager.description": "Beheer hier als beheerder van CLOUDMEN alle CloudGuard accounts met rollen en organisaties",
   "account-manager.table-without.title": "Aanvragen",
+  "account-manager.cloudmen-staff-badge": "Cloudmen admin",
   "account-manager.give-role": "Geef rol",
   "change": "Aanpassen",
   "roles.edit-title": "Rol Aanpassen",

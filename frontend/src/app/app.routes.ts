@@ -168,7 +168,7 @@ export const routes: Routes = [
   {
     path: 'accounts-manager',
     component: AccountsManager,
-    canActivate: [authGuard, accessGuard, cloudmenStaffGuard],
+    canActivate: [authGuard, accessGuard, roleGuard,cloudmenStaffGuard],
   },
   {
     path: 'test',

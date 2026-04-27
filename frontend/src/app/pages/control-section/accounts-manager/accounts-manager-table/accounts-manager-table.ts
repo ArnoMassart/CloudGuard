@@ -6,7 +6,6 @@ import { Organization } from '../../../../models/org/Organization';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../../shared/AppIcons';
-import { CustomAuthService } from '../../../../auth/custom-auth-service';
 
 @Component({
   selector: 'app-accounts-manager-table',
@@ -17,7 +16,6 @@ import { CustomAuthService } from '../../../../auth/custom-auth-service';
 export class AccountsManagerTable {
   readonly Icons = AppIcons;
 
-  readonly #auth = inject(CustomAuthService);
   readonly #translocoService = inject(TranslocoService);
 
   // Inputs
@@ -66,22 +64,22 @@ export class AccountsManagerTable {
     return this.users().some((user) => user.organizationRequested);
   }
 
-  getRoleColorClasses(roleValue: Role, user: { email: string }): string {
-    if (this.checkCLOUDMENSuperAdmin(user)) {
+  getRoleColorClasses(roleValue: Role, user: { isCloudmenStaff?: boolean }): string {
+    if (this.isRowCloudmenStaffUser(user) && roleValue === Role.SUPER_ADMIN) {
       return 'bg-primary text-white border-primary';
-    } else {
-      switch (roleValue) {
-        case Role.SUPER_ADMIN:
-          return 'bg-purple-100 text-purple-700 border-purple-200';
-        case Role.UNASSIGNED:
-          return 'bg-gray-100 text-gray-500 border-gray-200';
-        default:
-          return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-      }
+    }
+    switch (roleValue) {
+      case Role.SUPER_ADMIN:
+        return 'bg-purple-100 text-purple-700 border-purple-200';
+      case Role.UNASSIGNED:
+        return 'bg-gray-100 text-gray-500 border-gray-200';
+      default:
+        return 'bg-emerald-50 text-emerald-600 border-emerald-200';
     }
   }
 
-  checkCLOUDMENSuperAdmin(user: { email: string }): boolean {
-    return this.#auth.isCloudmenStaff();
+  /** Row user is on the server Cloudmen staff allowlist (from API UserDto). */
+  isRowCloudmenStaffUser(user: { isCloudmenStaff?: boolean }): boolean {
+    return user.isCloudmenStaff === true;
   }
 }

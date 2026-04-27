@@ -535,6 +535,7 @@
   "unassigned.request-sent-success": "Your request has been sent! \nAn administrator will review your account.",
   "unassigned.title": "Access pending",
   "accounts-manager": "Account Management",
+  "account-manager.cloudmen-staff-badge": "Cloudmen staff",
   "account-manager.give-role": "Give role",
   "change": "Change",
   "account-manager.minimize": "Click to minimize",
