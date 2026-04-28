@@ -14,7 +14,6 @@ import { WarmupCacheService } from '../services/warmup-cache-service';
 export class CustomAuthService {
   readonly #API_URL = RouteService.getBackendUrl('/auth');
   readonly #http = inject(HttpClient);
-  readonly #router = inject(Router);
 
   // BehaviorSubject(false): app start altijd op login tot sessie bevestigd is
   readonly #loggedInStatus = new ReplaySubject<boolean>(1);
@@ -22,8 +21,6 @@ export class CustomAuthService {
   readonly #initializedStatus = new BehaviorSubject<boolean>(false);
 
   readonly #auth0 = inject(AuthService);
-  readonly #warmupCacheService = inject(WarmupCacheService);
-
   readonly currentUser = signal<User | null>(null);
 
   #isChecking = false;
@@ -119,7 +116,6 @@ export class CustomAuthService {
           this.currentUser.set(user);
           this.#loggedInStatus.next(true);
           this.#initializedStatus.next(true);
-          this.#fetchCurrentUser();
         })
       );
   }

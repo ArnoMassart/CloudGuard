@@ -41,13 +41,13 @@ export class Navbar {
   readonly profileImageError = signal(false);
   readonly isMobileMenuOpen = signal(false);
 
-  readonly requestedCount = this.userService.requestedCount;
+  readonly requestedCount = signal(0);
 
   constructor() {
     effect(() => {
       this.currentUser();
       this.profileImageError.set(false);
-      this.userService.refreshRequestedCount();
+      this.getRequestedCount();
     });
   }
 
@@ -239,5 +239,16 @@ export class Navbar {
     }
 
     return 'viewer';
+  }
+
+  getRequestedCount() {
+    if (this.currentUser()) {
+      this.userService.refreshRequestedCount().subscribe({
+        next: (count) => {
+          this.requestedCount.set(count);
+        },
+        error: (err) => console.error('Error fetching requested count', err),
+      });
+    }
   }
 }
