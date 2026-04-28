@@ -17,27 +17,32 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * A service responsible for retrieving and caching Google Workspace user accounts and their assigned admin roles. <p>
+ *
+ * This service is critical for both data visualization and access control (RBAC). It fetches all users in the domain
+ * and maps their identifiers to their assigned Google Workspace administrative roles. By caching this heavy API
+ * response, the application significantly reduces latency during login and dashboard rendering.
+ */
 @Service
 public class GoogleUsersCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleUsersCacheService.class);
+    private static final String MY_CUSTOMER_TEXT = "my_customer";
 
     private final GoogleApiFactory googleApiFactory;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     private final Cache<String, UserCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(4, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
-
-    private static final String MY_CUSTOMER_TEXT = "my_customer";
-    private final UserService userService;
-    private final OrganizationService organizationService;
 
     public GoogleUsersCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
@@ -45,44 +50,25 @@ public class GoogleUsersCacheService {
         this.organizationService = organizationService;
     }
 
+    /**
+     * Forces a background refresh of the user data cache for the specified admin, bypassing the current
+     * Time-To-Live (TTL).
+     *
+     * @param loggedInEmail the email of the authenticated user triggering the manual refresh
+     */
     public void forceRefreshCache(String loggedInEmail) {
         cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
+    /**
+     * Retrieves the aggregated user and role data from the cache, or synchronously fetches it from the Google Admin
+     * Directory API if the cache is empty or expired.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return the {@link UserCacheEntry} containing the user list and their associated role mappings
+     */
     public UserCacheEntry getOrFetchUsersData(String loggedInEmail) {
         return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    public List<String> getUserRoles(String loggedInEmail) {
-        try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-
-            Directory service = googleApiFactory.getDirectoryService(
-                    DirectoryScopes.ADMIN_DIRECTORY_ROLEMANAGEMENT_READONLY, adminEmail);
-
-            RoleAssignments assignments = service.roleAssignments().list(MY_CUSTOMER_TEXT)
-                    .setUserKey(loggedInEmail)
-                    .execute();
-            List<RoleAssignment> items = assignments.getItems();
-
-            if (items == null || items.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            List<com.google.api.services.admin.directory.model.Role> allRoles =
-                    service.roles().list(MY_CUSTOMER_TEXT).execute().getItems();
-
-            return items.stream()
-                    .map(assignment -> allRoles.stream()
-                            .filter(role -> role.getRoleId().equals(assignment.getRoleId()))
-                            .findFirst()
-                            .map(Role::getRoleName)
-                            .orElse("Unknown Role (" + assignment.getRoleId() + ")"))
-                    .distinct()
-                    .toList();
-        } catch (Exception e) {
-            throw new GoogleWorkspaceSyncException("Failed to fetch roles from Google: " + e.getMessage());
-        }
     }
 
     private UserCacheEntry fetchFromGoogle(String loggedInEmail, UserCacheEntry fallbackEntry) {

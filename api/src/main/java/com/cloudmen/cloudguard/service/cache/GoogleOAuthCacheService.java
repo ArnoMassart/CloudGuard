@@ -23,19 +23,26 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Service responsible for retrieving and caching OAuth token data for users within a Google Workspace domain. <p>
+ *
+ * This service queries the Admin Directory API to discover which third-party applications have been granted access
+ * by users. Caching this data is crucial for performance, as fetching individual user tokens requires sequential API
+ * calls with built-in rate-limiting delays.
+ */
 @Service
 public class GoogleOAuthCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleOAuthCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
     private final GoogleUsersCacheService usersCacheService;
+    private final OrganizationService organizationService;
+    private final UserService userService;
 
     private final Cache<String, OAuthCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
-    private final OrganizationService organizationService;
-    private final UserService userService;
 
     public GoogleOAuthCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService, OrganizationService organizationService, UserService userService) {
         this.googleApiFactory = googleApiFactory;
@@ -44,10 +51,23 @@ public class GoogleOAuthCacheService {
         this.userService = userService;
     }
 
+    /**
+     * Forces a background refresh of the OAuth token cache for the specified user, bypassing the current
+     * Time-To-Live (TTL).
+     *
+     * @param loggedInEmail the email of the authenticated user triggering the manual refresh
+     */
     public void forceRefreshCache(String loggedInEmail) {
         cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
+    /**
+     * Retrieves the OAuth access data for the specified user from the cache, or synchronously fetches it from the
+     * Google Admin API if the cache is empty or expired.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return the aggregated {@link OAuthCacheEntry} containing all discovered third-party application tokens
+     */
     public OAuthCacheEntry getOrFetchOAuthData(String loggedInEmail) {
         return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }

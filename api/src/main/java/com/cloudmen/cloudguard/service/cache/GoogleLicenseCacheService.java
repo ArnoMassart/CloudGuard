@@ -25,19 +25,26 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Service responsible for retrieving, processing, and caching Google Workspace licensing data. <p>
+ *
+ * This service fetches license assignments across various Google products and cross-references them with user
+ * activity data. It calculates overall license usage and specifically identifies inactive users occupying paid
+ * licenses, which aids organizations in cost optimization.
+ */
 @Service
 public class GoogleLicenseCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleLicenseCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
     private final GoogleUsersCacheService usersCacheService;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     private final Cache<String, LicenseCacheEntry> cache = Caffeine.newBuilder()
             .expireAfterWrite(6, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
-    private final UserService userService;
-    private final OrganizationService organizationService;
 
     public GoogleLicenseCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
@@ -46,10 +53,23 @@ public class GoogleLicenseCacheService {
         this.organizationService = organizationService;
     }
 
+    /**
+     * Forces a background refresh of the licensing data cache for the specified user, bypassing the current
+     * Time-To-Live (TTL).
+     *
+     * @param loggedInEmail the email of the authenticated user triggering the manual refresh
+     */
     public void forceRefreshCache(String loggedInEmail) {
         cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
+    /**
+     * Retrieves the licensing data for the specified user from the cache, or synchronously fetches it from the Google
+     * Licensing API if the cache is empty or expired.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return the aggregated {@link LicenseCacheEntry} containing license allocations and inactive user metrics
+     */
     public LicenseCacheEntry getOrFetchLicenseData(String loggedInEmail) {
         return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }

@@ -24,8 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Service responsible for retrieving, assessing, and caching Google Workspace Shared Drive data. <p>
+ *
+ * This service fetches all Shared Drives for a domain, evaluates their sharing restrictions, and iterates through their
+ * permissions to identify external members and active managers (organizers). It then calculates a security risk score
+ * for each drive based on its exposure.
+ */
 @Service
 public class GoogleSharedDriveCacheService {
+    private static final Logger log = LoggerFactory.getLogger(GoogleSharedDriveCacheService.class);
+
     private final GoogleApiFactory googleApiFactory;
     private final UserService userService;
     private final OrganizationService organizationService;
@@ -35,18 +44,29 @@ public class GoogleSharedDriveCacheService {
             .maximumSize(100)
             .build();
 
-    private static final Logger log = LoggerFactory.getLogger(GoogleSharedDriveCacheService.class);
-
     public GoogleSharedDriveCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         this.googleApiFactory = googleApiFactory;
         this.userService = userService;
         this.organizationService = organizationService;
     }
 
+    /**
+     * Forces a background refresh of the Shared Drive cache for the specified user, bypassing the current
+     * Time-To-Live (TTL).
+     *
+     * @param loggedInEmail the email of the authenticated user triggering the manuel refresh
+     */
     public void forceRefreshCache(String loggedInEmail) {
         cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
+    /**
+     * Retrieves the Shared Drive data for the specified user from the cache, or synchronously fetches it from the
+     * Google Drive API if the cache is empty or expired.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return the aggregated {@link SharedDriveCacheEntry} containing drive configurations and risk assessments
+     */
     public SharedDriveCacheEntry getOrFetchDriveData(String loggedInEmail) {
         return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }
