@@ -6,7 +6,6 @@ import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
-import com.cloudmen.cloudguard.security.WorkspaceIdentityClaims;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
