@@ -40,17 +40,19 @@ public class UserService {
     private final AccessRequestEmailService accessRequestEmailService;
     private final OrganizationService organizationService;
     private final GoogleApiFactory googleApiFactory;
+    private final CloudguardStaffService cloudguardStaffService;
 
     public UserService(
             UserRepository userRepository,
             OrganizationRepository organizationRepository,
-            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory) {
+            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory, CloudguardStaffService cloudguardStaffService) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.messageSource = messageSource;
         this.accessRequestEmailService = accessRequestEmailService;
         this.organizationService = organizationService;
         this.googleApiFactory = googleApiFactory;
+        this.cloudguardStaffService = cloudguardStaffService;
     }
 
     public UserDto convertToDto(User user) {
@@ -83,7 +85,8 @@ public class UserService {
                 user.isRoleRequested(),
                 user.isOrganizationRequested(),
                 orgId,
-                organizationName
+                organizationName,
+                cloudguardStaffService.isCloudmenAdmin(user.getEmail())
 
         );
     }
@@ -191,6 +194,21 @@ public class UserService {
         }
 
         return false;
+    }
+
+    public boolean hasRole(String email, UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+        User user = userOptional.get();
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            return false;
+        }
+        return user.getRoles().contains(role);
     }
 
     public boolean hasOrganization(String email) {

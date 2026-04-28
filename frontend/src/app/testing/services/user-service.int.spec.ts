@@ -178,7 +178,7 @@ describe('UserService Integration', () => {
       // Beginwaarde is 0
       expect(service.requestedCount()).toBe(0);
 
-      service.refreshRequestedCount();
+      service.refreshRequestedCount().subscribe();
 
       const req = httpTesting.expectOne((r) => r.url.endsWith('/user/all/requested-count'));
       expect(req.request.method).toBe('GET');

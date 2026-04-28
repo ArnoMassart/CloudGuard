@@ -183,14 +183,16 @@ export class UserService {
       })
       .pipe(
         tap(() => {
-          this.refreshRequestedCount();
+          this.refreshRequestedCount().subscribe();
         })
       );
   }
 
   refreshRequestedCount(): Observable<number> {
     const url = RouteService.getBackendUrl('/user/all/requested-count');
-    return this.#http.get<number>(url, { withCredentials: true });
+    return this.#http.get<number>(url, { withCredentials: true }).pipe(
+      tap((count) => this.requestedCount.set(count))
+    );
   }
 
   getRole(roles: Role[]): string {
@@ -226,13 +228,21 @@ export class UserService {
       })
       .pipe(
         tap(() => {
-          this.refreshRequestedCount();
+          this.refreshRequestedCount().subscribe();
         })
       );
   }
 
   isOrganizationSetup(): Observable<boolean> {
     const url = RouteService.getBackendUrl('/user/org-setup-status');
+
+    return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
+
+  isCloudmenStaff(): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user/is-cloudmen-staff');
 
     return this.#http.get<boolean>(url, {
       withCredentials: true,

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { UsersGroups } from './users-groups';
-import { SectionType } from '../../../models/SectionType';
 
 // Mock vertalingen
 const I18N_MOCK = {
