@@ -12,6 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Service responsible for verifying if a customer has an active CloudGuard subscription based on Teamleader CRM
+ * data. <p>
+ *
+ * This service acts as a gatekeeper, checking custom fields within the Teamleader API to determine access rights.
+ * It includes robust error-handling logic, including automatic token refreshment and network-level retries.
+ */
 @Service
 @SuppressWarnings("unchecked")
 public class TeamleaderAccessService {
@@ -28,10 +35,21 @@ public class TeamleaderAccessService {
         this.teamleaderCompanyService = teamleaderCompanyService;
     }
 
-    public void updateCredentials(String accessToken, String refreshToken) {
-        teamleaderService.updateCredentials(accessToken, refreshToken);
-    }
-
+    /**
+     * Determines if the organization associated with the given email address has active access to CloudGuard. <p>
+     *
+     * <b>Resiliency Features:</b>
+     * <ul>
+     * <li><b>401 Handling:</b> Automatically attempts to refresh
+     * OAuth tokens and retries once if unauthorized.</li>
+     * <li><b>Network Retries:</b> Retries up to 2 times upon
+     * encountering network-level exceptions (e.g., Connection Reset).</li>
+     * </ul>
+     *
+     * @param loggedInEmail the email address of the user/admin being checked
+     * @return {@code true} if the associated company has the CloudGuard custom field set to true in Teamleader;
+     * {@code false} otherwise
+     */
     public boolean hasCloudGuardAccess(String loggedInEmail) {
         int maxRetries = 2;
         int attempt = 0;
@@ -75,6 +93,16 @@ public class TeamleaderAccessService {
             }
         }
         return false;
+    }
+
+    /**
+     * Updates the Teamleader credentials stored in the underlying {@link TeamleaderService}.
+     *
+     * @param accessToken   the new OAuth access token
+     * @param refreshToken  the new OAuth refresh token
+     */
+    public void updateCredentials(String accessToken, String refreshToken) {
+        teamleaderService.updateCredentials(accessToken, refreshToken);
     }
 
     private boolean executeAccessCheckFlow(String domainEmail) {
