@@ -27,6 +27,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -91,7 +92,30 @@ class NotificationProjectionSyncServiceTest {
 
         when(instanceRepository.findByOrganizationId(ORG_ID)).thenReturn(List.of());
 
+        
+        NotificationInstance ensured = new NotificationInstance();
+        ensured.setId(1L);
+        ensured.setOrganizationId(ORG_ID);
+        ensured.setSource("users-groups");
+        ensured.setNotificationType("user-control");
+        ensured.setStatus(NotificationInstanceStatus.ACTIVE);
+        when(instanceRepository.findByOrganizationIdAndSourceAndNotificationType(
+                        ORG_ID, "users-groups", "user-control"))
+                .thenReturn(Optional.of(ensured));
+
         syncService.syncOrganization(ORG_ID);
+
+        verify(instanceRepository).insertIfMissing(
+                eq(ORG_ID),
+                eq("users-groups"),
+                eq("user-control"),
+                eq(NotificationInstanceStatus.ACTIVE.name()),
+                eq(NotificationSeverity.CRITICAL.name()),
+                eq("t"),
+                eq("d"),
+                eq("Users"),
+                eq("/users-groups"),
+                any());
 
         ArgumentCaptor<NotificationInstance> captor = ArgumentCaptor.forClass(NotificationInstance.class);
         verify(instanceRepository).save(captor.capture());

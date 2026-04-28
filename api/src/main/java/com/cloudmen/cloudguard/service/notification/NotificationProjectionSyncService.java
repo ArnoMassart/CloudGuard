@@ -93,24 +93,35 @@ public class NotificationProjectionSyncService {
 
             NotificationInstance row = byKey.get(key);
             if (row == null) {
-                row = new NotificationInstance();
-                row.setOrganizationId(organizationId);
-                row.setSource(dto.source());
-                row.setNotificationType(dto.notificationType());
-                row.setStatus(
+                NotificationInstanceStatus initialStatus =
                         disabledInPreferences
                                 ? NotificationInstanceStatus.DISABLED
-                                : NotificationInstanceStatus.ACTIVE);
+                                : NotificationInstanceStatus.ACTIVE;
+                instanceRepository.insertIfMissing(
+                        organizationId,
+                        dto.source(),
+                        dto.notificationType(),
+                        initialStatus.name(),
+                        NotificationSeverity.fromDtoString(dto.severity()).name(),
+                        dto.title(),
+                        dto.description(),
+                        dto.sourceLabel(),
+                        dto.sourceRoute(),
+                        now);
+                row = instanceRepository
+                        .findByOrganizationIdAndSourceAndNotificationType(
+                                organizationId, dto.source(), dto.notificationType())
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Notification row missing after upsert for org "
+                                        + organizationId + " key " + key));
                 byKey.put(key, row);
             } else if (disabledInPreferences) {
                 row.setStatus(NotificationInstanceStatus.DISABLED);
                 row.setSolvedAt(null);
-            } else {
-                if (row.getStatus() == NotificationInstanceStatus.SOLVED
-                        || row.getStatus() == NotificationInstanceStatus.DISABLED) {
-                    row.setStatus(NotificationInstanceStatus.ACTIVE);
-                    row.setSolvedAt(null);
-                }
+            } else if (row.getStatus() == NotificationInstanceStatus.SOLVED
+                    || row.getStatus() == NotificationInstanceStatus.DISABLED) {
+                row.setStatus(NotificationInstanceStatus.ACTIVE);
+                row.setSolvedAt(null);
             }
 
             row.setSeverity(NotificationSeverity.fromDtoString(dto.severity()));
