@@ -196,6 +196,21 @@ public class UserService {
         return false;
     }
 
+    public boolean hasRole(String email, UserRole role) {
+        if (role == null) {
+            return false;
+        }
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            return false;
+        }
+        User user = userOptional.get();
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            return false;
+        }
+        return user.getRoles().contains(role);
+    }
+
     public boolean hasOrganization(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 

@@ -183,14 +183,16 @@ export class UserService {
       })
       .pipe(
         tap(() => {
-          this.refreshRequestedCount();
+          this.refreshRequestedCount().subscribe();
         })
       );
   }
 
   refreshRequestedCount(): Observable<number> {
     const url = RouteService.getBackendUrl('/user/all/requested-count');
-    return this.#http.get<number>(url, { withCredentials: true });
+    return this.#http.get<number>(url, { withCredentials: true }).pipe(
+      tap((count) => this.requestedCount.set(count))
+    );
   }
 
   getRole(roles: Role[]): string {
@@ -226,7 +228,7 @@ export class UserService {
       })
       .pipe(
         tap(() => {
-          this.refreshRequestedCount();
+          this.refreshRequestedCount().subscribe();
         })
       );
   }
