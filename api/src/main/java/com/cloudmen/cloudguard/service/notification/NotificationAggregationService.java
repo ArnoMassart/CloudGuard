@@ -9,6 +9,7 @@ import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceSta
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
+import com.cloudmen.cloudguard.dto.dashboard.DashboardOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
@@ -513,6 +514,21 @@ public class NotificationAggregationService {
         return response.active().stream()
                 .filter(n -> "critical".equals(n.severity()))
                 .count();
+    }
+
+    /**
+     * Returns total + critical active notification counts in a single aggregation pass.
+     * Preferred over calling {@link #getNotificationsCount(String)} and
+     * {@link #getNotificationsCriticalCount(String)} separately, which would aggregate twice.
+     */
+    public DashboardOverviewResponse getDashboardCounts(String userId) {
+        NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
+        List<NotificationDto> active = response.active();
+        int total = active.size();
+        int critical = (int) active.stream()
+                .filter(n -> "critical".equals(n.severity()))
+                .count();
+        return new DashboardOverviewResponse(total, critical);
     }
 
     public List<NotificationDto> getCriticalNotifications(String userId, Locale locale) {
