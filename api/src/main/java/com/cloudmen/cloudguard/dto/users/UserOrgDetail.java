@@ -1,22 +1,22 @@
 package com.cloudmen.cloudguard.dto.users;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 
-@AllArgsConstructor
-@Getter
-@Setter
-public class UserOrgDetail {
-    private String fullName;
-    private String email;
-    private String role;
-    private boolean isActive;
-    private String lastLogin;
-    private boolean isTwoFactorEnabled;
-    private boolean isSecurityConform;
-    /** Codes: NO_2FA, ACTIVITY_STALE, ACTIVITY_INACTIVE_RECENT — used to mask "Niet conform" when matching prefs are off. */
-    private List<String> securityViolationCodes;
-}
+/**
+ * A Data Transfer Object (DTO) containing detailed organizational and security information for a user. <p>
+ *
+ * This record encapsulates a user's identity details, their activity status, and comprehensive security
+ * compliance metrics. It is primarily used to display user lists alongside their corresponding security health within
+ * an organization.
+ */
+public record UserOrgDetail(
+        String fullName,
+        String email,
+        String role,
+        boolean isActive,
+        String lastLogin,
+        boolean isTwoFactorEnabled,
+        boolean isSecurityConform,
+//      Codes: NO_2FA, ACTIVITY_STALE, ACTIVITY_INACTIVE_RECENT — used to mask "Niet conform" when matching prefs are off.
+        List<String> securityViolationCodes
+) { }
