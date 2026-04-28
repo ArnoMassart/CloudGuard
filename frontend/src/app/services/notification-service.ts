@@ -42,7 +42,8 @@ export class NotificationService {
         active: res.active ?? [],
         solved: res.solved ?? [],
         lastNotificationSyncAt: res.lastNotificationSyncAt ?? null,
-      }))
+      })),
+      catchError(() => of({ active: [], solved: [], lastNotificationSyncAt: null }))
     );
   }
 

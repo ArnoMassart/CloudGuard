@@ -246,7 +246,7 @@ describe('UserService', () => {
     it('refreshRequestedCount GETs count and updates the signal', () => {
       expect(service.requestedCount()).toBe(0); // Initiele state
 
-      service.refreshRequestedCount();
+      service.refreshRequestedCount().subscribe();
 
       const req = httpMock.expectOne((r) => r.url.endsWith('/user/all/requested-count'));
       expect(req.request.method).toBe('GET');

@@ -9,6 +9,7 @@ export type User = {
   organizationRequested: boolean;
   organizationId: number;
   organizationName?: string | null;
+  isCloudmenStaff?: boolean;
 };
 
 export enum Role {
