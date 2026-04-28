@@ -42,10 +42,27 @@ public class GoogleSharedDriveService {
         this.drivesComplianceScorer = drivesComplianceScorer;
     }
 
+    /**
+     * Triggers a manual background refresh of the Shared Drive cache for the specified user.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     */
     public void forceRefreshCache(String loggedInEmail) {
         sharedDriveCacheService.forceRefreshCache(loggedInEmail);
     }
 
+    /**
+     * Retrieves a paginated and optionally filtered list of Shared Drives. <p>
+     *
+     * This method fetches data from the cache, applies a case-insensitive text filter on the drive name, and
+     * partitions the result. It also formats the creation timestamps into human-readable "time ago" strings.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @param pageToken     the string representation of the requested page index
+     * @param size          the maximum number of drives to return per page
+     * @param query         an optional search string to filter drives by name
+     * @return a {@link SharedDrivePageResponse} containing the requested page and metadata
+     */
     public SharedDrivePageResponse getSharedDrivesPaged(String loggedInEmail, String pageToken, int size, String query) {
         SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
 
@@ -85,6 +102,16 @@ public class GoogleSharedDriveService {
         return new SharedDrivePageResponse(pagedItems, nextTokenToReturn);
     }
 
+    /**
+     * Retrieves a comprehensive security and compliance overview of all Shared Drives within the organization. <p>
+     *
+     * This method aggregates risk metrics (such as orphan drives, external members, and permissive sharing settings)
+     * and utilizes the {@link DrivesComplianceScorer} to generate a preference-adjusted security score and breakdown.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @param disabledKeys  a set of security check keys to ignore based on user preferences
+     * @return a {@link SharedDriveOverviewResponse} containing aggregated metrics, scores, and warnings
+     */
     public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);

@@ -1,8 +1,10 @@
 package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.service.GoogleUsersService;
+import com.cloudmen.cloudguard.service.users.GoogleUserMapper;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import com.cloudmen.cloudguard.service.users.UsersComplianceScorer;
 import com.google.api.services.admin.directory.model.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +34,10 @@ public class GoogleUsersServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleUsersService(usersCacheService, getMessageSource());
+        UsersComplianceScorer scorer = new UsersComplianceScorer(getMessageSource());
+        GoogleUserMapper mapper = new GoogleUserMapper();
+
+        service = new GoogleUsersService(usersCacheService, scorer, mapper);
     }
 
     @AfterEach

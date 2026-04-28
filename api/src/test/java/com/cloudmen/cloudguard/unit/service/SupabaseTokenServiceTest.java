@@ -50,8 +50,12 @@ public class SupabaseTokenServiceTest {
         messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name());
         messageSource.setFallbackToSystemLocale(false);
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-        service = new SupabaseTokenService(MOCK_URL, MOCK_KEY, messageSource);
+
+        service = new SupabaseTokenService(messageSource);
+
         ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+        ReflectionTestUtils.setField(service, "supabaseUrl", MOCK_URL);
+        ReflectionTestUtils.setField(service, "supabaseKey", MOCK_KEY);
     }
 
     @Test

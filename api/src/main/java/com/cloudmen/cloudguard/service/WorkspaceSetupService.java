@@ -4,18 +4,28 @@ import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceSetupRequest;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Service responsible for the initial onboarding and setup of a Google Workspace tenant within CloudGuard. <p>
+ *
+ * This service verifies that Domain-Wide Delegation (DWD) has been correctly configured in the customer's Google
+ * Workspace environment. Upon successful verification, it links the administrative account to the organization and
+ * elevates the user's privileges to SUPER_ADMIN.
+ */
 @Service
 public class WorkspaceSetupService {
+    private static final Logger log = LoggerFactory.getLogger(WorkspaceSetupService.class);
 
     private final UserService userService;
     private final OrganizationService organizationService;
@@ -29,6 +39,15 @@ public class WorkspaceSetupService {
         this.googleApiFactory = googleApiFactory;
     }
 
+    /**
+     * Initializes a new Workspace tenant by verifying DWD access and promoting the requesting user to a
+     * Super Administrator.
+     *
+     * @param loggedInEmail the email of the user initiating the setup
+     * @param request       the setup payload containing the designated admin email
+     * @return the updated {@link UserDto} reflecting the new SUPER_ADMIN role
+     * @throws ResponseStatusException if DWD verification fails (HTTP 403)
+     */
     public UserDto initializeTenant(String loggedInEmail, WorkspaceSetupRequest request) {
         User user = userService.findByEmail(loggedInEmail);
 
@@ -39,11 +58,9 @@ public class WorkspaceSetupService {
                     "Google Domain-Wide Delegation verification failed.");
         }
 
-        // Promotie naar SUPER_ADMIN en opslaan [cite: 18]
         user.setRoles(new java.util.ArrayList<>(List.of(UserRole.SUPER_ADMIN)));
         User updatedUser = userService.save(user);
 
-        // Koppel admin email aan de organisatie [cite: 18]
         if (user.getOrganizationId() != null) {
             organizationService.findById(user.getOrganizationId())
                     .ifPresent(org -> organizationService.updateAdminEmailForOrg(
@@ -53,15 +70,16 @@ public class WorkspaceSetupService {
         return userService.convertToDto(updatedUser);
     }
 
+    /**
+     * Performs a minimal, read-only API call to verify if the CloudGuard service account has been granted Domain-Wide
+     * Delegation rights by the Workspace administrator.
+     */
     private boolean verifyDwdConnection(String adminEmail) {
         try {
-            // Gebruik de factory om een Directory service te bouwen [cite: 15]
-            // We gebruiken de scope 'admin.directory.user.readonly' als test [cite: 16, 17]
             Directory directoryService = googleApiFactory.getDirectoryService(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY,
                     adminEmail
             );
 
-            // Voer een minimale API-call uit om de rechten te testen [cite: 17]
             directoryService.users().list()
                     .setCustomer("my_customer")
                     .setMaxResults(1)
@@ -69,8 +87,7 @@ public class WorkspaceSetupService {
 
             return true;
         } catch (Exception e) {
-            // Logs voor debugging, de 403 wordt door de controller/frontend afgehandeld
-            System.err.println("Google DWD verification failed: " + e.getMessage());
+            log.error("Google DWD verification failed for {}: {}", adminEmail, e.getMessage());
             return false;
         }
     }

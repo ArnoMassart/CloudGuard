@@ -6,6 +6,7 @@ import com.cloudmen.cloudguard.dto.LoginResult;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
@@ -59,7 +60,7 @@ public class AuthService {
      * @return a {@link LoginResult} containing the secure cookie and user profile
      */
     public LoginResult processLogin(String externalIdToken) {
-        Jwt jwt = jwtService.decodeGoogleToken(externalIdToken);
+        Jwt jwt = jwtService.decodeExternalToken(externalIdToken);
 
         String email = jwt.getClaimAsString("email");
 

@@ -1,7 +1,6 @@
 package com.cloudmen.cloudguard.service;
 
 import com.cloudmen.cloudguard.dto.TeamleaderTokens;
-import com.cloudmen.cloudguard.exception.TokensNotFoundException;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,36 +17,43 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A central service for managing the persistence of Teamleader OAuth tokens. <p>
+ *
+ * To support a distributed architecture (or multiple developer instances), CloudGuard stores the active Teamleader
+ * access and refresh tokens in a central Supabase database. This service handles the retrieval and
+ * synchronization of these tokens using the Supabase REST API.
+ */
 @Service
 public class SupabaseTokenService {
 
     private static final Logger log = LoggerFactory.getLogger(SupabaseTokenService.class);
 
     private final RestTemplate restTemplate;
-    private final String supabaseUrl;
-    private final String supabaseKey;
     private final MessageSource messageSource;
 
+    @Value("${supabase.url}")
+    private String supabaseUrl;
+
+    @Value("${supabase.key}")
+    private String supabaseKey;
+
     public SupabaseTokenService(
-            @Value("${supabase.url}") String supabaseUrl,
-            @Value("${supabase.key}") String supabaseKey,
             @Qualifier("messageSource") MessageSource messageSource) {
+        this.messageSource = messageSource;
+
+        // The JdkClientHttpRequestFactory is explicitly required here
+        // to support HTTP PATCH requests which are blocked by default in standard Java net.
         this.restTemplate = new RestTemplate();
         this.restTemplate.setRequestFactory(new JdkClientHttpRequestFactory());
-        this.supabaseUrl = supabaseUrl;
-        this.supabaseKey = supabaseKey;
-        this.messageSource = messageSource;
     }
 
-    private HttpHeaders getSupabaseHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("apikey", supabaseKey);
-        headers.set("Authorization", "Bearer " + supabaseKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Prefer", "return=representation");
-        return headers;
-    }
-
+    /**
+     * Retrieves the currently active Teamleader tokens from the central database.
+     *
+     * @return a {@link TeamleaderTokens} record containing the access and refresh token
+     * @throws GoogleWorkspaceSyncException if no tokens are configured in the database
+     */
     public TeamleaderTokens getTokens() {
         String url = supabaseUrl + "/rest/v1/teamleader_tokens?id=eq.1";
         HttpEntity<Void> entity = new HttpEntity<>(getSupabaseHeaders());
@@ -70,6 +76,12 @@ public class SupabaseTokenService {
                         "api.teamleader.tokens_not_configured", null, LocaleContextHolder.getLocale()));
     }
 
+    /**
+     * Updates the central database with newly refreshed Teamleader tokens.
+     *
+     * @param accessToken   the new access token
+     * @param refreshToken  the new refresh token
+     */
     public void updateTokens(String accessToken, String refreshToken) {
         String url = supabaseUrl + "/rest/v1/teamleader_tokens?id=eq.1";
 
@@ -82,5 +94,14 @@ public class SupabaseTokenService {
 
         restTemplate.exchange(url, HttpMethod.PATCH, entity, String.class);
         log.info("Teamleader tokens succesvol gesynchroniseerd met centrale Supabase database.");
+    }
+
+    private HttpHeaders getSupabaseHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apikey", supabaseKey);
+        headers.set("Authorization", "Bearer " + supabaseKey);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Prefer", "return=representation");
+        return headers;
     }
 }

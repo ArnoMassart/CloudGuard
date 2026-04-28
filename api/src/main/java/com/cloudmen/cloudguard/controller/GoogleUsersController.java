@@ -3,10 +3,9 @@ package com.cloudmen.cloudguard.controller;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserPageResponse;
 import com.cloudmen.cloudguard.dto.users.UsersWithoutTwoFactorResponse;
-import com.cloudmen.cloudguard.service.GoogleUsersService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

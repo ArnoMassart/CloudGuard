@@ -23,6 +23,8 @@ import com.cloudmen.cloudguard.service.notification.NotificationAggregationServi
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
 import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +53,8 @@ class NotificationAggregationServiceTest {
 
     @Mock GoogleDomainService domainService;
     @Mock DnsRecordsService dnsRecordsService;
-    @Mock GoogleUsersService usersService;
+    @Mock
+    GoogleUsersService usersService;
     @Mock
     GoogleSharedDriveService driveService;
     @Mock
@@ -65,7 +68,8 @@ class NotificationAggregationServiceTest {
     @Mock UserSecurityPreferenceService preferenceService;
     @Mock NotificationInstanceRepository notificationInstanceRepository;
     @Mock NotificationProjectionProperties notificationProjectionProperties;
-    @Mock UserService userService;
+    @Mock
+    UserService userService;
     @Mock OrganizationService organizationService;
 
     private ResourceBundleMessageSource messageSource;

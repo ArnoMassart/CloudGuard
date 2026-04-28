@@ -29,6 +29,8 @@ import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;

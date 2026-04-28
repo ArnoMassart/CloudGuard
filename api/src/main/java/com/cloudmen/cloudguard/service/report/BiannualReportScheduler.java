@@ -4,7 +4,7 @@ import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.report.ReportResponse;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import org.slf4j.Logger;

@@ -17,6 +17,8 @@ import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.report.PdfReportService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

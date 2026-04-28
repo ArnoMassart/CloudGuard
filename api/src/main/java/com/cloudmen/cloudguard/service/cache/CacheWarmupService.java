@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.policy.MobileManagementPolicyProvider;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -2,18 +2,12 @@ package com.cloudmen.cloudguard.integration.controller;
 
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
-import com.cloudmen.cloudguard.controller.AuthController;
 import com.cloudmen.cloudguard.controller.UserController;
-import com.cloudmen.cloudguard.dto.LoginResult;
-import com.cloudmen.cloudguard.dto.TokenRequestDto;
-import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.exception.handler.GlobalExceptionHandler;
 import com.cloudmen.cloudguard.interceptor.AuthInterceptor;
-import com.cloudmen.cloudguard.service.AuthService;
 import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.JwtService;
-import com.cloudmen.cloudguard.service.UserService;
-import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,30 +17,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import jakarta.servlet.http.Cookie;
-import org.springframework.http.HttpHeaders;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(

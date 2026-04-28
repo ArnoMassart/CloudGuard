@@ -15,6 +15,14 @@ import java.util.Set;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
+/**
+ * Component responsible for calculating compliance scores and evaluating the risk levels of Google Workspace Shared
+ * Drives. <p>
+ *
+ * This scorer handles the complex weighting of risk tiers (low, medium, high), applies deductions for unsafe
+ * sharing settings (e.g., orphan drives, external access), and dynamically adjusts the final breakdown based on the
+ * user's active security preferences.
+ */
 @Component
 public class DrivesComplianceScorer {
     private final MessageSource messageSource;

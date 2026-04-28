@@ -10,7 +10,7 @@ import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.service.AdminSecurityKeysService;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.PasswordSettingsService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;

@@ -28,6 +28,8 @@ import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer;

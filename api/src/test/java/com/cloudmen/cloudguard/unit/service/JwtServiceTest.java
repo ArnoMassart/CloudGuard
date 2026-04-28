@@ -48,7 +48,7 @@ public class JwtServiceTest {
 
         service = new JwtService(messageSource);
 
-        ReflectionTestUtils.setField(service, "googleJwtDecoder", decoder);
+        ReflectionTestUtils.setField(service, "externalJwtDecoder", decoder);
         ReflectionTestUtils.setField(service, "secretKey", SECRET);
         ReflectionTestUtils.setField(service, "jwtExpiration", EXPIRATION);
         service.init();
@@ -60,21 +60,21 @@ public class JwtServiceTest {
     }
 
     @Test
-    void decodeGoogleToken_validToken_returnsJwt() {
+    void decodeExternalToken_validToken_returnsJwt() {
         Jwt mockJwt = mock(Jwt.class);
 
         when(decoder.decode("valid-token")).thenReturn(mockJwt);
 
-        Jwt result = service.decodeGoogleToken("valid-token");
+        Jwt result = service.decodeExternalToken("valid-token");
 
         assertEquals(mockJwt, result);
     }
 
     @Test
-    void decodeGoogleToken_invalidToken_throwsInvalidExternalTokenException() {
+    void decodeExternalToken_invalidToken_throwsInvalidExternalTokenException() {
         when(decoder.decode("invalid-token")).thenThrow(new org.springframework.security.oauth2.jwt.JwtException("Expired"));
 
-        assertThrows(InvalidExternalTokenException.class, () -> service.decodeGoogleToken("invalid-token"));
+        assertThrows(InvalidExternalTokenException.class, () -> service.decodeExternalToken("invalid-token"));
     }
 
     @Test

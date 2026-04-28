@@ -11,6 +11,8 @@ import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;

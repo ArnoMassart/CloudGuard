@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.users.UserCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;

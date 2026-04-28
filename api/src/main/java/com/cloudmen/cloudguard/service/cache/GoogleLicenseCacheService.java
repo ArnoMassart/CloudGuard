@@ -5,7 +5,7 @@ import com.cloudmen.cloudguard.dto.licenses.LicenseCacheEntry;
 import com.cloudmen.cloudguard.dto.licenses.LicenseType;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;

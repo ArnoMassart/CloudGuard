@@ -2,7 +2,7 @@ package com.cloudmen.cloudguard.service.policy;
 
 import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
