@@ -9,17 +9,21 @@ import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Core service responsible for user authentication, session management, and administrative auto-promotion. <p>
+ *
+ * This service processes external Google ID tokens, orchestrates new user registration, and manages the lifecycle of
+ * secure, HttpOnly session cookies. It also features automatic "Super Admin" discovery by cross-referencing login
+ * attempts with Google Workspace administrative status via Domain-Wide Delegation (DWD).
+ */
 @Service
 public class AuthService {
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final UserService userService;
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -41,18 +45,29 @@ public class AuthService {
         this.googleApiFactory = googleApiFactory;
     }
 
+    /**
+     * Processes a login attempt using an external Google ID token. <p>
+     *
+     * <b>Workflow:</b> <p>
+     * 1. Decodes and validates the Google JWT.
+     * 2. Retrieves or registers the user in the local database.
+     * 3. Attempts to link the user to a Workspace organization
+     * 4. Promotes the user to SUPER_ADMIN if they possess admin rights in Workspace.
+     * 5. Issues a secure internal session cookie.
+     *
+     * @param externalIdToken the raw OIDC token provided by Google
+     * @return a {@link LoginResult} containing the secure cookie and user profile
+     */
     public LoginResult processLogin(String externalIdToken) {
-        // 1. Decode the token to get all details (Name, Picture, Email)
         Jwt jwt = jwtService.decodeGoogleToken(externalIdToken);
 
         String email = jwt.getClaimAsString("email");
 
-        // 2. Try to find user, OR create a new one if missing
         User user = userService.findByEmailOptional(email)
                 .orElseGet(() -> registerNewUser(jwt));
 
         if (user.getRoles().isEmpty()) {
-            user.getRoles().add(UserRole.UNASSIGNED); // Of UserRole.USER
+            user.getRoles().add(UserRole.UNASSIGNED);
             userService.save(user);
         }
 
@@ -61,25 +76,103 @@ public class AuthService {
             organizationService.ensureUserLinkedToOrganization(
                     user, customer.id(), customer.displayName());
 
-            // AUTOMATISCHE SUPER-ADMIN CHECK (Multi-tenant DWD)
             checkAndPromoteAdmin(user);
         });
 
-        // Update profile picture from JWT if available (for existing users)
         String pictureUrl = jwt.getClaimAsString("picture");
         if (pictureUrl != null && !pictureUrl.isBlank() && !pictureUrl.equals(user.getPictureUrl())) {
             user.setPictureUrl(pictureUrl);
             userService.save(user);
         }
 
-        // 3. Generate Session Token (Same as before)
         String sessionToken = jwtService.generateToken(user);
         ResponseCookie cookie = createSessionCookie(sessionToken);
 
-        // 4. Return result
         UserDto userDto = userService.convertToDto(user);
 
         return new LoginResult(cookie, userDto);
+    }
+
+    /**
+     * Validates an internal session token and retrieves the corresponding user profile.
+     *
+     * @param token the internal JWT session token
+     * @return the {@link UserDto} if valid, or {@code null} if expired/invalid
+     */
+    public UserDto validateSession(String token) {
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+
+        try {
+            String email = jwtService.validateInternalToken(token);
+
+            return userRepository.findByEmail(email).map(userService::convertToDto).orElse(null);
+        } catch (Exception e ) {
+            return null;
+        }
+    }
+
+    /**
+     * Retrieves the current user context based on the session token.
+     *
+     * @param token the internal JWT session token
+     * @return an Optional {@link UserDto}
+     */
+    public Optional<UserDto> getCurrentUser(String token) {
+        try {
+            String email = jwtService.validateInternalToken(token);
+
+            return userService.findByEmailOptional(email)
+                    .map(userService::convertToDto);
+        } catch (Exception e) {
+            return java.util.Optional.empty();
+        }
+    }
+
+    /**
+     * Generates a secure, HttpOnly session cookie ("The Golden Ticket").
+     *
+     * @param token the internal session token to wrap in the cookie
+     * @return a configured {@link ResponseCookie}
+     */
+    public ResponseCookie createSessionCookie(String token) {
+        return ResponseCookie.from("AuthToken", token)
+                .httpOnly(true)     // Crucial: JS cannot read this
+                .secure(true)       // HTTPS only
+                .path("/")          // Available for the whole app
+                .maxAge(24 * 60 * 60L) // 1 Day (in seconds)
+                .sameSite("Strict") // CSRF Protection
+                .build();
+    }
+
+    /**
+     * Generates an expired cookie to effectively log out the user.
+     *
+     * @return an empty, expired {@link ResponseCookie}
+     */
+    public ResponseCookie createEmptyCookie() {
+        return ResponseCookie.from("AuthToken", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .build();
+    }
+
+    private User registerNewUser(Jwt jwt) {
+        User newUser = new User();
+
+        newUser.setEmail(jwt.getClaimAsString("email"));
+        newUser.setFirstName(jwt.getClaimAsString("given_name")); // Google standard field
+        newUser.setLastName(jwt.getClaimAsString("family_name")); // Google standard field
+        newUser.setPictureUrl(jwt.getClaimAsString("picture")); // Google profile photo URL
+
+        // Set Defaults
+        newUser.setCreatedAt(java.time.LocalDateTime.now());
+
+        return userService.save(newUser);
     }
 
     private void checkAndPromoteAdmin(User user) {
@@ -121,67 +214,5 @@ public class AuthService {
                 System.err.println("DWD auto-discovery failed for: " + user.getEmail());
             }
         });
-    }
-
-    private User registerNewUser(Jwt jwt) {
-        User newUser = new User();
-
-        newUser.setEmail(jwt.getClaimAsString("email"));
-        newUser.setFirstName(jwt.getClaimAsString("given_name")); // Google standard field
-        newUser.setLastName(jwt.getClaimAsString("family_name")); // Google standard field
-        newUser.setPictureUrl(jwt.getClaimAsString("picture")); // Google profile photo URL
-
-        // Set Defaults
-        newUser.setCreatedAt(java.time.LocalDateTime.now());
-
-        return userService.save(newUser);
-    }
-
-    public UserDto validateSession(String token) {
-        if (token == null || token.isEmpty()) {
-            return null;
-        }
-
-        try {
-            String email = jwtService.validateInternalToken(token);
-
-            return userRepository.findByEmail(email).map(userService::convertToDto).orElse(null);
-        } catch (Exception e ) {
-            return null;
-        }
-    }
-
-    public ResponseCookie createEmptyCookie() {
-        return ResponseCookie.from("AuthToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .build();
-    }
-
-    /**
-     * Creates the Secure Session Cookie (The "Golden Ticket")
-     */
-    public ResponseCookie createSessionCookie(String token) {
-        return ResponseCookie.from("AuthToken", token)
-                .httpOnly(true)     // Crucial: JS cannot read this
-                .secure(true)       // HTTPS only
-                .path("/")          // Available for the whole app
-                .maxAge(24 * 60 * 60L) // 1 Day (in seconds)
-                .sameSite("Strict") // CSRF Protection
-                .build();
-    }
-
-    public java.util.Optional<UserDto> getCurrentUser(String token) {
-        try {
-            String email = jwtService.validateInternalToken(token);
-
-            return userService.findByEmailOptional(email)
-                    .map(userService::convertToDto);
-        } catch (Exception e) {
-            return java.util.Optional.empty();
-        }
     }
 }

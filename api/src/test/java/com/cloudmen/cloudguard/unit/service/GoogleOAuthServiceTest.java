@@ -1,8 +1,10 @@
 package com.cloudmen.cloudguard.unit.service;
 
-import com.cloudmen.cloudguard.service.GoogleOAuthService;
+import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.service.oauth.OAuthComplianceScorer;
+import com.cloudmen.cloudguard.service.oauth.OAuthScopeMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +31,10 @@ public class GoogleOAuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleOAuthService(oAuthCacheService, getMessageSource());
+        OAuthComplianceScorer scorer = new OAuthComplianceScorer(getMessageSource());
+        OAuthScopeMapper mapper = new OAuthScopeMapper(getMessageSource());
+
+        service = new GoogleOAuthService(oAuthCacheService, mapper, scorer);
     }
 
     @AfterEach

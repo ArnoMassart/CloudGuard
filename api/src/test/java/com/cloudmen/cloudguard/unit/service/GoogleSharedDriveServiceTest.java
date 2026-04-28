@@ -2,7 +2,8 @@ package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
+import com.cloudmen.cloudguard.service.drives.DrivesComplianceScorer;
+import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,9 @@ public class GoogleSharedDriveServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleSharedDriveService(sharedDriveCacheService, getMessageSource());
+        DrivesComplianceScorer scorer = new DrivesComplianceScorer(getMessageSource());
+
+        service = new GoogleSharedDriveService(sharedDriveCacheService, scorer);
     }
 
     @AfterEach

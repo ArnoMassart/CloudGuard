@@ -19,6 +19,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Service responsible for sending administrative notifications regarding user access and onboarding requests. <p>
+ *
+ * This service alerts CLOUDMEN system administrators when a user requires manual intervention, such as being assigned to an
+ * organization or receiving a specific security role. All emails are sent asynchronously to the configured
+ * notification recipients.
+ */
 @Service
 public class AccessRequestEmailService {
     private static final Logger log = LoggerFactory.getLogger(AccessRequestEmailService.class);
@@ -37,6 +44,11 @@ public class AccessRequestEmailService {
         this.messageSource = messageSource;
     }
 
+    /**
+     * Notifies CLOUDMEN administrators that a user has successfully logged in but is not yet associated with an organization.
+     *
+     * @param userEmail the email address of the user awaiting organization assignment
+     */
     @Async
     public void notifyOrganizationRequest(String userEmail) {
         Locale locale = LocaleContextHolder.getLocale();
@@ -47,6 +59,11 @@ public class AccessRequestEmailService {
         sendEmail(userEmail, requestType, actionRequired, locale);
     }
 
+    /**
+     * Notifies CLOUDMEN administrators that a user is awaiting role assignment within the system.
+     *
+     * @param userEmail the email address of the user awaiting role assignment
+     */
     @Async
     public void notifyRoleRequest(String userEmail) {
         Locale locale = LocaleContextHolder.getLocale();

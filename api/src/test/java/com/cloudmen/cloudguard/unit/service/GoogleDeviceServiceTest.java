@@ -1,7 +1,9 @@
 package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.service.GoogleDeviceService;
+import com.cloudmen.cloudguard.service.device.DeviceComplianceScorer;
+import com.cloudmen.cloudguard.service.device.GoogleDeviceMapper;
+import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import org.junit.jupiter.api.AfterEach;
@@ -30,7 +32,10 @@ public class GoogleDeviceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleDeviceService(deviceCacheService);
+        DeviceComplianceScorer scorer = new DeviceComplianceScorer();
+        GoogleDeviceMapper mapper = new GoogleDeviceMapper(scorer);
+
+        service = new GoogleDeviceService(deviceCacheService, mapper, scorer);
     }
 
     @AfterEach
