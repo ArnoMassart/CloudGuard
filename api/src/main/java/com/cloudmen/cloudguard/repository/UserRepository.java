@@ -14,6 +14,16 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
+    /**
+     * Retrieves a paginated list of users who have pending requests for a new role or organization assignment. <p>
+     *
+     * The results can be optionally filtered by a search query, which performs a case-insensitive partial match
+     * against the user's first name, last name, or email address.
+     *
+     * @param query     the search string to match against user details
+     * @param pageable  pagination and sorting instructions
+     * @return a paginated result of users with pending requests
+     */
     @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = true OR u.organizationRequested = true " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
@@ -23,6 +33,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("query") String query,
             Pageable pageable);
 
+    /**
+     * Retrieves a paginated list of standard users who do not have any pending role or organization requests. <p>
+     *
+     * The results can be narrowed down to a specific organization and optionally filtered by a search query that
+     * performs a case-insensitive match on the user's name or email.
+     *
+     * @param organizationId    the ID of the organization to filter by, or {@code null} to skip this filter
+     * @param query             the search string to match against user details
+     * @param pageable          pagination and sorting instructions
+     * @return a paginated result of users without pending requests
+     */
     @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = false AND u.organizationRequested = false " +
             "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
             "AND (:query IS NULL OR :query = '' OR " +
