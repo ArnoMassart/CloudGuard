@@ -130,12 +130,12 @@ export class SecurityPreferences implements OnInit {
   }
 
   sectionExpanded(sectionId: string): boolean {
-    return this.expandedSections()[sectionId] ?? true;
+    return this.expandedSections()[sectionId] ?? false;
   }
 
   toggleSection(sectionId: string): void {
     this.expandedSections.update((m) => {
-      const cur = m[sectionId] ?? true;
+      const cur = m[sectionId] ?? false;
       return { ...m, [sectionId]: !cur };
     });
   }
