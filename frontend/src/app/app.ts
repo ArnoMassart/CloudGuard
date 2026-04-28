@@ -23,7 +23,7 @@ export class App implements OnInit {
 
   hasSeenSplash = signal(
     sessionStorage.getItem('has_seen_splash') === 'true' ||
-      globalThis.location.pathname.includes('/callback')
+      window.location.pathname.includes('/callback')
   );
 
   onSplashEnded() {
