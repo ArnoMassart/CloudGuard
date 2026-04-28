@@ -19,6 +19,7 @@ import com.cloudmen.cloudguard.dto.report.FullSecurityReport;
 import com.cloudmen.cloudguard.dto.report.ReportResponse;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.exception.PdfGenerationException;
+import com.cloudmen.cloudguard.exception.UserNotFoundException;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
@@ -48,9 +49,28 @@ import java.util.*;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 import static java.util.Map.entry;
 
+/**
+ * Service responsible for generating comprehensive PDF security reports by aggregating data from various security
+ * modules. <p>
+ *
+ * This service orchestrates the full report lifecycle: fetching metrics (Users, Devices, DNS, etc.), rendering
+ * localized Thymeleaf templates, and converting the resulting HTML5 to a print-ready PDF. It utilizes JSoup to ensure
+ * W3C compliance during the PDF rendering process.
+ */
 @Service
 public class PdfReportService {
     private static final Logger log = LoggerFactory.getLogger(PdfReportService.class);
+
+    public static final Map<String, DomainTip> TIPS = Map.ofEntries(
+            entry("SPF", new DomainTip("report.domain.tip.spf.title", "report.domain.tip.spf.valid", "report.domain.tip.spf.action", "report.domain.tip.spf.attention", "report.domain.tip.spf.tip")),
+            entry("DKIM", new DomainTip("report.domain.tip.dkim.title", "report.domain.tip.dkim.valid", "report.domain.tip.dkim.action", "report.domain.tip.dkim.attention", "report.domain.tip.dkim.tip")),
+            entry("DMARC", new DomainTip("report.domain.tip.dmarc.title", "report.domain.tip.dmarc.valid", "report.domain.tip.dmarc.action", "report.domain.tip.dmarc.attention", "report.domain.tip.dmarc.tip")),
+            entry("MX", new DomainTip("report.domain.tip.mx.title", "report.domain.tip.mx.valid", "report.domain.tip.mx.action", "report.domain.tip.mx.attention", "report.domain.tip.mx.tip")),
+            entry("DNSSEC", new DomainTip("report.domain.tip.dnssec.title", "report.domain.tip.dnssec.valid", "report.domain.tip.dnssec.action", "report.domain.tip.dnssec.attention", "report.domain.tip.dnssec.tip")),
+            entry("CAA", new DomainTip("report.domain.tip.caa.title", "report.domain.tip.caa.valid", "report.domain.tip.caa.action", "report.domain.tip.caa.attention", "report.domain.tip.caa.tip")),
+            entry("TXT", new DomainTip("report.domain.tip.txt.title", "report.domain.tip.txt.valid", "report.domain.tip.txt.action", "report.domain.tip.txt.attention", "report.domain.tip.txt.tip")),
+            entry("CNAME", new DomainTip("report.domain.tip.cname.title", "report.domain.tip.cname.valid", "report.domain.tip.cname.action", "report.domain.tip.cname.attention", "report.domain.tip.cname.tip"))
+    );
 
     private final TemplateEngine templateEngine;
     private final DashboardService dashboardService;
@@ -92,6 +112,17 @@ public class PdfReportService {
         this.organizationService = organizationService;
     }
 
+    /**
+     * Generates a full security report in PDF format for the specified user. <p>
+     *
+     * This method fetches localized data, renders a Thymeleaf template, and uses OpenHTMLtoPDF to produce the final
+     * document. It automatically handles asset embedding (logos/backgrounds) as Base64 strings.
+     *
+     * @param loggedInEmail the email of the user requesting the report
+     * @param locale        the locale used for translations within the PDF
+     * @return a {@link ReportResponse} containing the raw PDF bytes and company name
+     * @throws PdfGenerationException if any stage of the generation process fails
+     */
     public ReportResponse generateSecurityReport(String loggedInEmail, Locale locale) {
         log.info("Starting pdf generation");
 
@@ -367,17 +398,6 @@ public class PdfReportService {
 
         return domainData;
     }
-
-    public static final Map<String, DomainTip> TIPS = Map.ofEntries(
-            entry("SPF", new DomainTip("report.domain.tip.spf.title", "report.domain.tip.spf.valid", "report.domain.tip.spf.action", "report.domain.tip.spf.attention", "report.domain.tip.spf.tip")),
-            entry("DKIM", new DomainTip("report.domain.tip.dkim.title", "report.domain.tip.dkim.valid", "report.domain.tip.dkim.action", "report.domain.tip.dkim.attention", "report.domain.tip.dkim.tip")),
-            entry("DMARC", new DomainTip("report.domain.tip.dmarc.title", "report.domain.tip.dmarc.valid", "report.domain.tip.dmarc.action", "report.domain.tip.dmarc.attention", "report.domain.tip.dmarc.tip")),
-            entry("MX", new DomainTip("report.domain.tip.mx.title", "report.domain.tip.mx.valid", "report.domain.tip.mx.action", "report.domain.tip.mx.attention", "report.domain.tip.mx.tip")),
-            entry("DNSSEC", new DomainTip("report.domain.tip.dnssec.title", "report.domain.tip.dnssec.valid", "report.domain.tip.dnssec.action", "report.domain.tip.dnssec.attention", "report.domain.tip.dnssec.tip")),
-            entry("CAA", new DomainTip("report.domain.tip.caa.title", "report.domain.tip.caa.valid", "report.domain.tip.caa.action", "report.domain.tip.caa.attention", "report.domain.tip.caa.tip")),
-            entry("TXT", new DomainTip("report.domain.tip.txt.title", "report.domain.tip.txt.valid", "report.domain.tip.txt.action", "report.domain.tip.txt.attention", "report.domain.tip.txt.tip")),
-            entry("CNAME", new DomainTip("report.domain.tip.cname.title", "report.domain.tip.cname.valid", "report.domain.tip.cname.action", "report.domain.tip.cname.attention", "report.domain.tip.cname.tip"))
-    );
 
     private String insertZeroWidthSpaces(String text) {
         int interval = 40;
