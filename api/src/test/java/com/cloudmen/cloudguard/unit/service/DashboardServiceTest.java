@@ -65,18 +65,20 @@ public class DashboardServiceTest {
 
     @Test
     void getDashboardOverview_success_returnsCounts() {
-        when(notificationService.getNotificationsCount(ADMIN)).thenReturn(15L);
-        when(notificationService.getNotificationsCriticalCount(ADMIN)).thenReturn(3L);
+        when(notificationService.getDashboardCounts(ADMIN)).thenReturn(new DashboardOverviewResponse(15, 3));
 
         DashboardOverviewResponse response = dashboardService.getDashboardOverview(ADMIN);
 
         assertEquals(15, response.totalNotifications());
         assertEquals(3, response.criticalNotifications());
+        verify(notificationService).getDashboardCounts(ADMIN);
+        verify(notificationService, never()).getNotificationsCount(anyString());
+        verify(notificationService, never()).getNotificationsCriticalCount(anyString());
     }
 
     @Test
     void getDashboardOverview_exception_returnsZeroesWithoutCrashing() {
-        when(notificationService.getNotificationsCount(ADMIN)).thenThrow(new RuntimeException("Database error"));
+        when(notificationService.getDashboardCounts(ADMIN)).thenThrow(new RuntimeException("Database error"));
 
         DashboardOverviewResponse response = dashboardService.getDashboardOverview(ADMIN);
 

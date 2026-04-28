@@ -9,6 +9,7 @@ import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceSta
 import com.cloudmen.cloudguard.domain.model.notification.NotificationSeverity;
 import com.cloudmen.cloudguard.domain.model.DnsRecordImportance;
 import com.cloudmen.cloudguard.domain.model.DnsRecordStatus;
+import com.cloudmen.cloudguard.dto.dashboard.DashboardOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordDto;
 import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
@@ -35,10 +36,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
@@ -91,6 +95,12 @@ public class NotificationAggregationService {
     private final UserService userService;
     private final OrganizationService organizationService;
 
+    /**
+     * Serializes the first-time seed of {@code tbl_notifications} per organization within a single JVM
+     * to prevent racing inserters from burning auto-increment values via duplicate-key conflicts.
+     */
+    private final ConcurrentMap<Long, Object> seedLocksByOrgId = new ConcurrentHashMap<>();
+
     public NotificationAggregationService(
             GoogleDomainService domainService,
             DnsRecordsService dnsRecordsService,
@@ -139,9 +149,7 @@ public class NotificationAggregationService {
 
         /*
          * Admin email is only needed when we actually call Google (live aggregation path).
-         * The DB projection path serves cached rows without it, so we no longer validate admin
-         * email here; downstream services (users/drives/...) resolve and enforce admin email
-         * themselves via GoogleServiceHelperMethods#getAdminEmailForUser when they run.
+         * we no longer validate the admin email here
          */
 
         Set<String> disabledPreferenceKeys = preferenceService.getDisabledPreferenceKeys(userId);
@@ -247,11 +255,16 @@ public class NotificationAggregationService {
         if (orgId == null) {
             return aggregateActive(userId, locale, disabledPreferenceKeys, roles);
         }
-        boolean everSynced = notificationInstanceRepository.existsByOrganizationId(orgId);
-        if (!everSynced) {
-            List<NotificationDto> live = aggregateActive(userId, locale, disabledPreferenceKeys, roles);
-            persistAggregatedNotifications(orgId, live);
-            return live;
+        if (!notificationInstanceRepository.existsByOrganizationId(orgId)) {
+            Object lock = seedLocksByOrgId.computeIfAbsent(orgId, k -> new Object());
+            synchronized (lock) {
+                if (!notificationInstanceRepository.existsByOrganizationId(orgId)) {
+                    List<NotificationDto> live =
+                            aggregateActive(userId, locale, disabledPreferenceKeys, roles);
+                    persistAggregatedNotifications(orgId, live);
+                    return live;
+                }
+            }
         }
         List<NotificationInstance> projected =
                 notificationInstanceRepository.findByOrganizationIdAndStatus(
@@ -265,10 +278,10 @@ public class NotificationAggregationService {
      */
     private void persistAggregatedNotifications(Long orgId, List<NotificationDto> dtos) {
         for (NotificationDto dto : dtos) {
-            boolean exists = notificationInstanceRepository
-                    .findByOrganizationIdAndSourceAndNotificationType(orgId, dto.source(), dto.notificationType())
-                    .isPresent();
-            if (exists) {
+            if (notificationInstanceRepository
+                    .findByOrganizationIdAndSourceAndNotificationType(
+                            orgId, dto.source(), dto.notificationType())
+                    .isPresent()) {
                 continue;
             }
             NotificationInstance row = new NotificationInstance();
@@ -285,7 +298,14 @@ public class NotificationAggregationService {
                             : new ArrayList<>());
             row.setSourceLabel(dto.sourceLabel());
             row.setSourceRoute(dto.sourceRoute());
-            notificationInstanceRepository.save(row);
+            try {
+                notificationInstanceRepository.saveAndFlush(row);
+            } catch (DataIntegrityViolationException dup) {
+                log.debug(
+                        "Notification already created concurrently for {}:{}",
+                        dto.source(),
+                        dto.notificationType());
+            }
         }
     }
 
@@ -496,6 +516,21 @@ public class NotificationAggregationService {
         return response.active().stream()
                 .filter(n -> "critical".equals(n.severity()))
                 .count();
+    }
+
+    /**
+     * Returns total + critical active notification counts in a single aggregation pass.
+     * Preferred over calling {@link #getNotificationsCount(String)} and
+     * {@link #getNotificationsCriticalCount(String)} separately, which would aggregate twice.
+     */
+    public DashboardOverviewResponse getDashboardCounts(String userId) {
+        NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
+        List<NotificationDto> active = response.active();
+        int total = active.size();
+        int critical = (int) active.stream()
+                .filter(n -> "critical".equals(n.severity()))
+                .count();
+        return new DashboardOverviewResponse(total, critical);
     }
 
     public List<NotificationDto> getCriticalNotifications(String userId, Locale locale) {

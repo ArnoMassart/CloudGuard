@@ -108,9 +108,7 @@ public class DashboardService {
      */
     public DashboardOverviewResponse getDashboardOverview(String loggedInEmail) {
         try {
-            int totalNotifications = (int) notificationService.getNotificationsCount(loggedInEmail);
-            int criticalNotifications = (int) notificationService.getNotificationsCriticalCount(loggedInEmail);
-            return new DashboardOverviewResponse(totalNotifications, criticalNotifications);
+            return notificationService.getDashboardCounts(loggedInEmail);
         } catch (Exception e) {
             Throwable cause = (e instanceof CompletionException) ? e.getCause() : e;
 

@@ -156,7 +156,7 @@ class NotificationAggregationServiceTest {
                 .when(notificationInstanceRepository.findByOrganizationIdAndSourceAndNotificationType(
                         eq(99L), eq("users-groups"), eq("user-control")))
                 .thenReturn(Optional.empty());
-        lenient().when(notificationInstanceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(notificationInstanceRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         NotificationInstance disabled = new NotificationInstance();
         disabled.setId(1L);
@@ -172,7 +172,7 @@ class NotificationAggregationServiceTest {
         var response = service.getNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 
         assertTrue(response.active().isEmpty());
-        verify(notificationInstanceRepository).save(any());
+        verify(notificationInstanceRepository).saveAndFlush(any());
     }
 
     @Test
