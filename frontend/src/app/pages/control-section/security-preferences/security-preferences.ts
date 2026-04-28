@@ -8,7 +8,10 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../shared/AppIcons';
 import { SecurityPreferencesService } from '../../../services/security-preferences-service';
 import { SecurityPreferencesFacade } from '../../../services/security-preferences-facade';
-import { SECTION_PREFERENCE_CONFIGS } from '../../../models/preferences/section-preference-config';
+import {
+  SECTION_PREFERENCE_CONFIGS,
+  type SectionPreferenceConfig,
+} from '../../../models/preferences/section-preference-config';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { MessageDialog } from '../../../components/message-dialog/message-dialog';
@@ -22,6 +25,7 @@ import { MessageDialog } from '../../../components/message-dialog/message-dialog
 })
 export class SecurityPreferences implements OnInit {
   readonly sections = SECTION_PREFERENCE_CONFIGS;
+  readonly Icons = AppIcons;
 
   /** Same icons as `NavItemsSecurity` in the navbar */
   readonly #navIconByRoute: Record<string, typeof AppIcons.Shield> = {
@@ -46,6 +50,9 @@ export class SecurityPreferences implements OnInit {
   readonly saving = signal<string | null>(null);
   readonly loadError = signal<string | null>(null);
   readonly saveError = signal<string | null>(null);
+
+  /** Per-section accordion; omitted or true means expanded */
+  readonly expandedSections = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
     this.#loadPreferences();
@@ -120,6 +127,42 @@ export class SecurityPreferences implements OnInit {
 
   sectionNavIcon(route: string): typeof AppIcons.Shield {
     return this.#navIconByRoute[route] ?? AppIcons.Shield;
+  }
+
+  sectionExpanded(sectionId: string): boolean {
+    return this.expandedSections()[sectionId] ?? true;
+  }
+
+  toggleSection(sectionId: string): void {
+    this.expandedSections.update((m) => {
+      const cur = m[sectionId] ?? true;
+      return { ...m, [sectionId]: !cur };
+    });
+  }
+
+  sectionStats(section: SectionPreferenceConfig): { active: number; total: number } {
+    const total = section.preferences.length;
+    let active = 0;
+    for (const pref of section.preferences) {
+      if (this.isEnabled(section.section, pref.key)) active++;
+    }
+    return { active, total };
+  }
+
+  sectionBadgeLabel(section: SectionPreferenceConfig): string {
+    const { active, total } = this.sectionStats(section);
+    if (active === total) {
+      return this.#transloco.translate('preferences.section.badge.all_active');
+    }
+    return this.#transloco.translate('preferences.section.badge.partial', { active, total });
+  }
+
+  sectionBadgeClass(section: SectionPreferenceConfig): string {
+    const { active, total } = this.sectionStats(section);
+    if (active === total) {
+      return 'border border-emerald-100 bg-emerald-50 text-emerald-800';
+    }
+    return 'border border-amber-100 bg-amber-50 text-amber-900';
   }
 
   dnsSelectValue(dnsType: string | undefined): string {
