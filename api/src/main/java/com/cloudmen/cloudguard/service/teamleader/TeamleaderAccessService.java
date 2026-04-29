@@ -116,25 +116,56 @@ public class TeamleaderAccessService {
 
         Map<String, Object> companyDetails = teamleaderCompanyService.getCompanyDetails(companyId, headers);
         if (companyDetails == null) {
+            log.warn("Teamleader access: companies.info returned null for companyId={}", companyId);
             return false;
         }
 
+        log.debug(
+                "Teamleader access check: companyId={}, hasCustomFields={}",
+                companyId,
+                companyDetails.get("custom_fields") != null);
         return extractCloudGuardAccessValue(companyDetails);
     }
 
     private boolean extractCloudGuardAccessValue(Map<String, Object> companyDetails) {
+        @SuppressWarnings("unchecked")
         List<Map<String, Object>> customFields = (List<Map<String, Object>>) companyDetails.get("custom_fields");
 
-        if (customFields != null) {
-            for (Map<String, Object> field : customFields) {
-                Map<String, Object> definition = (Map<String, Object>) field.get("definition");
+        if (customFields == null || customFields.isEmpty()) {
+            log.warn(
+                    "Teamleader access: company has no custom_fields (or empty). Cannot evaluate CloudGuard field id {}",
+                    cloudGuardFieldId);
+            return false;
+        }
 
-                if (definition != null && cloudGuardFieldId.equals(definition.get("id"))) {
-                    Object value = field.get("value");
-                    return Boolean.TRUE.equals(value);
+        for (Map<String, Object> field : customFields) {
+            Map<String, Object> definition = (Map<String, Object>) field.get("definition");
+            if (definition == null) {
+                continue;
+            }
+            Object defId = definition.get("id");
+            log.debug("Teamleader custom field candidate definition.id={}", defId);
+
+            if (cloudGuardFieldId.equals(defId)) {
+                Object value = field.get("value");
+                log.info(
+                        "Teamleader access: matched CloudGuard field id={}, value={}, valueType={}",
+                        cloudGuardFieldId,
+                        value,
+                        value == null ? "null" : value.getClass().getSimpleName());
+
+                boolean allowed = Boolean.TRUE.equals(value);
+                if (!allowed) {
+                    log.warn(
+                            "Teamleader access: CloudGuard field is not boolean true (raw value={}). Access denied.",
+                            value);
                 }
+                return allowed;
             }
         }
+        log.warn(
+                "Teamleader access: no custom field matched cloudGuardFieldId={}. Check application.properties vs CRM field definition id.",
+                cloudGuardFieldId);
 
         return false;
     }
