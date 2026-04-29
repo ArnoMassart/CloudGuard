@@ -16,7 +16,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class GoogleServiceHelperMethods {
+/**
+ * A central utility class containing helper methods for Google Workspace
+ * integration, security scoring, role evaluation, and UI formatting. <p>
+ *
+ * This class provides stateless, static functions designed to be reused
+ * across various domain services within the CloudGuard application.
+ */
+public final class GoogleServiceHelperMethods {
+
+    public static final String VIOLATION_NO_2FA = "NO_2FA";
+    public static final String VIOLATION_ACTIVITY_STALE = "ACTIVITY_STALE";
+    public static final String VIOLATION_ACTIVITY_INACTIVE_RECENT = "ACTIVITY_INACTIVE_RECENT";
+
+    // Prevents instantiation of this utility class
+    private GoogleServiceHelperMethods(){}
+
+    /**
+     * Decodes a Base64-encoded PEM private key string into a Java {@link PrivateKey} object.
+     *
+     * @param pem the raw private key string (including BEGIN/END headers)
+     * @return a usable RSA PrivateKey
+     * @throws Exception if the key format is invalid or RSA algorithm is unavailable
+     */
     public static PrivateKey decodePrivateKey(String pem) throws Exception {
         String privateKeyPEM = pem
                 .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -28,6 +50,34 @@ public class GoogleServiceHelperMethods {
         return kf.generatePrivate(keySpec);
     }
 
+    /**
+     * Resolves the configured Workspace administrator email for a given user.
+     *
+     * @param email               the email of the user attempting an action
+     * @param userService         the user service to fetch local details
+     * @param organizationService the organization service to fetch the admin email
+     * @return the designated admin email string
+     * @throws NoAdminEmailConfiguredException if the organization lacks an admin email
+     * @throws GoogleWorkspaceSyncException if the user or organization cannot be found
+     */
+    public static String getAdminEmailForUser(String email, UserService userService, OrganizationService organizationService) {
+        return userService.findByEmailOptional(email)
+                .flatMap(user -> organizationService.findById(user.getOrganizationId()))
+                .map(org -> {
+                    if (org.getAdminEmail() == null || org.getAdminEmail().isBlank()) {
+                        throw new NoAdminEmailConfiguredException("No Admin email configured for organization: " + org.getName());
+                    }
+                    return org.getAdminEmail();
+                })
+                .orElseThrow(() -> new GoogleWorkspaceSyncException("User or Organization not found for: " + email));
+    }
+
+    /**
+     * Translates internal Google role constants to human-readable strings.
+     *
+     * @param role the raw role string from Google API
+     * @return a clean, human-readable role name
+     */
     public static String translateRoleName(String role) {
         if (role == null) return "User";
         return switch (role) {
@@ -36,10 +86,6 @@ public class GoogleServiceHelperMethods {
             default -> role;
         };
     }
-
-    public static final String VIOLATION_NO_2FA = "NO_2FA";
-    public static final String VIOLATION_ACTIVITY_STALE = "ACTIVITY_STALE";
-    public static final String VIOLATION_ACTIVITY_INACTIVE_RECENT = "ACTIVITY_INACTIVE_RECENT";
 
     /**
      * Null-safe evaluation aligned with {@link #checkUserSecurityStatus(boolean, DateTime, boolean)}.
@@ -79,59 +125,9 @@ public class GoogleServiceHelperMethods {
         return evaluateUserSecurity(isActive, lastLogin, isTwoFactorEnabled).conform();
     }
 
-    public static int getPage(String pageToken) {
-        int page = 1;
-        if (pageToken != null && !pageToken.isBlank()) {
-            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
-        }
-
-        return page;
-    }
-
-    public static <T> List<T> filterByNameOrEmail(List<T> items, String query, Function<T, String> nameExtractor,
-                                                  Function<T, String> emailExtractor) {
-        if (query == null || query.trim().isEmpty()) {
-            return items;
-        }
-
-        String lowerQuery = query.toLowerCase().trim();
-        return items.stream()
-                .filter(item -> {
-                    String name = nameExtractor.apply(item);
-                    String email = emailExtractor.apply(item);
-                    return (name != null && name.toLowerCase().contains(lowerQuery)) ||
-                            (email != null && email.toLowerCase().contains(lowerQuery));
-                })
-                .toList();
-    }
-
-
-    public static String severity(double score) {
-        return severity(score, false, "");
-    }
-
-    public static String severity(double score, boolean reverse) {
-        return severity(score, reverse, "");
-    }
-
-    public static String severity(double score, String color) {
-        return severity(score, false, color);
-    }
-
-    public static String severity(double score, boolean reverse, String color) {
-        if (!color.isEmpty()) {
-            return color;
-        }
-
-        if (reverse) {
-            if (score >= 75) return "error";
-            if (score >= 50) return "warning";
-            return "success";
-        } else {
-            if (score >= 75) return "success";
-            if (score >= 50) return "warning";
-            return "error";
-        }
+    public static boolean hasAccessToModule(List<UserRole> roles, UserRole requiredRole) {
+        if (roles == null) return false;
+        return roles.contains(UserRole.SUPER_ADMIN) || roles.contains(requiredRole);
     }
 
     public static int calculateWeightedScore(int total, int count, double weight, int emptyFallback) {
@@ -150,6 +146,71 @@ public class GoogleServiceHelperMethods {
     }
 
     /**
+     * Safely parses a page token string into an integer. Defaults to 1 if invalid.
+     */
+    public static int getPage(String pageToken) {
+        int page = 1;
+        if (pageToken != null && !pageToken.isBlank()) {
+            try { page = Integer.parseInt(pageToken); } catch (NumberFormatException ignored) {}
+        }
+
+        return page;
+    }
+
+    /**
+     * Filters a generic list of items based on a text query matching either name or email.
+     */
+    public static <T> List<T> filterByNameOrEmail(List<T> items, String query, Function<T, String> nameExtractor,
+                                                  Function<T, String> emailExtractor) {
+        if (query == null || query.trim().isEmpty()) {
+            return items;
+        }
+
+        String lowerQuery = query.toLowerCase().trim();
+        return items.stream()
+                .filter(item -> {
+                    String name = nameExtractor.apply(item);
+                    String email = emailExtractor.apply(item);
+                    return (name != null && name.toLowerCase().contains(lowerQuery)) ||
+                            (email != null && email.toLowerCase().contains(lowerQuery));
+                })
+                .toList();
+    }
+
+
+    /**
+     * Determines the UI severity color based on a percentage score.
+     */
+    public static String severity(double score, boolean reverse, String color) {
+        if (!color.isEmpty()) {
+            return color;
+        }
+
+        if (reverse) {
+            if (score >= 75) return "error";
+            if (score >= 50) return "warning";
+            return "success";
+        } else {
+            if (score >= 75) return "success";
+            if (score >= 50) return "warning";
+            return "error";
+        }
+    }
+
+    public static String severity(double score) {
+        return severity(score, false, "");
+    }
+
+    public static String severity(double score, boolean reverse) {
+        return severity(score, reverse, "");
+    }
+
+    public static String severity(double score, String color) {
+        return severity(score, false, color);
+    }
+
+
+    /**
      * The security score detail UI omits factors with {@code maxScore == 0}. Use when a criterion does not apply
      * (e.g. no inventory for a tier) so the row is not shown as a misleading {@code 0/N} failure.
      */
@@ -165,22 +226,5 @@ public class GoogleServiceHelperMethods {
             return new SecurityScoreFactorDto(title, description, 0, 0, "success", muted);
         }
         return new SecurityScoreFactorDto(title, description, score, maxScore, severity, muted);
-    }
-
-    public static String getAdminEmailForUser(String email, UserService userService, OrganizationService organizationService) {
-        return userService.findByEmailOptional(email)
-                .flatMap(user -> organizationService.findById(user.getOrganizationId()))
-                .map(org -> {
-                    if (org.getAdminEmail() == null || org.getAdminEmail().isBlank()) {
-                        throw new NoAdminEmailConfiguredException("No Admin email configured for organization: " + org.getName());
-                    }
-                    return org.getAdminEmail();
-                })
-                .orElseThrow(() -> new GoogleWorkspaceSyncException("User or Organization not found for: " + email));
-    }
-
-    public static boolean hasAccessToModule(List<UserRole> roles, UserRole requiredRole) {
-        if (roles == null) return false;
-        return roles.contains(UserRole.SUPER_ADMIN) | roles.contains(requiredRole);
     }
 }
