@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideAngularModule } from 'lucide-angular';
-import { Subscription } from 'rxjs';
+import { Subscription, distinctUntilChanged } from 'rxjs';
 import { AssignRoleDialog } from '../../../../components/assign-role-dialog/assign-role-dialog';
 import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
 import { SearchBar } from '../../../../components/search-bar/search-bar';
@@ -86,11 +86,15 @@ export class AccountsManagerUsers {
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
+    const reload = () => {
       this.loadUsers();
       this.loadUsersWithoutRoles();
       this.loadOrganizations();
-    });
+    };
+    reload();
+    this.langSubscription = this.#translocoService.langChanges$
+      .pipe(distinctUntilChanged())
+      .subscribe(reload);
   }
 
   ngOnDestroy(): void {

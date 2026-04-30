@@ -1,0 +1,11 @@
+{
+  "name": "cloudguard",
+  "private": true,
+  "scripts": {
+    "e2e": "cypress run",
+    "e2e:open": "cypress open"
+  },
+  "devDependencies": {
+    "cypress": "^14.3.0"
+  }
+}

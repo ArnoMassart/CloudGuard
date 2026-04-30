@@ -15,7 +15,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ApiError } from '../../../components/api-error/api-error';
 
 import { Observable, Subscription, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -145,9 +145,11 @@ export class ReportsReactions implements OnInit, OnDestroy {
   private langSubscription?: Subscription;
 
   ngOnInit() {
-    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
-      this.#loadNotifications(false);
-    });
+    this.langSubscription = this.#translocoService.langChanges$
+      .pipe(distinctUntilChanged())
+      .subscribe(() => {
+        this.#loadNotifications(false);
+      });
   }
 
   ngOnDestroy(): void {

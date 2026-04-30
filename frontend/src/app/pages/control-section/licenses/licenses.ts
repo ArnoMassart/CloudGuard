@@ -16,7 +16,7 @@ import { LicenseOverviewResponse } from '../../../models/licenses/LicenseOvervie
 import { PageWarnings } from '../../../components/page-warnings/page-warnings';
 import { PageWarningsItem } from '../../../components/page-warnings/page-warnings-item/page-warnings-item';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { Subscription } from 'rxjs';
+import { Subscription, distinctUntilChanged } from 'rxjs';
 import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 import { ApiError } from '../../../components/api-error/api-error';
 
@@ -101,6 +101,7 @@ export class Licenses implements OnInit, OnDestroy {
   readonly barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false,
     scales: {
       x: {
         grid: {
@@ -109,11 +110,8 @@ export class Licenses implements OnInit, OnDestroy {
         ticks: {
           callback: function (value: any) {
             const label = this.getLabelForValue(value);
-
-            if (label.length > 15) {
-              return label.substring(0, 15) + '...';
-            }
-            return label;
+            const s = label == null ? '' : String(label);
+            return s.length > 15 ? s.substring(0, 15) + '...' : s;
           },
           maxRotation: 0,
           minRotation: 0,
@@ -144,6 +142,9 @@ export class Licenses implements OnInit, OnDestroy {
   // ==========================================
   private langSubscription?: Subscription;
 
+  /** Ignores stale HTTP responses when a newer licenses fetch was started */
+  private licensesFetchGeneration = 0;
+
   // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
@@ -171,11 +172,22 @@ export class Licenses implements OnInit, OnDestroy {
   // PRIVATE METHODS
   // ==========================================
   #loadLicenses() {
-    this.isLoading.set(true);
+    const generation = ++this.licensesFetchGeneration;
+
+    /** Re-applying spinner tears down the Chart.js canvas during Cypress runs and can throw inside Chart teardown. */
+    const keepSkeletonHidden = this.licenseTypes().length > 0 && !this.apiError();
+
+    if (!keepSkeletonHidden) {
+      this.isLoading.set(true);
+    }
     this.apiError.set(false);
 
     this.#licenseService.getLicenses().subscribe({
       next: (res) => {
+        if (generation !== this.licensesFetchGeneration) {
+          return;
+        }
+
         this.licenseTypes.set(res.licenseTypes);
         this.inactiveUsers.set(res.inactiveUsers);
         this.maxLicenseAmount.set(res.maxLicenseAmount);
@@ -183,13 +195,21 @@ export class Licenses implements OnInit, OnDestroy {
 
         this.#updateBarChart();
 
-        this.isLoading.set(false);
+        if (!keepSkeletonHidden) {
+          this.isLoading.set(false);
+        }
       },
       error: (err) => {
+        if (generation !== this.licensesFetchGeneration) {
+          return;
+        }
+
         this.errorMessage.set(err.error);
         console.error('Failed to load licenses', err);
         this.apiError.set(true);
-        this.isLoading.set(false);
+        if (!keepSkeletonHidden) {
+          this.isLoading.set(false);
+        }
       },
     });
   }
