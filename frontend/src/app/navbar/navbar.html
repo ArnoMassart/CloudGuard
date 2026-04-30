@@ -1,5 +1,5 @@
 <div>
-  <div class="lg:hidden fixed z-40 p-4 bg-navbar-background text-white w-full flex justify-between">
+  <div class="lg:hidden fixed z-40 p-4 bg-navbar-background text-white w-full flex justify-between" data-testid="cy-navbar">
     <button type="button" (click)="toggleMobileMenu()" class="top-4 left-4">
       <i-lucide [img]="Icons.Menu" size="24" />
     </button>
@@ -76,7 +76,7 @@
         </div>
 
         <div class="flex flex-col min-w-0">
-          <span class="text-white truncate font-medium leading-tight">{{ user.firstName }} {{ user.lastName }}</span>
+          <span class="text-white truncate font-medium leading-tight" data-testid="nav-profile-name">{{ user.firstName }} {{ user.lastName }}</span>
           <span class="text-muted-foreground truncate text-sm leading-tight">{{ getRoleName(user) |
             transloco
             }}</span>
