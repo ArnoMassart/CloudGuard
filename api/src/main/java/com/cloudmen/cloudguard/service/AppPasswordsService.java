@@ -86,13 +86,13 @@ public class AppPasswordsService {
         return new AppPasswordPageResponse(pagedUsers, nextToken);
     }
 
-    public AppPasswordOverviewResponse getOverview(String adminEmail) {
-        return getOverview(adminEmail, Set.of());
+    public AppPasswordOverviewResponse getOverview(String loggedInEmail) {
+        return getOverview(loggedInEmail, Set.of());
     }
 
-    public AppPasswordOverviewResponse getOverview(String adminEmail, Set<String> disabledKeys) {
+    public AppPasswordOverviewResponse getOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        AppPasswordCacheEntry entry =  cache.get(adminEmail, this::fetchAllAppPasswords);
+        AppPasswordCacheEntry entry =  cache.get(loggedInEmail, this::fetchAllAppPasswords);
         if (entry == null) {
             throw new GoogleWorkspaceSyncException("Error with app passwords cache, cache is null");
         }

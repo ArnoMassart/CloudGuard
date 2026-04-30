@@ -40,13 +40,13 @@ public class GoogleApiFactory {
      * @return authorized {@link ServiceAccountCredentials}
      * @throws Exception if the private key is invalid or credentials cannot be built
      */
-    public ServiceAccountCredentials getCredentials(Set<String> scopes, String organizationAdminEmail) throws Exception {
+    public ServiceAccountCredentials getCredentials(Set<String> scopes, String adminEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
 
         return ServiceAccountCredentials.newBuilder()
                 .setClientEmail(clientEmail)
                 .setPrivateKey(decodePrivateKey(pk))
-                .setServiceAccountUser(organizationAdminEmail)
+                .setServiceAccountUser(adminEmail)
                 .setScopes(scopes)
                 .build();
     }
@@ -55,10 +55,10 @@ public class GoogleApiFactory {
      * Initializes a Directory service for managing users, groups, and devices.
      *
      * @param scopes        set of OAuth scopes
-     * @param loggedInEmail the admin email to impersonate
+     * @param adminEmail the admin email to impersonate
      */
-    public Directory getDirectoryService(Set<String> scopes, String loggedInEmail) throws Exception {
-        ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
+    public Directory getDirectoryService(Set<String> scopes, String adminEmail) throws Exception {
+        ServiceAccountCredentials credentials = getCredentials(scopes, adminEmail);
 
         return new Directory.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
@@ -68,15 +68,15 @@ public class GoogleApiFactory {
                 .build();
     }
 
-    public Directory getDirectoryService(String scope, String loggedInEmail) throws Exception {
-        return getDirectoryService(Collections.singleton(scope), loggedInEmail);
+    public Directory getDirectoryService(String scope, String adminEmail) throws Exception {
+        return getDirectoryService(Collections.singleton(scope), adminEmail);
     }
 
     /**
      * Initializes a Drive service for analyzing Shared Drives and file permissions.
      */
-    public Drive getDriveService(Set<String> scopes, String loggedInEmail) throws Exception {
-        ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
+    public Drive getDriveService(Set<String> scopes, String adminEmail) throws Exception {
+        ServiceAccountCredentials credentials = getCredentials(scopes, adminEmail);
 
         return new Drive.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
@@ -86,15 +86,15 @@ public class GoogleApiFactory {
                 .build();
     }
 
-    public Drive getDriveService(String scope, String loggedInEmail) throws Exception {
-        return getDriveService(Collections.singleton(scope), loggedInEmail);
+    public Drive getDriveService(String scope, String adminEmail) throws Exception {
+        return getDriveService(Collections.singleton(scope), adminEmail);
     }
 
     /**
      * Initializes a Licensing service for auditing Google Workspace license usage.
      */
-    public Licensing getLicensingService(Set<String> scopes, String loggedInEmail) throws Exception {
-        ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
+    public Licensing getLicensingService(Set<String> scopes, String adminEmail) throws Exception {
+        ServiceAccountCredentials credentials = getCredentials(scopes, adminEmail);
 
         return new Licensing.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
@@ -105,15 +105,15 @@ public class GoogleApiFactory {
 
     }
 
-    public Licensing getLicensingService(String scope, String loggedInEmail) throws Exception {
-        return getLicensingService(Collections.singleton(scope), loggedInEmail);
+    public Licensing getLicensingService(String scope, String adminEmail) throws Exception {
+        return getLicensingService(Collections.singleton(scope), adminEmail);
     }
 
     /**
      * Initializes a CloudIdentity service for managing security groups and identity settings.
      */
-    public CloudIdentity getCloudIdentityService(Set<String> scopes, String loggedInEmail) throws Exception {
-        ServiceAccountCredentials credentials = getCredentials(scopes, loggedInEmail);
+    public CloudIdentity getCloudIdentityService(Set<String> scopes, String adminEmail) throws Exception {
+        ServiceAccountCredentials credentials = getCredentials(scopes, adminEmail);
 
         return new CloudIdentity.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
@@ -124,7 +124,7 @@ public class GoogleApiFactory {
 
     }
 
-    public CloudIdentity getCloudIdentityService(String scope, String loggedInEmail) throws Exception {
-        return getCloudIdentityService(Collections.singleton(scope), loggedInEmail);
+    public CloudIdentity getCloudIdentityService(String scope, String adminEmail) throws Exception {
+        return getCloudIdentityService(Collections.singleton(scope), adminEmail);
     }
 }

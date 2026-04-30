@@ -58,7 +58,7 @@ class GoogleOrgUnitServiceTest {
 
     @Test
     void getOrgUnitTree_nullOrgList_returnsEmptyRootWithI18nName() {
-        when(orgUnitCacheService.getOrFetchOrgUnitData(ADMIN))
+        when(orgUnitCacheService.getOrFetchData(ADMIN))
                 .thenReturn(new OrgUnitCacheEntry(null, Map.of(), 0L));
 
         OrgUnitNodeDto root = service.getOrgUnitTree(ADMIN);
@@ -72,7 +72,7 @@ class GoogleOrgUnitServiceTest {
 
     @Test
     void getOrgUnitTree_emptyOrgList_returnsEmptyRootWithI18nName() {
-        when(orgUnitCacheService.getOrFetchOrgUnitData(ADMIN))
+        when(orgUnitCacheService.getOrFetchData(ADMIN))
                 .thenReturn(new OrgUnitCacheEntry(List.of(), Map.of(), 0L));
 
         OrgUnitNodeDto root = service.getOrgUnitTree(ADMIN);
@@ -96,7 +96,7 @@ class GoogleOrgUnitServiceTest {
         counts.put("/Sales", 50);
         counts.put("/Sales/EMEA", 10);
 
-        when(orgUnitCacheService.getOrFetchOrgUnitData(ADMIN))
+        when(orgUnitCacheService.getOrFetchData(ADMIN))
                 .thenReturn(new OrgUnitCacheEntry(units, counts, 1L));
 
         OrgUnitNodeDto root = service.getOrgUnitTree(ADMIN);
@@ -132,7 +132,7 @@ class GoogleOrgUnitServiceTest {
         bad.setOrgUnitPath("   ");
         bad.setParentOrgUnitPath("/");
         OrgUnit good = ou("/Legal", "/", "Legal");
-        when(orgUnitCacheService.getOrFetchOrgUnitData(ADMIN))
+        when(orgUnitCacheService.getOrFetchData(ADMIN))
                 .thenReturn(new OrgUnitCacheEntry(List.of(bad, good), Map.of("/", 1, "/Legal", 2), 0L));
 
         OrgUnitNodeDto root = service.getOrgUnitTree(ADMIN);
@@ -146,7 +146,7 @@ class GoogleOrgUnitServiceTest {
         OrgUnit finance = ou("/Finance", "/", "Finance");
         OrgUnit ap = ou("/Finance/Ap", "/Finance", " ");
         ap.setName(null);
-        when(orgUnitCacheService.getOrFetchOrgUnitData(ADMIN))
+        when(orgUnitCacheService.getOrFetchData(ADMIN))
                 .thenReturn(new OrgUnitCacheEntry(List.of(finance, ap), Map.of("/Finance/Ap", 3), 0L));
 
         OrgUnitNodeDto root = service.getOrgUnitTree(ADMIN);

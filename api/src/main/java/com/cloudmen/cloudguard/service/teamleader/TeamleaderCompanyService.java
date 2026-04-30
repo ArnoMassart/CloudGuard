@@ -90,14 +90,14 @@ public class TeamleaderCompanyService {
     /**
      * Resolves the human-readable company name for a given email.
      *
-     * @param loggedInEmail the email address of the user
+     * @param userEmail     the email address of the user
      * @param headers       the HTTP headers for API authentication
      * @return the company name, or "Onbekend Bedrijf" if
      * resolution fails
      */
-    public String getCompanyNameByEmail(String loggedInEmail, HttpHeaders headers) {
+    public String getCompanyNameByEmail(String userEmail, HttpHeaders headers) {
         // AANGEPAST: Roept nu getCompanyIdByDomain aan
-        String companyId = getCompanyIdByDomain(loggedInEmail, headers);
+        String companyId = getCompanyIdByDomain(userEmail, headers);
 
         if (companyId == null) {
             return "Onbekend Bedrijf";

@@ -53,15 +53,15 @@ public final class GoogleServiceHelperMethods {
     /**
      * Resolves the configured Workspace administrator email for a given user.
      *
-     * @param email               the email of the user attempting an action
+     * @param userEmail           the email of the user attempting an action
      * @param userService         the user service to fetch local details
      * @param organizationService the organization service to fetch the admin email
      * @return the designated admin email string
      * @throws NoAdminEmailConfiguredException if the organization lacks an admin email
      * @throws GoogleWorkspaceSyncException if the user or organization cannot be found
      */
-    public static String getAdminEmailForUser(String email, UserService userService, OrganizationService organizationService) {
-        return userService.findByEmailOptional(email)
+    public static String getAdminEmailForUser(String userEmail, UserService userService, OrganizationService organizationService) {
+        return userService.findByEmailOptional(userEmail)
                 .flatMap(user -> organizationService.findById(user.getOrganizationId()))
                 .map(org -> {
                     if (org.getAdminEmail() == null || org.getAdminEmail().isBlank()) {
@@ -69,7 +69,7 @@ public final class GoogleServiceHelperMethods {
                     }
                     return org.getAdminEmail();
                 })
-                .orElseThrow(() -> new GoogleWorkspaceSyncException("User or Organization not found for: " + email));
+                .orElseThrow(() -> new GoogleWorkspaceSyncException("User or Organization not found for: " + userEmail));
     }
 
     /**

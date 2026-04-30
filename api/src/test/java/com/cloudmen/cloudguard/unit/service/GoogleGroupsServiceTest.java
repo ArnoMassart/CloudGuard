@@ -58,7 +58,7 @@ class GoogleGroupsServiceTest {
 
     @Test
     void getGroupsPaged_emptyCache_returnsEmptyPageAndNoNextToken() {
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(List.of()));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(List.of()));
 
         var page = service.getGroupsPaged(GlobalTestHelper.ADMIN, null, null, 10);
 
@@ -71,7 +71,7 @@ class GoogleGroupsServiceTest {
         List<CachedGroupItem> groups = List.of(
                 group("Alpha Team", "alpha@example.com", "LOW", 0, false),
                 group("Beta Club", "other@example.com", "LOW", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var page = service.getGroupsPaged(GlobalTestHelper.ADMIN, "beta", null, 10);
 
@@ -84,7 +84,7 @@ class GoogleGroupsServiceTest {
         List<CachedGroupItem> groups = List.of(
                 group("A", "a@x.com", "LOW", 0, false),
                 group("B", "b@x.com", "LOW", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var page = service.getGroupsPaged(GlobalTestHelper.ADMIN, "   ", null, 1);
 
@@ -98,7 +98,7 @@ class GoogleGroupsServiceTest {
         for (int i = 0; i < 5; i++) {
             groups.add(group("G" + i, "g" + i + "@x.com", "LOW", 0, false));
         }
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var page = service.getGroupsPaged(GlobalTestHelper.ADMIN, null, "2", 2);
 
@@ -112,7 +112,7 @@ class GoogleGroupsServiceTest {
         List<CachedGroupItem> groups = List.of(
                 group("G0", "g0@x.com", "LOW", 0, false),
                 group("G1", "g1@x.com", "LOW", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var page = service.getGroupsPaged(GlobalTestHelper.ADMIN, null, "1", 2);
 
@@ -123,7 +123,7 @@ class GoogleGroupsServiceTest {
     @Test
     void getGroupsPaged_pageBeyondTotal_returnsEmptyList() {
         List<CachedGroupItem> groups = List.of(group("Only", "o@x.com", "LOW", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var page = service.getGroupsPaged(GlobalTestHelper.ADMIN, null, "5", 2);
 
@@ -132,7 +132,7 @@ class GoogleGroupsServiceTest {
 
     @Test
     void getGroupsOverview_noGroups_securityScore100() {
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(List.of()));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(List.of()));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
 
@@ -151,7 +151,7 @@ class GoogleGroupsServiceTest {
                 group("Low", "l@x.com", "LOW", 0, false),
                 group("Med", "m@x.com", "MEDIUM", 0, false),
                 group("Hi", "h@x.com", "HIGH", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
 
@@ -167,7 +167,7 @@ class GoogleGroupsServiceTest {
         List<CachedGroupItem> groups = List.of(
                 group("A", "a@x.com", "LOW", 0, false),
                 group("B", "b@x.com", "LOW", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
         var factors = overview.securityScoreBreakdown().factors();
@@ -188,7 +188,7 @@ class GoogleGroupsServiceTest {
                 group("Open", "o@x.com", "LOW", 0, true),
                 group("Guests", "g@x.com", "LOW", 3, false),
                 group("Closed", "c@x.com", "LOW", 0, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
 
@@ -199,7 +199,7 @@ class GoogleGroupsServiceTest {
     void getGroupsOverview_withDisabledGroupExternalPreference_forcesScore100AndMutedBreakdown() {
         List<CachedGroupItem> groups = List.of(
                 group("Hi", "h@x.com", "HIGH", 1, true));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN, Set.of("users-groups:groupExternal"));
 
@@ -214,7 +214,7 @@ class GoogleGroupsServiceTest {
     void getGroupsOverview_withWarnings_whenRiskAndPreferenceEnabled() {
         List<CachedGroupItem> groups = List.of(
                 group("Hi", "h@x.com", "HIGH", 1, false));
-        when(groupsCacheService.getOrFetchGroupData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
+        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN, Set.of());
 

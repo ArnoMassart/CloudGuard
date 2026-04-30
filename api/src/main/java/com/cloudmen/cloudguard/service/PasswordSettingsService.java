@@ -76,7 +76,7 @@ public class PasswordSettingsService {
     private PasswordSettingsDto fetchPasswordSettings(String loggedInEmail) {
         String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
-        var entry = usersCache.getOrFetchUsersData(loggedInEmail);
+        var entry = usersCache.getOrFetchData(loggedInEmail);
         List<User> allUsers = entry.allUsers();
 
 
@@ -114,7 +114,7 @@ public class PasswordSettingsService {
         List<String> ouPaths = new ArrayList<>();
 
         try {
-            var ouEntry = orgUnitCache.getOrFetchOrgUnitData(loggedInEmail);
+            var ouEntry = orgUnitCache.getOrFetchData(loggedInEmail);
             userCounts.putAll(ouEntry.userCounts());
             Set<String> pathSet = new LinkedHashSet<>();
             pathSet.add("/");

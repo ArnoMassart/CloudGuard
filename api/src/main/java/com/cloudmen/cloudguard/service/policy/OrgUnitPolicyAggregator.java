@@ -28,9 +28,7 @@ public class OrgUnitPolicyAggregator {
 
     public OrgUnitPolicyAggregator(
             List<OrgUnitPolicyProvider> providers,
-            @Qualifier("messageSource") MessageSource messageSource,
-            UserService userService,
-            OrganizationService organizationService) {
+            @Qualifier("messageSource") MessageSource messageSource, UserService userService, OrganizationService organizationService) {
         this.providers = providers.stream()
                 .sorted(Comparator.comparingInt(p -> {
                     Order o = p.getClass().getAnnotation(Order.class);

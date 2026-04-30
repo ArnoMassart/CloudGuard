@@ -44,7 +44,7 @@ public class GoogleLicenseService {
      * @return a {@link LicensePageResponse} containing sorted license types and chart metadata
      */
     public LicensePageResponse getLicenses(String loggedInEmail) {
-        LicenseCacheEntry cachedData = licenseCacheService.getOrFetchLicenseData(loggedInEmail);
+        LicenseCacheEntry cachedData = licenseCacheService.getOrFetchData(loggedInEmail);
         List<LicenseType> types = cachedData.licenseTypes().stream().sorted(Comparator.comparing(LicenseType::skuName)).toList();
 
         int maxLicenseAmount = types.stream().mapToInt(LicenseType::totalAssigned).max()
@@ -68,12 +68,12 @@ public class GoogleLicenseService {
      * @return a {@link LicenseOverviewResponse} with aggregated utilization metrics
      */
     public LicenseOverviewResponse getLicensesPageOverview(String loggedInEmail) {
-        LicenseCacheEntry cachedData = licenseCacheService.getOrFetchLicenseData(loggedInEmail);
+        LicenseCacheEntry cachedData = licenseCacheService.getOrFetchData(loggedInEmail);
         List<LicenseType> types = cachedData.licenseTypes();
 
         int totalAssigned =  types.stream().mapToInt(LicenseType::totalAssigned).sum();
 
-        List<User> allDomainUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
+        List<User> allDomainUsers = usersCacheService.getOrFetchData(loggedInEmail).allUsers();
 
         int riskyAccounts =0;
         int unusedLicenses = cachedData.inactiveUsers() != null ? cachedData.inactiveUsers().size() : 0;

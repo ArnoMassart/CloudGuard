@@ -31,51 +31,21 @@ import java.util.stream.Collectors;
  * response, the application significantly reduces latency during login and dashboard rendering.
  */
 @Service
-public class GoogleUsersCacheService {
+public class GoogleUsersCacheService extends AbstractGoogleWorkspaceCacheService<UserCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleUsersCacheService.class);
     private static final String MY_CUSTOMER_TEXT = "my_customer";
 
     private final GoogleApiFactory googleApiFactory;
-    private final UserService userService;
-    private final OrganizationService organizationService;
-
-    private final Cache<String, UserCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(4, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
 
     public GoogleUsersCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
+        super(userService, organizationService, 4);
         this.googleApiFactory = googleApiFactory;
-        this.userService = userService;
-        this.organizationService = organizationService;
     }
 
-    /**
-     * Forces a background refresh of the user data cache for the specified admin, bypassing the current
-     * Time-To-Live (TTL).
-     *
-     * @param loggedInEmail the email of the authenticated user triggering the manual refresh
-     */
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    /**
-     * Retrieves the aggregated user and role data from the cache, or synchronously fetches it from the Google Admin
-     * Directory API if the cache is empty or expired.
-     *
-     * @param loggedInEmail the email of the authenticated user
-     * @return the {@link UserCacheEntry} containing the user list and their associated role mappings
-     */
-    public UserCacheEntry getOrFetchUsersData(String loggedInEmail) {
-        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private UserCacheEntry fetchFromGoogle(String loggedInEmail, UserCacheEntry fallbackEntry) {
+    @Override
+    protected UserCacheEntry fetchFromGoogle(String adminEmail, UserCacheEntry fallbackEntry) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-
-            log.info("Ophalen LIVE gebruikers data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+            log.info("Ophalen LIVE gebruikers data van Google. Impersonatie via Admin: {}", adminEmail);
             Directory userDirectory = googleApiFactory.getDirectoryService(
                     Set.of(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY),
                     adminEmail);

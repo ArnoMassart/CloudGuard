@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import com.cloudmen.cloudguard.service.GoogleOrgUnitService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.policy.OrgUnitPolicyAggregator;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,24 +26,24 @@ public class GoogleOrgUnitsController {
     @GetMapping
     public ResponseEntity<OrgUnitNodeDto> getOrgUnits(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(orgUnitService.getOrgUnitTree(email));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(orgUnitService.getOrgUnitTree(loggedInEmail));
     }
 
     @GetMapping("/policies")
     public ResponseEntity<List<OrgUnitPolicyDto>> getOrgUnitPolicies(
             @CookieValue(name = "AuthToken", required = false) String token,
             @RequestParam(defaultValue = "/") String orgUnitPath) {
-        String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(orgUnitPolicyAggregator.getPolicies(email, orgUnitPath));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(orgUnitPolicyAggregator.getPolicies(loggedInEmail, orgUnitPath));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshUsersCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        orgUnitService.forceRefreshCache(adminEmail);
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        orgUnitService.forceRefreshCache(loggedInEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

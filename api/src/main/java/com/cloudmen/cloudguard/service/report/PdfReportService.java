@@ -146,7 +146,7 @@ public class PdfReportService {
 
             String companyName = teamleaderCompanyService.getCompanyNameByEmail(adminEmail, headers);
 
-            FullSecurityReport reportData = getFullSecurityReport(adminEmail, locale, roles);
+            FullSecurityReport reportData = getFullSecurityReport(loggedInEmail, locale, roles);
 
             Context context = new Context(locale);
 
@@ -189,34 +189,34 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport getFullSecurityReport(String adminEmail, Locale locale, List<UserRole> roles) {
+    private FullSecurityReport getFullSecurityReport(String loggedInEmail, Locale locale, List<UserRole> roles) {
         // Haal de overall score veilig op
         int overallScore = 100;
         try {
-            overallScore = dashboardService.getDashboardSecurityScores(adminEmail).overallScore();
+            overallScore = dashboardService.getDashboardSecurityScores(loggedInEmail).overallScore();
         } catch (Exception e) {
             log.error("Fout bij ophalen overall score voor rapport: {}", e.getMessage());
         }
 
-        Set<String> disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(adminEmail);
+        Set<String> disabled = userSecurityPreferenceService.getDisabledPreferenceKeys(loggedInEmail);
 
         return new FullSecurityReport(
                 overallScore,
-                getSecurityReportRiskItems(adminEmail, locale),
-                hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER) ? getSecurityReportUsersMetrics(adminEmail, disabled) : null,
-                hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER) ? getSecurityReportGroupsMetrics(adminEmail, disabled) : null,
-                hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER) ? getSecurityReportDriveMetrics(adminEmail, disabled) : null,
-                hasAccessToModule(roles, UserRole.DEVICES_VIEWER) ? getSecurityReportDeviceMetrics(adminEmail, disabled) : null,
-                hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER) ? getSecurityReportAppAccessMetrics(adminEmail, disabled) : null,
-                hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER) ? getSecurityReportAppPasswordMetrics(adminEmail, disabled) : null,
-                hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER) ? getSecurityReportPasswordMetrics(adminEmail) : null,
-                hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER) ? getSecurityReportDomainData(adminEmail, locale) : null
+                getSecurityReportRiskItems(loggedInEmail, locale),
+                hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER) ? getSecurityReportUsersMetrics(loggedInEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER) ? getSecurityReportGroupsMetrics(loggedInEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER) ? getSecurityReportDriveMetrics(loggedInEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.DEVICES_VIEWER) ? getSecurityReportDeviceMetrics(loggedInEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER) ? getSecurityReportAppAccessMetrics(loggedInEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER) ? getSecurityReportAppPasswordMetrics(loggedInEmail, disabled) : null,
+                hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER) ? getSecurityReportPasswordMetrics(loggedInEmail) : null,
+                hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER) ? getSecurityReportDomainData(loggedInEmail, locale) : null
         );
     }
 
-    private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems(String adminEmail, Locale locale) {
+    private List<FullSecurityReport.RiskItem> getSecurityReportRiskItems(String loggedInEmail, Locale locale) {
         try {
-            List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(adminEmail, locale);
+            List<NotificationDto> criticalNotifications = notificationAggregationService.getCriticalNotifications(loggedInEmail, locale);
             return criticalNotifications.stream().map(n -> new FullSecurityReport.RiskItem(n.title(), n.description())).toList();
         } catch (Exception e) {
             log.error("Fout bij ophalen Risk Items voor rapport: {}", e.getMessage());
@@ -224,9 +224,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.UsersMetrics getSecurityReportUsersMetrics(String adminEmail, Set<String> disabled) {
+    private FullSecurityReport.UsersMetrics getSecurityReportUsersMetrics(String loggedInEmail, Set<String> disabled) {
         try {
-            UserOverviewResponse response = googleUsersService.getUsersPageOverview(adminEmail, disabled);
+            UserOverviewResponse response = googleUsersService.getUsersPageOverview(loggedInEmail, disabled);
             int total = response.totalUsers();
             int mfaPct = response.totalUsers() > 0 ? (int) (100 - Math.floor((double) response.withoutTwoFactor() / response.totalUsers() * 100)) : 100;
             return new FullSecurityReport.UsersMetrics(total, mfaPct, response.adminUsers(), response.activeLongNoLoginCount(), response.securityScore(), false);
@@ -236,9 +236,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.GroupsMetrics getSecurityReportGroupsMetrics(String adminEmail, Set<String> disabled) {
+    private FullSecurityReport.GroupsMetrics getSecurityReportGroupsMetrics(String loggedInEmail, Set<String> disabled) {
         try {
-            GroupOverviewResponse response = googleGroupsService.getGroupsOverview(adminEmail, disabled);
+            GroupOverviewResponse response = googleGroupsService.getGroupsOverview(loggedInEmail, disabled);
             return new FullSecurityReport.GroupsMetrics((int) response.totalGroups(), (int) response.groupsWithExternal(), (int) response.highRiskGroups(), response.securityScore(), false);
         } catch (Exception e) {
             log.error("Fout bij ophalen Groups Metrics voor rapport: {}", e.getMessage());
@@ -246,9 +246,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.DriveMetrics getSecurityReportDriveMetrics(String adminEmail, Set<String> disabled) {
+    private FullSecurityReport.DriveMetrics getSecurityReportDriveMetrics(String loggedInEmail, Set<String> disabled) {
         try {
-            SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(adminEmail, disabled);
+            SharedDriveOverviewResponse response = googleSharedDriveService.getDrivesPageOverview(loggedInEmail, disabled);
             return new FullSecurityReport.DriveMetrics(response.totalDrives(), response.notOnlyDomainUsersAllowedCount(), response.orphanDrives(), response.securityScore(), false);
         } catch (Exception e) {
             log.error("Fout bij ophalen Drive Metrics voor rapport: {}", e.getMessage());
@@ -256,9 +256,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.DeviceMetrics getSecurityReportDeviceMetrics(String adminEmail, Set<String> disabled) {
+    private FullSecurityReport.DeviceMetrics getSecurityReportDeviceMetrics(String loggedInEmail, Set<String> disabled) {
         try {
-            DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(adminEmail, disabled);
+            DeviceOverviewResponse response = googleDeviceService.getDevicesPageOverview(loggedInEmail, disabled);
             int total = response.totalDevices();
             int unsafe = response.totalNonCompliant();
             int safe = total - unsafe;
@@ -277,9 +277,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.AppAccessMetrics getSecurityReportAppAccessMetrics(String adminEmail, Set<String> disabled) {
+    private FullSecurityReport.AppAccessMetrics getSecurityReportAppAccessMetrics(String loggedInEmail, Set<String> disabled) {
         try {
-            OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(adminEmail, disabled);
+            OAuthOverviewResponse response = googleOAuthService.getOAuthPageOverview(loggedInEmail, disabled);
             int totalConnected = (int) response.totalThirdPartyApps();
             int highRisk = (int) response.totalHighRiskApps();
             int trusted = totalConnected - highRisk;
@@ -290,9 +290,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics(String adminEmail, Set<String> disabled) {
+    private FullSecurityReport.AppPasswordMetrics getSecurityReportAppPasswordMetrics(String loggedInEmail, Set<String> disabled) {
         try {
-            AppPasswordOverviewResponse response = appPasswordsService.getOverview(adminEmail, disabled);
+            AppPasswordOverviewResponse response = appPasswordsService.getOverview(loggedInEmail, disabled);
             return new FullSecurityReport.AppPasswordMetrics(response.totalAppPasswords(), response.usersWithAppPasswords(), response.securityScore(), false);
         } catch (Exception e) {
             log.error("Fout bij ophalen App Password Metrics voor rapport: {}", e.getMessage());
@@ -300,9 +300,9 @@ public class PdfReportService {
         }
     }
 
-    private FullSecurityReport.PasswordMetrics getSecurityReportPasswordMetrics(String adminEmail) {
+    private FullSecurityReport.PasswordMetrics getSecurityReportPasswordMetrics(String loggedInEmail) {
         try {
-            PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(adminEmail);
+            PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(loggedInEmail);
             int enforcedOus = (int) response.twoStepVerification().byOrgUnit().stream().filter(OrgUnit2SvDto::enforced).count();
             long unenforcedWithUsers = response.twoStepVerification().byOrgUnit().stream().filter(ou -> !ou.enforced() && ou.totalCount() > 0).count();
             return new FullSecurityReport.PasswordMetrics(response.passwordPoliciesByOu().size(), enforcedOus, unenforcedWithUsers, response.adminsWithoutSecurityKeys().size(), response.securityScore(), false);
@@ -312,17 +312,17 @@ public class PdfReportService {
         }
     }
 
-    private List<FullSecurityReport.DomainData> getSecurityReportDomainData(String adminEmail, Locale locale) {
+    private List<FullSecurityReport.DomainData> getSecurityReportDomainData(String loggedInEmail, Locale locale) {
         List<FullSecurityReport.DomainData> domainData = new ArrayList<>();
 
         try {
-            List<DomainDto> domains = googleDomainService.getAllDomains(adminEmail);
+            List<DomainDto> domains = googleDomainService.getAllDomains(loggedInEmail);
 
             for (DomainDto d : domains) {
                 String domain = d.domainName();
 
                 try {
-                    var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(adminEmail);
+                    var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
                     DnsRecordResponseDto dnsResponse = dnsRecordsService.getImportantRecords(domain, "google", dnsOverrides);
                     List<DnsRecordDto> rows = dnsResponse.rows();
                     int score = dnsResponse.securityScore();

@@ -4,5 +4,5 @@ import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 
 public interface OrgUnitPolicyProvider {
     String key();
-    OrgUnitPolicyDto fetch(String loggedInEmail, String orgUnitPath) throws Exception;
+    OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception;
 }

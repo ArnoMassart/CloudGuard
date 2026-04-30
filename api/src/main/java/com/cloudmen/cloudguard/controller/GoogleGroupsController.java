@@ -28,23 +28,23 @@ public class GoogleGroupsController {
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "5") int size) {
-    String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsService.getGroupsPaged(email, query, pageToken, size));
+    String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleGroupsService.getGroupsPaged(loggedInEmail, query, pageToken, size));
     }
 
     @GetMapping("/overview")
     public ResponseEntity<GroupOverviewResponse> getGroupsOverview(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        String email = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleGroupsService.getGroupsOverview(email, preferenceService.getDisabledPreferenceKeys(email)));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleGroupsService.getGroupsOverview(loggedInEmail, preferenceService.getDisabledPreferenceKeys(loggedInEmail)));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshUsersCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        googleGroupsService.forceRefreshCache(adminEmail);
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        googleGroupsService.forceRefreshCache(loggedInEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }
