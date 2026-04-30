@@ -22,6 +22,9 @@ import java.util.List;
  * @param roleRequested         {@code true} if the user has a pending request to be granted a new or elevated role
  * @param organizationRequested {@code true} if the user has a pending request to join or be assigned to an
  *                              organization
+ * @param accessRequested       {@code true} if the user has a pending request to join
+ * @param accessAccepted        {@code true} if the user has been accepted to CloudGuard
+ * @param accessDenied          {@code true} if the user has been denied from CloudGuard
  * @param organizationId        the unique database identifier of the organization to which the user belongs
  * @param organizationName      the display name of the organization to which the user is affiliated
  */
@@ -34,6 +37,9 @@ public record UserDto(
         LocalDateTime createdAt,
         Boolean roleRequested,
         Boolean organizationRequested,
+        Boolean accessRequested,
+        Boolean accessAccepted,
+        Boolean accessDenied,
         Long organizationId,
         String organizationName,
         @JsonProperty("isCloudmenStaff") Boolean isCloudmenStaff

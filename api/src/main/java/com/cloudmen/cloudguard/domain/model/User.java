@@ -98,6 +98,27 @@ public class User {
     private boolean organizationRequested = false;
 
     /**
+     * A flag indicating whether the user has actively requested access to CloudGuard. <p>
+     *
+     * This field defaults to {@code false}.
+     */
+    private boolean accessRequested = false;
+
+    /**
+     * A flag indicating whether the user has been accepted to CloudGuard. <p>
+     *
+     * This field defaults to {@code false}.
+     */
+    private boolean accessAccepted = false;
+
+    /**
+     * A flag indicating whether the user has been denied from CloudGuard. <p>
+     *
+     * This field defaults to {@code false}.
+     */
+    private boolean accessDenied = false;
+
+    /**
      * A list of roles assigned to the user. <p>
      *
      * This field is stored as an {@link ElementCollection} fetched eagerly from the database.

@@ -25,7 +25,7 @@ export class RequestAccess implements OnInit {
   }
 
   requestAccess() {
-    this.#userService.requestRoleAccess().subscribe({
+    this.#userService.requestAccess('/request-access').subscribe({
       next: () => {
         this.requestSent.set(true);
       },
@@ -34,7 +34,7 @@ export class RequestAccess implements OnInit {
   }
 
   getRequestSent() {
-    this.#userService.getRequestRoleAccessSent().subscribe({
+    this.#userService.getRequestSent('/request-access').subscribe({
       next: (val) => {
         this.requestSent.set(val);
       },

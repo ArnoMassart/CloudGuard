@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service.user;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
@@ -24,7 +25,7 @@ public class UserMapper {
     private final MessageSource messageSource;
     private final CloudguardStaffService cloudguardStaffService;
 
-    public UserMapper(OrganizationRepository organizationRepository, @Qualifier("messageSource") MessageSource messageSource, CloudguardStaffService cloudguardStaffService) {
+    public UserMapper(OrganizationRepository organizationRepository, @Qualifier("messageSource") MessageSource messageSource, CloudguardStaffService cloudguardStaffService ) {
         this.organizationRepository = organizationRepository;
         this.messageSource = messageSource;
         this.cloudguardStaffService = cloudguardStaffService;
@@ -59,6 +60,9 @@ public class UserMapper {
                 user.getCreatedAt(),
                 user.isRoleRequested(),
                 user.isOrganizationRequested(),
+                user.isAccessRequested(),
+                user.isAccessAccepted(),
+                user.isAccessDenied(),
                 orgId,
                 organizationName,
                 cloudguardStaffService.isCloudmenAdmin(user.getEmail())

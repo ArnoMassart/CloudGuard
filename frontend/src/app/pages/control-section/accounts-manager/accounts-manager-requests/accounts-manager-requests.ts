@@ -1,38 +1,39 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject, signal, viewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideAngularModule } from 'lucide-angular';
 import { Subscription } from 'rxjs';
 import { AssignRoleDialog } from '../../../../components/assign-role-dialog/assign-role-dialog';
 import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
-import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { Organization } from '../../../../models/org/Organization';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { Router } from '@angular/router';
+import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
-import { ActivatedRoute, Router } from '@angular/router';
+import { PageHeader } from '../../../../components/page-header/page-header';
+import { LucideAngularModule } from 'lucide-angular';
+import { AccountsManagerRequestsTable } from './accounts-manager-requests-table/accounts-manager-requests-table';
+import { AccessDecisionDialog } from '../../../../components/access-decision-dialog/access-decision-dialog';
 
 const ITEMS_PER_PAGE = 4;
 
 @Component({
-  selector: 'app-accounts-manager-users',
+  selector: 'app-accounts-manager-requests',
   imports: [
-    TranslocoPipe,
     SearchBar,
-    PaginationBar,
-    LucideAngularModule,
-    FormsModule,
     AccountsManagerTable,
-    CommonModule,
+    PaginationBar,
+    TranslocoPipe,
+    PageHeader,
+    LucideAngularModule,
+    AccountsManagerRequestsTable,
   ],
-  templateUrl: './accounts-manager-users.html',
-  styleUrl: './accounts-manager-users.css',
+  templateUrl: './accounts-manager-requests.html',
+  styleUrl: './accounts-manager-requests.css',
 })
-export class AccountsManagerUsers {
+export class AccountsManagerRequests {
   readonly Icons = AppIcons;
   readonly #userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
@@ -41,7 +42,7 @@ export class AccountsManagerUsers {
 
   readonly pagination = viewChild(PaginationBar);
 
-  readonly users = signal<User[]>([]);
+  readonly usersWithRequests = signal<User[]>([]);
   readonly isLoading = signal(false);
   readonly isRefreshing = signal<boolean>(false);
   readonly searchQuery = signal('');
@@ -50,8 +51,6 @@ export class AccountsManagerUsers {
   readonly dialog = inject(MatDialog);
 
   readonly expandedRoles = signal<Set<string>>(new Set<string>());
-
-  readonly badgeCount = signal(0);
 
   toggleRolesSummary(email: string, rolesLength: number) {
     if (rolesLength > 2) {
@@ -80,9 +79,8 @@ export class AccountsManagerUsers {
   // ==========================================
   ngOnInit(): void {
     this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
-      this.loadUsers();
+      this.loadUsersWithRequests();
       this.loadOrganizations();
-      this.loadAccessRequestsCount();
     });
   }
 
@@ -95,15 +93,10 @@ export class AccountsManagerUsers {
   // ==========================================
   // PUBLIC METHODS
   // ==========================================
-  onOrgFilterChange(orgId: string) {
-    this.selectedOrganization.set(orgId);
-    this.#resetAndLoad();
-  }
-
   onSearch(value: string) {
     this.searchQuery.set(value);
     this.pagination()?.reset();
-    this.loadUsers();
+    this.loadUsersWithRequests();
   }
 
   getAllAvailableRoles() {
@@ -147,13 +140,55 @@ export class AccountsManagerUsers {
       });
   }
 
-  openRoleChangeDialog(user: User, hasExistingRoles: boolean): void {
+  openAcceptedDialog(user: User): void {
+    const dialogRef = this.dialog.open(AccessDecisionDialog, {
+      width: '450px',
+      panelClass: 'custom-dialog-container',
+      data: {
+        user: user,
+        isAccepted: true,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        // has been accepted
+        this.#userService.userAccepted(user).subscribe({
+          next: () => {
+            this.openRoleChangeDialog(user);
+          },
+          error: (err) => {
+            console.error('Error with accepting user', err);
+          },
+        });
+      }
+    });
+  }
+
+  openDenyDialog(user: User): void {
+    const dialogRef = this.dialog.open(AccessDecisionDialog, {
+      width: '450px',
+      panelClass: 'custom-dialog-container',
+      data: {
+        user: user,
+        isAccepted: false,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        // has been denied
+      }
+    });
+  }
+
+  openRoleChangeDialog(user: User): void {
     const dialogRef = this.dialog.open(AssignRoleDialog, {
       width: '450px',
       panelClass: 'custom-dialog-container',
       data: {
         user: user,
-        isEditMode: hasExistingRoles,
+        isEditMode: false,
         allAvailableRoles: this.getAllAvailableRoles(),
       },
     });
@@ -169,7 +204,7 @@ export class AccountsManagerUsers {
     this.isLoading.set(true);
     this.#userService.updateRolesForUser(email, roles).subscribe({
       next: () => {
-        this.loadUsers();
+        this.loadUsersWithRequests();
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -179,24 +214,20 @@ export class AccountsManagerUsers {
     });
   }
 
-  loadUsers(token?: string) {
+  loadUsersWithRequests(token?: string) {
     this.isLoading.set(true);
 
     this.#userService
-      .getAllDatabaseUsers(
-        ITEMS_PER_PAGE,
-        token || undefined,
-        this.searchQuery(),
-        this.selectedOrganization()
-      )
+      .getAllRequestedDatabaseUsers(ITEMS_PER_PAGE, token || undefined, this.searchQuery())
       .subscribe({
         next: (page) => {
-          this.users.set(page.users);
+          this.usersWithRequests.set(page.users);
+          console.log(page);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
         },
         error: (err) => {
-          console.error('Failed to load users', err);
+          console.error('Failed to load requested users', err);
           this.isLoading.set(false);
         },
       });
@@ -226,7 +257,7 @@ export class AccountsManagerUsers {
     this.#userService.updateUserOrg(user.email, newOrgId).subscribe({
       next: () => {
         // Eventueel een succesmelding of de lokale state updaten
-        this.loadUsers();
+        this.loadUsersWithRequests();
       },
     });
   }
@@ -238,21 +269,11 @@ export class AccountsManagerUsers {
 
   #resetAndLoad() {
     this.pagination()?.reset();
-    this.loadUsers();
+
+    this.loadUsersWithRequests();
   }
 
-  goToRequests() {
-    this.#router.navigate(['/accounts-manager/requests']);
-  }
-
-  loadAccessRequestsCount() {
-    this.#userService.getAccessRequestsCount().subscribe({
-      next: (res) => {
-        this.badgeCount.set(res);
-      },
-      error: (err) => {
-        console.error('Error getting the access request count', err);
-      },
-    });
+  backToAccountManagement() {
+    this.#router.navigate(['/accounts-manager']);
   }
 }

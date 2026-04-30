@@ -24,12 +24,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param pageable  pagination and sorting instructions
      * @return a paginated result of users with pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = true OR u.organizationRequested = true " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessRequested = true " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<User> findAllByRoleRequestedWithSearch(
+    Page<User> findAllByAccessRequestedWithSearch(
             @Param("query") String query,
             Pageable pageable);
 
@@ -44,7 +44,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param pageable          pagination and sorting instructions
      * @return a paginated result of users without pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = false AND u.organizationRequested = false " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessRequested = false " +
             "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
@@ -68,4 +68,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT DISTINCT u.organizationId FROM tbl_users u WHERE u.organizationId IS NOT NULL")
     List<Long> findDistinctOrganizationIds();
+
+    long countByAccessRequestedTrue();
 }

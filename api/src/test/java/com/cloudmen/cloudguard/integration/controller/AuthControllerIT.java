@@ -98,6 +98,9 @@ public class AuthControllerIT {
                 LocalDateTime.now(),
                 false,
                 false,
+                false,
+                false,
+                false,
                 1L,
                 "Acme Corp",
                 false

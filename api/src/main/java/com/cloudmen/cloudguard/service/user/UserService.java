@@ -89,6 +89,29 @@ public class UserService {
         }
     }
 
+
+    public boolean getAccessRequested(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        return userOptional.map(User::isAccessRequested).orElse(false);
+    }
+
+    @Transactional
+    public void updateRequestAccess(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            if (!user.isAccessRequested()) {
+                user.setAccessRequested(true);
+                userRepository.save(user);
+
+                accessRequestEmailService.notifyAccessRequest(email);
+            }
+        }
+    }
+
     public boolean getRoleRequested(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
@@ -96,7 +119,7 @@ public class UserService {
     }
 
     @Transactional
-    public void updateRequestAccess(String email) {
+    public void updateRoleRequestAccess(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isPresent()) {
@@ -184,7 +207,7 @@ public class UserService {
         return fetchUsersFromDb(pageToken, size, query, orgIdFilter, true);
     }
 
-    public DatabaseUsersResponse getAllWithRequestedRoleAndOrganization(String pageToken, int size, String query) {
+    public DatabaseUsersResponse getAllRequested(String pageToken, int size, String query) {
         return fetchUsersFromDb(pageToken, size, query, "", false);
     }
 
@@ -246,6 +269,54 @@ public class UserService {
                 .orElse(false);
     }
 
+    public long getRequestedAccessCount() {
+        return userRepository.countByAccessRequestedTrue();
+    }
+
+    public boolean isAccepted(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            return user.isAccessAccepted();
+        }
+
+        return false;
+    }
+
+    public boolean isDenied(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            return user.isAccessDenied();
+        }
+
+        return false;
+    }
+
+    public void acceptUser(String userEmail) {
+        User user = findByEmail(userEmail);
+
+        user.setAccessAccepted(true);
+        user.setAccessDenied(false);
+        user.setAccessRequested(false);
+
+        save(user);
+    }
+
+    public void denyUser(String userEmail) {
+        User user = findByEmail(userEmail);
+
+        user.setAccessDenied(true);
+        user.setAccessAccepted(false);
+        user.setAccessRequested(false);
+
+        save(user);
+    }
+
     private DatabaseUsersResponse fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 
@@ -262,7 +333,7 @@ public class UserService {
 
             userPage = userRepository.findAllWithoutRequested(parsedOrgId, query, pageable);
         } else {
-            userPage = userRepository.findAllByRoleRequestedWithSearch(query, pageable);
+            userPage = userRepository.findAllByAccessRequestedWithSearch(query, pageable);
         }
 
         String nextPageToken = userPage.hasNext() ? String.valueOf(page + 1) : null;

@@ -53,8 +53,8 @@ public class AccessRequestEmailService {
     public void notifyOrganizationRequest(String userEmail) {
         Locale locale = LocaleContextHolder.getLocale();
 
-        String requestType = messageSource.getMessage("email.access.type.org", null, "Koppeling aan een organisatie", locale);
-        String actionRequired = messageSource.getMessage("email.access.action.org", null, "Deze gebruiker heeft nog geen organisatie. Wijs een organisatie toe via de Accounts Manager.", locale);
+        String requestType = "Koppeling aan een organisatie";
+        String actionRequired = "Deze gebruiker heeft nog geen organisatie. Wijs een organisatie toe via de Accounts Manager.";
 
         sendEmail(userEmail, requestType, actionRequired, locale);
     }
@@ -67,8 +67,22 @@ public class AccessRequestEmailService {
     @Async
     public void notifyRoleRequest(String userEmail) {
         Locale locale = LocaleContextHolder.getLocale();
-        String requestType = messageSource.getMessage("email.access.type.role", null, "Toewijzing van een CloudGuard rol", locale);
-        String actionRequired = messageSource.getMessage("email.access.action.role", null, "Deze gebruiker heeft succesvol ingelogd, maar heeft nog geen rol (of staat op Unassigned). Wijs een rol toe via de Accounts Manager.", locale);
+        String requestType = "Toewijzing van een CloudGuard rol";
+        String actionRequired = "Deze gebruiker heeft succesvol ingelogd, maar heeft nog geen rol (of staat op Unassigned). Wijs een rol toe via de Accounts Manager.";
+
+        sendEmail(userEmail, requestType, actionRequired, locale);
+    }
+
+    /**
+     * Notifies CLOUDMEN administrators that a user is awaiting access within the system.
+     *
+     * @param userEmail the email address of the user awaiting access
+     */
+    @Async
+    public void notifyAccessRequest(String userEmail) {
+        Locale locale = LocaleContextHolder.getLocale();
+        String requestType = "Toegangsaanvraag voor CloudGuard";
+        String actionRequired = "Deze gebruiker is succesvol ingelogd, maar heeft nog geen toegang tot het platform. Keur de toegangsaanvraag goed via de Accounts Manager.";
 
         sendEmail(userEmail, requestType, actionRequired, locale);
     }

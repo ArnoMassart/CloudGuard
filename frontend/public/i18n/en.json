@@ -601,5 +601,17 @@
   "account-manager.admin-email": "Admin Email",
   "account-manager.all-orgs": "All organizations",
   "account-manager.no-email-bound": "No email connected",
-  "account-manager.search-orgs": "Search organizations by name"
+  "account-manager.search-orgs": "Search organizations by name",
+  "accept": "Accept",
+  "access-decision.accept.description": "You are about to approve <span class='text-black font-medium'>{{name}}</span>. \nThis grants the user access to CloudGuard.",
+  "access-decision.deny.description": "You are about to reject <span class='text-black font-medium'>{{name}}</span>'s request. \nThis user will not have access to CloudGuard.",
+  "account-manager.new-requests": "New Requests",
+  "account-manager.requests.back": "Back to Account Management",
+  "account-manager.requests.none-found": "No requests found",
+  "account-manager.requests.request-for-access": "Request for access",
+  "actions": "Actions",
+  "deny": "Deny",
+  "denied.description": "Your request for CloudGuard has been rejected by a CLOUDMEN administrator.",
+  "denied.sub-description": "If you think this is a mistake, contact your administrator.",
+  "request-access.description": "You have successfully logged in, but you have not yet been given access to the application by a CLOUDMEN administrator."
 }

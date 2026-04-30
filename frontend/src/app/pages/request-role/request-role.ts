@@ -1,18 +1,18 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideAngularModule } from 'lucide-angular';
-import { CustomAuthService } from '../../auth/custom-auth-service';
 import { LanguageBar } from '../../components/language-bar/language-bar';
+import { CustomAuthService } from '../../auth/custom-auth-service';
 import { UserService } from '../../services/user-service';
 import { AppIcons } from '../../shared/AppIcons';
 
 @Component({
-  selector: 'app-no-organization',
+  selector: 'app-request-role',
   imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
-  templateUrl: './no-organization.html',
-  styleUrl: './no-organization.css',
+  templateUrl: './request-role.html',
+  styleUrl: './request-role.css',
 })
-export class NoOrganization {
+export class RequestRole implements OnInit {
   readonly Icons = AppIcons;
 
   readonly #userService = inject(UserService);
@@ -24,8 +24,8 @@ export class NoOrganization {
     this.getRequestSent();
   }
 
-  requestAccess() {
-    this.#userService.requestAccess('/no-organization').subscribe({
+  requestRole() {
+    this.#userService.requestAccess('/request-role').subscribe({
       next: () => {
         this.requestSent.set(true);
       },
@@ -34,7 +34,7 @@ export class NoOrganization {
   }
 
   getRequestSent() {
-    this.#userService.getRequestSent('/no-organization').subscribe({
+    this.#userService.getRequestSent('/request-role').subscribe({
       next: (val) => {
         this.requestSent.set(val);
       },

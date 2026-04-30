@@ -40,9 +40,11 @@ export class App implements OnInit {
         !this.#router.url.includes('/no-access') &&
         !this.#router.url.includes('/server-error') &&
         !this.#router.url.includes('/request-access') &&
+        !this.#router.url.includes('/request-role') &&
         !this.#router.url.includes('/no-organization') &&
         !this.#router.url.includes('/setup') &&
         !this.#router.url.includes('/no-page-access') &&
+        !this.#router.url.includes('/denied') &&
         !this.#router.url.includes('/callback');
     });
 

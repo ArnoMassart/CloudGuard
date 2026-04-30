@@ -10,6 +10,9 @@ export type User = {
   organizationId: number;
   organizationName?: string | null;
   isCloudmenStaff?: boolean;
+  accessRequested: boolean;
+  accessAccepted: boolean;
+  accessDenied: boolean;
 };
 
 export enum Role {

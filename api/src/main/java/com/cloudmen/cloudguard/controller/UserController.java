@@ -1,7 +1,9 @@
 package com.cloudmen.cloudguard.controller;
 
+import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
+import com.cloudmen.cloudguard.dto.users.UserDecisionRequestDto;
 import com.cloudmen.cloudguard.dto.users.UserUpdateRoleRequest;
 import com.cloudmen.cloudguard.dto.users.UsersUpdateOrganizationRequest;
 import com.cloudmen.cloudguard.service.CloudguardStaffService;
@@ -72,12 +74,40 @@ public class UserController {
     }
 
     /**
-     * Checks if the authenticated user has already submitted a request for role assignment.
+     * Checks if the authenticated user has already submitted a request for CloudGuard access.
      *
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
      * @return a {@link ResponseEntity} containing a boolean indicating if an access request is currently pending
      */
     @GetMapping("/request-access")
+    public ResponseEntity<Boolean> getRequestAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.getAccessRequested(loggedInEmail));
+    }
+
+    /**
+     * Submits a request for CloudGuard access on behalf of the authenticated user.
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
+     */
+    @PostMapping("/request-access")
+    public ResponseEntity<String> requestAccess(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        userService.updateRequestAccess(loggedInEmail);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Checks if the authenticated user has already submitted a request for role assignment.
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if an access request is currently pending
+     */
+    @GetMapping("/request-role")
     public ResponseEntity<Boolean> getRequestRoleAccessSent(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
@@ -90,11 +120,11 @@ public class UserController {
      * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
      * @return an empty {@link ResponseEntity} indicating the request was successfully logged
      */
-    @PostMapping("/request-access")
+    @PostMapping("/request-role")
     public ResponseEntity<String> requestRoleAccess(@CookieValue(name = "AuthToken", required = false) String token) {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        userService.updateRequestAccess(loggedInEmail);
+        userService.updateRoleRequestAccess(loggedInEmail);
 
         return ResponseEntity.ok().build();
     }
@@ -170,6 +200,32 @@ public class UserController {
     }
 
     /**
+     * Verifies if the authenticated user is accepted to CloudGuard.
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if the user is accepted
+     */
+    @GetMapping("/is-accepted")
+    public ResponseEntity<Boolean> isAccepted(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.isAccepted(loggedInEmail));
+    }
+
+    /**
+     * Verifies if the authenticated user has been denied from CloudGuard.
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if the user has been denied
+     */
+    @GetMapping("/is-denied")
+    public ResponseEntity<Boolean> isDenied(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.isDenied(loggedInEmail));
+    }
+
+    /**
      * Retrieves a paginated and conditionally filtered list of all users. <p>
      *
      * This endpoint is used to oversee all users across the system, with optional filters for search terms and
@@ -201,15 +257,15 @@ public class UserController {
      * @param query     an optional search term to filter the list
      * @return a {@link ResponseEntity} containing a {@link DatabaseUsersResponse} with the requested users
      */
-    @GetMapping("/all/no-roles")
-    public ResponseEntity<DatabaseUsersResponse> getAllUsersWithRequestedRole(
+    @GetMapping("/all/requested-access")
+    public ResponseEntity<DatabaseUsersResponse> getAllRequestedUsers(
             @CookieValue(name="AuthToken", required=false) String token,
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "4") int size,
             @RequestParam(required = false) String query) {
         String email = jwtService.validateInternalToken(token);
         cloudguardStaffService.requireCloudmenAdmin(email);
-        return ResponseEntity.ok(userService.getAllWithRequestedRoleAndOrganization(pageToken, size, query));
+        return ResponseEntity.ok(userService.getAllRequested(pageToken, size, query));
     }
 
     /**
@@ -301,5 +357,42 @@ public class UserController {
             @CookieValue(name="AuthToken", required = false) String token) {
         String email = jwtService.validateInternalToken(token);
         return ResponseEntity.ok(cloudguardStaffService.isCloudmenAdmin(email));
+    }
+
+    @GetMapping("/access-requests/count")
+    public ResponseEntity<Long> getRequestedAccessCount(@CookieValue(name="AuthToken", required = false) String token) {
+        jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.getRequestedAccessCount());
+    }
+
+    /**
+     * Set the accepted state of the user to true
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
+     */
+    @PostMapping("/accepted")
+    public ResponseEntity<String> userAccepted(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserDecisionRequestDto request) {
+        jwtService.validateInternalToken(token);
+
+        userService.acceptUser(request.email());
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Set the denied state of the user to true
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
+     */
+    @PostMapping("/denied")
+    public ResponseEntity<String> userDenied(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserDecisionRequestDto request) {
+        jwtService.validateInternalToken(token);
+
+        userService.denyUser(request.email());
+
+        return ResponseEntity.ok().build();
     }
 }

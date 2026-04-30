@@ -1,0 +1,45 @@
+<div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
+    <app-page-header Title="{{ 'accounts-manager' | transloco }}"
+        Description="{{ 'account-manager.description' | transloco }}" [NeedAdminLink]="false" />
+
+    <div class="w-full flex flex-col gap-8 mt-6">
+        <div class="flex items-center gap-4 cursor-pointer hover:text-gray-600" (click)="backToAccountManagement()">
+            <i-lucide [img]="Icons.ArrowLeft" [size]="22" />
+            <span>{{ 'account-manager.requests.back' | transloco }}</span>
+        </div>
+
+        @if (usersWithRequests().length >= 1) {
+        <app-search-bar placeholder="{{ 'users.search' | transloco }}..." (searchChange)="onSearch($event)" />
+
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="mx-6 mb-6">
+                <span class="font-medium md:text-lg text-[17px] text-slate-900">
+                    {{ 'account-manager.table-without.title' | transloco }}
+                </span>
+            </div>
+
+            @if (isLoading()) {
+            } @else if (usersWithRequests().length > 0) {
+            <app-accounts-manager-requests-table [users]="usersWithRequests()" [orgs]="orgs()"
+                [hasExistingRoles]="false" [expandedRoles]="expandedRoles()"
+                (actionAcceptClick)="openAcceptedDialog($event)" (actionDenyClick)="openDenyDialog($event)"
+                (orgChange)="onOrganizationChange($event.user)"
+                (toggleRoles)="toggleRolesSummary($event.email, $event.length)" />
+            }
+
+            <div [class.hidden]="usersWithRequests().length === 0">
+                <app-pagination-bar [nextPageToken]="nextPageToken()" [isLoading]="isLoading()"
+                    (loadData)="loadUsersWithRequests($event)" />
+            </div>
+        </div>
+        } @else {
+        <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
+            <div class="mx-6 mb-6">
+                <span class="font-medium md:text-lg text-[17px] text-slate-900">
+                    {{ 'account-manager.requests.none-found' | transloco }}
+                </span>
+            </div>
+        </div>
+        }
+    </div>
+</div>

@@ -601,5 +601,17 @@
   "account-manager.search-orgs": "Zoek organisaties op naam",
   "account-manager.all-orgs": "Alle organisaties",
   "account-manager.admin-email": "Admin Email",
-  "account-manager.no-email-bound": "Geen email verbonden"
+  "account-manager.no-email-bound": "Geen email verbonden",
+  "account-manager.new-requests": "Nieuwe Aanvragen",
+  "account-manager.requests.none-found": "Geen aanvragen gevonden",
+  "account-manager.requests.back": "Terug naar Accountbeheer",
+  "actions": "Acties",
+  "account-manager.requests.request-for-access": "Aanvraag voor toegang",
+  "accept": "Accepteren",
+  "deny": "Weigeren",
+  "access-decision.accept.description": "U staat op het punt om <span class='text-black font-medium'>{{name}}</span> goed te keuren. Hiermee verleent u deze gebruiker toegang tot CloudGuard.",
+  "access-decision.deny.description": "U staat op het punt om de aanvraag van <span class='text-black font-medium'>{{name}}</span> af te wijzen. Deze gebruiker krijgt geen toegang tot CloudGuard.",
+  "request-access.description": "Je bent succesvol ingelogd, maar je hebt nog geen toegang tot de applicatie gekregen van een beheerder van CLOUDMEN.",
+  "denied.description": "Je aanvraag voor CloudGuard is afgewezen door een beheerder van CLOUDMEN.",
+  "denied.sub-description": "Neem contact op met je beheerder als je denkt dat dit een vergissing is."
 }
