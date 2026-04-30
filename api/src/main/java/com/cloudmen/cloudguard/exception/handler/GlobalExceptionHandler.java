@@ -112,8 +112,8 @@ public class GlobalExceptionHandler {
                 messageSource.getMessage("api.error.unexpected", null, LocaleContextHolder.getLocale()));
     }
 
-    @ExceptionHandler(OrganizationNotNullException.class)
-    public ResponseEntity<String> handleOrganizationNotNullException(OrganizationNotNullException ex) {
+    @ExceptionHandler(OrganizationIdNotNullException.class)
+    public ResponseEntity<String> handleOrganizationNotNullException(OrganizationIdNotNullException ex) {
         return plainText(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 

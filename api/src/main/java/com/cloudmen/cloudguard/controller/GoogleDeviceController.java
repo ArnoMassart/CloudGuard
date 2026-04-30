@@ -2,10 +2,9 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.devices.DevicePageResponse;
-import com.cloudmen.cloudguard.service.GoogleDeviceService;
+import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

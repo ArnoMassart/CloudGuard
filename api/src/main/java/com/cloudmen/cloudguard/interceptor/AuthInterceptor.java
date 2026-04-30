@@ -13,6 +13,13 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import java.util.Arrays;
 import java.util.Locale;
 
+/**
+ * A Spring MVC interceptor responsible for enforcing basic authentication checks on incoming HTTP requests. <p>
+ *
+ * This interceptor ensures that any secured route is accessed by a client holding a valid, non-empty "AuthToken"
+ * cookie. If the required cookie is missing or empty, the request is immediately rejected and an
+ * {@link UnauthorizedException} is thrown, utilizing the request's locale to provide a translated error message.
+ */
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
 

@@ -14,12 +14,17 @@ import com.cloudmen.cloudguard.dto.dns.DnsRecordResponseDto;
 import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
+import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
 import com.cloudmen.cloudguard.domain.model.notification.NotificationInstanceStatus;
 import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
 import com.cloudmen.cloudguard.service.notification.NotificationFeedbackService;
+import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,18 +53,23 @@ class NotificationAggregationServiceTest {
 
     @Mock GoogleDomainService domainService;
     @Mock DnsRecordsService dnsRecordsService;
-    @Mock GoogleUsersService usersService;
-    @Mock GoogleSharedDriveService driveService;
-    @Mock GoogleDeviceService deviceService;
+    @Mock
+    GoogleUsersService usersService;
+    @Mock
+    GoogleSharedDriveService driveService;
+    @Mock
+    GoogleDeviceService deviceService;
     @Mock AppPasswordsService appPasswordsService;
     @Mock GoogleGroupsService groupsService;
-    @Mock GoogleOAuthService oAuthService;
+    @Mock
+    GoogleOAuthService oAuthService;
     @Mock PasswordSettingsService passwordSettingsService;
     @Mock NotificationFeedbackService feedbackService;
     @Mock UserSecurityPreferenceService preferenceService;
     @Mock NotificationInstanceRepository notificationInstanceRepository;
     @Mock NotificationProjectionProperties notificationProjectionProperties;
-    @Mock UserService userService;
+    @Mock
+    UserService userService;
     @Mock OrganizationService organizationService;
 
     private ResourceBundleMessageSource messageSource;

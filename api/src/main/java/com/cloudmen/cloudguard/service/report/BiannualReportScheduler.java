@@ -4,7 +4,7 @@ import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.report.ReportResponse;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.service.cache.CacheWarmupService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import org.slf4j.Logger;
@@ -17,13 +17,19 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * A scheduled service responsible for orchestrating the automated generation and delivery of security reports. <p>
+ *
+ * This scheduler runs on a biannual basis (every six months) and iterates through all active organizations. It
+ * triggers a cache warm-up, generates a localized PDF report, and dispatches it to the designated administrative
+ * contact, provided they have the required CloudGuard access level.
+ */
 @Service
 public class BiannualReportScheduler {
     private static final Logger log = LoggerFactory.getLogger(BiannualReportScheduler.class);
 
     private final PdfReportService reportService;
     private final SecurityReportEmailService emailService;
-
     private final UserService userService;
     private final TeamleaderAccessService teamleaderAccessService;
     private final CacheWarmupService cacheWarmupService;
@@ -39,8 +45,14 @@ public class BiannualReportScheduler {
     }
 
     /**
-     * CRON: "0 0 8 1 1,7 *" means:
-     * At 08:00:00 AM, on the 1st day of the month, only in January and July.
+     * Executes the biannual security report workflow. <p>
+     *
+     * <b>Schedule:</b> Runs at 08:00 AM on the 1st of January and the 1st of July. <p>
+     * <b>Workflow:</b> <p>
+     * 1. Identifies unique organizations from the user base. <p>
+     * 2. Verifies Teamleader access for the target email. <p>
+     * 3. Warms up the Google Workspace cache asynchronously. <p>
+     * 4. Generates a localized PDF and emails it to the recipient
      */
     @Scheduled(cron = "0 0 8 1 1,7 *")
     public void generateAndSendReports() {

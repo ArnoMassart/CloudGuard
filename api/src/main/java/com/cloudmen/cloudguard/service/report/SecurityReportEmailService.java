@@ -20,6 +20,13 @@ import java.util.Locale;
 
 import static com.cloudmen.cloudguard.utility.UtilityFunctions.escapeHtml;
 
+/**
+ * Service responsible for dispatching security reports via email. <p>
+ * <p>
+ * This service handles the construction of localized MIME messages, including HTML body generation and PDF
+ * attachment handling. Operations are executed asynchronously to ensure that report generation workflows are not
+ * blocked by mail server latency.
+ */
 @Service
 public class SecurityReportEmailService {
 
@@ -34,6 +41,18 @@ public class SecurityReportEmailService {
         this.messageSource = messageSource;
     }
 
+    /**
+     * Sends a security report email with a PDF attachment. <p>
+     * <p>
+     * This method runs in a separate thread due to the {@link Async} annotation. It assembles an HTML email using
+     * pre-defined templates and localized messages from the resource bundles.
+     *
+     * @param recipientEmail the email address of the recipient
+     * @param companyName    the name of the client company (used for filename and greeting)
+     * @param pdfBytes       the raw bytes of the generated PDF report
+     * @param locale         the locale for translating the email content
+     * @throws FailedFeedbackEmailException if the email delivery fails due to messaging or SMTP issues
+     */
     @Async
     public void sendSecurityReportEmail(String recipientEmail, String companyName, byte[] pdfBytes, Locale locale) {
         String subject = messageSource.getMessage("email.report.subject", null, locale);
@@ -64,35 +83,34 @@ public class SecurityReportEmailService {
         }
     }
 
+    private String buildReportHtml(String companyName, Locale locale) {
+        String safeCompanyName = escapeHtml(companyName);
+        String greeting = messageSource.getMessage("email.report.greeting", new Object[]{safeCompanyName}, locale);
+        String p1 = messageSource.getMessage("email.report.p1", null, locale);
+        String p2 = messageSource.getMessage("email.report.p2", null, locale);
+        String signoff = messageSource.getMessage("email.report.signoff", null, locale);
+        String footer = messageSource.getMessage("email.report.footer", null, locale);
+
+        String content =
+                """
+                        <h3 style="margin-top: 0; color: %s;">%s</h3>
+                        <p>%s</p>
+                        <p>%s</p>
+                        <br>
+                        <p>%s<br><strong>Het CloudGuard Team</strong></p>
+                        """
+                        .formatted(
+                                SecurityEmailHtml.HEADER_BG,
+                                greeting,
+                                p1,
+                                p2,
+                                signoff);
+
+        return SecurityEmailHtml.document(content, footer);
+    }
+
     private void throwReportEmailFailed(Locale locale, Throwable cause) {
         String msg = messageSource.getMessage("api.email.send_failed", null, locale);
         throw new FailedFeedbackEmailException(msg, cause);
     }
-
-    private String buildReportHtml(String companyName, Locale locale) {
-            String safeCompanyName = escapeHtml(companyName);
-            String greeting = messageSource.getMessage("email.report.greeting", new Object[]{safeCompanyName}, locale);
-            String p1 = messageSource.getMessage("email.report.p1", null, locale);
-            String p2 = messageSource.getMessage("email.report.p2", null, locale);
-            String signoff = messageSource.getMessage("email.report.signoff", null, locale);
-            String footer = messageSource.getMessage("email.report.footer", null, locale);
-
-            String content =
-                    """
-                          <h3 style="margin-top: 0; color: %s;">%s</h3>
-                          <p>%s</p>
-                          <p>%s</p>
-                          <br>
-                          <p>%s<br><strong>Het CloudGuard Team</strong></p>
-                          """
-                            .formatted(
-                                    SecurityEmailHtml.HEADER_BG,
-                                    greeting,
-                                    p1,
-                                    p2,
-                                    signoff);
-
-            return SecurityEmailHtml.document(content, footer);
-        }
-
 }

@@ -1,133 +1,40 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.service.drives;
 
-import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
-import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
-import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
-import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
-import com.cloudmen.cloudguard.service.cache.GoogleSharedDriveCacheService;
 import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
-import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
-import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 import java.util.Locale;
+import java.util.Set;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
-@Service
-public class GoogleSharedDriveService {
-    private final GoogleSharedDriveCacheService sharedDriveCacheService;
+/**
+ * Component responsible for calculating compliance scores and evaluating the risk levels of Google Workspace Shared
+ * Drives. <p>
+ *
+ * This scorer handles the complex weighting of risk tiers (low, medium, high), applies deductions for unsafe
+ * sharing settings (e.g., orphan drives, external access), and dynamically adjusts the final breakdown based on the
+ * user's active security preferences.
+ */
+@Component
+public class DrivesComplianceScorer {
     private final MessageSource messageSource;
 
-    public GoogleSharedDriveService(GoogleSharedDriveCacheService sharedDriveCacheService, MessageSource messageSource) {
-        this.sharedDriveCacheService = sharedDriveCacheService;
+    public DrivesComplianceScorer(@Qualifier("messageSource") MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 
-    public void forceRefreshCache(String loggedInEmail) {
-        sharedDriveCacheService.forceRefreshCache(loggedInEmail);
-    }
-
-    public SharedDrivePageResponse getSharedDrivesPaged(String loggedInEmail, String pageToken, int size, String query) {
-        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
-
-        List<SharedDriveBasicDetail> filteredList = cachedData.allDrives();
-        if (query != null && !query.trim().isEmpty()) {
-            String lowerQuery = query.toLowerCase().trim();
-            filteredList = filteredList.stream()
-                    .filter(d -> d.name() != null && d.name().toLowerCase().contains(lowerQuery))
-                    .toList();
-        }
-
-        int page = GoogleServiceHelperMethods.getPage(pageToken);
-
-        int totalDrives = filteredList.size();
-        int startIndex = (page - 1) * size;
-        int endIndex = Math.min(startIndex + size, totalDrives);
-
-        List<SharedDriveBasicDetail> pagedItems = (startIndex >= totalDrives)
-                ? Collections.emptyList()
-                : filteredList.subList(startIndex, endIndex).stream().map(item -> {
-            String time = DateTimeConverter.convertToTimeAgo(item.createdTime());
-            return new SharedDriveBasicDetail(
-                    item.id(),
-                    item.name(),
-                    item.totalMembers(),
-                    item.externalMembers(),
-                    item.totalOrganizers(),
-                    item.createdTime(),
-                    time,
-                    item.onlyDomainUsersAllowed(),
-                    item.onlyMembersCanAccess(),
-                    item.risk()
-            );
-        }).toList();
-
-        String nextTokenToReturn = (endIndex < totalDrives) ? String.valueOf(page + 1) : null;
-        return new SharedDrivePageResponse(pagedItems, nextTokenToReturn);
-    }
-
-    public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
-        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
-        List<SharedDriveBasicDetail> drives = cachedData.allDrives();
-
-        int totalDrives = drives.size();
-
-        int orphanDrives = (int) drives.stream().filter(d -> d.totalOrganizers() <= 0).count();
-        int totalLowRisk = (int) drives.stream().filter(d -> d.risk().equals("low")).count();
-        int totalMediumRisk = (int) drives.stream().filter(d -> d.risk().equals("middle")).count();
-        int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("high")).count();
-        int totalExternalMembersCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
-
-        int riskOnlyScore = totalDrives == 0 ? 100
-                : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
-
-        int notOnlyDomainUsersAllowedCount = (int) drives.stream().filter(d -> !d.onlyDomainUsersAllowed()).count();
-        int notOnlyMembersCanAccessCount = (int) drives.stream().filter(d -> !d.onlyMembersCanAccess()).count();
-        int externalMembersDriveCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
-
-        SecurityScoreBreakdownDto breakdown = buildDrivesBreakdown(
-                totalDrives, totalLowRisk, totalMediumRisk, totalHighRisk, orphanDrives,
-                notOnlyDomainUsersAllowedCount, notOnlyMembersCanAccessCount,
-                riskOnlyScore, off);
-
-        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
-                .check("notOnlyDomainUsersAllowedWarning", notOnlyDomainUsersAllowedCount, "shared-drives", "outsideDomain")
-                .check("notOnlyMembersCanAccessWarning", notOnlyMembersCanAccessCount, "shared-drives", "nonMemberAccess")
-                .check("externalMembersWarning", externalMembersDriveCount, "shared-drives", "external")
-                .check("orphanDrivesWarning", orphanDrives, "shared-drives", "orphan")
-                .build();
-
-        return new SharedDriveOverviewResponse(
-                totalDrives,
-                orphanDrives,
-                totalHighRisk,
-                totalExternalMembersCount,
-                breakdown.totalScore(),
-                notOnlyDomainUsersAllowedCount,
-                notOnlyMembersCanAccessCount,
-                externalMembersDriveCount,
-                breakdown,
-                warnings
-        );
-    }
-
-    private SecurityScoreBreakdownDto buildDrivesBreakdown(int totalDrives, int totalLowRisk, int totalMediumRisk, int totalHighRisk,
-                                                            int orphanDrives, int notOnlyDomainUsersAllowedCount,
-                                                            int notOnlyMembersCanAccessCount,
-                                                            int riskOnlyScore, Set<String> off) {
+    public SecurityScoreBreakdownDto buildDrivesBreakdown(int totalDrives, int totalLowRisk, int totalMediumRisk, int totalHighRisk,
+                                                          int orphanDrives, int notOnlyDomainUsersAllowedCount,
+                                                          int notOnlyMembersCanAccessCount,
+                                                          int riskOnlyScore, Set<String> off) {
         int lowScore = GoogleServiceHelperMethods.calculateWeightedScore(totalDrives, totalLowRisk, 100.0, 100);
         int mediumScore = GoogleServiceHelperMethods.calculateWeightedScore(totalDrives, totalMediumRisk, 60.0, 0);
         String mediumSeverity = severity(mediumScore > 0 ? mediumScore * 100.0 / 60 : 0, "warning");
@@ -194,7 +101,7 @@ public class GoogleSharedDriveService {
         return new SecurityScoreBreakdownDto(combinedScore, status, factors);
     }
 
-    private static int combinedDriveSecurityScore(int totalDrives, int riskOnlyScore, int orphanScore,
+    private int combinedDriveSecurityScore(int totalDrives, int riskOnlyScore, int orphanScore,
                                                   int domainOnlyScore, int membersOnlyScore, Set<String> off) {
         if (totalDrives == 0) {
             return 0;

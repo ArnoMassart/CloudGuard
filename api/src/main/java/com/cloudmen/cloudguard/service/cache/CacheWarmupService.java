@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.policy.MobileManagementPolicyProvider;
 import com.cloudmen.cloudguard.service.policy.TSVPolicyProvider;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,13 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
+/**
+ * A service responsible for orchestrating the asynchronous pre-loading (warm-up) of Google Workspace data caches. <p>
+ *
+ * This service improves application performance by fetching heavy data from external APIs in the background. It
+ * intelligently respects Role-Based Access Control (RBAC), ensuring that only the caches relevant to the user's
+ * specific permissions are triggered.
+ */
 @Service
 public class CacheWarmupService {
 
@@ -60,21 +68,16 @@ public class CacheWarmupService {
         this.organizationService = organizationService;
     }
 
-    @FunctionalInterface
-    private interface ThrowingRunnable {
-        void run() throws Exception;
-    }
-
-    private CompletableFuture<Void> runSafeAsync(ThrowingRunnable task, String taskName) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                task.run();
-            } catch (Exception e) {
-                log.warn("{} warmup failed",taskName, e);
-            }
-        });
-    }
-
+    /**
+     * Initiates an asynchronous cache warm-up process tailored to the specific access rights of the logged-in user. <p>
+     *
+     * The method evaluates the user's assigned roles and spawns concurrent, safe background tasks to refresh only the
+     * allowed modules (e.g., Users, Groups, Devices). If a specific cache fails to load, it is caught, logged, and
+     * ignored, allowing the rest of the warm-up to complete.
+     *
+     * @param loggedInEmail the email address of the authenticated user requesting the warm-up
+     * @return a {@link CompletableFuture} that completes when all eligible background cache refresh tasks have finished
+     */
     public CompletableFuture<Void> warmupAllCachesAsync(String loggedInEmail) {
         Optional<User> user = userService.findByEmailOptional(loggedInEmail);
         String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
@@ -142,5 +145,20 @@ public class CacheWarmupService {
         CompletableFuture<?>[] tasksArray = tasks.toArray(new CompletableFuture[0]);
 
         return CompletableFuture.allOf(tasksArray).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle {} modules voor: {}", tasks.size() ,loggedInEmail));
+    }
+
+    private CompletableFuture<Void> runSafeAsync(ThrowingRunnable task, String taskName) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                task.run();
+            } catch (Exception e) {
+                log.warn("{} warmup failed",taskName, e);
+            }
+        });
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
     }
 }

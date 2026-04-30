@@ -6,9 +6,14 @@ import com.cloudmen.cloudguard.dto.dashboard.DashboardOverviewResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardPageResponse;
 import com.cloudmen.cloudguard.dto.dashboard.DashboardScores;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
+import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.notification.NotificationAggregationService;
+import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import com.cloudmen.cloudguard.service.user.UserService;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +26,13 @@ import java.util.concurrent.CompletionException;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
+/**
+ * The central orchestration service for the security dashboard. <p>
+ *
+ * This service aggregates security scores and notification metrics from various modules (Users, Groups, DNS, etc.)
+ * to provide a unified security posture. To maintain high performance, it executes individual scoring logic in
+ * parallel using {@link CompletableFuture} and filters results based on the user's specific RBAC permissions.
+ */
 @Service
 public class DashboardService {
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
@@ -53,6 +65,16 @@ public class DashboardService {
         this.userService = userService;
     }
 
+    /**
+     * Retrieves and aggregates all security scores for the dashboard page. <p>
+     *
+     * This method triggers multiple asynchronous tasks to fetch individual module scores. It then calculates an
+     * overall weighted security score and provides a timestamp of the update.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return a {@link DashboardPageResponse} containing aggregated scores and metadata
+     * @throws GoogleWorkspaceSyncException if critical synchronization errors occur during data retrieval
+     */
     public DashboardPageResponse getDashboardSecurityScores(String loggedInEmail) {
         try {
             DashboardScores scores = getAllScores(loggedInEmail);
@@ -78,6 +100,12 @@ public class DashboardService {
         }
     }
 
+    /**
+     * Retrieves high-level notification statistics for the dashboard summary.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return a {@link DashboardOverviewResponse} with total and critical notification counts
+     */
     public DashboardOverviewResponse getDashboardOverview(String loggedInEmail) {
         try {
             return notificationService.getDashboardCounts(loggedInEmail);
@@ -150,28 +178,7 @@ public class DashboardService {
                     "Password Settings"
             );
 
-            CompletableFuture<Integer> dnsAverageFuture;
-            if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
-                dnsAverageFuture = CompletableFuture.supplyAsync(() -> domainService.getAllDomains(loggedInEmail))
-                        .thenCompose(domains -> {
-                            if (domains == null || domains.isEmpty()) return CompletableFuture.completedFuture(0);
-
-                            var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
-                            List<CompletableFuture<Integer>> dnsTasks = domains.stream()
-                                    .map(dto -> CompletableFuture.supplyAsync(() ->
-                                            dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
-                                    ).exceptionally(ex -> handleAsyncError(ex, "Individuele DNS", 0))) // <-- Gebruik helper
-                                    .toList();
-
-                            return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
-                                    .thenApply(v -> {
-                                        int totalScore = dnsTasks.stream().mapToInt(CompletableFuture::join).sum();
-                                        return Math.round((float) totalScore / domains.size());
-                                    });
-                        }).exceptionally(ex -> handleAsyncError(ex, "Globale DNS Average", 100)); // <-- Gebruik helper
-            } else {
-                dnsAverageFuture = CompletableFuture.completedFuture(-1);
-            }
+            CompletableFuture<Integer> dnsAverageFuture = fetchDnsScoresAsync(roles, loggedInEmail);
 
             CompletableFuture.allOf(
                     usersFuture, groupsFuture, drivesFuture, devicesFuture, appAccessFuture, appPasswordsFuture,
@@ -198,24 +205,28 @@ public class DashboardService {
         }
     }
 
-    private int calculateTotalScore(DashboardScores scores) {
-        int totalScore = 0;
-        int categoriesCount = 0;
-
-        if (scores.usersScore() >= 0) { totalScore += scores.usersScore(); categoriesCount++; }
-        if (scores.groupsScore() >= 0) { totalScore += scores.groupsScore(); categoriesCount++; }
-        if (scores.drivesScore() >= 0) { totalScore += scores.drivesScore(); categoriesCount++; }
-        if (scores.devicesScore() >= 0) { totalScore += scores.devicesScore(); categoriesCount++; }
-        if (scores.appAccessScore() >= 0) { totalScore += scores.appAccessScore(); categoriesCount++; }
-        if (scores.appPasswordsScore() >= 0) { totalScore += scores.appPasswordsScore(); categoriesCount++; }
-        if (scores.passwordSettingsScore() >= 0) { totalScore += scores.passwordSettingsScore(); categoriesCount++; }
-        if (scores.dnsScore() >= 0) { totalScore += scores.dnsScore(); categoriesCount++; }
-
-        if (categoriesCount == 0) {
-            return 0;
+    private CompletableFuture<Integer> fetchDnsScoresAsync(List<UserRole> roles, String loggedInEmail) {
+        if (!hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
+            return CompletableFuture.completedFuture(-1);
         }
 
-        return Math.round((float) totalScore / categoriesCount);
+        return CompletableFuture.supplyAsync(() -> domainService.getAllDomains(loggedInEmail))
+                .thenCompose(domains -> {
+                    if (domains == null || domains.isEmpty()) return CompletableFuture.completedFuture(0);
+
+                    var dnsOverrides = userSecurityPreferenceService.getDnsImportanceOverrides(loggedInEmail);
+                    List<CompletableFuture<Integer>> dnsTasks = domains.stream()
+                            .map(dto -> CompletableFuture.supplyAsync(() ->
+                                    dnsRecordsService.getImportantRecords(dto.domainName(), "google", dnsOverrides).securityScore()
+                            ).exceptionally(ex -> handleAsyncError(ex, "Individuele DNS", 0)))
+                            .toList();
+
+                    return CompletableFuture.allOf(dnsTasks.toArray(new CompletableFuture[0]))
+                            .thenApply(v -> {
+                                int totalScore = dnsTasks.stream().mapToInt(CompletableFuture::join).sum();
+                                return Math.round((float) totalScore / domains.size());
+                            });
+                }).exceptionally(ex -> handleAsyncError(ex, "Globale DNS Average", 100));
     }
 
     private CompletableFuture<Integer> fetchScoreIfAllowed(List<UserRole> roles, UserRole requiredRole, java.util.function.Supplier<Integer> scoreSupplier, String moduleName) {
@@ -240,5 +251,25 @@ public class DashboardService {
 
         log.error("Fout bij laden {} score/logica: {}", moduleName, root.getMessage());
         return fallbackScore;
+    }
+
+    private int calculateTotalScore(DashboardScores scores) {
+        int totalScore = 0;
+        int categoriesCount = 0;
+
+        if (scores.usersScore() >= 0) { totalScore += scores.usersScore(); categoriesCount++; }
+        if (scores.groupsScore() >= 0) { totalScore += scores.groupsScore(); categoriesCount++; }
+        if (scores.drivesScore() >= 0) { totalScore += scores.drivesScore(); categoriesCount++; }
+        if (scores.devicesScore() >= 0) { totalScore += scores.devicesScore(); categoriesCount++; }
+        if (scores.appAccessScore() >= 0) { totalScore += scores.appAccessScore(); categoriesCount++; }
+        if (scores.appPasswordsScore() >= 0) { totalScore += scores.appPasswordsScore(); categoriesCount++; }
+        if (scores.passwordSettingsScore() >= 0) { totalScore += scores.passwordSettingsScore(); categoriesCount++; }
+        if (scores.dnsScore() >= 0) { totalScore += scores.dnsScore(); categoriesCount++; }
+
+        if (categoriesCount == 0) {
+            return 0;
+        }
+
+        return Math.round((float) totalScore / categoriesCount);
     }
 }

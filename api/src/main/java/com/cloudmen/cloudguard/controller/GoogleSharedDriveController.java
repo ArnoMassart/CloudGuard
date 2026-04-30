@@ -2,10 +2,9 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDrivePageResponse;
-import com.cloudmen.cloudguard.service.GoogleSharedDriveService;
+import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

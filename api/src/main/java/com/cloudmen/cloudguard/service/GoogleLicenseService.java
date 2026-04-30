@@ -9,6 +9,12 @@ import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Service responsible for aggregating and analyzing Google Workspace license utilization. <p>
+ *
+ * This service retrieves cached license and user data to calculate the total assigned licenses, identify inactive or
+ * suspended users consuming licenses (risky/unused), and prepares the data for frontend chart visualizations.
+ */
 @Service
 public class GoogleLicenseService {
     private final GoogleLicenseCacheService licenseCacheService;
@@ -20,10 +26,23 @@ public class GoogleLicenseService {
         this.usersCacheService = usersCacheService;
     }
 
+    /**
+     * Triggers a manual background refresh of the License cache for the specified user.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     */
     public void forceRefreshCache(String loggedInEmail) {
         licenseCacheService.forceRefreshCache(loggedInEmail);
     }
 
+    /**
+     * Retrieves detailed license distribution data formatted for frontend charting and lists. <p>
+     *
+     * Automatically calculates the appropriate axis step size based on the highest license count.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return a {@link LicensePageResponse} containing sorted license types and chart metadata
+     */
     public LicensePageResponse getLicenses(String loggedInEmail) {
         LicenseCacheEntry cachedData = licenseCacheService.getOrFetchLicenseData(loggedInEmail);
         List<LicenseType> types = cachedData.licenseTypes().stream().sorted(Comparator.comparing(LicenseType::skuName)).toList();
@@ -41,6 +60,13 @@ public class GoogleLicenseService {
         );
     }
 
+    /**
+     * Retrieves a high-level overview of license utilization, highlighting potential cost-saving opportunities
+     * (unused/suspended licenses).
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return a {@link LicenseOverviewResponse} with aggregated utilization metrics
+     */
     public LicenseOverviewResponse getLicensesPageOverview(String loggedInEmail) {
         LicenseCacheEntry cachedData = licenseCacheService.getOrFetchLicenseData(loggedInEmail);
         List<LicenseType> types = cachedData.licenseTypes();

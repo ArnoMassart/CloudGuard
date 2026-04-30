@@ -8,7 +8,8 @@ import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.AccessRequestEmailService;
 import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserMapper;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,9 @@ public class UserServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(cloudguardStaffService.isCloudmenAdmin(anyString())).thenReturn(false);
-        userService = new UserService(userRepository, organizationRepository, messageSource, accessRequestEmailService, organizationService, googleApiFactory, cloudguardStaffService);
+
+        UserMapper mapper = new UserMapper(organizationRepository, messageSource, cloudguardStaffService);
+        userService = new UserService(userRepository, accessRequestEmailService, organizationService, googleApiFactory, mapper);
     }
 
     @Test

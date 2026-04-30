@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.service.cache;
 import com.cloudmen.cloudguard.dto.devices.DeviceCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -23,6 +23,13 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A service responsible for retrieving and caching hardware device data from a Google Workspace environment. <p>
+ *
+ * This service communicates with both the Admin Directory API and the Cloud Identity API to fetch Mobile, ChromeOS, and
+ * Endpoint (Windows/Mac) devices. To optimize performance, queries are executed in parallel and the results are
+ * temporarily stored in an in-memory Caffeine cache.
+ */
 @Service
 public class GoogleDeviceCacheService {
     private static final Logger log = LoggerFactory.getLogger(GoogleDeviceCacheService.class);
@@ -42,10 +49,22 @@ public class GoogleDeviceCacheService {
         this.organizationService = organizationService;
     }
 
+    /**
+     * Forces a background refresh of the device cache for the specified user, bypassing the current Time-To-Live (TTL).
+     *
+     * @param loggedInEmail the email of the authenticated user triggering the refresh
+     */
     public void forceRefreshCache(String loggedInEmail) {
         cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
     }
 
+    /**
+     * Retrieves the device data for the specified user from the cache, or fetches it synchronously from Google if the
+     * cache is empty or expired.
+     *
+     * @param loggedInEmail the email of the authenticated user
+     * @return the aggregated {@link DeviceCacheEntry} containing mobile, ChromeOS, and endpoint devices
+     */
     public DeviceCacheEntry getOrFetchDeviceData(String loggedInEmail) {
         return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
     }

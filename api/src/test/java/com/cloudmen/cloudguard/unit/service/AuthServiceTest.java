@@ -9,13 +9,12 @@ import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.AuthService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.OrganizationService;
-import com.cloudmen.cloudguard.service.UserService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.service.WorkspaceCustomerIdResolver;
 import com.cloudmen.cloudguard.dto.workspace.WorkspaceCustomer;
 import com.cloudmen.cloudguard.unit.helper.AuthTestHelper;
 import com.cloudmen.cloudguard.unit.helper.GlobalTestHelper;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.google.api.services.admin.directory.Directory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,7 +79,7 @@ public class AuthServiceTest {
         existingUser.setRoles(new ArrayList<>());
         UserDto dto = AuthTestHelper.mockUserDto();
 
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.decodeExternalToken("ext-token")).thenReturn(mockJwt);
         when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
         when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
         when(userService.convertToDto(existingUser)).thenReturn(dto);
@@ -109,7 +108,7 @@ public class AuthServiceTest {
         existingUser.setRoles(new ArrayList<>(List.of(UserRole.UNASSIGNED)));
         UserDto dto = AuthTestHelper.mockUserDto();
 
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.decodeExternalToken("ext-token")).thenReturn(mockJwt);
         when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
         when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
         when(userService.convertToDto(existingUser)).thenReturn(dto);
@@ -139,7 +138,7 @@ public class AuthServiceTest {
         existingUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN)));
         UserDto dto = AuthTestHelper.mockUserDto();
 
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.decodeExternalToken("ext-token")).thenReturn(mockJwt);
         // Geen organization resolves -> DWD check wordt overgeslagen
         when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
         when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
@@ -162,7 +161,7 @@ public class AuthServiceTest {
         existingUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN)));
         UserDto dto = AuthTestHelper.mockUserDto();
 
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.decodeExternalToken("ext-token")).thenReturn(mockJwt);
         when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
         when(jwtService.generateToken(existingUser)).thenReturn("internal-token");
         when(userService.convertToDto(existingUser)).thenReturn(dto);
@@ -180,7 +179,7 @@ public class AuthServiceTest {
         savedUser.setRoles(new ArrayList<>());
         UserDto dto = AuthTestHelper.mockUserDto();
 
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.decodeExternalToken("ext-token")).thenReturn(mockJwt);
         when(userService.findByEmailOptional("new@x.com")).thenReturn(Optional.empty());
         when(userService.save(any(User.class))).thenReturn(savedUser);
         when(jwtService.generateToken(savedUser)).thenReturn("internal-token");
@@ -199,7 +198,7 @@ public class AuthServiceTest {
         existingUser.setRoles(new ArrayList<>(List.of(UserRole.SUPER_ADMIN)));
         UserDto dto = AuthTestHelper.mockUserDto();
 
-        when(jwtService.decodeGoogleToken("ext-token")).thenReturn(mockJwt);
+        when(jwtService.decodeExternalToken("ext-token")).thenReturn(mockJwt);
         when(userService.findByEmailOptional(GlobalTestHelper.ADMIN)).thenReturn(Optional.of(existingUser));
 
         when(workspaceCustomerIdResolver.resolveWorkspaceCustomer(GlobalTestHelper.ADMIN))

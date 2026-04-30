@@ -1,31 +1,34 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.service.oauth;
 
-import com.cloudmen.cloudguard.dto.oauth.*;
-import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
-import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.service.cache.GoogleOAuthCacheService;
-import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
+import com.cloudmen.cloudguard.dto.oauth.AggregatedAppDto;
+import com.cloudmen.cloudguard.dto.oauth.DataAccessDto;
+import com.cloudmen.cloudguard.dto.oauth.ScopeCategory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Locale;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+/**
+ * Component responsible for translating raw Google OAuth scope URLs
+ * into human-readable permissions and mapping aggregated builders
+ * into frontend-ready DTOs.
+ */
+@Component
+public class OAuthScopeMapper {
+    private final MessageSource messageSource;
 
-@Service
-public class GoogleOAuthService {
-    private final GoogleOAuthCacheService oAuthCacheService;
+    public OAuthScopeMapper(@Qualifier("messageSource") MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
 
-    private static final List<String> INTERNAL_CLIENT_IDS = List.of(
+    public static final List<String> INTERNAL_CLIENT_IDS = List.of(
             "1046230096039-0c4fqtecqs3fe7t762cn1922garmr4p5.apps.googleusercontent.com"
     );
 
     private static final String FULL_ACCESS_READ_WRITE_TEXT = "app-access.rights.full-access";
-    private final MessageSource messageSource;
 
     private record ScopeMapping(String keyword, ScopeCategory category, String description, boolean isCritical) {}
 
@@ -100,146 +103,7 @@ public class GoogleOAuthService {
             new ScopeMapping("readonly", ScopeCategory.READONLY, "app-access.rights.basic-reading", false)
     );
 
-    public GoogleOAuthService(GoogleOAuthCacheService oAuthCacheService, MessageSource messageSource) {
-        this.oAuthCacheService = oAuthCacheService;
-        this.messageSource = messageSource;
-    }
-
-    public void forceRefreshCache(String loggedInEmail) {
-        oAuthCacheService.forceRefreshCache(loggedInEmail);
-    }
-
-    public OAuthPagedResponse getOAuthPaged(String loggedInEmail, String pageToken, int size, String query, String risk) {
-        OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchOAuthData(loggedInEmail);
-        int totalDomainUsers = cachedData.totalDomainUsers();
-
-        List<AggregatedAppBuilder> builders = aggregateTokens(cachedData.allRawTokens());
-
-        if (query != null && !query.trim().isEmpty()) {
-            String lowerQuery = query.toLowerCase().trim();
-            builders = builders.stream()
-                    .filter(app -> app.name != null && app.name.toLowerCase().contains(lowerQuery))
-                    .toList();
-        }
-
-        List<AggregatedAppBuilder> filteredBuilders = builders;
-
-        int allFilteredApps = filteredBuilders.size();
-
-        Map<Boolean, List<AggregatedAppBuilder>> partitioned = filteredBuilders.stream().collect(Collectors.partitioningBy(b -> isAppHighRisk(b.allScopes)));
-
-        List<AggregatedAppBuilder> highRiskBuilders = partitioned.get(true);
-        List<AggregatedAppBuilder> notHighRiskBuilders = partitioned.get(false);
-
-        int allHighRiskApps = highRiskBuilders.size();
-        int allNotHighRiskApps = notHighRiskBuilders.size();
-
-         if (risk != null) {
-            filteredBuilders = switch (risk) {
-                case "high" -> highRiskBuilders;
-                case "not-high" -> notHighRiskBuilders;
-                default -> filteredBuilders;
-            };
-         }
-
-        filteredBuilders = filteredBuilders.stream()
-                .sorted(Comparator.comparing(a -> a.name))
-                .toList();
-
-        int page = GoogleServiceHelperMethods.getPage(pageToken);
-
-        int totalApps = filteredBuilders.size();
-        int startIndex = (page - 1) * size;
-        int endIndex = Math.min(startIndex + size, totalApps);
-
-        List<AggregatedAppBuilder> pagedItems = (startIndex >= totalApps)
-                ? Collections.emptyList()
-                : filteredBuilders.subList(startIndex, endIndex);
-
-        List<AggregatedAppDto> mappedItems = pagedItems.stream()
-                .map(builder -> mapToFrontendDto(builder, totalDomainUsers))
-                .toList();
-
-        String nextTokenToReturn = (endIndex < totalApps) ? String.valueOf(page + 1) : null;
-        return new OAuthPagedResponse(mappedItems, nextTokenToReturn, allFilteredApps, allHighRiskApps, allNotHighRiskApps);
-    }
-
-    public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail, Set<String> disabledKeys) {
-        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchOAuthData(loggedInEmail);
-        List<RawUserToken> rawTokens = cachedData.allRawTokens();
-
-        List<AggregatedAppBuilder> apps = aggregateTokens(rawTokens);
-
-        long totalThirdPartyApps = apps.stream().filter(app -> !(app.isAnonymous || INTERNAL_CLIENT_IDS.contains(app.clientId))).count();
-        long totalPermissionsGranted = rawTokens.size();
-
-        long totalHighRiskApps = apps.stream()
-                .filter(app -> isAppHighRisk(app.allScopes))
-                .count();
-
-        boolean ignHighRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-access", "highRisk");
-
-        int securityScore = 100;
-        if (!ignHighRisk && totalThirdPartyApps > 0) {
-            double penalty = ((double) totalHighRiskApps / totalThirdPartyApps) * 100;
-            securityScore = (int) Math.max(0, 100 - Math.round(penalty));
-        }
-
-        SecurityScoreBreakdownDto breakdown = buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, totalPermissionsGranted, securityScore, ignHighRisk);
-
-        return new OAuthOverviewResponse(
-                totalThirdPartyApps,
-                totalHighRiskApps,
-                totalPermissionsGranted,
-                securityScore,
-                breakdown
-        );
-    }
-
-    private SecurityScoreBreakdownDto buildOAuthBreakdown(long totalThirdPartyApps, long totalHighRiskApps, long totalPermissionsGranted, int securityScore,
-                                                         boolean ignoreHighRiskPref) {
-        int highRiskScore = totalThirdPartyApps == 0 ? 100 : (int) Math.round((totalThirdPartyApps - totalHighRiskApps) * 100.0 / totalThirdPartyApps);
-        if (ignoreHighRiskPref) {
-            highRiskScore = 100;
-        }
-        int noAppsScore = 100;
-
-        Locale locale = LocaleContextHolder.getLocale();
-
-        boolean showHighRiskFactor = totalThirdPartyApps > 0 || ignoreHighRiskPref;
-
-        var factors = java.util.List.of(
-                securityScoreFactorForDetail(
-                        showHighRiskFactor,
-                        messageSource.getMessage("apps.score.factor.without_high_risk.title", null, locale),
-                        totalHighRiskApps == 0
-                                ? messageSource.getMessage("apps.score.factor.without_high_risk.description.none", null, locale)
-                                : messageSource.getMessage("apps.score.factor.without_high_risk.description", new Object[]{totalHighRiskApps, totalThirdPartyApps}, locale),
-                        highRiskScore,
-                        100,
-                        severity(highRiskScore),
-                        ignoreHighRiskPref),
-                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore), false)
-        );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
-        return new SecurityScoreBreakdownDto(securityScore, status, factors);
-    }
-
-    private List<AggregatedAppBuilder> aggregateTokens(List<RawUserToken> rawTokens) {
-        Map<String, AggregatedAppBuilder> appMap = new HashMap<>();
-
-        for (RawUserToken raw : rawTokens) {
-            if (raw.clientId() == null || raw.clientId().isBlank()) continue;
-
-            appMap.computeIfAbsent(raw.clientId(), k -> new AggregatedAppBuilder(raw.clientId(), raw.displayText()))
-                    .addGrant(raw);
-        }
-
-        return new ArrayList<>(appMap.values());
-    }
-
-    private AggregatedAppDto mapToFrontendDto(AggregatedAppBuilder builder, int totalDomainUsers) {
+    public AggregatedAppDto mapToFrontendDto(AggregatedAppBuilder builder, int totalDomainUsers) {
         List<DataAccessDto> accessList = builder.allScopes.stream()
                 .map(this::translateScopeDetails)
                 .distinct()
@@ -307,36 +171,5 @@ public class GoogleOAuthService {
         Locale locale = LocaleContextHolder.getLocale();
 
         return new DataAccessDto(messageSource.getMessage("app.details.fallback.name", new Object[]{fallbackName}, locale), messageSource.getMessage("app.details.fallback.rights", null, locale), false);
-    }
-
-    private boolean isAppHighRisk(Set<String> scopes) {
-        return scopes.stream().anyMatch(scope ->
-                scope.contains("/auth/drive") ||
-                        scope.contains("/auth/gmail") ||
-                        scope.contains("/auth/admin.directory") ||
-                        scope.contains("/auth/cloud-platform")
-        );
-    }
-
-    // --- INTERNE BUILDER CLASS ---
-    private static class AggregatedAppBuilder {
-        final String clientId;
-        final String name;
-        final Set<String> userEmails = new HashSet<>();
-        final Set<String> allScopes = new HashSet<>();
-        boolean isNative = false;
-        boolean isAnonymous = false;
-
-        AggregatedAppBuilder(String clientId, String name) {
-            this.clientId = clientId;
-            this.name = name;
-        }
-
-        void addGrant(RawUserToken token) {
-            if (token.userEmail() != null) userEmails.add(token.userEmail());
-            if (token.scopes() != null) allScopes.addAll(token.scopes());
-            if (token.isNativeApp()) this.isNative = true;
-            if (token.isAnonymous()) this.isAnonymous = true;
-        }
     }
 }

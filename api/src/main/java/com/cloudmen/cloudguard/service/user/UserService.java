@@ -1,94 +1,51 @@
-package com.cloudmen.cloudguard.service;
+package com.cloudmen.cloudguard.service.user;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.exception.UserNotFoundException;
-import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
+import com.cloudmen.cloudguard.service.AccessRequestEmailService;
+import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.DirectoryScopes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The core orchestration service for managing local application users. <p>
+ *
+ * This service handles standard CRUD operations, language preferences, role assignments, and onboarding workflows
+ * (such as organization and role requests). It also interfaces with the Google Workspace API to verify Domain-Wide
+ * Delegation (DWD) setups for administrative users.
+ */
 @Service
 public class UserService {
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
-
-    private static final String ORGANIZATION_FALLBACK_DISPLAY_MESSAGE_KEY =
-            "api.organization.fallback_display_name";
-
-    private static final String ORGANIZATION_FALLBACK_DISPLAY_DEFAULT =
-            "Organization (workspace customer could not be resolved)";
-
-    private final OrganizationRepository organizationRepository;
-    private final MessageSource messageSource;
     private final AccessRequestEmailService accessRequestEmailService;
     private final OrganizationService organizationService;
     private final GoogleApiFactory googleApiFactory;
-    private final CloudguardStaffService cloudguardStaffService;
+    private final UserMapper mapper;
 
     public UserService(
-            UserRepository userRepository,
-            OrganizationRepository organizationRepository,
-            @Qualifier("messageSource") MessageSource messageSource, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory, CloudguardStaffService cloudguardStaffService) {
+            UserRepository userRepository, AccessRequestEmailService accessRequestEmailService, OrganizationService organizationService, GoogleApiFactory googleApiFactory, UserMapper mapper) {
         this.userRepository = userRepository;
-        this.organizationRepository = organizationRepository;
-        this.messageSource = messageSource;
         this.accessRequestEmailService = accessRequestEmailService;
         this.organizationService = organizationService;
         this.googleApiFactory = googleApiFactory;
-        this.cloudguardStaffService = cloudguardStaffService;
+        this.mapper = mapper;
     }
 
     public UserDto convertToDto(User user) {
-        String organizationName = "";
-        Long orgId = user.getOrganizationId();
-
-        if (orgId != null) {
-            organizationName = organizationRepository.findById(orgId)
-                    .map(org -> {
-                        if (org.getCustomerId() == null || org.getCustomerId().isBlank()) {
-                            return messageSource.getMessage(
-                                    ORGANIZATION_FALLBACK_DISPLAY_MESSAGE_KEY,
-                                    null,
-                                    ORGANIZATION_FALLBACK_DISPLAY_DEFAULT,
-                                    LocaleContextHolder.getLocale());
-                        } else {
-                            return org.getName();
-                        }
-                    })
-                    .orElse("");
-        }
-
-        return new UserDto(
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPictureUrl(),
-                user.getRoles(),
-                user.getCreatedAt(),
-                user.isRoleRequested(),
-                user.isOrganizationRequested(),
-                orgId,
-                organizationName,
-                cloudguardStaffService.isCloudmenAdmin(user.getEmail())
-
-        );
+        return mapper.convertToDto(user);
     }
 
     public Optional<User> findByEmailOptional(String email) {
@@ -231,6 +188,64 @@ public class UserService {
         return fetchUsersFromDb(pageToken, size, query, "", false);
     }
 
+    @Transactional
+    public void updateRoles(String email, List<UserRole> roles) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            if (roles.isEmpty()) {
+                user.getRoles().clear();
+                user.getRoles().add(UserRole.UNASSIGNED);
+            } else {
+                user.setRoles(roles);
+            }
+
+            userRepository.save(user);
+        }
+    }
+
+    @Transactional
+    public void updateRolesAndUpdateRequestedStatus(String email, List<UserRole> roles) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setRoles(roles);
+            user.setRoleRequested(false);
+            userRepository.save(user);
+        }
+    }
+
+    public long getAllRequestedCount() {
+        return userRepository.countByRoleRequestedTrueOrOrganizationRequestedTrue();
+    }
+
+    @Transactional
+    public void updateUsersOrg(String email, Long orgId) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setOrganizationId(orgId);
+            user.setOrganizationRequested(false);
+            userRepository.save(user);
+        });
+    }
+
+    public boolean isOrganizationSetup(String email) {
+        return userRepository.findByEmail(email)
+                .map(User::getOrganizationId)
+                .flatMap(organizationService::findById)
+                .map(org -> {
+                    String adminEmail = org.getAdminEmail();
+                    if (adminEmail == null || adminEmail.isBlank()) {
+                        return false; // Geen admin e-mail ingesteld [cite: 18]
+                    }
+                    // Controleer of de Domain-Wide Delegation effectief werkt [cite: 7, 16]
+                    return verifyDwdStatus(adminEmail);
+                })
+                .orElse(false);
+    }
+
     private DatabaseUsersResponse fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 
@@ -256,65 +271,6 @@ public class UserService {
 
         return new DatabaseUsersResponse(filteredList, nextPageToken);
     }
-
-    @Transactional
-    public void updateRoles(String email, List<UserRole> roles) {
-      Optional<User> userOptional = userRepository.findByEmail(email);
-
-      if (userOptional.isPresent()) {
-          User user = userOptional.get();
-
-          if (roles.isEmpty()) {
-              user.getRoles().clear();
-              user.getRoles().add(UserRole.UNASSIGNED);
-          } else {
-            user.setRoles(roles);
-          }
-
-          userRepository.save(user);
-      }
-    }
-
-    @Transactional
-    public void updateRolesAndUpdateRequestedStatus(String email, List<UserRole> roles) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setRoles(roles);
-            user.setRoleRequested(false);
-            userRepository.save(user);
-        }
-    }
-
-    public long getAllRequestedCount() {
-        return userRepository.countByRoleRequestedTrueOrOrganizationRequestedTrue();
-    }
-
-    @Transactional
-    public void updateUsersOrg(String email, Long orgId) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-           user.setOrganizationId(orgId);
-           user.setOrganizationRequested(false);
-           userRepository.save(user);
-        });
-    }
-
-    public boolean isOrganizationSetup(String email) {
-        return userRepository.findByEmail(email)
-                .map(User::getOrganizationId)
-                .flatMap(organizationService::findById)
-                .map(org -> {
-                    String adminEmail = org.getAdminEmail();
-                    if (adminEmail == null || adminEmail.isBlank()) {
-                        return false; // Geen admin e-mail ingesteld [cite: 18]
-                    }
-                    // Controleer of de Domain-Wide Delegation effectief werkt [cite: 7, 16]
-                    return verifyDwdStatus(adminEmail);
-                })
-                .orElse(false);
-    }
-
 
     private boolean verifyDwdStatus(String adminEmail) {
         try {

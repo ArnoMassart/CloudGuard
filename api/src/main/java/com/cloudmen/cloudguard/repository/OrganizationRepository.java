@@ -24,6 +24,16 @@ public interface OrganizationRepository extends JpaRepository<Organization,Long>
             """)
     List<Long> findIdsOfUnusedFallbackOrganizationsWithoutCustomerId();
 
+    /**
+     * Retrieves a paginated list of organizations, optionally filtered by a search query. <p>
+     *
+     * If the query is null or empty, all organizations are returned. Otherwise, it performs a case-insensitive
+     * partial match on the organization's name.
+     *
+     * @param query     the search string to match against names
+     * @param pageable  pagination and sorting instructions
+     * @return a paginated result of matched organizations
+     */
     @Query("SELECT o FROM Organization o WHERE " +
             ":query IS NULL OR :query = '' OR " +
             "LOWER(o.name) LIKE LOWER(CONCAT('%', :query, '%'))")

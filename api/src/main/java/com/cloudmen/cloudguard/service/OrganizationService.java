@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.service;
 import com.cloudmen.cloudguard.domain.model.Organization;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.dto.organization.DatabaseOrgResponse;
-import com.cloudmen.cloudguard.exception.OrganizationNotNullException;
+import com.cloudmen.cloudguard.exception.OrganizationIdNotNullException;
 import com.cloudmen.cloudguard.repository.OrganizationRepository;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.repository.UserSecurityPreferenceRepository;
@@ -58,7 +58,7 @@ public class OrganizationService {
 
     public Optional<Organization> findById(Long id) {
         if (id == null) {
-            throw new OrganizationNotNullException("The organization id cannot be null");
+            throw new OrganizationIdNotNullException("The organization id cannot be null");
         }
 
         return organizationRepository.findById(id);

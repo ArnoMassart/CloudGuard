@@ -1,8 +1,10 @@
 package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
-import com.cloudmen.cloudguard.service.GoogleUsersService;
+import com.cloudmen.cloudguard.service.users.GoogleUserMapper;
+import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
+import com.cloudmen.cloudguard.service.users.UsersComplianceScorer;
 import com.google.api.services.admin.directory.model.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +34,10 @@ public class GoogleUsersServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GoogleUsersService(usersCacheService, getMessageSource());
+        UsersComplianceScorer scorer = new UsersComplianceScorer(getMessageSource());
+        GoogleUserMapper mapper = new GoogleUserMapper();
+
+        service = new GoogleUsersService(usersCacheService, scorer, mapper);
     }
 
     @AfterEach
@@ -68,8 +73,8 @@ public class GoogleUsersServiceTest {
         var page = service.getWorkspaceUsersPaged(ADMIN, null, 10, "beta");
 
         assertEquals(2, page.users().size());
-        assertTrue(page.users().stream().anyMatch(u -> u.getEmail().equals("other@example.com")));
-        assertTrue(page.users().stream().anyMatch(u -> u.getEmail().equals("beta.user@example.com")));
+        assertTrue(page.users().stream().anyMatch(u -> u.email().equals("other@example.com")));
+        assertTrue(page.users().stream().anyMatch(u -> u.email().equals("beta.user@example.com")));
     }
 
     @Test
@@ -83,8 +88,8 @@ public class GoogleUsersServiceTest {
         var page = service.getWorkspaceUsersPaged(ADMIN, "1", 10, " ");
 
         assertEquals(2, page.users().size());
-        assertEquals("Alpha", page.users().get(0).getFullName());
-        assertEquals("Zeta", page.users().get(1).getFullName());
+        assertEquals("Alpha", page.users().get(0).fullName());
+        assertEquals("Zeta", page.users().get(1).fullName());
     }
 
     @Test
@@ -97,19 +102,19 @@ public class GoogleUsersServiceTest {
 
         var page1 = service.getWorkspaceUsersPaged(ADMIN, "1", 2, null);
         assertEquals(2, page1.users().size());
-        assertEquals("A0", page1.users().get(0).getFullName());
+        assertEquals("A0", page1.users().get(0).fullName());
         assertEquals("2", page1.nextPageToken());
 
         // Page 2
         var page2 = service.getWorkspaceUsersPaged(ADMIN, "2", 2, null);
         assertEquals(2, page2.users().size());
-        assertEquals("A2", page2.users().get(0).getFullName());
+        assertEquals("A2", page2.users().get(0).fullName());
         assertEquals("3", page2.nextPageToken());
 
         // Page 3 (Last page)
         var page3 = service.getWorkspaceUsersPaged(ADMIN, "3", 2, null);
         assertEquals(1, page3.users().size());
-        assertEquals("A4", page3.users().get(0).getFullName());
+        assertEquals("A4", page3.users().get(0).fullName());
         assertNull(page3.nextPageToken());
     }
 
@@ -125,8 +130,8 @@ public class GoogleUsersServiceTest {
 
         var page = service.getWorkspaceUsersPaged(ADMIN, null, 10, null);
 
-        assertEquals("Super Admin", page.users().get(0).getRole());
-        assertEquals("Regular User", page.users().get(1).getRole());
+        assertEquals("Super Admin", page.users().get(0).role());
+        assertEquals("Regular User", page.users().get(1).role());
     }
 
     @Test
