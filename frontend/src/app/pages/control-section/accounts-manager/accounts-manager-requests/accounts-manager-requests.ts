@@ -15,7 +15,8 @@ import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager
 import { PageHeader } from '../../../../components/page-header/page-header';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountsManagerRequestsTable } from './accounts-manager-requests-table/accounts-manager-requests-table';
-import { AccessDecisionDialog } from '../../../../components/access-decision-dialog/access-decision-dialog';
+import { UserDecisionDialog } from '../../../../components/user-decision-dialog/user-decision-dialog';
+import { DecisionResult } from '../../../../models/DecisionResult';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -23,7 +24,6 @@ const ITEMS_PER_PAGE = 4;
   selector: 'app-accounts-manager-requests',
   imports: [
     SearchBar,
-    AccountsManagerTable,
     PaginationBar,
     TranslocoPipe,
     PageHeader,
@@ -141,21 +141,24 @@ export class AccountsManagerRequests {
   }
 
   openAcceptedDialog(user: User): void {
-    const dialogRef = this.dialog.open(AccessDecisionDialog, {
+    const dialogRef = this.dialog.open(UserDecisionDialog, {
       width: '450px',
       panelClass: 'custom-dialog-container',
       data: {
         user: user,
         isAccepted: true,
+        uniqueOrganizations: this.orgs(),
+        regularRoles: this.getAllAvailableRoles(),
       },
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
+    dialogRef.afterClosed().subscribe((result: DecisionResult) => {
+      if (result && result.isAccepted) {
         // has been accepted
-        this.#userService.userAccepted(user).subscribe({
+        console.log(result);
+        this.#userService.userAccepted(result).subscribe({
           next: () => {
-            this.openRoleChangeDialog(user);
+            this.#resetAndLoad();
           },
           error: (err) => {
             console.error('Error with accepting user', err);
@@ -166,18 +169,28 @@ export class AccountsManagerRequests {
   }
 
   openDenyDialog(user: User): void {
-    const dialogRef = this.dialog.open(AccessDecisionDialog, {
+    const dialogRef = this.dialog.open(UserDecisionDialog, {
       width: '450px',
       panelClass: 'custom-dialog-container',
       data: {
         user: user,
         isAccepted: false,
+        uniqueOrganizations: this.orgs(),
+        regularRoles: this.getAllAvailableRoles(),
       },
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
+    dialogRef.afterClosed().subscribe((result: DecisionResult) => {
+      if (result && !result.isAccepted) {
         // has been denied
+        this.#userService.userDenied(result).subscribe({
+          next: () => {
+            this.#resetAndLoad();
+          },
+          error: (err) => {
+            console.error('Error with denying user', err);
+          },
+        });
       }
     });
   }

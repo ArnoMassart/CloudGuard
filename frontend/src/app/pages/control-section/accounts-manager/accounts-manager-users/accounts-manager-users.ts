@@ -34,7 +34,7 @@ const ITEMS_PER_PAGE = 4;
 })
 export class AccountsManagerUsers {
   readonly Icons = AppIcons;
-  readonly #userService = inject(UserService);
+  readonly userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
   readonly #orgService = inject(OrgService);
   readonly #router = inject(Router);
@@ -50,8 +50,6 @@ export class AccountsManagerUsers {
   readonly dialog = inject(MatDialog);
 
   readonly expandedRoles = signal<Set<string>>(new Set<string>());
-
-  readonly badgeCount = signal(0);
 
   toggleRolesSummary(email: string, rolesLength: number) {
     if (rolesLength > 2) {
@@ -167,7 +165,7 @@ export class AccountsManagerUsers {
 
   updateRoles(email: string, roles: Role[]) {
     this.isLoading.set(true);
-    this.#userService.updateRolesForUser(email, roles).subscribe({
+    this.userService.updateRolesForUser(email, roles).subscribe({
       next: () => {
         this.loadUsers();
         this.isLoading.set(false);
@@ -182,7 +180,7 @@ export class AccountsManagerUsers {
   loadUsers(token?: string) {
     this.isLoading.set(true);
 
-    this.#userService
+    this.userService
       .getAllDatabaseUsers(
         ITEMS_PER_PAGE,
         token || undefined,
@@ -223,7 +221,7 @@ export class AccountsManagerUsers {
     const newOrgId = user.organizationId;
 
     // Roep je UserService aan om de organisatie van de gebruiker te updaten
-    this.#userService.updateUserOrg(user.email, newOrgId).subscribe({
+    this.userService.updateUserOrg(user.email, newOrgId).subscribe({
       next: () => {
         // Eventueel een succesmelding of de lokale state updaten
         this.loadUsers();
@@ -246,10 +244,8 @@ export class AccountsManagerUsers {
   }
 
   loadAccessRequestsCount() {
-    this.#userService.getAccessRequestsCount().subscribe({
-      next: (res) => {
-        this.badgeCount.set(res);
-      },
+    this.userService.refreshRequestedCount().subscribe({
+      next: (res) => {},
       error: (err) => {
         console.error('Error getting the access request count', err);
       },

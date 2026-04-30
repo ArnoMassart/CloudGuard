@@ -3,6 +3,7 @@ import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { AccessService } from './access-service';
 import { map, Observable } from 'rxjs';
 import { CustomAuthService } from '../auth/custom-auth-service';
+import { Role } from '../models/users/User';
 
 export const accessGuard: CanActivateFn = (route, state): Observable<boolean | UrlTree> => {
   const tlService = inject(AccessService);
@@ -17,8 +18,24 @@ export const accessGuard: CanActivateFn = (route, state): Observable<boolean | U
         return router.createUrlTree(['/no-access']);
       }
 
+      if (user.accessDenied) {
+        return router.createUrlTree(['/denied']);
+      }
+
+      if (!user.accessAccepted) {
+        return router.createUrlTree(['/request-access']);
+      }
+
+      if (!user.organizationId || user.organizationId === 0) {
+        return router.createUrlTree(['/no-organization']);
+      }
+
       if (!user.roles || user.roles.length === 0) {
         return router.createUrlTree(['/no-access']);
+      }
+
+      if (user.roles.includes(Role.UNASSIGNED)) {
+        return router.createUrlTree(['/request-role']);
       }
 
       if (!hasAccess) {

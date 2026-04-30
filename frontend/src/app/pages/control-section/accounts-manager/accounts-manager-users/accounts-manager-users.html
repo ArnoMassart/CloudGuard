@@ -44,10 +44,10 @@
                     (click)="goToRequests()">
                     <i-lucide [img]=" Icons.UserRoundCheck" [size]="20" />
                     <span class="">{{ 'account-manager.new-requests' | transloco }}</span>
-                    @if (badgeCount() > 0) {
+                    @if (userService.requestedCount()) {
                     <span
                         class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm">
-                        {{ badgeCount() > 99 ? '99+' : badgeCount() }}
+                        {{ userService.requestedCount() > 99 ? '99+' : userService.requestedCount() }}
                     </span>
                     }
                 </button>

@@ -3,6 +3,7 @@ package com.cloudmen.cloudguard.service.user;
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
 import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
+import com.cloudmen.cloudguard.dto.users.UserDecisionRequestDto;
 import com.cloudmen.cloudguard.dto.users.UserDto;
 import com.cloudmen.cloudguard.exception.UserNotFoundException;
 import com.cloudmen.cloudguard.repository.UserRepository;
@@ -273,6 +274,10 @@ public class UserService {
         return userRepository.countByAccessRequestedTrue();
     }
 
+    public long getDeniedCount() {
+        return userRepository.countByAccessDeniedTrue();
+    }
+
     public boolean isAccepted(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
 
@@ -297,12 +302,17 @@ public class UserService {
         return false;
     }
 
-    public void acceptUser(String userEmail) {
-        User user = findByEmail(userEmail);
+    public void acceptUser(UserDecisionRequestDto request) {
+        User user = findByEmail(request.userEmail());
 
         user.setAccessAccepted(true);
         user.setAccessDenied(false);
         user.setAccessRequested(false);
+        user.setOrganizationRequested(false);
+        user.setRoleRequested(false);
+
+        user.setOrganizationId(Long.valueOf(request.organizationId()));
+        user.setRoles(request.roles());
 
         save(user);
     }

@@ -1,19 +1,30 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
-import { Role, RoleLabels, RolePriority, User } from '../../../../../models/users/User';
-import { Organization } from '../../../../../models/org/Organization';
-import { AppIcons } from '../../../../../shared/AppIcons';
-import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LucideAngularModule } from 'lucide-angular';
+import { PageHeader } from '../../../../components/page-header/page-header';
+import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
+import { SearchBar } from '../../../../components/search-bar/search-bar';
+import { AccountsManagerRequestsTable } from '../accounts-manager-requests/accounts-manager-requests-table/accounts-manager-requests-table';
+import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
+import { Organization } from '../../../../models/org/Organization';
+import { AppIcons } from '../../../../shared/AppIcons';
+
+const ITEMS_PER_PAGE = 4;
 
 @Component({
-  selector: 'app-accounts-manager-requests-table',
-  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule],
-  templateUrl: './accounts-manager-requests-table.html',
-  styleUrl: './accounts-manager-requests-table.css',
+  selector: 'app-accounts-manager-denied',
+  imports: [
+    SearchBar,
+    PaginationBar,
+    TranslocoPipe,
+    PageHeader,
+    LucideAngularModule,
+    AccountsManagerRequestsTable,
+  ],
+  templateUrl: './accounts-manager-denied.html',
+  styleUrl: './accounts-manager-denied.css',
 })
-export class AccountsManagerRequestsTable {
+export class AccountsManagerDenied {
   readonly Icons = AppIcons;
 
   readonly #translocoService = inject(TranslocoService);
@@ -25,8 +36,7 @@ export class AccountsManagerRequestsTable {
   readonly expandedRoles = input.required<Set<string>>();
 
   // Outputs
-  readonly actionAcceptClick = output<User>();
-  readonly actionDenyClick = output<User>();
+  readonly actionClick = output<User>();
   readonly orgChange = output<{ user: User; newOrgId: number | null }>();
   readonly toggleRoles = output<{ email: string; length: number }>();
 

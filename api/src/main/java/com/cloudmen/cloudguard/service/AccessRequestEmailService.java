@@ -39,6 +39,9 @@ public class AccessRequestEmailService {
     @Value("${spring.mail.username:noreply@cloudguard.com}")
     private String fromEmail;
 
+    @Value("${cloudguard.app.public-url:}")
+    private String appPublicUrl;
+
     public AccessRequestEmailService(JavaMailSender mailSender, @Qualifier("messageSource") MessageSource messageSource) {
         this.mailSender = mailSender;
         this.messageSource = messageSource;
@@ -109,7 +112,7 @@ public class AccessRequestEmailService {
 
             helper.setText(
                     buildPlainText(userEmail, requestType, actionRequired),
-                    buildHtmlContent(userEmail, requestType, actionRequired)
+                    buildHtmlContent(userEmail, requestType, actionRequired, locale)
             );
             mailSender.send(message);
             log.info("Toegangsverzoek e-mail succesvol verstuurd voor gebruiker: {}", userEmail);
@@ -119,13 +122,23 @@ public class AccessRequestEmailService {
     }
 
     private String buildPlainText(String userEmail, String requestType, String actionRequired) {
-        return "Nieuw toegangsverzoek in CloudGuard\n\n" +
-                "Gebruiker: " + userEmail + "\n" +
-                "Type verzoek: " + requestType + "\n\n" +
-                "Vereiste actie:\n" + actionRequired;
+        StringBuilder sb = new StringBuilder();
+        sb.append("Nieuw toegangsverzoek in CloudGuard\n\n")
+                .append("Gebruiker: ").append(userEmail).append("\n")
+                .append("Type verzoek: ").append(requestType).append("\n\n")
+                .append("Vereiste actie:\n").append(actionRequired);
+
+        String baseUrl = appPublicUrl != null ? appPublicUrl.trim() : "";
+        if (!baseUrl.isEmpty()) {
+            // Voorkom dubbele slashes!
+            String link = baseUrl.endsWith("/") ? baseUrl + "accounts-manager" : baseUrl + "/accounts-manager";
+            sb.append("\n\nPlatform URL: ").append(link);
+        }
+
+        return sb.toString();
     }
 
-    private String buildHtmlContent(String userEmail, String requestType, String actionRequired) {
+    private String buildHtmlContent(String userEmail, String requestType, String actionRequired, Locale locale) {
         String extraCss =
                 """
                         .title { font-size: 20px; font-weight: 600; color: %s; margin: 0 0 24px 0; }
@@ -142,6 +155,21 @@ public class AccessRequestEmailService {
                                 SecurityEmailHtml.FOREGROUND,
                                 SecurityEmailHtml.PRIMARY);
 
+        String baseUrl = appPublicUrl != null ? appPublicUrl.trim() : "";
+        String buttonBlock = "";
+
+        if (!baseUrl.isEmpty()) {
+            // Voorkom dubbele slashes bij het toevoegen van accounts-manager
+            String link = baseUrl.endsWith("/") ? baseUrl + "accounts-manager" : baseUrl + "/accounts-manager";
+            String buttonLabel = messageSource.getMessage("email.access.button", null, "Beheer in Accounts Manager", locale);
+
+            buttonBlock = """
+                <div style="margin-top: 24px; text-align: center;">
+                    <a href="%s" style="display: inline-block; background: %s; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">%s</a>
+                </div>
+                """.formatted(safeHref(link), SecurityEmailHtml.PRIMARY, UtilityFunctions.escapeHtml(buttonLabel));
+        }
+
         String content =
                 """
                           <h2 class="title">Actie vereist: Aanpassing account nodig</h2>
@@ -153,17 +181,26 @@ public class AccessRequestEmailService {
                             <div class="label">VEREISTE ACTIE</div>
                             <div class="action-box">%s</div>
                           </div>
+                          %s
                         """
                         .formatted(
                                 UtilityFunctions.escapeHtml(userEmail),
                                 UtilityFunctions.escapeHtml(userEmail),
                                 UtilityFunctions.escapeHtml(requestType),
-                                UtilityFunctions.escapeHtml(actionRequired));
+                                UtilityFunctions.escapeHtml(actionRequired),
+                                buttonBlock);
 
         String footer =
                 UtilityFunctions.escapeHtml(
                         "Dit is een automatisch gegenereerd bericht vanuit het CloudGuard platform.");
 
         return SecurityEmailHtml.document(extraCss, true, content, footer);
+    }
+
+    private static String safeHref(String url) {
+        if (url == null) {
+            return "";
+        }
+        return UtilityFunctions.escapeHtml(url).replace(" ", "%20");
     }
 }

@@ -1,19 +1,19 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
-import { Role, RoleLabels, RolePriority, User } from '../../../../../models/users/User';
-import { Organization } from '../../../../../models/org/Organization';
-import { AppIcons } from '../../../../../shared/AppIcons';
-import { FormsModule } from '@angular/forms';
+import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Organization } from '../../../../models/org/Organization';
+import { AppIcons } from '../../../../shared/AppIcons';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
-  selector: 'app-accounts-manager-requests-table',
+  selector: 'app-accounts-manager-denied-table',
   imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule],
-  templateUrl: './accounts-manager-requests-table.html',
-  styleUrl: './accounts-manager-requests-table.css',
+  templateUrl: './accounts-manager-denied-table.html',
+  styleUrl: './accounts-manager-denied-table.css',
 })
-export class AccountsManagerRequestsTable {
+export class AccountsManagerDeniedTable {
   readonly Icons = AppIcons;
 
   readonly #translocoService = inject(TranslocoService);
@@ -25,8 +25,7 @@ export class AccountsManagerRequestsTable {
   readonly expandedRoles = input.required<Set<string>>();
 
   // Outputs
-  readonly actionAcceptClick = output<User>();
-  readonly actionDenyClick = output<User>();
+  readonly actionClick = output<User>();
   readonly orgChange = output<{ user: User; newOrgId: number | null }>();
   readonly toggleRoles = output<{ email: string; length: number }>();
 

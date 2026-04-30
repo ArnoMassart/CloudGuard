@@ -613,5 +613,9 @@
   "access-decision.deny.description": "U staat op het punt om de aanvraag van <span class='text-black font-medium'>{{name}}</span> af te wijzen. Deze gebruiker krijgt geen toegang tot CloudGuard.",
   "request-access.description": "Je bent succesvol ingelogd, maar je hebt nog geen toegang tot de applicatie gekregen van een beheerder van CLOUDMEN.",
   "denied.description": "Je aanvraag voor CloudGuard is afgewezen door een beheerder van CLOUDMEN.",
-  "denied.sub-description": "Neem contact op met je beheerder als je denkt dat dit een vergissing is."
+  "denied.sub-description": "Neem contact op met je beheerder als je denkt dat dit een vergissing is.",
+  "back": "Terug",
+  "select-an-org": "Kies een organisatie",
+  "asign-org": "Organisatie toewijzen",
+  "select-org-org": "Selecteer een organisatie..."
 }

@@ -9,6 +9,8 @@ import com.cloudmen.cloudguard.dto.users.UsersUpdateOrganizationRequest;
 import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.user.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/user")
 public class UserController {
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final JwtService jwtService;
     private final UserService userService;
     private final CloudguardStaffService cloudguardStaffService;
@@ -366,6 +369,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getRequestedAccessCount());
     }
 
+    @GetMapping("/denied/count")
+    public ResponseEntity<Long> getDeniedCount(@CookieValue(name="AuthToken", required = false) String token) {
+        jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.getDeniedCount());
+    }
+
     /**
      * Set the accepted state of the user to true
      *
@@ -376,7 +386,9 @@ public class UserController {
     public ResponseEntity<String> userAccepted(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserDecisionRequestDto request) {
         jwtService.validateInternalToken(token);
 
-        userService.acceptUser(request.email());
+        log.info("User email: {}", request);
+
+        userService.acceptUser(request);
 
         return ResponseEntity.ok().build();
     }
@@ -391,7 +403,7 @@ public class UserController {
     public ResponseEntity<String> userDenied(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserDecisionRequestDto request) {
         jwtService.validateInternalToken(token);
 
-        userService.denyUser(request.email());
+        userService.denyUser(request.userEmail());
 
         return ResponseEntity.ok().build();
     }
