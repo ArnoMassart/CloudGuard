@@ -20,6 +20,6 @@ public class GoogleDomainService {
     }
 
     public List<DomainDto> getAllDomains(String loggedInEmail) {
-        return domainCacheService.getOrFetchDomainData(loggedInEmail).domains();
+        return domainCacheService.getOrFetchData(loggedInEmail).domains();
     }
 }

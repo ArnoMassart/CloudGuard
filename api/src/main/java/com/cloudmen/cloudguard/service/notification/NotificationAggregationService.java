@@ -555,44 +555,44 @@ public class NotificationAggregationService {
                 n.createdAt());
     }
 
-    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
+    private List<NotificationDto> aggregateActive(String loggedInEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
         List<NotificationDto> notifications = new ArrayList<>();
 
         int id = 0;
 
         UserOverviewResponse users = null;
         if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
-            users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
+            users = safeGet(() -> usersService.getUsersPageOverview(loggedInEmail, disabled));
         }
 
         SharedDriveOverviewResponse drives = null;
         if (hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER)) {
-        drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
+        drives = safeGet(() -> driveService.getDrivesPageOverview(loggedInEmail, disabled));
         }
 
         DeviceOverviewResponse devices = null;
         if (hasAccessToModule(roles, UserRole.DEVICES_VIEWER)) {
-            devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail, disabled));
+            devices = safeGet(() -> deviceService.getDevicesPageOverview(loggedInEmail, disabled));
         }
 
         GroupOverviewResponse groups = null;
         if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
-            groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail, disabled));
+            groups = safeGet(() -> groupsService.getGroupsOverview(loggedInEmail, disabled));
         }
 
         OAuthOverviewResponse oAuth = null;
         if (hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER)) {
-            oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail, disabled));
+            oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(loggedInEmail, disabled));
         }
 
         AppPasswordOverviewResponse appPasswords = null;
         if (hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER)) {
-            appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, disabled));
+            appPasswords = safeGet(() -> appPasswordsService.getOverview(loggedInEmail, disabled));
         }
 
         DnsRecordResponseDto dns = null;
         if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
-            dns = getDnsData(adminEmail);
+            dns = getDnsData(loggedInEmail);
         }
 
         // DNS
@@ -742,7 +742,7 @@ public class NotificationAggregationService {
 
         // Password settings
         if (hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER)) {
-            PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(adminEmail));
+            PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(loggedInEmail));
 
             if (passwordSettings != null) {
                 var twoStep = passwordSettings.twoStepVerification();
@@ -809,9 +809,9 @@ public class NotificationAggregationService {
                 .toList();
     }
 
-    private DnsRecordResponseDto getDnsData(String adminEmail) {
+    private DnsRecordResponseDto getDnsData(String loggedInEmail) {
         try {
-            List<DomainDto> domains = domainService.getAllDomains(adminEmail);
+            List<DomainDto> domains = domainService.getAllDomains(loggedInEmail);
             String primaryDomain = domains.stream()
                     .filter(d -> "Primary Domain".equals(d.domainType()))
                     .findFirst()
@@ -821,7 +821,7 @@ public class NotificationAggregationService {
                 return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
             }
             return dnsRecordsService.getImportantRecords(primaryDomain, "google",
-                    preferenceService.getDnsImportanceOverrides(adminEmail));
+                    preferenceService.getDnsImportanceOverrides(loggedInEmail));
         } catch (Exception e) {
             log.warn("Failed to fetch DNS data for notifications: {}", e.getMessage());
             return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);

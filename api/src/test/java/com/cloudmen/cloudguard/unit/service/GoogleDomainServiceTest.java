@@ -38,7 +38,7 @@ class GoogleDomainServiceTest {
         List<DomainDto> domains = List.of(
                 new DomainDto("primary.com", "PRIMARY", true, 42),
                 new DomainDto("alias.com", "ALIAS", false, 0));
-        when(domainCacheService.getOrFetchDomainData(GlobalTestHelper.ADMIN))
+        when(domainCacheService.getOrFetchData(GlobalTestHelper.ADMIN))
                 .thenReturn(new DomainCacheEntry(domains, 1L));
 
         List<DomainDto> result = service.getAllDomains(GlobalTestHelper.ADMIN);

@@ -127,10 +127,10 @@
             class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
             <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'state' | transloco }}</span>
             <div class="px-3 py-1 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
-              [class.text-emerald-600]="user.active" [class.bg-[#dbfce7]]="user.active"
-              [class.text-slate-500]="!user.active" [class.bg-[#f3f4f6]]="!user.active">
-              <lucide-icon [img]="user.active ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
-              {{ user.active ? ( 'active-2' | transloco ) : 'Suspended' }}
+              [class.text-emerald-600]="user.isActive" [class.bg-[#dbfce7]]="user.isActive"
+              [class.text-slate-500]="!user.isActive" [class.bg-[#f3f4f6]]="!user.isActive">
+              <lucide-icon [img]="user.isActive ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
+              {{ user.isActive ? ( 'active-2' | transloco ) : 'Suspended' }}
             </div>
           </td>
 
@@ -147,11 +147,12 @@
           <td
             class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100">
             <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">2FA</span>
-            <div class="flex items-center gap-1.5 text-xs font-medium" [class.text-emerald-400]="user.twoFactorEnabled"
-              [class.text-destructive]="!user.twoFactorEnabled && !twoFactorCellMuted(user)"
+            <div class="flex items-center gap-1.5 text-xs font-medium"
+              [class.text-emerald-400]="user.isTwoFactorEnabled"
+              [class.text-destructive]="!user.isTwoFactorEnabled && !twoFactorCellMuted(user)"
               [class.text-[#6b7280]]="twoFactorCellMuted(user)">
-              <lucide-icon [img]="user.twoFactorEnabled ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
-              {{ user.twoFactorEnabled ? ('enabled' | transloco) : ('off' | transloco) }}
+              <lucide-icon [img]="user.isTwoFactorEnabled ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
+              {{ user.isTwoFactorEnabled ? ('enabled' | transloco) : ('off' | transloco) }}
             </div>
           </td>
 

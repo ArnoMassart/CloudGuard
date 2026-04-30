@@ -8,9 +8,6 @@ import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.licensing.Licensing;
 import com.google.api.services.licensing.LicensingScopes;
@@ -33,51 +30,22 @@ import java.util.concurrent.TimeUnit;
  * licenses, which aids organizations in cost optimization.
  */
 @Service
-public class GoogleLicenseCacheService {
+public class GoogleLicenseCacheService extends AbstractGoogleWorkspaceCacheService<LicenseCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleLicenseCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
     private final GoogleUsersCacheService usersCacheService;
-    private final UserService userService;
-    private final OrganizationService organizationService;
-
-    private final Cache<String, LicenseCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(6, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
 
     public GoogleLicenseCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService, UserService userService, OrganizationService organizationService) {
+        super(userService, organizationService, 6);
         this.googleApiFactory = googleApiFactory;
         this.usersCacheService = usersCacheService;
-        this.userService = userService;
-        this.organizationService = organizationService;
     }
 
-    /**
-     * Forces a background refresh of the licensing data cache for the specified user, bypassing the current
-     * Time-To-Live (TTL).
-     *
-     * @param loggedInEmail the email of the authenticated user triggering the manual refresh
-     */
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    /**
-     * Retrieves the licensing data for the specified user from the cache, or synchronously fetches it from the Google
-     * Licensing API if the cache is empty or expired.
-     *
-     * @param loggedInEmail the email of the authenticated user
-     * @return the aggregated {@link LicenseCacheEntry} containing license allocations and inactive user metrics
-     */
-    public LicenseCacheEntry getOrFetchLicenseData(String loggedInEmail) {
-        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private LicenseCacheEntry fetchFromGoogle(String loggedInEmail, LicenseCacheEntry fallback) {
+    @Override
+    protected LicenseCacheEntry fetchFromGoogle(String adminEmail, LicenseCacheEntry fallback) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-            log.info("Ophalen LIVE License data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+            log.info("Ophalen LIVE License data van Google. Impersonatie via Admin: {}", adminEmail);
 
             Licensing licensingDirectory = googleApiFactory.getLicensingService(LicensingScopes.APPS_LICENSING, adminEmail);
             String domain = adminEmail.split("@")[1];
@@ -95,7 +63,7 @@ public class GoogleLicenseCacheService {
                 allItems.addAll(fetchAssignmentsForProduct(licensingDirectory, productId, domain));
             }
 
-            List<User> allUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
+            List<User> allUsers = usersCacheService.getOrFetchDataByAdmin(adminEmail).allUsers();
 
             List<LicenseType> licenseTypes = mapAssignmentsToLicenseTypes(allItems);
 

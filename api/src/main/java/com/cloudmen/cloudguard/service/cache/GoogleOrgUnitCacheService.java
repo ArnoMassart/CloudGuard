@@ -5,9 +5,6 @@ import com.cloudmen.cloudguard.dto.organization.OrgUnitCacheEntry;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.OrgUnit;
@@ -20,40 +17,22 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Service
-public class GoogleOrgUnitCacheService {
+public class GoogleOrgUnitCacheService extends AbstractGoogleWorkspaceCacheService<OrgUnitCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleOrgUnitCacheService.class);
 
     private final GoogleApiFactory directoryFactory;
-    private final UserService userService;
-    private final OrganizationService organizationService;
-
-    // --- CACHE CONFIGURATIE ---
-    private final Cache<String, OrgUnitCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(24, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
 
     public GoogleOrgUnitCacheService(GoogleApiFactory directoryFactory, UserService userService, OrganizationService organizationService) {
+        super(userService, organizationService, 24);
         this.directoryFactory = directoryFactory;
-        this.userService = userService;
-        this.organizationService = organizationService;
     }
 
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    public OrgUnitCacheEntry getOrFetchOrgUnitData(String loggedInEmail) {
-        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private OrgUnitCacheEntry fetchFromGoogle(String loggedInEmail, OrgUnitCacheEntry fallbackEntry) {
+    @Override
+    protected OrgUnitCacheEntry fetchFromGoogle(String adminEmail, OrgUnitCacheEntry fallbackEntry) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-            log.info("Ophalen LIVE data van Google. Org Units: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+            log.info("Ophalen LIVE Org Units data van Google. Impersonatie via Admin: {}", adminEmail);
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_ORGUNIT_READONLY,
                     DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY

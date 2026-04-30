@@ -56,8 +56,8 @@ public class GoogleUsersController {
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "3") int size,
             @RequestParam(required = false) String query) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserService.getWorkspaceUsersPaged(adminEmail, pageToken, size, query));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleUserService.getWorkspaceUsersPaged(loggedInEmail, pageToken, size, query));
     }
 
     /**
@@ -72,8 +72,8 @@ public class GoogleUsersController {
     @GetMapping("/without-two-factor")
     public ResponseEntity<UsersWithoutTwoFactorResponse> getUsersWithoutTwoFactor(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserService.getUsersWithoutTwoFactor(adminEmail));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleUserService.getUsersWithoutTwoFactor(loggedInEmail));
     }
 
     /**
@@ -88,8 +88,8 @@ public class GoogleUsersController {
     @GetMapping("/overview")
     public ResponseEntity<UserOverviewResponse> getUsersPageOverview(
             @CookieValue(name = "AuthToken", required = false) String token) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        return ResponseEntity.ok(googleUserService.getUsersPageOverview(adminEmail, preferenceService.getDisabledPreferenceKeys(adminEmail)));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return ResponseEntity.ok(googleUserService.getUsersPageOverview(loggedInEmail, preferenceService.getDisabledPreferenceKeys(loggedInEmail)));
     }
 
     /**
@@ -105,8 +105,8 @@ public class GoogleUsersController {
     public ResponseEntity<String> refreshUsersCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        googleUserService.forceRefreshCache(adminEmail);
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        googleUserService.forceRefreshCache(loggedInEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

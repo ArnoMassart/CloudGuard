@@ -5,9 +5,6 @@ import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.ChromeOsDevice;
@@ -31,50 +28,20 @@ import java.util.concurrent.TimeUnit;
  * temporarily stored in an in-memory Caffeine cache.
  */
 @Service
-public class GoogleDeviceCacheService {
+public class GoogleDeviceCacheService extends AbstractGoogleWorkspaceCacheService<DeviceCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleDeviceCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
-    private final UserService userService;
-    private final OrganizationService organizationService;
-
-    private final Cache<String, DeviceCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
 
     public GoogleDeviceCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
+        super(userService, organizationService, 8);
         this.googleApiFactory = googleApiFactory;
-        this.userService = userService;
-        this.organizationService = organizationService;
     }
 
-    /**
-     * Forces a background refresh of the device cache for the specified user, bypassing the current Time-To-Live (TTL).
-     *
-     * @param loggedInEmail the email of the authenticated user triggering the refresh
-     */
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    /**
-     * Retrieves the device data for the specified user from the cache, or fetches it synchronously from Google if the
-     * cache is empty or expired.
-     *
-     * @param loggedInEmail the email of the authenticated user
-     * @return the aggregated {@link DeviceCacheEntry} containing mobile, ChromeOS, and endpoint devices
-     */
-    public DeviceCacheEntry getOrFetchDeviceData(String loggedInEmail) {
-        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private DeviceCacheEntry fetchFromGoogle(String loggedInEmail, DeviceCacheEntry fallbackEntry) {
+    @Override
+    protected DeviceCacheEntry fetchFromGoogle(String adminEmail, DeviceCacheEntry fallbackEntry) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-
-            log.info("Ophalen LIVE Device data PARALLEL van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
-
+            log.info("Ophalen LIVE Device data PARALLEL van Google. Impersonatie via Admin: {}", adminEmail);
 
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_DEVICE_MOBILE_READONLY,

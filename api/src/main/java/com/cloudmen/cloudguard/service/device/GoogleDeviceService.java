@@ -184,7 +184,7 @@ public class GoogleDeviceService {
     }
 
     private List<DeviceDetail> getAllMappedDevices(String loggedInEmail) {
-        DeviceCacheEntry cachedData = deviceCacheService.getOrFetchDeviceData(loggedInEmail);
+        DeviceCacheEntry cachedData = deviceCacheService.getOrFetchData(loggedInEmail);
         List<DeviceDetail> allDevices = new ArrayList<>();
 
         // Map Mobile

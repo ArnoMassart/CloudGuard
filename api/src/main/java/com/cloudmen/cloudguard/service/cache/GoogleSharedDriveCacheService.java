@@ -7,9 +7,6 @@ import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.DriveList;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Service responsible for retrieving, assessing, and caching Google Workspace Shared Drive data. <p>
@@ -31,49 +27,20 @@ import java.util.concurrent.TimeUnit;
  * for each drive based on its exposure.
  */
 @Service
-public class GoogleSharedDriveCacheService {
+public class GoogleSharedDriveCacheService extends AbstractGoogleWorkspaceCacheService<SharedDriveCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleSharedDriveCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
-    private final UserService userService;
-    private final OrganizationService organizationService;
-
-    private final Cache<String, SharedDriveCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(24, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
 
     public GoogleSharedDriveCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
+        super(userService, organizationService, 24);
         this.googleApiFactory = googleApiFactory;
-        this.userService = userService;
-        this.organizationService = organizationService;
     }
 
-    /**
-     * Forces a background refresh of the Shared Drive cache for the specified user, bypassing the current
-     * Time-To-Live (TTL).
-     *
-     * @param loggedInEmail the email of the authenticated user triggering the manuel refresh
-     */
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    /**
-     * Retrieves the Shared Drive data for the specified user from the cache, or synchronously fetches it from the
-     * Google Drive API if the cache is empty or expired.
-     *
-     * @param loggedInEmail the email of the authenticated user
-     * @return the aggregated {@link SharedDriveCacheEntry} containing drive configurations and risk assessments
-     */
-    public SharedDriveCacheEntry getOrFetchDriveData(String loggedInEmail) {
-        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private SharedDriveCacheEntry fetchFromGoogle(String loggedInEmail, SharedDriveCacheEntry fallbackEntry) {
+    @Override
+    protected SharedDriveCacheEntry fetchFromGoogle(String adminEmail, SharedDriveCacheEntry fallbackEntry) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-            log.info("Ophalen LIVE Shared Drive data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+            log.info("Ophalen LIVE Shared Drive data van Google. Impersonatie via Admin: {}", adminEmail);
 
             Drive driveService = googleApiFactory.getDriveService(DriveScopes.DRIVE_READONLY, adminEmail);
             String customerDomain = adminEmail.substring(adminEmail.indexOf("@") + 1);

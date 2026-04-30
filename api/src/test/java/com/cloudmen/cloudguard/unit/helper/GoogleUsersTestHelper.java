@@ -36,6 +36,6 @@ public class GoogleUsersTestHelper {
         lenient().when(mockEntry.userRoleAssignments()).thenReturn(roleAssignments);
         lenient().when(mockEntry.roleDictionary()).thenReturn(roleDict);
 
-        when(usersCacheService.getOrFetchUsersData(GlobalTestHelper.ADMIN)).thenReturn(mockEntry);
+        when(usersCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(mockEntry);
     }
 }

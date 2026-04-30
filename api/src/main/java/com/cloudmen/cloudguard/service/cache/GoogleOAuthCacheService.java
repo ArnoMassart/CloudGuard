@@ -6,9 +6,6 @@ import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.services.admin.directory.Directory;
 import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.Token;
@@ -31,58 +28,29 @@ import java.util.concurrent.TimeUnit;
  * calls with built-in rate-limiting delays.
  */
 @Service
-public class GoogleOAuthCacheService {
+public class GoogleOAuthCacheService extends AbstractGoogleWorkspaceCacheService<OAuthCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleOAuthCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
     private final GoogleUsersCacheService usersCacheService;
-    private final OrganizationService organizationService;
-    private final UserService userService;
-
-    private final Cache<String, OAuthCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
 
     public GoogleOAuthCacheService(GoogleApiFactory googleApiFactory, GoogleUsersCacheService usersCacheService, OrganizationService organizationService, UserService userService) {
+        super(userService, organizationService, 8);
         this.googleApiFactory = googleApiFactory;
         this.usersCacheService = usersCacheService;
-        this.organizationService = organizationService;
-        this.userService = userService;
     }
 
-    /**
-     * Forces a background refresh of the OAuth token cache for the specified user, bypassing the current
-     * Time-To-Live (TTL).
-     *
-     * @param loggedInEmail the email of the authenticated user triggering the manual refresh
-     */
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    /**
-     * Retrieves the OAuth access data for the specified user from the cache, or synchronously fetches it from the
-     * Google Admin API if the cache is empty or expired.
-     *
-     * @param loggedInEmail the email of the authenticated user
-     * @return the aggregated {@link OAuthCacheEntry} containing all discovered third-party application tokens
-     */
-    public OAuthCacheEntry getOrFetchOAuthData(String loggedInEmail) {
-        return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private OAuthCacheEntry fetchFromGoogle(String loggedInEmail, OAuthCacheEntry fallback) {
+    @Override
+    protected OAuthCacheEntry fetchFromGoogle(String adminEmail, OAuthCacheEntry fallback) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-            log.info("Ophalen LIVE OAuth data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+            log.info("Ophalen LIVE OAuth data van Google. Impersonatie via Admin: {}", adminEmail);
 
             Directory directory = googleApiFactory.getDirectoryService(
                     Set.of(DirectoryScopes.ADMIN_DIRECTORY_USER_READONLY, DirectoryScopes.ADMIN_DIRECTORY_USER_SECURITY),
                     adminEmail
             );
 
-            List<User> allUsers = usersCacheService.getOrFetchUsersData(loggedInEmail).allUsers();
+            List<User> allUsers = usersCacheService.getOrFetchDataByAdmin(adminEmail).allUsers();
             List<RawUserToken> allTokens = fetchAllRawTokens(directory, allUsers);
 
             return new OAuthCacheEntry(

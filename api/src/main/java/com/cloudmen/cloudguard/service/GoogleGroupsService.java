@@ -37,7 +37,7 @@ public class GoogleGroupsService {
     }
 
     public GroupPageResponse getGroupsPaged(String loggedInEmail, String query, String pageToken, int size) {
-        GroupCacheEntry cachedData = groupsCacheService.getOrFetchGroupData(loggedInEmail);
+        GroupCacheEntry cachedData = groupsCacheService.getOrFetchData(loggedInEmail);
 
         List<CachedGroupItem> filteredList = GoogleServiceHelperMethods.filterByNameOrEmail(cachedData.allGroups(), query, CachedGroupItem::name, CachedGroupItem::email);
 
@@ -56,7 +56,7 @@ public class GoogleGroupsService {
     }
 
     public GroupOverviewResponse getGroupsOverview(String loggedInEmail) {
-        GroupCacheEntry cachedData = groupsCacheService.getOrFetchGroupData(loggedInEmail);
+        GroupCacheEntry cachedData = groupsCacheService.getOrFetchData(loggedInEmail);
 
         int totalGroups = cachedData.allGroups().size();
         int groupsWithExternal = 0;
