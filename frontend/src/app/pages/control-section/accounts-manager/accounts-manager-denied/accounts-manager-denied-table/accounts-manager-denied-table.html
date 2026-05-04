@@ -1,0 +1,65 @@
+<table class="w-full text-left border-collapse block xl:table">
+    <thead class="hidden xl:table-header-group">
+        <tr class="border-b border-t border-gray-100 bg-gray-50/50">
+            <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                {{ 'name-caps' | transloco }}
+            </th>
+
+            <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                Email
+            </th>
+
+            <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                {{ 'reason-caps' | transloco }}
+            </th>
+
+            <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                {{ 'account-manager.denied.date-denied' | transloco }}
+            </th>
+
+            <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase">
+                {{ 'actions' | transloco }}
+            </th>
+        </tr>
+    </thead>
+
+    <tbody class="block xl:table-row-group">
+        @for (user of users(); track user.email) {
+        <tr
+            class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
+
+            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-medium text-slate-900 text-sm">{{ user.name }}</span>
+                </div>
+            </td>
+
+            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="text-gray-400">{{ user.email }}</span>
+            </td>
+
+            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="tracking-wide text-gray-400">
+                    <span>{{user.accessDeniedReason}}</span>
+                </span>
+            </td>
+
+            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="tracking-wide text-gray-400">
+                    <span>{{user.accessDeniedAt}}</span>
+                </span>
+            </td>
+
+            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <div class="flex gap-3 items-center">
+                    <button type="button" matTooltip="{{ 'reset-denial.title' | transloco }}" matTooltipPosition="above"
+                        (click)="$event.stopPropagation(); actionClick.emit(user)"
+                        class="text-[11px] font-medium text-white uppercase py-1.5 px-3 bg-primary rounded-lg hover:opacity-75 transition-all shadow-sm">
+                        <i-lucide [img]="Icons.Undo" [size]="16" />
+                    </button>
+                </div>
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>

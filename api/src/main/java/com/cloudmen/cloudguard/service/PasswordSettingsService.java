@@ -63,7 +63,7 @@ public class PasswordSettingsService {
 
     public void forceRefreshCache(String loggedInEmail) {
         cache.invalidate(loggedInEmail);
-        policyCache.forceRefreshCache();
+        policyCache.forceRefreshCache(loggedInEmail);
         usersCache.forceRefreshCache(loggedInEmail);
         orgUnitCache.forceRefreshCache(loggedInEmail);
         adminSecurityKeysService.forceRefreshCache(loggedInEmail);

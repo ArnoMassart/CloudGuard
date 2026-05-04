@@ -7,6 +7,9 @@ import { UserOverviewResponse } from '../models/users/UserOverviewResponse';
 import { UsersWithoutTwoFactorResponse } from '../models/users/UsersWithoutTwoFactorResponse';
 import { Role, RoleLabels, RolePriority, User } from '../models/users/User';
 import { DatabaseUsersResponse } from '../models/users/DatabaseUsersResponse';
+import { DecisionResult } from '../models/DecisionResult';
+import { UserDenyRequest } from '../models/users/UserDenyRequest';
+import { DeniedUser } from '../models/users/DeniedUser';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +19,7 @@ export class UserService {
   readonly #http = inject(HttpClient);
 
   readonly requestedCount = signal<number>(0);
+  readonly deniedCount = signal<number>(0);
 
   getInitials(user: { firstName?: string; lastName?: string; email?: string }) {
     if (user?.firstName && user?.lastName)
@@ -70,8 +74,8 @@ export class UserService {
     });
   }
 
-  requestRoleAccess(): Observable<string> {
-    const url = RouteService.getBackendUrl('/user/request-access');
+  requestAccess(urlPath: string): Observable<string> {
+    const url = RouteService.getBackendUrl('/user' + urlPath);
     return this.#http.post(
       url,
       {},
@@ -82,42 +86,15 @@ export class UserService {
     );
   }
 
-  getRequestRoleAccessSent(): Observable<boolean> {
-    const url = RouteService.getBackendUrl('/user/request-access');
+  getRequestSent(urlPath: string): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user' + urlPath);
     return this.#http.get<boolean>(url, {
       withCredentials: true,
     });
   }
 
-  requestNoOrganization(): Observable<string> {
-    const url = RouteService.getBackendUrl('/user/no-organization');
-    return this.#http.post(
-      url,
-      {},
-      {
-        responseType: 'text',
-        withCredentials: true,
-      }
-    );
-  }
-
-  getRequestNoOrganizationSent(): Observable<boolean> {
-    const url = RouteService.getBackendUrl('/user/no-organization');
-    return this.#http.get<boolean>(url, {
-      withCredentials: true,
-    });
-  }
-
-  hasValidRole(): Observable<boolean> {
-    const url = RouteService.getBackendUrl('/user/valid-role');
-
-    return this.#http.get<boolean>(url, {
-      withCredentials: true,
-    });
-  }
-
-  hasOrganization(): Observable<boolean> {
-    const url = RouteService.getBackendUrl('/user/has-organization');
+  hasValidField(urlPath: string): Observable<boolean> {
+    const url = RouteService.getBackendUrl('/user' + urlPath);
 
     return this.#http.get<boolean>(url, {
       withCredentials: true,
@@ -129,7 +106,7 @@ export class UserService {
     pageToken?: string,
     query?: string,
     org?: string
-  ): Observable<DatabaseUsersResponse> {
+  ): Observable<DatabaseUsersResponse<User>> {
     const url = RouteService.getBackendUrl('/user/all');
     let params = new HttpParams().set('size', size.toString());
 
@@ -137,23 +114,39 @@ export class UserService {
     if (query) params = params.set('query', query);
     if (org) params = params.set('orgFilter', org);
 
-    return this.#http.get<DatabaseUsersResponse>(url, {
+    return this.#http.get<DatabaseUsersResponse<User>>(url, {
       params: params,
     });
   }
 
-  getAllDatabaseUsersWithoutRoles(
+  getAllRequestedDatabaseUsers(
     size: number,
     pageToken?: string,
     query?: string
-  ): Observable<DatabaseUsersResponse> {
-    const url = RouteService.getBackendUrl('/user/all/no-roles');
+  ): Observable<DatabaseUsersResponse<User>> {
+    const url = RouteService.getBackendUrl('/user/all/requested-access');
     let params = new HttpParams().set('size', size.toString());
 
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
 
-    return this.#http.get<DatabaseUsersResponse>(url, {
+    return this.#http.get<DatabaseUsersResponse<User>>(url, {
+      params: params,
+    });
+  }
+
+  getAllDeniedDatabaseUsers(
+    size: number,
+    pageToken?: string,
+    query?: string
+  ): Observable<DatabaseUsersResponse<DeniedUser>> {
+    const url = RouteService.getBackendUrl('/user/all/denied');
+    let params = new HttpParams().set('size', size.toString());
+
+    if (pageToken) params = params.set('pageToken', pageToken);
+    if (query) params = params.set('query', query);
+
+    return this.#http.get<DatabaseUsersResponse<DeniedUser>>(url, {
       params: params,
     });
   }
@@ -165,7 +158,7 @@ export class UserService {
       roles,
     };
 
-    return this.#http.post<DatabaseUsersResponse>(url, body, {
+    return this.#http.post<DatabaseUsersResponse<User>>(url, body, {
       withCredentials: true,
     });
   }
@@ -177,21 +170,26 @@ export class UserService {
       roles,
     };
 
-    return this.#http
-      .post(url, body, {
-        withCredentials: true,
-      })
-      .pipe(
-        tap(() => {
-          this.refreshRequestedCount().subscribe();
-        })
-      );
+    return this.#http.post(url, body, {
+      withCredentials: true,
+    });
   }
 
   refreshRequestedCount(): Observable<number> {
-    const url = RouteService.getBackendUrl('/user/all/requested-count');
+    const url = RouteService.getBackendUrl('/user/access-requests/count');
     return this.#http.get<number>(url, { withCredentials: true }).pipe(
-      tap((count) => this.requestedCount.set(count))
+      tap((count) => {
+        this.requestedCount.set(count);
+      })
+    );
+  }
+
+  refreshDeniedCount(): Observable<number> {
+    const url = RouteService.getBackendUrl('/user/denied/count');
+    return this.#http.get<number>(url, { withCredentials: true }).pipe(
+      tap((count) => {
+        this.deniedCount.set(count);
+      })
     );
   }
 
@@ -245,6 +243,46 @@ export class UserService {
     const url = RouteService.getBackendUrl('/user/is-cloudmen-staff');
 
     return this.#http.get<boolean>(url, {
+      withCredentials: true,
+    });
+  }
+
+  getUsersFullName(user: User): string {
+    return user.firstName + ' ' + user.lastName;
+  }
+
+  userAccepted(result: DecisionResult): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/accepted');
+
+    return this.#http.post(url, result, {
+      responseType: 'text',
+      withCredentials: true,
+    });
+  }
+
+  userDenied(result: UserDenyRequest): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/denied');
+
+    return this.#http.post(url, result, {
+      responseType: 'text',
+      withCredentials: true,
+    });
+  }
+
+  userReaccepted(email: string): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/reaccept');
+
+    return this.#http.post(url, email, {
+      responseType: 'text',
+      withCredentials: true,
+    });
+  }
+
+  switchUserStatus(email: string): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/status/change');
+
+    return this.#http.post(url, email, {
+      responseType: 'text',
       withCredentials: true,
     });
   }

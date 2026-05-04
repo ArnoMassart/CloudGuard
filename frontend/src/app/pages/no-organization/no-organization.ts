@@ -25,7 +25,7 @@ export class NoOrganization {
   }
 
   requestAccess() {
-    this.#userService.requestNoOrganization().subscribe({
+    this.#userService.requestAccess('/no-organization').subscribe({
       next: () => {
         this.requestSent.set(true);
       },
@@ -34,7 +34,7 @@ export class NoOrganization {
   }
 
   getRequestSent() {
-    this.#userService.getRequestNoOrganizationSent().subscribe({
+    this.#userService.getRequestSent('/no-organization').subscribe({
       next: (val) => {
         this.requestSent.set(val);
       },

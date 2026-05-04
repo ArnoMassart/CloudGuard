@@ -202,6 +202,11 @@ public class AuthService {
                     // 1. Promoveer de gebruiker lokaal naar SUPER_ADMIN
                     user.getRoles().clear();
                     user.getRoles().add(UserRole.SUPER_ADMIN);
+
+                    if (!user.isAccessAccepted() && !user.isAccessDenied()) {
+                        user.setAccessAccepted(true);
+                        user.setAccessRequested(false);
+                    }
                     userService.save(user);
 
                     // 2. Als dit de eerste keer is, sla dit adres op als de org-admin

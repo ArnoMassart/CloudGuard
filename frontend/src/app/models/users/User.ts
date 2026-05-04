@@ -5,11 +5,18 @@ export type User = {
   pictureUrl?: string | null;
   roles: Role[];
   createdAt: Date;
+  isActive: boolean;
   roleRequested: boolean;
   organizationRequested: boolean;
   organizationId: number;
   organizationName?: string | null;
   isCloudmenStaff?: boolean;
+  accessRequested: boolean;
+  accessAccepted: boolean;
+  accessDenied: boolean;
+  accessDeniedAt: Date;
+  accessDeniedReason: string;
+  accessRequestedAt: Date;
 };
 
 export enum Role {

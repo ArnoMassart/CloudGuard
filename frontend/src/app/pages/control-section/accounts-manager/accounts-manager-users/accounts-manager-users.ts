@@ -14,13 +14,10 @@ import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DeactivateUserDialog } from '../../../../components/deactivate-user-dialog/deactivate-user-dialog';
 
 const ITEMS_PER_PAGE = 4;
-
-type OrgFilter = {
-  id: number;
-  name: string;
-};
 
 @Component({
   selector: 'app-accounts-manager-users',
@@ -38,24 +35,19 @@ type OrgFilter = {
 })
 export class AccountsManagerUsers {
   readonly Icons = AppIcons;
-  readonly #userService = inject(UserService);
+  readonly userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
   readonly #orgService = inject(OrgService);
+  readonly #router = inject(Router);
 
   readonly pagination = viewChild(PaginationBar);
-  readonly paginationWithoutRoles = viewChild(PaginationBar);
 
   readonly users = signal<User[]>([]);
-  readonly usersWithoutRoles = signal<User[]>([]);
   readonly isLoading = signal(false);
-  readonly isLoadingWithoutRoles = signal(false);
   readonly isRefreshing = signal<boolean>(false);
-  readonly isRefreshingWithoutRoles = signal<boolean>(false);
   readonly searchQuery = signal('');
-  readonly searchQueryWithoutRoles = signal('');
 
   readonly nextPageToken = signal<string | null>(null);
-  readonly nextPageTokenWithoutRoles = signal<string | null>(null);
   readonly dialog = inject(MatDialog);
 
   readonly expandedRoles = signal<Set<string>>(new Set<string>());
@@ -88,8 +80,9 @@ export class AccountsManagerUsers {
   ngOnInit(): void {
     const reload = () => {
       this.loadUsers();
-      this.loadUsersWithoutRoles();
       this.loadOrganizations();
+      this.loadAccessRequestsCount();
+      this.loadDeniedCount();
     };
     reload();
     this.langSubscription = this.#translocoService.langChanges$
@@ -115,12 +108,6 @@ export class AccountsManagerUsers {
     this.searchQuery.set(value);
     this.pagination()?.reset();
     this.loadUsers();
-  }
-
-  onSearchWithoutRoles(value: string) {
-    this.searchQueryWithoutRoles.set(value);
-    this.paginationWithoutRoles()?.reset();
-    this.loadUsersWithoutRoles();
   }
 
   getAllAvailableRoles() {
@@ -177,18 +164,14 @@ export class AccountsManagerUsers {
 
     dialogRef.afterClosed().subscribe((newRoles) => {
       if (newRoles) {
-        if (hasExistingRoles) {
-          this.updateRoles(user.email, newRoles);
-        } else {
-          this.updateRolesForUserWithout(user.email, newRoles);
-        }
+        this.updateRoles(user.email, newRoles);
       }
     });
   }
 
   updateRoles(email: string, roles: Role[]) {
     this.isLoading.set(true);
-    this.#userService.updateRolesForUser(email, roles).subscribe({
+    this.userService.updateRolesForUser(email, roles).subscribe({
       next: () => {
         this.loadUsers();
         this.isLoading.set(false);
@@ -196,22 +179,6 @@ export class AccountsManagerUsers {
       error: (err) => {
         console.error('Error occured with updating roles', err);
         this.isLoading.set(false);
-      },
-    });
-  }
-
-  updateRolesForUserWithout(email: string, roles: Role[]) {
-    this.isLoadingWithoutRoles.set(true);
-    this.#userService.updateRolesForUserWithoutAny(email, roles).subscribe({
-      next: () => {
-        this.loadUsers();
-        this.loadUsersWithoutRoles();
-
-        this.isLoadingWithoutRoles.set(false);
-      },
-      error: (err) => {
-        console.error('Error occured with updating roles', err);
-        this.isLoadingWithoutRoles.set(false);
       },
     });
   }
@@ -219,7 +186,7 @@ export class AccountsManagerUsers {
   loadUsers(token?: string) {
     this.isLoading.set(true);
 
-    this.#userService
+    this.userService
       .getAllDatabaseUsers(
         ITEMS_PER_PAGE,
         token || undefined,
@@ -231,32 +198,11 @@ export class AccountsManagerUsers {
           this.users.set(page.users);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
+          this.userService.refreshDeniedCount();
         },
         error: (err) => {
           console.error('Failed to load users', err);
           this.isLoading.set(false);
-        },
-      });
-  }
-
-  loadUsersWithoutRoles(token?: string) {
-    this.isLoadingWithoutRoles.set(true);
-
-    this.#userService
-      .getAllDatabaseUsersWithoutRoles(
-        ITEMS_PER_PAGE,
-        token || undefined,
-        this.searchQueryWithoutRoles()
-      )
-      .subscribe({
-        next: (page) => {
-          this.usersWithoutRoles.set(page.users);
-          this.nextPageTokenWithoutRoles.set(page.nextPageToken);
-          this.isLoadingWithoutRoles.set(false);
-        },
-        error: (err) => {
-          console.error('Failed to load users', err);
-          this.isLoadingWithoutRoles.set(false);
         },
       });
   }
@@ -282,10 +228,9 @@ export class AccountsManagerUsers {
     const newOrgId = user.organizationId;
 
     // Roep je UserService aan om de organisatie van de gebruiker te updaten
-    this.#userService.updateUserOrg(user.email, newOrgId).subscribe({
+    this.userService.updateUserOrg(user.email, newOrgId).subscribe({
       next: () => {
         // Eventueel een succesmelding of de lokale state updaten
-        this.loadUsersWithoutRoles();
         this.loadUsers();
       },
     });
@@ -298,7 +243,60 @@ export class AccountsManagerUsers {
 
   #resetAndLoad() {
     this.pagination()?.reset();
-
     this.loadUsers();
+  }
+
+  goToRequests() {
+    this.#router.navigate(['accounts-manager/requests']);
+  }
+
+  goToDenied() {
+    this.#router.navigate(['/accounts-manager/denied-list']);
+  }
+
+  loadAccessRequestsCount() {
+    this.userService.refreshRequestedCount().subscribe({
+      next: (res) => {},
+      error: (err) => {
+        console.error('Error getting the access request count', err);
+      },
+    });
+  }
+
+  loadDeniedCount() {
+    this.userService.refreshDeniedCount().subscribe({
+      next: (res) => {},
+      error: (err) => {
+        console.error('Error getting the access request count', err);
+      },
+    });
+  }
+
+  hasRequest(): boolean {
+    return this.users().some((u) => u.organizationRequested || u.roleRequested);
+  }
+
+  switchUserActiveState(user: User) {
+    const ref = this.dialog.open(DeactivateUserDialog, {
+      width: '400px',
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop',
+      data: {
+        user: user,
+      },
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (result) {
+        this.userService.switchUserStatus(user.email).subscribe({
+          next: () => {
+            this.#resetAndLoad();
+          },
+          error: (err) => {
+            console.error('Error with setting user to inactive', err);
+          },
+        });
+      }
+    });
   }
 }

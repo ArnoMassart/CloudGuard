@@ -1,6 +1,4 @@
-import { User } from './User';
-
-export type DatabaseUsersResponse = {
-  users: User[];
+export type DatabaseUsersResponse<T> = {
+  users: T[];
   nextPageToken: string;
 };

@@ -24,12 +24,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param pageable  pagination and sorting instructions
      * @return a paginated result of users with pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = true OR u.organizationRequested = true " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessRequested = true " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<User> findAllByRoleRequestedWithSearch(
+    Page<User> findAllByAccessRequestedWithSearch(
             @Param("query") String query,
             Pageable pageable);
 
@@ -44,21 +44,37 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param pageable          pagination and sorting instructions
      * @return a paginated result of users without pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.roleRequested = false AND u.organizationRequested = false " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessAccepted " +
             "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<User> findAllWithoutRequested(
+    Page<User> findAllAccepted(
             @Param("organizationId") Long organizationId,
+            @Param("query") String query,
+            Pageable pageable);
+
+    /**
+     * Retrieves a paginated list of standard users who have their access denied from CloudGuard. <p>
+     *
+     * The results can be filtered by a search query that performs a case-insensitive match on the user's name or email.
+     *
+     * @param query             the search string to match against user details
+     * @param pageable          pagination and sorting instructions
+     * @return a paginated result of denied users
+     */
+    @Query("SELECT u FROM tbl_users u WHERE u.accessDenied = true " +
+            "AND (:query IS NULL OR :query = '' OR " +
+            "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<User> findAllDenied(
             @Param("query") String query,
             Pageable pageable);
 
     long countByRoleRequestedTrueOrOrganizationRequestedTrue();
     boolean existsByOrganizationId(Long organizationId);
-
-    Optional<User> findFirstByOrganizationIdOrderByIdAsc(Long organizationId);
 
     @Query(
             "SELECT u FROM tbl_users u WHERE u.organizationId = :orgId AND :role MEMBER OF u.roles ORDER BY u.id"
@@ -68,4 +84,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT DISTINCT u.organizationId FROM tbl_users u WHERE u.organizationId IS NOT NULL")
     List<Long> findDistinctOrganizationIds();
+
+    long countByAccessRequestedTrue();
+    long countByAccessDeniedTrue();
 }
