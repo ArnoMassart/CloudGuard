@@ -128,6 +128,11 @@ export class Navbar {
       Route: '/accounts-manager',
       RequiredRole: Role.SUPER_ADMIN,
     },
+    {
+      Icon: this.Icons.LifeBuoy,
+      Label: 'help-contact',
+      Route: '/contact',
+    },
   ];
 
   readonly filteredSecurityItems = computed(() => {

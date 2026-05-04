@@ -28,6 +28,7 @@ import { NoOrganization } from './pages/no-organization/no-organization';
 import { WorkspaceSetup } from './pages/workspace-setup/workspace-setup';
 import { PageAccessDenied } from './pages/page-access-denied/page-access-denied';
 import { cloudmenStaffGuard } from './guards/cloudmen-staff.guard';
+import { Contact } from './pages/contact/contact';
 import { AccountsManagerRequests } from './pages/control-section/accounts-manager/accounts-manager-requests/accounts-manager-requests';
 import { RequestRole } from './pages/request-role/request-role';
 import { Denied } from './pages/denied/denied';
@@ -172,6 +173,11 @@ export const routes: Routes = [
   {
     path: 'reports-reactions',
     component: ReportsReactions,
+    canActivate: [authGuard, accessGuard],
+  },
+  {
+    path: 'contact',
+    component: Contact,
     canActivate: [authGuard, accessGuard],
   },
   {

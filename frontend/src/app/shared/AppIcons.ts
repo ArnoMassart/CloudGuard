@@ -49,12 +49,15 @@ import {
   UserPlus,
   CircleAlert,
   Copy,
+  Phone,
+  Mail,
   UserRoundCheck,
   ArrowLeft,
   Check,
   CircleMinus,
   UserRoundX,
   Undo,
+  LifeBuoy,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -89,11 +92,14 @@ export class AppIcons {
   static readonly HardDrive = HardDrive;
   static readonly Info = Info;
   static readonly Key = Key;
+  static readonly LifeBuoy = LifeBuoy;
   static readonly Loader = Loader;
   static readonly Lock = Lock;
   static readonly LogOut = LogOut;
+  static readonly Mail = Mail;
   static readonly Menu = Menu;
   static readonly MessageCircle = MessageCircle;
+  static readonly Phone = Phone;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
   static readonly Send = Send;
