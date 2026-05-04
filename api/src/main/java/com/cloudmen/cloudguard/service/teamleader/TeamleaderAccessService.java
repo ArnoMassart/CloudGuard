@@ -37,7 +37,8 @@ public class TeamleaderAccessService {
     @Value("${teamleader.customfield.cloudguard.id}")
     private String cloudGuardFieldId;
 
-    public TeamleaderAccessService(TeamleaderService teamleaderService, TeamleaderCompanyService teamleaderCompanyService,  UserService userService, OrganizationService organizationService) {
+    public TeamleaderAccessService(TeamleaderService teamleaderService, TeamleaderCompanyService teamleaderCompanyService,
+            UserService userService, OrganizationService organizationService) {
         this.teamleaderService = teamleaderService;
         this.teamleaderCompanyService = teamleaderCompanyService;
         this.userService = userService;
@@ -121,12 +122,12 @@ public class TeamleaderAccessService {
 
         String companyId = null;
         if (organizationId != null) {
-            Optional<Organization>  orgOpt = organizationService.findById(organizationId);
+            Optional<Organization> orgOpt = organizationService.findById(organizationId);
             if (orgOpt.isPresent()) {
                 String stored = orgOpt.get().getTeamleaderCompanyId();
-                if(stored!=null && !stored.isEmpty()){
+                if (stored != null && !stored.isBlank()) {
                     companyId = stored;
-                    log.debug("Teamleader  access: using stored company id {} for organizationId={}", companyId, organizationId);
+                    log.debug("Teamleader access: using stored company id {} for organizationId={}", companyId, organizationId);
                 }
             }
         }
@@ -157,7 +158,7 @@ public class TeamleaderAccessService {
 
         boolean allowed = extractCloudGuardAccessValue(companyDetails);
 
-        if(allowed && organizationId != null && !resolvedViaStoredId){
+        if (allowed && organizationId != null && !resolvedViaStoredId) {
             organizationService.saveTeamleaderCompanyIdIfAbsent(organizationId, companyId);
         }
 

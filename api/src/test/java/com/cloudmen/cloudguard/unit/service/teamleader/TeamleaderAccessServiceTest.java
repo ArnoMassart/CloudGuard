@@ -1,8 +1,12 @@
 package com.cloudmen.cloudguard.unit.service.teamleader;
 
+import com.cloudmen.cloudguard.domain.model.Organization;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderAccessService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderCompanyService;
 import com.cloudmen.cloudguard.service.teamleader.TeamleaderService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +17,7 @@ import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 import static com.cloudmen.cloudguard.unit.helper.GlobalTestHelper.ADMIN;
 import static com.cloudmen.cloudguard.unit.helper.TeamleaderTestHelper.*;
@@ -28,14 +33,22 @@ public class TeamleaderAccessServiceTest {
     @Mock
     private TeamleaderCompanyService teamleaderCompanyService;
 
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private OrganizationService organizationService;
+
     private TeamleaderAccessService teamleaderAccessService;
 
     private static final String CLOUDGUARD_FIELD_ID = "mock-field-id-123";
 
     @BeforeEach
     void setUp() {
-        teamleaderAccessService = new TeamleaderAccessService(teamleaderService, teamleaderCompanyService);
+        teamleaderAccessService = new TeamleaderAccessService(
+                teamleaderService, teamleaderCompanyService, userService, organizationService);
         ReflectionTestUtils.setField(teamleaderAccessService, "cloudGuardFieldId", CLOUDGUARD_FIELD_ID);
+        lenient().when(userService.findByEmailOptional(ADMIN)).thenReturn(Optional.empty());
     }
 
     @Test
@@ -172,6 +185,49 @@ public class TeamleaderAccessServiceTest {
         assertFalse(result);
         verify(teamleaderService, times(1)).createHeaders();
         verify(teamleaderService).refreshTokens();
+    }
+
+    @Test
+    void hasCloudGuardAccess_usesStoredTeamleaderCompanyId_skipsDomainLookup() {
+        HttpHeaders mockHeaders = new HttpHeaders();
+        when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
+
+        User user = new User();
+        user.setOrganizationId(42L);
+        when(userService.findByEmailOptional(ADMIN)).thenReturn(Optional.of(user));
+
+        Organization org = new Organization();
+        org.setTeamleaderCompanyId("stored-uuid");
+        when(organizationService.findById(42L)).thenReturn(Optional.of(org));
+
+        when(teamleaderCompanyService.getCompanyDetails("stored-uuid", mockHeaders))
+                .thenReturn(createCompanyDetailsWithCustomField(CLOUDGUARD_FIELD_ID, true));
+
+        assertTrue(teamleaderAccessService.hasCloudGuardAccess(ADMIN));
+
+        verify(teamleaderCompanyService, never()).getCompanyIdByDomain(any(), any());
+        verify(organizationService, never()).saveTeamleaderCompanyIdIfAbsent(any(), any());
+    }
+
+    @Test
+    void hasCloudGuardAccess_domainResolutionWhenGranted_persistsTeamleaderCompanyId() {
+        HttpHeaders mockHeaders = new HttpHeaders();
+        when(teamleaderService.createHeaders()).thenReturn(mockHeaders);
+
+        User user = new User();
+        user.setOrganizationId(42L);
+        when(userService.findByEmailOptional(ADMIN)).thenReturn(Optional.of(user));
+
+        Organization org = new Organization();
+        when(organizationService.findById(42L)).thenReturn(Optional.of(org));
+
+        when(teamleaderCompanyService.getCompanyIdByDomain(ADMIN, mockHeaders)).thenReturn("company-1");
+        when(teamleaderCompanyService.getCompanyDetails("company-1", mockHeaders))
+                .thenReturn(createCompanyDetailsWithCustomField(CLOUDGUARD_FIELD_ID, true));
+
+        assertTrue(teamleaderAccessService.hasCloudGuardAccess(ADMIN));
+
+        verify(organizationService).saveTeamleaderCompanyIdIfAbsent(42L, "company-1");
     }
 
     @Test
