@@ -4,7 +4,6 @@ import { provideAuth0, authHttpInterceptorFn } from '@auth0/auth0-angular';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { errorInterceptor } from './interceptor/error.interceptor';
 import { TranslocoHttpLoader } from './transloco-loader';
 import { provideTransloco } from '@jsverse/transloco';
 import { languageInterceptor } from './interceptor/language.interceptor';
@@ -13,9 +12,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(
-      withInterceptors([errorInterceptor, languageInterceptor, authHttpInterceptorFn])
-    ),
+    provideHttpClient(withInterceptors([languageInterceptor, authHttpInterceptorFn])),
     provideAuth0({
       domain: 'dev-x2l40e775g2q2ot3.eu.auth0.com',
       clientId: '6RChZH73eEvLLEhwrk8DjTgDETGYTe4u',

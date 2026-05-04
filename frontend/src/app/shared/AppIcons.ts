@@ -49,20 +49,29 @@ import {
   UserPlus,
   CircleAlert,
   Copy,
+  UserRoundCheck,
+  ArrowLeft,
+  Check,
+  CircleMinus,
+  UserRoundX,
+  Undo,
 } from 'lucide-angular';
 
 export class AppIcons {
   static readonly AppWindow = AppWindow;
+  static readonly ArrowLeft = ArrowLeft;
   static readonly Bell = Bell;
   static readonly LayoutGrid = LayoutGrid;
   static readonly Building2 = Building2;
   static readonly Calendar = Calendar;
+  static readonly Check = Check;
   static readonly ChevronDown = ChevronDown;
   static readonly ChevronLeft = ChevronLeft;
   static readonly ChevronRight = ChevronRight;
   static readonly ChevronUp = ChevronUp;
   static readonly CircleAlert = CircleAlert;
   static readonly CircleCheck = CircleCheck;
+  static readonly CircleMinus = CircleMinus;
   static readonly CircleQuestionMark = CircleQuestionMark;
   static readonly CircleX = CircleX;
   static readonly Clock = Clock;
@@ -96,7 +105,10 @@ export class AppIcons {
   static readonly SmartPhone = Smartphone;
   static readonly TrendingDown = TrendingDown;
   static readonly TriangleAlert = TriangleAlert;
+  static readonly Undo = Undo;
   static readonly UserCog = UserCog;
+  static readonly UserRoundCheck = UserRoundCheck;
+  static readonly UserRoundX = UserRoundX;
   static readonly UserPlus = UserPlus;
   static readonly Users = Users;
   static readonly UsersRound = UsersRound;

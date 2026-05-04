@@ -1,0 +1,34 @@
+<div class="bg-card">
+    <header class="flex justify-between items-center py-4 px-5 border-b-2 border-muted/50">
+        <h3 class="m-0 text-xl font-medium">
+            {{ (data.user.isActive ? 'deactivate-dialog.title' : 'activate-dialog.title') | transloco }}
+        </h3>
+        <button class="cursor-pointer text-muted-foreground hover:text-slate-700 transition-colors" type="button"
+            mat-dialog-close aria-label="{{ 'close' | transloco }}">
+            <i-lucide [img]="Icons.X" size="18" />
+        </button>
+    </header>
+
+    <div class="p-5 flex flex-col gap-4">
+        <p class="m-0 text-[15px] text-muted-foreground text-center">
+            {{ (data.user.isActive ? 'deactivate-dialog.description' : 'activate-dialog.description') | transloco: {
+            name: data?.user?.firstName + ' ' + data?.user?.lastName } }}
+        </p>
+
+        <div class="flex justify-end gap-4 mt-4">
+            <button type="button"
+                class="cursor-pointer hover:bg-gray-100 border-2 border-muted/50 py-2 px-6 rounded-xl bg-transparent text-sm text-muted-foreground transition-colors"
+                mat-dialog-close cdkFocusInitial>
+                {{ 'cancel' | transloco }}
+            </button>
+
+            <button type="button"
+                class="hover:opacity-80 cursor-pointer border-2 rounded-xl text-white text-sm py-2 px-6 transition-colors shadow-sm"
+                [class.bg-red-600]="data.user.isActive" [class.border-red-600/50]="data.user.isActive"
+                [class.bg-emerald-600]="!data.user.isActive" [class.border-emerald-600/50]="!data.user.isActive"
+                [mat-dialog-close]="true">
+                {{ (data.user.isActive ? 'deactivate-dialog.confirm' : 'activate-dialog.confirm') | transloco }}
+            </button>
+        </div>
+    </div>
+</div>

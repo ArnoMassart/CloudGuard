@@ -52,7 +52,7 @@
       @for (item of filteredControlItems(); track item.Label) {
       <app-nav-item (click)="closeMobileMenu()" [Route]="item.Route" [Icon]="item.Icon"
         [Label]="(item.Label | transloco)"
-        [BadgeCount]="item.Label==='accounts-manager' ? requestedCount() : 0"></app-nav-item>
+        [BadgeCount]="item.Label==='accounts-manager' ? userService.requestedCount() : 0"></app-nav-item>
       }
     </ul>
     <div class="seperator"></div>
@@ -68,7 +68,8 @@
       <div class="relative z-10 flex items-center gap-3 min-w-0 ">
         <div class="w-10 h-10 shrink-0 rounded-full bg-primary flex items-center justify-center overflow-hidden">
           @if (user.pictureUrl && !profileImageError()) {
-          <img [src]="user.pictureUrl" alt="" class="w-full h-full object-cover" (error)="profileImageError.set(true)" />
+          <img [src]="user.pictureUrl" alt="" class="w-full h-full object-cover"
+            (error)="profileImageError.set(true)" />
           }
           @if (!user.pictureUrl || profileImageError()) {
           <span class="text-white text-lg">{{ getInitials(user) }}</span>

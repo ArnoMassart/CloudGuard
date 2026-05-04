@@ -6,10 +6,13 @@ import { Organization } from '../../../../models/org/Organization';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../../shared/AppIcons';
+import { MatDialog } from '@angular/material/dialog';
+import { ViewRolesDialog } from '../../../../components/view-roles-dialog/view-roles-dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-accounts-manager-table',
-  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule],
+  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule, MatTooltipModule],
   templateUrl: './accounts-manager-table.html',
   styleUrl: './accounts-manager-table.css',
 })
@@ -21,13 +24,17 @@ export class AccountsManagerTable {
   // Inputs
   readonly users = input.required<User[]>();
   readonly orgs = input.required<Organization[]>();
-  readonly hasExistingRoles = input.required<boolean>();
+  readonly hasRequest = input.required<boolean>();
   readonly expandedRoles = input.required<Set<string>>();
 
   // Outputs
   readonly actionClick = output<User>();
   readonly orgChange = output<{ user: User; newOrgId: number | null }>();
   readonly toggleRoles = output<{ email: string; length: number }>();
+
+  readonly activeSwitch = output<User>();
+
+  readonly dialog = inject(MatDialog);
 
   /** Chips shown in the Role column (Super Admin + Cloudmen admin are two chips when both apply). */
   getRolesTranslated(user: User): {
@@ -112,5 +119,34 @@ export class AccountsManagerTable {
   /** Row user is on the server Cloudmen staff allowlist (from API UserDto). */
   isRowCloudmenStaffUser(user: { isCloudmenStaff?: boolean }): boolean {
     return user.isCloudmenStaff === true;
+  }
+
+  hasValidRole(user: User): boolean {
+    return !user.roles.includes(Role.UNASSIGNED);
+  }
+
+  showRoles(user: User) {
+    if (user.roles.length <= 1) return;
+
+    this.dialog.open(ViewRolesDialog, {
+      width: '400px',
+      panelClass: 'custom-dialog-container',
+      data: {
+        roles: this.getSortedTranslatedRoles(user),
+      },
+    });
+  }
+
+  getSortedTranslatedRoles(user: User) {
+    return user.roles
+      .map((role) => ({
+        value: role,
+        label: RoleLabels[role],
+      }))
+      .sort((a, b) => {
+        const transA = this.#translocoService.translate(a.label);
+        const transB = this.#translocoService.translate(b.label);
+        return transA.localeCompare(transB);
+      });
   }
 }

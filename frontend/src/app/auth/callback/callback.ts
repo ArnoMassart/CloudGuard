@@ -44,9 +44,11 @@ export class Callback implements OnInit {
       // 2. Haal daarna de rol én organisatie tegelijkertijd op en bundel ze in een object
       switchMap(() => {
         return forkJoin({
-          hasValidRole: this.userService.hasValidRole(),
-          hasOrganization: this.userService.hasOrganization(),
+          hasValidRole: this.userService.hasValidField('/valid-role'),
+          hasOrganization: this.userService.hasValidField('/has-organization'),
           isSetupActive: this.userService.isOrganizationSetup(),
+          isAccepted: this.userService.hasValidField('/is-accepted'),
+          isDenied: this.userService.hasValidField('/is-denied'),
         });
       })
     );
@@ -63,12 +65,16 @@ export class Callback implements OnInit {
         next: ({ loginData }) => {
           sessionStorage.removeItem('auth0_redirect_pending');
 
-          if (!loginData.hasOrganization) {
+          if (loginData.isDenied) {
+            this.router.navigate(['/denied']);
+          } else if (!loginData.isAccepted) {
+            this.router.navigate(['/request-access']);
+          } else if (!loginData.hasOrganization) {
             this.router.navigate(['/no-organization']);
           } else if (!loginData.isSetupActive) {
             this.router.navigate(['/setup']);
           } else if (!loginData.hasValidRole) {
-            this.router.navigate(['/request-access']);
+            this.router.navigate(['/request-role']);
           } else {
             this.warmupCacheService.triggerWarmup();
             this.router.navigate(['/home']);

@@ -28,6 +28,11 @@ import { NoOrganization } from './pages/no-organization/no-organization';
 import { WorkspaceSetup } from './pages/workspace-setup/workspace-setup';
 import { PageAccessDenied } from './pages/page-access-denied/page-access-denied';
 import { cloudmenStaffGuard } from './guards/cloudmen-staff.guard';
+import { AccountsManagerRequests } from './pages/control-section/accounts-manager/accounts-manager-requests/accounts-manager-requests';
+import { RequestRole } from './pages/request-role/request-role';
+import { Denied } from './pages/denied/denied';
+import { AccountsManagerDenied } from './pages/control-section/accounts-manager/accounts-manager-denied/accounts-manager-denied';
+import { Inactive } from './pages/inactive/inactive';
 
 export const routes: Routes = [
   {
@@ -47,12 +52,24 @@ export const routes: Routes = [
     component: TeamleaderAccessDenied,
   },
   {
+    path: 'denied',
+    component: Denied,
+  },
+  {
+    path: 'inactive',
+    component: Inactive,
+  },
+  {
     path: 'no-access',
     component: AccessDenied,
   },
   {
     path: 'no-page-access',
     component: PageAccessDenied,
+  },
+  {
+    path: 'request-role',
+    component: RequestRole,
   },
   {
     path: 'request-access',
@@ -168,7 +185,17 @@ export const routes: Routes = [
   {
     path: 'accounts-manager',
     component: AccountsManager,
-    canActivate: [authGuard, accessGuard, roleGuard,cloudmenStaffGuard],
+    canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
+  },
+  {
+    path: 'accounts-manager/requests',
+    component: AccountsManagerRequests,
+    canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
+  },
+  {
+    path: 'accounts-manager/denied-list',
+    component: AccountsManagerDenied,
+    canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
   },
   {
     path: 'test',

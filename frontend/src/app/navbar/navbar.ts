@@ -40,8 +40,6 @@ export class Navbar {
   readonly profileImageError = signal(false);
   readonly isMobileMenuOpen = signal(false);
 
-  readonly requestedCount = signal(0);
-
   constructor() {
     effect(() => {
       this.currentUser();
@@ -64,7 +62,7 @@ export class Navbar {
     },
     {
       Icon: this.Icons.Building2,
-      Label: 'organisational-units',
+      Label: 'organizational-units',
       Route: '/organizational-units',
       RequiredRole: Role.ORG_UNITS_VIEWER,
     },
@@ -243,9 +241,7 @@ export class Navbar {
   getRequestedCount() {
     if (this.currentUser()) {
       this.userService.refreshRequestedCount().subscribe({
-        next: (count) => {
-          this.requestedCount.set(count);
-        },
+        next: (count) => {},
         error: (err) => console.error('Error fetching requested count', err),
       });
     }

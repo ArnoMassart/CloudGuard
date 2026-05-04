@@ -83,6 +83,8 @@ public class User {
      */
     private String language = "nl";
 
+    private boolean isActive = true;
+
     /**
      * A flag indicating whether the user has actively requested a role assignment. <p>
      *
@@ -96,6 +98,33 @@ public class User {
      * This field defaults to {@code false}.
      */
     private boolean organizationRequested = false;
+
+    /**
+     * A flag indicating whether the user has actively requested access to CloudGuard. <p>
+     *
+     * This field defaults to {@code false}.
+     */
+    private boolean accessRequested = false;
+
+    /**
+     * A flag indicating whether the user has been accepted to CloudGuard. <p>
+     *
+     * This field defaults to {@code false}.
+     */
+    private boolean accessAccepted = false;
+
+    /**
+     * A flag indicating whether the user has been denied from CloudGuard. <p>
+     *
+     * This field defaults to {@code false}.
+     */
+    private boolean accessDenied = false;
+
+    private LocalDateTime accessDeniedAt;
+
+    private String accessDeniedReason;
+
+    private LocalDateTime accessRequestedAt;
 
     /**
      * A list of roles assigned to the user. <p>

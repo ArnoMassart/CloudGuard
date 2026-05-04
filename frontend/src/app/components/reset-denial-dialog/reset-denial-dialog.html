@@ -1,0 +1,38 @@
+<div class="bg-white rounded-xl flex flex-col max-h-[85vh] w-112.5 max-w-full">
+    <header class="flex justify-between items-start pt-6 px-6 pb-2 border-b border-slate-100">
+        <div>
+            <h3 class="m-0 text-xl font-medium text-slate-900">
+                {{ 'reset-denial.title' | transloco }}
+            </h3>
+        </div>
+        <button type="button" mat-dialog-close
+            class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            aria-label="{{ 'close' | transloco }}">
+            <lucide-icon [img]="Icons.X" size="20" />
+        </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar flex flex-col gap-4">
+        <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-4 flex flex-col">
+            <span class="font-medium text-slate-900">{{ data.user.name }}</span>
+            <span class="text-sm text-slate-500">{{ data.user.email }}</span>
+        </div>
+
+        <p class="m-0 text-[15px] text-slate-600 text-center">
+            {{ 'reset-denial.description' | transloco }}
+            {{ 'reset-denial.description-2' | transloco }}
+        </p>
+    </div>
+
+    <div class="px-6 py-4 flex justify-end gap-3 border-t border-slate-100 bg-slate-50/50 rounded-b-xl">
+        <button type="button" mat-dialog-close
+            class="cursor-pointer hover:bg-slate-100 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
+            {{ 'cancel' | transloco }}
+        </button>
+
+        <button type="button" (click)="confirm()"
+            class="cursor-pointer hover:opacity-90 rounded-lg text-white text-sm font-medium py-2.5 px-6 transition-all shadow-sm bg-primary">
+            {{ 'reset-denial.confirm-btn' | transloco }}
+        </button>
+    </div>
+</div>
