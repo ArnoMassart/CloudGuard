@@ -49,6 +49,9 @@ import {
   UserPlus,
   CircleAlert,
   Copy,
+  Check,
+  Phone,
+  Mail,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -57,6 +60,7 @@ export class AppIcons {
   static readonly LayoutGrid = LayoutGrid;
   static readonly Building2 = Building2;
   static readonly Calendar = Calendar;
+  static readonly Check = Check;
   static readonly ChevronDown = ChevronDown;
   static readonly ChevronLeft = ChevronLeft;
   static readonly ChevronRight = ChevronRight;
@@ -83,8 +87,10 @@ export class AppIcons {
   static readonly Loader = Loader;
   static readonly Lock = Lock;
   static readonly LogOut = LogOut;
+  static readonly Mail = Mail;
   static readonly Menu = Menu;
   static readonly MessageCircle = MessageCircle;
+  static readonly Phone = Phone;
   static readonly RefreshCw = RefreshCw;
   static readonly Search = Search;
   static readonly Send = Send;

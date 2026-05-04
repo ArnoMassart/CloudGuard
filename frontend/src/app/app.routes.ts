@@ -28,6 +28,7 @@ import { NoOrganization } from './pages/no-organization/no-organization';
 import { WorkspaceSetup } from './pages/workspace-setup/workspace-setup';
 import { PageAccessDenied } from './pages/page-access-denied/page-access-denied';
 import { cloudmenStaffGuard } from './guards/cloudmen-staff.guard';
+import { Contact } from './pages/contact/contact';
 
 export const routes: Routes = [
   {
@@ -158,6 +159,11 @@ export const routes: Routes = [
     canActivate: [authGuard, accessGuard],
   },
   {
+    path: 'contact',
+    component: Contact,
+    canActivate: [authGuard, accessGuard],
+  },
+  {
     path: 'security-preferences',
     component: SecurityPreferences,
     canActivate: [authGuard, accessGuard, roleGuard],
@@ -168,7 +174,7 @@ export const routes: Routes = [
   {
     path: 'accounts-manager',
     component: AccountsManager,
-    canActivate: [authGuard, accessGuard, roleGuard,cloudmenStaffGuard],
+    canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
   },
   {
     path: 'test',
