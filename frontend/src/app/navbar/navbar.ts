@@ -117,11 +117,6 @@ export class Navbar {
       Route: '/reports-reactions',
     },
     {
-      Icon: this.Icons.LifeBuoy,
-      Label: 'help-contact',
-      Route: '/contact',
-    },
-    {
       Icon: this.Icons.Settings,
       Label: 'security-preferences',
       Route: '/security-preferences',
@@ -132,6 +127,11 @@ export class Navbar {
       Label: 'accounts-manager',
       Route: '/accounts-manager',
       RequiredRole: Role.SUPER_ADMIN,
+    },
+    {
+      Icon: this.Icons.LifeBuoy,
+      Label: 'help-contact',
+      Route: '/contact',
     },
   ];
 
