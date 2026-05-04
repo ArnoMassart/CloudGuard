@@ -13,6 +13,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -24,14 +25,18 @@ import java.util.Objects;
  * a 401 Unauthorized response.
  */
 @Service
+@SuppressWarnings("unchecked") // teamleader returns json deserialized as nested Map / List without generics.
 public class TeamleaderCompanyService {
     private static final Logger log = LoggerFactory.getLogger(TeamleaderCompanyService.class);
+
+    private static final int PRIMARY_DOMAIN_LOOKUP_CAP = 50; //inspect the first N list results to cap latency and API calls
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final TeamleaderService teamleaderService;
 
     @Value("${teamleader.api.base}") private String teamleaderApiBase;
 
+    //stores the UUID that Teamleader assigns to a specific custom field definition
     @Value("${teamleader.customfield.primary-domain.id}") private String primaryDomainFieldId;
 
 
@@ -53,8 +58,14 @@ public class TeamleaderCompanyService {
         String domain = extractDomain(email);
 
         if (domain.isEmpty()) {
+            log.debug("Teamleader getCompanyIdByDomain: cannot extract domain from email (null or no '@')");
             return null;
         }
+
+        log.debug(
+                "Teamleader getCompanyIdByDomain: extractedDomain={}, normalized={}",
+                domain,
+                normalizeDomain(domain));
 
         try {
             return performGetCompanyIdByDomain(domain, headers);
@@ -113,8 +124,26 @@ public class TeamleaderCompanyService {
     }
 
     private String performGetCompanyIdByDomain(String domain, HttpHeaders headers) {
-        // Door 'term' te gebruiken, zoekt Teamleader breed naar het domein,
-        // inclusief in de e-mailadressen van het bedrijf.
+        String normalizedRequested = normalizeDomain(domain);
+
+        // 1) Prefer the CRM "Primary domain" custom field as the authoritative key.
+        if (primaryDomainFieldId != null && !primaryDomainFieldId.isBlank()) {
+            String byCustomField = lookupByPrimaryDomainCustomField(normalizedRequested, headers);
+            if (byCustomField != null) {
+                log.info(
+                        "Teamleader: resolved companyId={} via CRM primary-domain custom field (normalized={})",
+                        byCustomField,
+                        normalizedRequested);
+                return byCustomField;
+            }
+            log.debug(
+                    "Teamleader: no company via CRM primary-domain filter for normalized={}, falling back to term search",
+                    normalizedRequested);
+        } else {
+            log.debug("Teamleader primary-domain field id not configured; using term search only");
+        }
+
+        // 2) Fallback: broad term search (company name, emails, websites, …).
         String body = """
         {
           "filter": {
@@ -132,13 +161,247 @@ public class TeamleaderCompanyService {
                 new ParameterizedTypeReference<Map<String, Object>>() {}
         );
 
-        List<Map<String, Object>> data = (List<Map<String, Object>>) Objects.requireNonNull(response.getBody()).get("data");
-        if (data != null && !data.isEmpty()) {
-            // We pakken hier het eerste resultaat dat Teamleader teruggeeft.
-            return (String) data.get(0).get("id");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> data = response.getBody() != null
+                ? (List<Map<String, Object>>) response.getBody().get("data")
+                : null;
+
+        if (data == null || data.isEmpty()) {
+            log.debug("Teamleader companies.list: zero hits for filterTerm={}", domain);
+            return null;
         }
 
+        int scanLimit = Math.min(data.size(), PRIMARY_DOMAIN_LOOKUP_CAP);
+        log.debug(
+                "Teamleader companies.list: totalHits={}, scanLimit={}, filterTerm={}",
+                data.size(),
+                scanLimit,
+                domain);
+
+        if (primaryDomainFieldId == null || primaryDomainFieldId.isBlank()) {
+            String fallbackId = (String) data.get(0).get("id");
+            log.debug(
+                    "Teamleader primary-domain field id not configured; using first companies.list hit companyId={}",
+                    fallbackId);
+            return fallbackId;
+        }
+
+        log.debug(
+                "Teamleader primary-domain scan: normalizedRequested={}, primaryDomainFieldId={}",
+                normalizedRequested,
+                primaryDomainFieldId);
+
+        String emailFallbackId = null;
+        String emailFallbackName = "";
+
+        for (int i = 0; i < scanLimit; i++) {
+            String companyId = (String) data.get(i).get("id");
+            if (companyId == null) {
+                continue;
+            }
+
+            Map<String, Object> details = performGetCompanyDetails(companyId, headers);
+            String crmPrimary = extractPrimaryDomainFromCompany(details);
+            String companyName = details != null && details.get("name") != null
+                    ? String.valueOf(details.get("name"))
+                    : "";
+
+            if (crmPrimary != null && !crmPrimary.isEmpty()) {
+                String normalizedCrm = normalizeDomain(crmPrimary);
+                boolean matches = normalizedCrm.equals(normalizedRequested);
+                log.debug(
+                        "Teamleader primary-domain scan [{}]: companyId={}, name={}, crmPrimaryRaw={}, normalizedCrm={}, matchesRequested={}",
+                        i,
+                        companyId,
+                        companyName,
+                        crmPrimary,
+                        normalizedCrm,
+                        matches);
+                if (matches) {
+                    log.info(
+                            "Teamleader: resolved companyId={} by CRM primary domain match (term search, normalized={})",
+                            companyId,
+                            normalizedRequested);
+                    return companyId;
+                }
+            } else {
+                log.debug(
+                        "Teamleader primary-domain scan [{}]: companyId={}, name={}, crmPrimaryDomain=<empty or absent>",
+                        i,
+                        companyId,
+                        companyName);
+            }
+
+            if (emailFallbackId == null && companyEmailDomainMatches(details, normalizedRequested)) {
+                emailFallbackId = companyId;
+                emailFallbackName = companyName;
+                log.debug(
+                        "Teamleader company-email fallback candidate [{}]: companyId={}, name={}",
+                        i,
+                        companyId,
+                        companyName);
+            }
+        }
+
+        if (emailFallbackId != null) {
+            log.info(
+                    "Teamleader: no CRM primary-domain match for filterTerm={}; resolved companyId={} (name={}) by company email domain match",
+                    domain,
+                    emailFallbackId,
+                    emailFallbackName);
+            return emailFallbackId;
+        }
+
+        log.warn(
+                "Teamleader: no company matched filterTerm={} via CRM primary domain or company email (normalizedRequested={})",
+                domain,
+                normalizedRequested);
         return null;
+    }
+
+    private String lookupByPrimaryDomainCustomField(String normalizedDomain, HttpHeaders headers) {
+        String body = """
+        {
+          "filter": {
+            "custom_fields": [
+              { "id": "%s", "value": "%s" }
+            ]
+          }
+        }
+        """.formatted(primaryDomainFieldId, normalizedDomain);
+
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                teamleaderApiBase + "/companies.list",
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> data = response.getBody() != null
+                ? (List<Map<String, Object>>) response.getBody().get("data")
+                : null;
+        if (data == null || data.isEmpty()) {
+            return null;
+        }
+        log.debug(
+                "Teamleader custom-field filter: hits={}, normalizedDomain={}, fieldId={}",
+                data.size(),
+                normalizedDomain,
+                primaryDomainFieldId);
+
+        int scanLimit = Math.min(data.size(), PRIMARY_DOMAIN_LOOKUP_CAP);
+        for (int i = 0; i < scanLimit; i++) {
+            String companyId = (String) data.get(i).get("id");
+            if (companyId == null) {
+                continue;
+            }
+            Map<String, Object> details = performGetCompanyDetails(companyId, headers);
+            String crmPrimary = extractPrimaryDomainFromCompany(details);
+            if (crmPrimary != null && normalizeDomain(crmPrimary).equals(normalizedDomain)) {
+                return companyId;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * True when any entry in {@code companies.info} {@code emails} has a domain equal to {@code normalizedDomain}
+     * after {@link #normalizeDomain(String)}.
+     */
+    private boolean companyEmailDomainMatches(Map<String, Object> details, String normalizedDomain) {
+        if (details == null) {
+            return false;
+        }
+        Object emailsObj = details.get("emails");
+        if (!(emailsObj instanceof List<?> list)) {
+            return false;
+        }
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> map)) {
+                continue;
+            }
+            Object email = map.get("email");
+            if (email == null) {
+                continue;
+            }
+            String s = String.valueOf(email);
+            int at = s.lastIndexOf('@');
+            if (at < 0) {
+                continue;
+            }
+            if (normalizeDomain(s.substring(at + 1)).equals(normalizedDomain)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String extractPrimaryDomainFromCompany(Map<String, Object> companyDetails) {
+        if(companyDetails==null){
+            return null;
+        }
+        List<Map<String, Object>> customFields = (List<Map<String, Object>>) companyDetails.get("custom_fields");
+        if(customFields==null || customFields.isEmpty()){
+            return null;
+        }
+
+        for(Map<String, Object> field: customFields){
+            Map<String, Object> definition = (Map<String,Object>) field.get("definition");
+            if(definition==null){
+                continue;
+            }
+            if(!primaryDomainFieldId.equals(String.valueOf(definition.get("id")))){
+                continue;
+            }
+            return stringifyCustomFieldValue(field.get("value"));
+        }
+        return null;
+    }
+
+    private String stringifyCustomFieldValue(Object value){
+        if(value==null){
+            return null;
+        }
+        if (value instanceof String s) {
+            s = s.trim();
+            return s.isEmpty() ? null : s;
+        }
+        if (value instanceof Map<?, ?> map) {
+            Object text = map.get("text");
+            if (text == null) {
+                text = map.get("value");
+            }
+            if (text == null) {
+                return null;
+            }
+            String t = text.toString().trim();
+            return t.isEmpty() ? null : t;
+        }
+        String s = value.toString().trim();
+        return s.isEmpty() ? null : s;
+    }
+
+    static String normalizeDomain(String raw){
+        if(raw==null){
+            return "";
+        }
+
+        String s = raw.trim().toLowerCase(Locale.ROOT);
+        if (s.startsWith("https://")) {
+            s = s.substring(8);
+        } else if (s.startsWith("http://")) {
+            s = s.substring(7);
+        }
+        int slash = s.indexOf('/');
+        if (slash >= 0) {
+            s = s.substring(0, slash);
+        }
+        if (s.startsWith("www.")) {
+            s = s.substring(4);
+        }
+        return s;
     }
 
     private Map<String, Object> performGetCompanyDetails(String companyId, HttpHeaders headers) {
