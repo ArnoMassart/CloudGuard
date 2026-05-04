@@ -96,6 +96,7 @@ public class AuthControllerIT {
                 "url",
                 List.of(UserRole.SUPER_ADMIN),
                 LocalDateTime.now(),
+                true,
                 false,
                 false,
                 false,

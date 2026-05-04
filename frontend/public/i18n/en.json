@@ -631,5 +631,17 @@
   "reset-denial.description-2": "This ensures that the user is no longer marked as 'denied', allowing them to reapply for access to the platform.",
   "reset-denial.title": "Undo denial",
   "no-change-needed": "No modification necessary",
-  "organizational-units": "Organizational units"
+  "organizational-units": "Organizational units",
+  "deactivate-dialog.confirm": "Make inactive",
+  "deactivate-dialog.description": "Are you sure you want to make {{name}} inactive? \nThis user immediately loses access to the platform and can no longer log in.",
+  "deactivate-dialog.title": "Make user inactive?",
+  "activate-dialog.confirm": "Activate",
+  "activate-dialog.description": "Are you sure you want to make {{name}} active again? \nThis user will immediately regain access to the platform and can log in again.",
+  "activate-dialog.title": "Activate user?",
+  "suspended": "Suspended",
+  "account-manager.denied.activate": "Activate user",
+  "account-manager.denied.deactivate": "Deactivate user",
+  "inactive.description": "Your account is currently inactive by an administrator. \nThis means you do not have access to this application.",
+  "inactive.sub-description": "If you believe this is an error or to have your account reactivated, please contact your administrator or IT Helpdesk.",
+  "inactive.title": "Account Inactive"
 }

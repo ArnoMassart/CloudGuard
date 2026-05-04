@@ -277,4 +277,13 @@ export class UserService {
       withCredentials: true,
     });
   }
+
+  switchUserStatus(email: string): Observable<string> {
+    const url = RouteService.getBackendUrl('/user/status/change');
+
+    return this.#http.post(url, email, {
+      responseType: 'text',
+      withCredentials: true,
+    });
+  }
 }

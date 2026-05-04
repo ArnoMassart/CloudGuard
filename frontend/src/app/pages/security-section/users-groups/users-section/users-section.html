@@ -130,7 +130,7 @@
               [class.text-emerald-600]="user.isActive" [class.bg-[#dbfce7]]="user.isActive"
               [class.text-slate-500]="!user.isActive" [class.bg-[#f3f4f6]]="!user.isActive">
               <lucide-icon [img]="user.isActive ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
-              {{ user.isActive ? ( 'active-2' | transloco ) : 'Suspended' }}
+              {{ (user.isActive ? 'active-2' : 'suspended') | transloco }}
             </div>
           </td>
 

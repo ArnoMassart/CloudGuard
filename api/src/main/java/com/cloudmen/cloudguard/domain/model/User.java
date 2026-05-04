@@ -83,6 +83,8 @@ public class User {
      */
     private String language = "nl";
 
+    private boolean isActive = true;
+
     /**
      * A flag indicating whether the user has actively requested a role assignment. <p>
      *

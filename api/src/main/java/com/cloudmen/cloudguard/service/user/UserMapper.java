@@ -58,6 +58,7 @@ public class UserMapper {
                 user.getPictureUrl(),
                 user.getRoles(),
                 user.getCreatedAt(),
+                user.isActive(),
                 user.isRoleRequested(),
                 user.isOrganizationRequested(),
                 user.isAccessRequested(),

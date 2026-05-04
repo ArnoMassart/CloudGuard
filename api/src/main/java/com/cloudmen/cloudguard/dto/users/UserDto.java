@@ -35,6 +35,7 @@ public record UserDto(
         String pictureUrl,
         List<UserRole> roles,
         LocalDateTime createdAt,
+        Boolean isActive,
         Boolean roleRequested,
         Boolean organizationRequested,
         Boolean accessRequested,

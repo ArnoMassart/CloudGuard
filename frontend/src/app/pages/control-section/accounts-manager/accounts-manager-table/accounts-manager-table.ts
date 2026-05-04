@@ -8,10 +8,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { MatDialog } from '@angular/material/dialog';
 import { ViewRolesDialog } from '../../../../components/view-roles-dialog/view-roles-dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-accounts-manager-table',
-  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule],
+  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule, MatTooltipModule],
   templateUrl: './accounts-manager-table.html',
   styleUrl: './accounts-manager-table.css',
 })
@@ -30,6 +31,8 @@ export class AccountsManagerTable {
   readonly actionClick = output<User>();
   readonly orgChange = output<{ user: User; newOrgId: number | null }>();
   readonly toggleRoles = output<{ email: string; length: number }>();
+
+  readonly activeSwitch = output<User>();
 
   readonly dialog = inject(MatDialog);
 

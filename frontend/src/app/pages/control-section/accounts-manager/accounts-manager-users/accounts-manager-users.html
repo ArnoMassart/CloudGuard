@@ -66,7 +66,7 @@
         } @else if (users().length > 0) {
         <app-accounts-manager-table [users]="users()" [orgs]="orgs()" [hasRequest]="hasRequest()"
             [expandedRoles]="expandedRoles()" (actionClick)="openRoleChangeDialog($event, true)"
-            (orgChange)="onOrganizationChange($event.user)"
+            (orgChange)="onOrganizationChange($event.user)" (activeSwitch)="switchUserActiveState($event)"
             (toggleRoles)="toggleRolesSummary($event.email, $event.length)" />
         }
 

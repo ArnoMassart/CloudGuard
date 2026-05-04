@@ -364,6 +364,14 @@ public class UserService {
         save(user);
     }
 
+    public void switchUserStatus(String email) {
+        User user = findByEmail(email);
+
+        user.setActive(!user.isActive());
+
+        save(user);
+    }
+
     private DatabaseUsersResponse<UserDto> fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 

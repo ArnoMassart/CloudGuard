@@ -631,5 +631,17 @@
   "reset-denial.description-2": "Dit zorgt ervoor dat de gebruiker niet langer als 'geweigerd' staat gemarkeerd, waardoor deze opnieuw een toegangsaanvraag kan indienen voor het platform.",
   "reset-denial.confirm-btn": "Weigering resetten",
   "no-change-needed": "Geen wijziging nodig",
-  "organizational-units": "Organisatie-eenheden"
+  "organizational-units": "Organisatie-eenheden",
+  "deactivate-dialog.title": "Gebruiker inactief maken?",
+  "deactivate-dialog.description": "Weet je zeker dat je {{name}} inactief wilt maken? Deze gebruiker verliest per direct de toegang tot het platform en kan niet meer inloggen.",
+  "deactivate-dialog.confirm": "Inactief maken",
+  "activate-dialog.title": "Gebruiker activeren?",
+  "activate-dialog.description": "Weet je zeker dat je {{name}} weer actief wilt maken? Deze gebruiker krijgt per direct weer toegang tot het platform en kan weer inloggen.",
+  "activate-dialog.confirm": "Activeren",
+  "suspended": "Inactief",
+  "account-manager.denied.deactivate": "Gebruiker deactiveren",
+  "account-manager.denied.activate": "Gebruiker activeren",
+  "inactive.title": "Account Inactief",
+  "inactive.description": "Je account is momenteel op inactief gezet door een beheerder. Hierdoor heb je geen toegang tot deze applicatie.",
+  "inactive.sub-description": "Neem contact op met je beheerder of de IT-helpdesk als je denkt dat dit een fout is of om je account opnieuw te laten activeren."
 }

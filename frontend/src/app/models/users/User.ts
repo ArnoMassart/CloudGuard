@@ -5,6 +5,7 @@ export type User = {
   pictureUrl?: string | null;
   roles: Role[];
   createdAt: Date;
+  isActive: boolean;
   roleRequested: boolean;
   organizationRequested: boolean;
   organizationId: number;

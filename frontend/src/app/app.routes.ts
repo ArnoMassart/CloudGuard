@@ -32,6 +32,7 @@ import { AccountsManagerRequests } from './pages/control-section/accounts-manage
 import { RequestRole } from './pages/request-role/request-role';
 import { Denied } from './pages/denied/denied';
 import { AccountsManagerDenied } from './pages/control-section/accounts-manager/accounts-manager-denied/accounts-manager-denied';
+import { Inactive } from './pages/inactive/inactive';
 
 export const routes: Routes = [
   {
@@ -53,6 +54,10 @@ export const routes: Routes = [
   {
     path: 'denied',
     component: Denied,
+  },
+  {
+    path: 'inactive',
+    component: Inactive,
   },
   {
     path: 'no-access',

@@ -438,4 +438,19 @@ public class UserController {
         cloudguardStaffService.requireCloudmenAdmin(email);
         return ResponseEntity.ok(userService.getAllDenied(pageToken, size, query));
     }
+
+    /**
+     * Set the active state of the user to false so they are not active in the CloudGuard system
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
+     */
+    @PostMapping("/status/change")
+    public ResponseEntity<String> setUserInactive(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody String email) {
+        jwtService.validateInternalToken(token);
+
+        userService.switchUserStatus(email);
+
+        return ResponseEntity.ok().build();
+    }
 }

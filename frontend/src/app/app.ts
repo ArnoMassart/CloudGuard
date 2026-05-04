@@ -49,6 +49,7 @@ export class App implements OnInit {
     { route: '/setup', preciseCheck: true },
     { route: '/no-page-access', preciseCheck: true },
     { route: '/denied', preciseCheck: true },
+    { route: '/inactive', preciseCheck: true },
   ];
 
   ngOnInit(): void {

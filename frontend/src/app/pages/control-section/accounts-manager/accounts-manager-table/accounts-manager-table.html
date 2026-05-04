@@ -1,38 +1,38 @@
 <table class="w-full text-left border-collapse block xl:table">
   <thead class="hidden xl:table-header-group">
     <tr class="border-b border-t border-gray-100 bg-gray-50/50">
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[20%] min-w-[180px]">
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[20%] min-w-45">
         {{ 'user-cap' | transloco }}
       </th>
 
       @if (hasRequest()) {
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[12%] min-w-[120px]">
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[12%] min-w-30">
         {{ 'required-changes' | transloco }}
       </th>
       }
 
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[10%] min-w-[100px]">
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[10%] min-w-25">
         {{ 'state' | transloco }}
       </th>
 
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[28%] min-w-[220px]">
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[28%] min-w-55">
         {{ 'role' | transloco }}
       </th>
 
-      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[20%] min-w-[180px]">
+      <th class="px-6 py-4 text-xs font-medium text-gray-400 uppercase w-[20%] min-w-45">
         {{ 'organization' | transloco }}
       </th>
-      <th class="px-6 py-4 w-[10%] min-w-[120px]"></th>
+      <th class="px-6 py-4 w-[10%] min-w-30"></th>
     </tr>
   </thead>
 
   <tbody class="block xl:table-row-group">
     @for (user of users(); track user.email) {
     <tr
-      class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
+      class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden transition-colors">
 
       <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 align-middle">
-        <div class="flex flex-col gap-0.5 max-w-[180px]">
+        <div class="flex flex-col gap-0.5 max-w-45">
           <span class="font-medium text-slate-900 text-[14px] truncate" [title]="user.firstName + ' ' + user.lastName">
             {{ user.firstName }} {{ user.lastName }}
           </span>
@@ -57,19 +57,28 @@
       </td>
       }
 
-      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 align-middle">
-        <span
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-green-50 text-green-700 border border-green-200/60 shadow-sm whitespace-nowrap">
-          <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-          Actief
-        </span>
+      <td (click)="!user.isCloudmenStaff && activeSwitch.emit(user)" [class.cursor-not-allowed]="user.isCloudmenStaff"
+        [class.cursor-pointer]="!user.isCloudmenStaff" [class.hover:opacity-75]="!user.isCloudmenStaff"
+        class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-3 xl:py-4 border-b xl:border-none border-gray-100 align-middle transition-opacity">
 
+        <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'state' | transloco }}</span>
+
+        <div class="px-3 py-1 inline-flex justify-center gap-1.5 text-xs font-medium rounded-lg"
+          [class.text-emerald-600]="user.isActive" [class.bg-[#dbfce7]]="user.isActive"
+          [class.text-slate-500]="!user.isActive" [class.bg-[#f3f4f6]]="!user.isActive"
+          [matTooltip]="(user.isCloudmenStaff ? '' : (user.isActive ? 'account-manager.denied.deactivate' : 'account-manager.denied.activate') | transloco)"
+          matTooltipPosition="above">
+          <lucide-icon [img]="user.isActive ? Icons.CircleCheck : Icons.CircleX" size="14"></lucide-icon>
+          {{ (user.isActive ? 'active-2' : 'suspended') | transloco }}
+        </div>
       </td>
 
       <td
-        class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 cursor-pointer group align-middle"
+        class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 group align-middle"
         (click)="$event.stopPropagation(); showRoles(user)"
         [title]="(displayRoleChipCount(user) > 2 ? (expandedRoles().has(user.email) ? 'account-manager.minimize' : 'account-manager.view-all') : '') | transloco">
+        <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'role' | transloco }}</span>
+
         <div class="flex flex-wrap gap-1.5 items-center">
           @if (expandedRoles().has(user.email) && displayRoleChipCount(user) > 2) {
           @for (role of getRolesTranslated(user); track role.trackKey) {
@@ -107,8 +116,11 @@
         </div>
       </td>
 
-      <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 align-middle">
-        <div class="relative w-full min-w-[160px] max-w-[200px]">
+      <td
+        class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 align-middle">
+        <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'organization' | transloco }}</span>
+
+        <div class="relative w-full min-w-40 max-w-50">
           <select [disabled]="isRowCloudmenStaffUser(user)" [(ngModel)]="user.organizationId"
             (change)="onOrgChange(user, $event)" (click)="$event.stopPropagation()"
             class="w-full appearance-none bg-transparent border border-transparent hover:border-slate-200 hover:bg-white focus:bg-white rounded-md py-1.5 pl-2 pr-7 text-[13px] font-medium text-slate-700 focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer transition-all disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:border-transparent disabled:hover:bg-transparent">
@@ -123,7 +135,7 @@
       </td>
 
       <td
-        class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 xl:text-right align-middle">
+        class="flex xl:table-cell justify-end items-center px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 xl:text-right align-middle">
         <button [disabled]="isRowCloudmenStaffUser(user)" (click)="$event.stopPropagation(); actionClick.emit(user)"
           class="text-[11px] font-semibold text-white uppercase py-2 px-4 bg-primary rounded-md hover:bg-primary/90 transition-all shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
           {{ (hasValidRole(user) ? 'roles.edit-title' : 'account-manager.give-role') | transloco }}

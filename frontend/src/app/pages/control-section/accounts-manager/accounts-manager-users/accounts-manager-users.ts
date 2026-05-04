@@ -15,6 +15,7 @@ import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DeactivateUserDialog } from '../../../../components/deactivate-user-dialog/deactivate-user-dialog';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -273,5 +274,29 @@ export class AccountsManagerUsers {
 
   hasRequest(): boolean {
     return this.users().some((u) => u.organizationRequested || u.roleRequested);
+  }
+
+  switchUserActiveState(user: User) {
+    const ref = this.dialog.open(DeactivateUserDialog, {
+      width: '400px',
+      panelClass: 'dialog-panel',
+      backdropClass: 'dialog-backdrop',
+      data: {
+        user: user,
+      },
+    });
+
+    ref.afterClosed().subscribe((result) => {
+      if (result) {
+        this.userService.switchUserStatus(user.email).subscribe({
+          next: () => {
+            this.#resetAndLoad();
+          },
+          error: (err) => {
+            console.error('Error with setting user to inactive', err);
+          },
+        });
+      }
+    });
   }
 }
