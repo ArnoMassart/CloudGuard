@@ -124,6 +124,26 @@ public class TeamleaderCompanyService {
     }
 
     private String performGetCompanyIdByDomain(String domain, HttpHeaders headers) {
+        String normalizedRequested = normalizeDomain(domain);
+
+        // 1) Prefer the CRM "Primary domain" custom field as the authoritative key.
+        if (primaryDomainFieldId != null && !primaryDomainFieldId.isBlank()) {
+            String byCustomField = lookupByPrimaryDomainCustomField(normalizedRequested, headers);
+            if (byCustomField != null) {
+                log.info(
+                        "Teamleader: resolved companyId={} via CRM primary-domain custom field (normalized={})",
+                        byCustomField,
+                        normalizedRequested);
+                return byCustomField;
+            }
+            log.debug(
+                    "Teamleader: no company found via CRM primary-domain custom field for normalized={}, falling back to term search",
+                    normalizedRequested);
+        } else {
+            log.debug("Teamleader primary-domain field id not configured; using legacy term search only");
+        }
+
+        // 2) Fallback
         // Door 'term' te gebruiken, zoekt Teamleader breed naar het domein,
         // inclusief in de e-mailadressen van het bedrijf.
         String body = """
@@ -144,7 +164,7 @@ public class TeamleaderCompanyService {
         );
 
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> data = (List<Map<String, Object>>) Objects.requireNonNull(response.getBody()).get("data");
+        List<Map<String, Object>> data = response.getBody() != null ? (List<Map<String, Object>>) response.getBody().get("data") : null;
         if (data == null || data.isEmpty()) {
             log.debug("Teamleader companies.list: zero hits for filterTerm={}", domain);
             return null;
@@ -167,7 +187,6 @@ public class TeamleaderCompanyService {
         }
 
         //if primary domain field is not empty,  normalize the domain (which comes from the email in getCompanyIdByDomain)
-        String normalizedRequested = normalizeDomain(domain);
         boolean sawNonEmptyPrimaryDomain = false;
 
         log.debug(
@@ -225,6 +244,46 @@ public class TeamleaderCompanyService {
                 "Teamleader: no company CRM primary domain matches filterTerm={} (normalizedRequested={})",
                 domain,
                 normalizedRequested);
+        return null;
+    }
+
+    private String lookupByPrimaryDomainCustomField(String normalizedDomain, HttpHeaders headers) {
+        String body = """
+        {
+          "filter": {
+            "custom_fields": [
+              { "id": "%s", "value": "%s" }
+            ]
+          }
+        }
+        """.formatted(primaryDomainFieldId, normalizedDomain);
+        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                teamleaderApiBase + "/companies.list",
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> data = response.getBody() != null
+                ? (List<Map<String, Object>>) response.getBody().get("data")
+                : null;
+        if (data == null || data.isEmpty()) {
+            return null;
+        }
+        log.debug(
+                "Teamleader custom-field filter: hits={}, normalizedDomain={}, fieldId={}",
+                data.size(), normalizedDomain, primaryDomainFieldId);
+        int scanLimit = Math.min(data.size(), PRIMARY_DOMAIN_LOOKUP_CAP);
+        for (int i = 0; i < scanLimit; i++) {
+            String companyId = (String) data.get(i).get("id");
+            if (companyId == null) continue;
+            Map<String, Object> details = performGetCompanyDetails(companyId, headers);
+            String crmPrimary = extractPrimaryDomainFromCompany(details);
+            if (crmPrimary != null && normalizeDomain(crmPrimary).equals(normalizedDomain)) {
+                return companyId;
+            }
+        }
         return null;
     }
 
