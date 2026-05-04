@@ -41,6 +41,8 @@ public class TeamleaderCompanyServiceTest {
 
     private static final String API_BASE = "https://api.teamleader.eu";
     private static final String COMPANY_ID = "company-123";
+    /** Must match {@code teamleader.customfield.primary-domain.id} shape used in production properties. */
+    private static final String PRIMARY_DOMAIN_FIELD_ID = "00000000-0000-0000-0000-000000000001";
 
     @BeforeEach
     void setUp() {
@@ -195,6 +197,120 @@ public class TeamleaderCompanyServiceTest {
 
         assertThrows(HttpClientErrorException.Unauthorized.class, () -> teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers));
         verify(teamleaderService).refreshTokens();
+    }
+
+    @Test
+    void getCompanyIdByDomain_primaryDomainFieldConfigured_customFieldLookupMatchesCrm_returnsCompanyId() {
+        ReflectionTestUtils.setField(teamleaderCompanyService, "primaryDomainFieldId", PRIMARY_DOMAIN_FIELD_ID);
+        HttpHeaders headers = new HttpHeaders();
+
+        when(restTemplate.exchange(
+                eq(API_BASE + "/companies.list"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of(Map.of("id", COMPANY_ID))));
+
+        Map<String, Object> companyData = Map.of(
+                "id", COMPANY_ID,
+                "name", "Acme",
+                "custom_fields", List.of(
+                        Map.of(
+                                "definition", Map.of("id", PRIMARY_DOMAIN_FIELD_ID),
+                                "value", "example.com")));
+
+        when(restTemplate.exchange(
+                eq(API_BASE + "/companies.info"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(TeamleaderTestHelper.createCompanyInfoResponse(companyData));
+
+        String result = teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers);
+
+        assertEquals(COMPANY_ID, result);
+        verify(restTemplate, times(1)).exchange(
+                eq(API_BASE + "/companies.list"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class));
+        verify(restTemplate, times(1)).exchange(
+                eq(API_BASE + "/companies.info"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class));
+    }
+
+    @Test
+    void getCompanyIdByDomain_primaryDomainFieldConfigured_customFieldEmpty_termSearchEmailFallback_returnsCompanyId() {
+        ReflectionTestUtils.setField(teamleaderCompanyService, "primaryDomainFieldId", PRIMARY_DOMAIN_FIELD_ID);
+        HttpHeaders headers = new HttpHeaders();
+
+        when(restTemplate.exchange(
+                eq(API_BASE + "/companies.list"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class)
+        ))
+                .thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of()))
+                .thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of(Map.of("id", COMPANY_ID))));
+
+        Map<String, Object> detailsWithMismatchingCrmButMatchingCompanyEmail = Map.of(
+                "id", COMPANY_ID,
+                "name", "Acme",
+                "custom_fields", List.of(
+                        Map.of(
+                                "definition", Map.of("id", PRIMARY_DOMAIN_FIELD_ID),
+                                "value", "other-customer.com")),
+                "emails", List.of(Map.of("type", "primary", "email", GlobalTestHelper.ADMIN)));
+
+        when(restTemplate.exchange(
+                eq(API_BASE + "/companies.info"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(TeamleaderTestHelper.createCompanyInfoResponse(detailsWithMismatchingCrmButMatchingCompanyEmail));
+
+        String result = teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers);
+
+        assertEquals(COMPANY_ID, result);
+        verify(restTemplate, times(2)).exchange(
+                eq(API_BASE + "/companies.list"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class));
+    }
+
+    @Test
+    void getCompanyIdByDomain_primaryDomainFieldConfigured_noCrmOrEmailMatch_returnsNull() {
+        ReflectionTestUtils.setField(teamleaderCompanyService, "primaryDomainFieldId", PRIMARY_DOMAIN_FIELD_ID);
+        HttpHeaders headers = new HttpHeaders();
+
+        when(restTemplate.exchange(
+                eq(API_BASE + "/companies.list"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class)
+        ))
+                .thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of()))
+                .thenReturn(TeamleaderTestHelper.createCompanyListResponse(List.of(Map.of("id", COMPANY_ID))));
+
+        Map<String, Object> details = Map.of(
+                "id", COMPANY_ID,
+                "custom_fields", List.of(
+                        Map.of(
+                                "definition", Map.of("id", PRIMARY_DOMAIN_FIELD_ID),
+                                "value", "wrong.com")),
+                "emails", List.of(Map.of("type", "primary", "email", "person@unrelated.org")));
+
+        when(restTemplate.exchange(
+                eq(API_BASE + "/companies.info"),
+                eq(HttpMethod.POST),
+                any(HttpEntity.class),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(TeamleaderTestHelper.createCompanyInfoResponse(details));
+
+        assertNull(teamleaderCompanyService.getCompanyIdByDomain(GlobalTestHelper.ADMIN, headers));
     }
 
     @Test
