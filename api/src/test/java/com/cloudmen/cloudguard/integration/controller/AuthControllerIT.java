@@ -227,13 +227,19 @@ public class AuthControllerIT {
 
         when(authService.processLogin(eq(externalToken))).thenReturn(loginResult);
 
-        mockMvc.perform(
-                        post("/api/auth/login")
-                                .contextPath("/api")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(requestDto)))
+        mockMvc.perform(post("/api/auth/login")
+                        .contextPath("/api")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.SET_COOKIE, sessionCookie.toString()))
+                // GEFIXTE REGELS: Gebruik de specifieke cookie() matchers!
+                .andExpect(cookie().value(AUTH_COOKIE, VALID_TOKEN))
+                .andExpect(cookie().httpOnly(AUTH_COOKIE, true))
+                .andExpect(cookie().secure(AUTH_COOKIE, true))
+                .andExpect(cookie().path(AUTH_COOKIE, "/"))
+                .andExpect(cookie().maxAge(AUTH_COOKIE, 86400))
+                // (Afhankelijk van je Spring versie kun je ook sameSite testen)
+                .andExpect(cookie().sameSite(AUTH_COOKIE, "Strict"))
                 .andExpect(jsonPath("$.email").value("admin@acme.com"));
 
         verify(authService).processLogin(externalToken);

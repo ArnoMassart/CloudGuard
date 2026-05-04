@@ -29,20 +29,20 @@ public class AppPasswordController {
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String query) {
-        String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getAppPasswordsPaged(email, pageToken, size, query);
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return appPasswordsService.getAppPasswordsPaged(loggedInEmail, pageToken, size, query);
     }
 
     @GetMapping("/overview")
     public AppPasswordOverviewResponse getOverview(@CookieValue(name = "AuthToken", required = false) String token) {
-        String email = jwtService.validateInternalToken(token);
-        return appPasswordsService.getOverview(email, preferenceService.getDisabledPreferenceKeys(email));
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        return appPasswordsService.getOverview(loggedInEmail, preferenceService.getDisabledPreferenceKeys(loggedInEmail));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<String> refreshCache(@CookieValue(name = "AuthToken", required = false) String token) {
-        String email = jwtService.validateInternalToken(token);
-        appPasswordsService.forceRefreshCache(email);
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        appPasswordsService.forceRefreshCache(loggedInEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

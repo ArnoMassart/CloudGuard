@@ -111,7 +111,7 @@ class PasswordSettingsServiceTest {
         service.getPasswordSettings(ADMIN);
         service.getPasswordSettings(ADMIN);
 
-        verify(usersCache, times(1)).getOrFetchUsersData(ADMIN);
+        verify(usersCache, times(1)).getOrFetchData(ADMIN);
     }
 
     @Test
@@ -147,12 +147,16 @@ class PasswordSettingsServiceTest {
         ok.setIsEnrolledIn2Sv(true);
         ok.setIsEnforcedIn2Sv(true);
 
-        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
+        lenient().when(usersCache.getOrFetchData(ADMIN)).thenReturn(
                 new UserCacheEntry(List.of(forced, ok), Map.of(), Map.of(), 0L));
-        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
+
+        lenient().when(orgUnitCache.getOrFetchDataByAdmin(ADMIN)).thenReturn(
                 new OrgUnitCacheEntry(List.of(), Map.of("/", 2), 0L));
-        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
-        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
+        lenient().when(orgUnitCache.getOrFetchData(ADMIN)).thenReturn(
+                new OrgUnitCacheEntry(List.of(), Map.of("/", 2), 0L));
+
+        lenient().when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
+        lenient().when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
 
         var missingKeyAdmin = new AdminWithSecurityKeyDto(
                 "a1", "Admin One", "admin1@example.com", "Admin", "/", true, 0);
@@ -340,12 +344,17 @@ class PasswordSettingsServiceTest {
     }
 
     private void stubMinimalTenant() throws Exception {
-        when(usersCache.getOrFetchUsersData(ADMIN)).thenReturn(
+        lenient().when(usersCache.getOrFetchData(ADMIN)).thenReturn(
                 new UserCacheEntry(List.of(), Map.of(), Map.of(), 0L));
-        when(orgUnitCache.getOrFetchOrgUnitData(ADMIN)).thenReturn(
+
+        // Voor het geval je service nog de oude methodenaam gebruikt:
+        lenient().when(orgUnitCache.getOrFetchDataByAdmin(ADMIN)).thenReturn(
                 new OrgUnitCacheEntry(List.of(), Map.of("/", 0), 0L));
-        when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
-        when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
+        lenient().when(orgUnitCache.getOrFetchData(ADMIN)).thenReturn(
+                new OrgUnitCacheEntry(List.of(), Map.of("/", 0), 0L));
+
+        lenient().when(policyCache.getOuIdToPathMap(ADMIN)).thenReturn(Collections.emptyMap());
+        lenient().when(policyCache.getAllPolicies(ADMIN)).thenReturn(Collections.emptyList());
     }
 
     private static OuPasswordPolicyDto ouPolicy(

@@ -8,9 +8,6 @@ import com.cloudmen.cloudguard.dto.groups.GroupSettingsDto;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
-import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.admin.directory.Directory;
@@ -38,20 +35,13 @@ import java.util.concurrent.TimeUnit;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.decodePrivateKey;
 
 @Service
-public class GoogleGroupsCacheService {
+public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheService<GroupCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleGroupsCacheService.class);
 
     private final GoogleApiFactory googleApiFactory;
 
-    private final Cache<String, GroupCacheEntry> cache = Caffeine.newBuilder()
-            .expireAfterWrite(6, TimeUnit.HOURS)
-            .maximumSize(100)
-            .build();
-
     private static final String CLOUD_IDENTITY_SCOPE = "https://www.googleapis.com/auth/cloud-identity.groups.readonly";
     private static final String GROUPS_SETTINGS_SCOPE = "https://www.googleapis.com/auth/apps.groups.settings";
-    private final UserService userService;
-    private final OrganizationService organizationService;
 
 
     @Value("${google.api.client-email}")
@@ -61,24 +51,14 @@ public class GoogleGroupsCacheService {
     private String privateKey;
 
     public GoogleGroupsCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
+        super(userService, organizationService, 6);
         this.googleApiFactory = googleApiFactory;
-        this.userService = userService;
-        this.organizationService = organizationService;
     }
 
-    public void forceRefreshCache(String loggedInEmail) {
-        cache.asMap().compute(loggedInEmail, this::fetchFromGoogle);
-    }
-
-    public GroupCacheEntry getOrFetchGroupData(String loggedInEmail) {
-       return cache.get(loggedInEmail, email -> fetchFromGoogle(email, null));
-    }
-
-    private GroupCacheEntry fetchFromGoogle(String loggedInEmail, GroupCacheEntry fallbackEntry) {
+    @Override
+    protected GroupCacheEntry fetchFromGoogle(String adminEmail, GroupCacheEntry fallbackEntry) {
         try {
-            String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
-
-            log.info("Ophalen LIVE groepen data van Google. Gebruiker: {}, Impersonatie via Admin: {}", loggedInEmail, adminEmail);
+            log.info("Ophalen LIVE groepen data van Google. Impersonatie via Admin: {}", adminEmail);
 
             Set<String> scopes = Set.of(
                     DirectoryScopes.ADMIN_DIRECTORY_GROUP_READONLY,

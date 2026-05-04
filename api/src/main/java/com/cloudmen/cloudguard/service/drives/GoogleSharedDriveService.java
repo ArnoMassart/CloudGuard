@@ -64,7 +64,7 @@ public class GoogleSharedDriveService {
      * @return a {@link SharedDrivePageResponse} containing the requested page and metadata
      */
     public SharedDrivePageResponse getSharedDrivesPaged(String loggedInEmail, String pageToken, int size, String query) {
-        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
+        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchData(loggedInEmail);
 
         List<SharedDriveBasicDetail> filteredList = cachedData.allDrives();
         if (query != null && !query.trim().isEmpty()) {
@@ -114,7 +114,7 @@ public class GoogleSharedDriveService {
      */
     public SharedDriveOverviewResponse getDrivesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchDriveData(loggedInEmail);
+        SharedDriveCacheEntry cachedData = sharedDriveCacheService.getOrFetchData(loggedInEmail);
         List<SharedDriveBasicDetail> drives = cachedData.allDrives();
 
         int totalDrives = drives.size();

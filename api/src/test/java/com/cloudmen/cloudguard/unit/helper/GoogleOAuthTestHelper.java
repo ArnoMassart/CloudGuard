@@ -29,6 +29,6 @@ public class GoogleOAuthTestHelper {
         lenient().when(mockEntry.allRawTokens()).thenReturn(tokens);
         lenient().when(mockEntry.totalDomainUsers()).thenReturn(totalDomainUsers);
 
-        when(cacheService.getOrFetchOAuthData(GlobalTestHelper.ADMIN)).thenReturn(mockEntry);
+        when(cacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(mockEntry);
     }
 }

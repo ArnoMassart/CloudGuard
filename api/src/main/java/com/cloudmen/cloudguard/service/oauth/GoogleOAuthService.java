@@ -54,7 +54,7 @@ public class GoogleOAuthService {
      * @return an {@link OAuthPagedResponse} containing the requested page and metadata
      */
     public OAuthPagedResponse getOAuthPaged(String loggedInEmail, String pageToken, int size, String query, String risk) {
-        OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchOAuthData(loggedInEmail);
+        OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchData(loggedInEmail);
         int totalDomainUsers = cachedData.totalDomainUsers();
 
         List<AggregatedAppBuilder> builders = aggregateTokens(cachedData.allRawTokens());
@@ -120,7 +120,7 @@ public class GoogleOAuthService {
      */
     public OAuthOverviewResponse getOAuthPageOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchOAuthData(loggedInEmail);
+        OAuthCacheEntry cachedData = oAuthCacheService.getOrFetchData(loggedInEmail);
         List<RawUserToken> rawTokens = cachedData.allRawTokens();
 
         List<AggregatedAppBuilder> apps = aggregateTokens(rawTokens);

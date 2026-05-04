@@ -4,7 +4,6 @@ import com.cloudmen.cloudguard.dto.organization.OrgUnitPolicyDto;
 import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.Directory;
-import com.google.api.services.admin.directory.DirectoryScopes;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import com.google.api.services.admin.directory.model.User;
 import com.google.api.services.admin.directory.model.Users;
@@ -120,7 +119,7 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
             log.info("Ophalen mobiel beheerniveau per apparaat. Impersonatie via Admin: {}", adminEmail);
 
             Map<String, String> emailToOu = fetchEmailToOuMap(adminEmail);
-            List<MobileDevice> devices = deviceCache.getOrFetchDeviceData(adminEmail).mobileDevices();
+            List<MobileDevice> devices = deviceCache.getOrFetchData(adminEmail).mobileDevices();
             if (devices == null) devices = List.of();
 
             Map<String, MdStats> statsMap = new HashMap<>();

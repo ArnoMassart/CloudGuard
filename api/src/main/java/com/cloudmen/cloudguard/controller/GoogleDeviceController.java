@@ -111,8 +111,8 @@ public class GoogleDeviceController {
     public ResponseEntity<String> refreshDevicesCache(
             @CookieValue(name = "AuthToken", required = false) String token
     ) {
-        String adminEmail = jwtService.validateInternalToken(token);
-        googleDeviceService.forceRefreshCache(adminEmail);
+        String loggedInEmail = jwtService.validateInternalToken(token);
+        googleDeviceService.forceRefreshCache(loggedInEmail);
         return ResponseEntity.ok("Cache is succesvol vernieuwd!");
     }
 }

@@ -143,7 +143,7 @@ export class UsersSection implements OnInit {
 
   /** 2FA off and 2FA warning muted in preferences → gray cell (Security column unchanged). */
   twoFactorCellMuted(user: UserOrgDetail): boolean {
-    return !user.twoFactorEnabled && this.#preferencesFacade.isDisabled('users-groups', '2fa');
+    return !user.isTwoFactorEnabled && this.#preferencesFacade.isDisabled('users-groups', '2fa');
   }
 
   /** Activity warning muted and user has an activity violation → gray last-login cell. */
@@ -163,7 +163,7 @@ export class UsersSection implements OnInit {
    * Shows Conform when the user is already conform, or when every violation is covered by a disabled (muted) preference.
    */
   effectiveSecurityConform(user: UserOrgDetail): boolean {
-    if (user.securityConform) {
+    if (user.isSecurityConform) {
       return true;
     }
     const codes = user.securityViolationCodes;

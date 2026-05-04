@@ -9,10 +9,10 @@ export type UserOrgDetail = {
   fullName: string;
   email: string;
   role: string;
-  active: boolean;
+  isActive: boolean;
   lastLogin: string;
-  twoFactorEnabled: boolean;
-  securityConform: boolean;
+  isTwoFactorEnabled: boolean;
+  isSecurityConform: boolean;
   /** When every listed violation is muted by Beveiligingsvoorkeuren, UI shows Conform. */
   securityViolationCodes?: string[];
 };

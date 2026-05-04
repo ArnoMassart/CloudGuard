@@ -40,6 +40,6 @@ public class GoogleSharedDriveTestHelper {
 
         lenient().when(mockEntry.allDrives()).thenReturn(drives);
 
-        when(cacheService.getOrFetchDriveData(GlobalTestHelper.ADMIN)).thenReturn(mockEntry);
+        when(cacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(mockEntry);
     }
 }

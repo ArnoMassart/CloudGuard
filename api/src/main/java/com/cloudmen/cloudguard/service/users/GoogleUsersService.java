@@ -56,7 +56,7 @@ public class GoogleUsersService {
      * @return a {@link UserPageResponse} containing the requested users
      */
     public UserPageResponse getWorkspaceUsersPaged(String loggedInEmail, String pageToken, int size, String query) {
-        UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
+        UserCacheEntry cachedData = usersCacheService.getOrFetchData(loggedInEmail);
 
         List<User> filteredList = cachedData.allUsers();
         if (query != null && !query.trim().isEmpty()) {
@@ -92,7 +92,7 @@ public class GoogleUsersService {
      * @return a {@link UsersWithoutTwoFactorResponse} containing the non-compliant users
      */
     public UsersWithoutTwoFactorResponse getUsersWithoutTwoFactor(String loggedInEmail) {
-        UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
+        UserCacheEntry cachedData = usersCacheService.getOrFetchData(loggedInEmail);
         List<UsersWithoutTwoFactorResponse.UserSummary> users = cachedData.allUsers().stream()
                 .filter(user -> !Boolean.TRUE.equals(user.getSuspended()) && !Boolean.TRUE.equals(user.getIsEnrolledIn2Sv()))
                 .map(user -> new UsersWithoutTwoFactorResponse.UserSummary(
@@ -116,7 +116,7 @@ public class GoogleUsersService {
      */
     public UserOverviewResponse getUsersPageOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        UserCacheEntry cachedData = usersCacheService.getOrFetchUsersData(loggedInEmail);
+        UserCacheEntry cachedData = usersCacheService.getOrFetchData(loggedInEmail);
         List<User> googleUsers = cachedData.allUsers();
         LocalDate now = LocalDate.now();
 

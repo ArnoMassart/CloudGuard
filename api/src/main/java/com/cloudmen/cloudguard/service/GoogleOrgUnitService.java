@@ -21,12 +21,12 @@ public class GoogleOrgUnitService {
         this.messageSource = messageSource;
     }
 
-    public void forceRefreshCache(String adminEmail) {
-        orgUnitCacheService.forceRefreshCache(adminEmail);
+    public void forceRefreshCache(String loggedInEmail) {
+        orgUnitCacheService.forceRefreshCache(loggedInEmail);
     }
 
     public OrgUnitNodeDto getOrgUnitTree(String loggedInEmail) {
-        OrgUnitCacheEntry cachedData = orgUnitCacheService.getOrFetchOrgUnitData(loggedInEmail);
+        OrgUnitCacheEntry cachedData = orgUnitCacheService.getOrFetchData(loggedInEmail);
         List<OrgUnit> allOrgUnits = cachedData.allOrgUnits();
         Map<String, Integer> userCounts = cachedData.userCounts();
 

@@ -34,13 +34,7 @@ public interface NotificationInstanceRepository extends JpaRepository<Notificati
     int deleteByStatusAndSolvedAtBefore(
             @Param("status") NotificationInstanceStatus status, @Param("cutoff") LocalDateTime cutoff);
 
-    /**
-     * Race-safe insert of the parent {@code tbl_notifications} row for a unique
-     * {@code (organization_id, source, notification_type)} key. Uses MySQL's
-     * {@code ON DUPLICATE KEY UPDATE id = id} no-op so concurrent writers cannot fail
-     * with a duplicate-key violation. Recommended actions ({@code @ElementCollection}
-     * child rows) are not inserted here; callers should set them via JPA after reload.
-     */
+    
     @Modifying
     @Query(value = """
             INSERT INTO tbl_notifications

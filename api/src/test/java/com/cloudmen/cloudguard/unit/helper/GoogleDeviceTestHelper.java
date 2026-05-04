@@ -73,6 +73,6 @@ public class GoogleDeviceTestHelper {
         lenient().when(mockEntry.chromeOsDevices()).thenReturn(chromeOs);
         lenient().when(mockEntry.endpointDevices()).thenReturn(endpoints);
 
-        when(cacheService.getOrFetchDeviceData(ADMIN)).thenReturn(mockEntry);
+        when(cacheService.getOrFetchData(ADMIN)).thenReturn(mockEntry);
     }
 }

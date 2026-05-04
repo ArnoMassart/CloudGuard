@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { RouteService } from '../services/route-service';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
 import { Router } from '@angular/router';
-import { catchError, map, tap, timeout } from 'rxjs/operators';
+import { catchError, map, tap, timeout, finalize, switchMap } from 'rxjs/operators';
 import { User } from '../models/users/User';
 import { AuthService } from '@auth0/auth0-angular';
 import { WarmupCacheService } from '../services/warmup-cache-service';
@@ -43,40 +43,57 @@ export class CustomAuthService {
       })
       .pipe(
         timeout(3000),
-        map((res) => res.ok),
-        catchError(() => of(false)),
-        tap((isAuthenticated) => {
-          this.#loggedInStatus.next(isAuthenticated);
-          this.#isChecking = false;
-
-          if (isAuthenticated) {
-            this.#fetchCurrentUser();
-            this.loadCloudmenStaffFlag();
-          } else {
+        switchMap((res)=>{
+          if(!res.ok) {
+            this.#loggedInStatus.next(false);
             this.#initializedStatus.next(true);
+            return of(false);
           }
-        })
+          return this.#fetchCurrentUser$().pipe(
+            map((user) => {
+              const ok = !!user;
+              this.#loggedInStatus.next(ok);
+              return ok;
+            }),
+          );
+        }),
+        catchError(() => {
+          this.#loggedInStatus.next(false);
+          this.#initializedStatus.next(true);
+          return of(false);
+        }),
+        finalize(()=>{
+          this.#isChecking = false;
+        }),
       );
   }
 
-  #fetchCurrentUser(): void {
-    this.#http
-      .get<User>(`${this.#API_URL}/me`, { withCredentials: true })
-      .pipe(catchError(() => of(null)))
-      .subscribe((user) => {
-        if (user) {
-          this.currentUser.set(user);
+  #fetchCurrentUser$(): Observable<User | null> {
+    return this.#http.get<User>(`${this.#API_URL}/me`, { withCredentials: true }).pipe(
+      catchError(() => of(null)),
+      switchMap((user) => {
+        if (!user) {
+          this.currentUser.set(null);
+          this.isCloudmenStaff.set(false);
+          this.#initializedStatus.next(true);
+          return of(null);
         }
-        // BELANGRIJK: Pas als de data in de signal zit, mag de guard doorlopen!
-        this.#initializedStatus.next(true);
-      });
+        this.currentUser.set(user);
+        return this.userService.isCloudmenStaff().pipe(
+          tap((v) => this.isCloudmenStaff.set(v)),
+          catchError(() => {
+            this.isCloudmenStaff.set(false);
+            return of(undefined);
+          }),
+          map(() => user),
+          tap(() => this.#initializedStatus.next(true)),
+        );
+      }),
+    );
   }
 
-  private loadCloudmenStaffFlag(): void {
-    this.userService.isCloudmenStaff().subscribe({
-      next: (v)=> this.isCloudmenStaff.set(v),
-      error: () => this.isCloudmenStaff.set(false)
-    });
+  fetchCurrentUser(): void {
+    this.#fetchCurrentUser$().subscribe();
   }
 
   logout(): void {
@@ -129,10 +146,8 @@ export class CustomAuthService {
         tap((user) => {
           this.currentUser.set(user);
           this.#loggedInStatus.next(true);
-          this.#initializedStatus.next(true);
-          this.loadCloudmenStaffFlag();
-          this.#fetchCurrentUser();
-        })
+          this.fetchCurrentUser();
+        }),
       );
   }
 }

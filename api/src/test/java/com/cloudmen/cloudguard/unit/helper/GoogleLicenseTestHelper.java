@@ -35,7 +35,7 @@ public class GoogleLicenseTestHelper {
         lenient().when(mockEntry.licenseTypes()).thenReturn(types);
         lenient().when(mockEntry.inactiveUsers()).thenReturn(inactiveUsers);
 
-        when(cacheService.getOrFetchLicenseData(ADMIN)).thenReturn(mockEntry);
+        when(cacheService.getOrFetchData(ADMIN)).thenReturn(mockEntry);
     }
 
     public static void mockUsersCacheEntry(GoogleUsersCacheService cacheService, List<User> users) {
@@ -43,6 +43,6 @@ public class GoogleLicenseTestHelper {
 
         lenient().when(mockEntry.allUsers()).thenReturn(users);
 
-        lenient().when(cacheService.getOrFetchUsersData(ADMIN)).thenReturn(mockEntry);
+        lenient().when(cacheService.getOrFetchData(ADMIN)).thenReturn(mockEntry);
     }
 }

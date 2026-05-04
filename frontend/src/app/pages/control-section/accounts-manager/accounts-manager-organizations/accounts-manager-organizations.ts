@@ -8,7 +8,7 @@ import { SearchBar } from '../../../../components/search-bar/search-bar';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
 import { MatDialog } from '@angular/material/dialog';
-import { Subscription } from 'rxjs';
+import { Subscription, distinctUntilChanged } from 'rxjs';
 import { AssignRoleDialog } from '../../../../components/assign-role-dialog/assign-role-dialog';
 import { AccountSectionType } from '../../../../models/AccountSectionType';
 import { Organization } from '../../../../models/org/Organization';
@@ -55,9 +55,11 @@ export class AccountsManagerOrganizations {
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
-    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
-      this.loadOrganizations();
-    });
+    const reload = () => this.loadOrganizations();
+    reload();
+    this.langSubscription = this.#translocoService.langChanges$
+      .pipe(distinctUntilChanged())
+      .subscribe(reload);
   }
 
   ngOnDestroy(): void {
