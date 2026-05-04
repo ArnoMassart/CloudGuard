@@ -144,7 +144,7 @@ public class CacheWarmupService {
 
         CompletableFuture<?>[] tasksArray = tasks.toArray(new CompletableFuture[0]);
 
-        return CompletableFuture.allOf(tasksArray).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle {} modules voor: {}", tasks.size() ,loggedInEmail));
+        return CompletableFuture.allOf(tasksArray).thenAccept(v -> log.info("✅ Cache warm-up succesvol voltooid voor alle {} modules voor: {}", tasks.size(), loggedInEmail));
     }
 
     private CompletableFuture<Void> runSafeAsync(ThrowingRunnable task, String taskName) {

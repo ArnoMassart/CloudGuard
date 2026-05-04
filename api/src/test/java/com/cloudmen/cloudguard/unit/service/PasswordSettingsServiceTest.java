@@ -94,7 +94,7 @@ class PasswordSettingsServiceTest {
     void forceRefreshCache_invalidatesInternalCacheAndRefreshesDependencies() {
         service.forceRefreshCache(ADMIN);
 
-        verify(policyCache).forceRefreshCache();
+        verify(policyCache).forceRefreshCache(ADMIN);
         verify(usersCache).forceRefreshCache(ADMIN);
         verify(orgUnitCache).forceRefreshCache(ADMIN);
         verify(adminSecurityKeysService).forceRefreshCache(ADMIN);

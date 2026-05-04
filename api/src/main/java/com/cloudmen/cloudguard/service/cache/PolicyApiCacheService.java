@@ -1,6 +1,9 @@
 package com.cloudmen.cloudguard.service.cache;
 
+import com.cloudmen.cloudguard.dto.policy.PolicyApiCacheEntry;
 import com.cloudmen.cloudguard.exception.GoogleWorkspaceSyncException;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,114 +27,56 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Shared cache for Cloud Identity Policy API responses. Fetches all policies
- * once and caches them for 5 minutes to stay within the 30 req/min quota.
+ * Shared cache for Cloud Identity Policy API responses and Directory OU id→path maps,
+ * per Workspace admin, via Caffeine (15 min expiry; Policy API quota aware).
  */
 @Service
-public class PolicyApiCacheService {
+public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<PolicyApiCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(PolicyApiCacheService.class);
     private static final String POLICY_API_SCOPE = "https://www.googleapis.com/auth/cloud-identity.policies.readonly";
     private static final String POLICY_API_BASE = "https://cloudidentity.googleapis.com/v1/policies";
-    private static final long CACHE_TTL_MS = 15 * 60 * 1000L; // 15 min (Policy API: 1 QPS per customer)
+    private static final int CACHE_TTL_MINUTES = 15;
 
     private final GoogleApiFactory directoryFactory;
     private final MessageSource messageSource;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    private final AtomicReference<List<JsonNode>> cachedPolicies = new AtomicReference<>();
-    private final AtomicLong policyCacheTimestamp = new AtomicLong(0);
-
-    private final AtomicReference<Map<String, String>> cachedOuIdToPath = new AtomicReference<>();
-    private final AtomicLong ouCacheTimestamp = new AtomicLong(0);
-
-    private final Object policyLock = new Object();
-    private final Object ouLock = new Object();
-
     public PolicyApiCacheService(
             GoogleApiFactory directoryFactory,
-            @Qualifier("messageSource") MessageSource messageSource) {
+            @Qualifier("messageSource") MessageSource messageSource,
+            UserService userService,
+            OrganizationService organizationService) {
+        super(userService, organizationService, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
         this.directoryFactory = directoryFactory;
         this.messageSource = messageSource;
     }
 
-    /**
-     * Invalidates the policy cache so the next request fetches fresh data.
-     */
-    public void forceRefreshCache() {
-        policyCacheTimestamp.set(0);
-        ouCacheTimestamp.set(0);
-    }
-
-    public List<JsonNode> getAllPolicies(String adminEmail) throws Exception {
-        long now = System.currentTimeMillis();
-        List<JsonNode> currentPolicies = cachedPolicies.get();
-        long currentTimestamp = policyCacheTimestamp.get();
-
-        // 1st Check
-        if (currentPolicies != null && (now - currentTimestamp) < CACHE_TTL_MS) {
-            log.debug("Returning {} cached policies", currentPolicies.size());
-            return currentPolicies;
-        }
-
-        // Cache miss: synchronize to ensure only one thread fetches
-        synchronized (policyLock) {
-            // Re-read inside the lock (another thread might have updated it)
-            currentPolicies = cachedPolicies.get();
-            currentTimestamp = policyCacheTimestamp.get();
-            now = System.currentTimeMillis();
-
-            // 2nd Check
-            if (currentPolicies != null && (now - currentTimestamp) < CACHE_TTL_MS) {
-                return currentPolicies;
+    @Override
+    protected PolicyApiCacheEntry fetchFromGoogle(String adminEmail, PolicyApiCacheEntry fallback) {
+        try {
+            List<JsonNode> policies = List.copyOf(fetchAllPolicies(adminEmail));
+            Map<String, String> ouMap = Map.copyOf(fetchOuIdToPathMap(adminEmail));
+            return new PolicyApiCacheEntry(policies, ouMap);
+        } catch (Exception e) {
+            if (fallback != null) {
+                log.error("Policy API / Directory failed; using stale cache: {}", e.getMessage());
+                return fallback;
             }
-
-            // Fetch and update cache safely
-            List<JsonNode> fresh = fetchAllPolicies(adminEmail);
-            List<JsonNode> immutableFresh = List.copyOf(fresh); // Still use copyOf for immutability
-
-            cachedPolicies.set(immutableFresh);
-            policyCacheTimestamp.set(System.currentTimeMillis());
-
-            return immutableFresh;
+            throw new GoogleWorkspaceSyncException(
+                    "Fout bij ophalen policy / OU data: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Returns a cached mapping from OU ID
-     */
-    public Map<String, String> getOuIdToPathMap(String adminEmail) throws Exception {
-        long now = System.currentTimeMillis();
-        Map<String, String> currentMap = cachedOuIdToPath.get();
-        long currentTimestamp = ouCacheTimestamp.get();
+    public List<JsonNode> getAllPolicies(String adminEmail) {
+        return getOrFetchDataByAdmin(adminEmail).policies();
+    }
 
-        // 1st Check
-        if (currentMap != null && (now - currentTimestamp) < CACHE_TTL_MS) {
-            return currentMap;
-        }
-
-        synchronized (ouLock) {
-            currentMap = cachedOuIdToPath.get();
-            currentTimestamp = ouCacheTimestamp.get();
-            now = System.currentTimeMillis();
-
-            // 2nd Check
-            if (currentMap != null && (now - currentTimestamp) < CACHE_TTL_MS) {
-                return currentMap;
-            }
-
-            Map<String, String> fresh = fetchOuIdToPathMap(adminEmail);
-            Map<String, String> immutableFresh = Map.copyOf(fresh);
-
-            cachedOuIdToPath.set(immutableFresh);
-            ouCacheTimestamp.set(System.currentTimeMillis());
-
-            return immutableFresh;
-        }
+    public Map<String, String> getOuIdToPathMap(String adminEmail) {
+        return getOrFetchDataByAdmin(adminEmail).ouIdToPath();
     }
 
     /**
@@ -174,7 +119,7 @@ public class PolicyApiCacheService {
                 }
             }
         }
-        log.info("Loaded {} OU ID→path mappings (cached for {}s)", map.size(), CACHE_TTL_MS / 1000);
+        log.info("Loaded {} OU ID→path mappings (Caffeine TTL {} min)", map.size(), CACHE_TTL_MINUTES);
         return map;
     }
 
@@ -230,7 +175,7 @@ public class PolicyApiCacheService {
             pageToken = (next != null && !next.isNull() && !next.asText().isBlank()) ? next.asText() : null;
         } while (pageToken != null);
 
-        log.info("Fetched {} policies from Policy API (cached for {}s)", out.size(), CACHE_TTL_MS / 1000);
+        log.info("Fetched {} policies from Policy API (Caffeine TTL {} min)", out.size(), CACHE_TTL_MINUTES);
         return out;
     }
 }
