@@ -110,7 +110,9 @@ public class TeamleaderAccessService {
 
         String companyId = teamleaderCompanyService.getCompanyIdByDomain(domainEmail, headers);
         if (companyId == null) {
-            log.info("Geen bedrijf gevonden voor domein: {}", domainEmail);
+            log.info(
+                    "Teamleader access: geen bedrijf gevonden (login-email={}; bedrijf wordt opgelost via domein uit dit adres)",
+                    domainEmail);
             return false;
         }
 
