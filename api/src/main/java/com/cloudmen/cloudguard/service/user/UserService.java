@@ -234,6 +234,8 @@ public class UserService {
                 user.setRoles(roles);
             }
 
+            user.setRoleRequested(false);
+
             userRepository.save(user);
         }
     }
