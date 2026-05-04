@@ -54,20 +54,6 @@ export class AccountsManagerDenied {
   readonly nextPageToken = signal<string | null>(null);
   readonly dialog = inject(MatDialog);
 
-  readonly expandedRoles = signal<Set<string>>(new Set<string>());
-
-  toggleRolesSummary(email: string, rolesLength: number) {
-    if (rolesLength > 2) {
-      const current = new Set(this.expandedRoles());
-      if (current.has(email)) {
-        current.delete(email);
-      } else {
-        current.add(email);
-      }
-      this.expandedRoles.set(current);
-    }
-  }
-
   readonly orgs = signal<Organization[]>([]);
 
   readonly selectedOrganization = signal<string>('');

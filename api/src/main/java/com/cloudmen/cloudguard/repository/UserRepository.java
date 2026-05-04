@@ -44,13 +44,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param pageable          pagination and sorting instructions
      * @return a paginated result of users without pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.accessRequested = false and u.accessDenied = false " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessAccepted " +
             "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<User> findAllWithoutRequested(
+    Page<User> findAllAccepted(
             @Param("organizationId") Long organizationId,
             @Param("query") String query,
             Pageable pageable);

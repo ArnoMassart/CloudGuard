@@ -266,4 +266,8 @@ export class AccountsManagerUsers {
       },
     });
   }
+
+  hasRequest(): boolean {
+    return this.users().some((u) => u.organizationRequested || u.roleRequested);
+  }
 }

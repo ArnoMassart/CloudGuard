@@ -376,7 +376,7 @@ public class UserService {
                 parsedOrgId = Long.parseLong(orgIdFilter);
             }
 
-            userPage = userRepository.findAllWithoutRequested(parsedOrgId, query, pageable);
+            userPage = userRepository.findAllAccepted(parsedOrgId, query, pageable);
         }else {
             userPage = userRepository.findAllByAccessRequestedWithSearch(query, pageable);
         }
