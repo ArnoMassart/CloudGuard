@@ -613,5 +613,22 @@
   "deny": "Deny",
   "denied.description": "Your request for CloudGuard has been rejected by a CLOUDMEN administrator.",
   "denied.sub-description": "If you think this is a mistake, contact your administrator.",
-  "request-access.description": "You have successfully logged in, but you have not yet been given access to the application by a CLOUDMEN administrator."
+  "request-access.description": "You have successfully logged in, but you have not yet been given access to the application by a CLOUDMEN administrator.",
+  "account-manager.denied.denied-users": "Denied users",
+  "account-manager.denied.none": "No denied users found",
+  "asign-org": "Assign organization",
+  "back": "Back",
+  "list": "list",
+  "select-an-org": "Choose an organization",
+  "select-org-org": "Select an organization...",
+  "account-manager.requests.page.description": "Manage all CloudGuard requests here as an administrator of CLOUDMEN",
+  "account-manager.requests.page.title": "Manage requests",
+  "denied": "Rejected",
+  "deny-reason": "Reason for refusal",
+  "enter-deny-reason": "Enter a reason for the refusal...",
+  "account-manager.denied.date-denied": "Date rejected",
+  "reset-denial.confirm-btn": "Reset rejection",
+  "reset-denial.description": "Are you sure you want to remove the denial for this user?",
+  "reset-denial.description-2": "This ensures that the user is no longer marked as 'denied', allowing them to reapply for access to the platform.",
+  "reset-denial.title": "Undo denial"
 }

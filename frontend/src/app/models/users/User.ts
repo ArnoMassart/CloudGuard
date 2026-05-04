@@ -13,6 +13,9 @@ export type User = {
   accessRequested: boolean;
   accessAccepted: boolean;
   accessDenied: boolean;
+  accessDeniedAt: Date;
+  accessDeniedReason: string;
+  accessRequestedAt: Date;
 };
 
 export enum Role {

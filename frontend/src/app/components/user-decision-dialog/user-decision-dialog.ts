@@ -30,6 +30,7 @@ export class UserDecisionDialog {
   selectedOrganizationId: string = '';
   isSuperAdmin: boolean = false;
   selectedRoles: Set<string> = new Set();
+  denyReason: string = '';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -78,6 +79,7 @@ export class UserDecisionDialog {
       organizationId: this.selectedOrganizationId,
       isSuperAdmin: this.isSuperAdmin,
       roles: Array.from(this.selectedRoles),
+      denyReason: this.denyReason.trim(),
     });
   }
 }

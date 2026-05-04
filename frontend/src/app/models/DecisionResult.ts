@@ -6,4 +6,5 @@ export type DecisionResult = {
   isSuperAdmin: boolean;
   organizationId: string;
   roles: Role[];
+  denyReason: string;
 };

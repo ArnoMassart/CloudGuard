@@ -118,6 +118,12 @@ public class User {
      */
     private boolean accessDenied = false;
 
+    private LocalDateTime accessDeniedAt;
+
+    private String accessDeniedReason;
+
+    private LocalDateTime accessRequestedAt;
+
     /**
      * A list of roles assigned to the user. <p>
      *

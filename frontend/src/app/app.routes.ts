@@ -31,6 +31,7 @@ import { cloudmenStaffGuard } from './guards/cloudmen-staff.guard';
 import { AccountsManagerRequests } from './pages/control-section/accounts-manager/accounts-manager-requests/accounts-manager-requests';
 import { RequestRole } from './pages/request-role/request-role';
 import { Denied } from './pages/denied/denied';
+import { AccountsManagerDenied } from './pages/control-section/accounts-manager/accounts-manager-denied/accounts-manager-denied';
 
 export const routes: Routes = [
   {
@@ -184,6 +185,11 @@ export const routes: Routes = [
   {
     path: 'accounts-manager/requests',
     component: AccountsManagerRequests,
+    canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
+  },
+  {
+    path: 'accounts-manager/denied-list',
+    component: AccountsManagerDenied,
     canActivate: [authGuard, accessGuard, roleGuard, cloudmenStaffGuard],
   },
   {

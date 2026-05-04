@@ -62,7 +62,7 @@ export class Navbar {
     },
     {
       Icon: this.Icons.Building2,
-      Label: 'organisational-units',
+      Label: 'organizational-units',
       Route: '/organizational-units',
       RequiredRole: Role.ORG_UNITS_VIEWER,
     },

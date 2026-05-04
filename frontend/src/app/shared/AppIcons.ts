@@ -53,6 +53,8 @@ import {
   ArrowLeft,
   Check,
   CircleMinus,
+  UserRoundX,
+  Undo,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -103,8 +105,10 @@ export class AppIcons {
   static readonly SmartPhone = Smartphone;
   static readonly TrendingDown = TrendingDown;
   static readonly TriangleAlert = TriangleAlert;
+  static readonly Undo = Undo;
   static readonly UserCog = UserCog;
   static readonly UserRoundCheck = UserRoundCheck;
+  static readonly UserRoundX = UserRoundX;
   static readonly UserPlus = UserPlus;
   static readonly Users = Users;
   static readonly UsersRound = UsersRound;

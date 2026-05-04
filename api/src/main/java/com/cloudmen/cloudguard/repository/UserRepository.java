@@ -44,7 +44,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param pageable          pagination and sorting instructions
      * @return a paginated result of users without pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.accessRequested = false " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessRequested = false and u.accessDenied = false " +
             "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
@@ -55,10 +55,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("query") String query,
             Pageable pageable);
 
+    /**
+     * Retrieves a paginated list of standard users who have their access denied from CloudGuard. <p>
+     *
+     * The results can be filtered by a search query that performs a case-insensitive match on the user's name or email.
+     *
+     * @param query             the search string to match against user details
+     * @param pageable          pagination and sorting instructions
+     * @return a paginated result of denied users
+     */
+    @Query("SELECT u FROM tbl_users u WHERE u.accessDenied = true " +
+            "AND (:query IS NULL OR :query = '' OR " +
+            "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<User> findAllDenied(
+            @Param("query") String query,
+            Pageable pageable);
+
     long countByRoleRequestedTrueOrOrganizationRequestedTrue();
     boolean existsByOrganizationId(Long organizationId);
-
-    Optional<User> findFirstByOrganizationIdOrderByIdAsc(Long organizationId);
 
     @Query(
             "SELECT u FROM tbl_users u WHERE u.organizationId = :orgId AND :role MEMBER OF u.roles ORDER BY u.id"

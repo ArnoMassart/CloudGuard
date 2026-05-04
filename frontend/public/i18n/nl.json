@@ -617,5 +617,18 @@
   "back": "Terug",
   "select-an-org": "Kies een organisatie",
   "asign-org": "Organisatie toewijzen",
-  "select-org-org": "Selecteer een organisatie..."
+  "select-org-org": "Selecteer een organisatie...",
+  "account-manager.denied.none": "Geen geweigerde gebruikers gevonden",
+  "account-manager.denied.denied-users": "Geweigerde gebruikers",
+  "list": "lijst",
+  "account-manager.requests.page.description": "Beheer hier als beheerder van CLOUDMEN alle CloudGuard aanvragen",
+  "account-manager.requests.page.title": "Aanvragen Beheren",
+  "denied": "Afgewezen",
+  "deny-reason": "Reden van weigering",
+  "enter-deny-reason": "Vul een reden in voor de weigering...",
+  "account-manager.denied.date-denied": "Datum geweigerd",
+  "reset-denial.title": "Weigering ongedaan maken",
+  "reset-denial.description": "Weet je zeker dat je de weigering voor deze gebruiker wilt verwijderen?",
+  "reset-denial.description-2": "Dit zorgt ervoor dat de gebruiker niet langer als 'geweigerd' staat gemarkeerd, waardoor deze opnieuw een toegangsaanvraag kan indienen voor het platform.",
+  "reset-denial.confirm-btn": "Weigering resetten"
 }

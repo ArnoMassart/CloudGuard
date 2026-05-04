@@ -2,15 +2,16 @@ package com.cloudmen.cloudguard.service.user;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
-import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
-import com.cloudmen.cloudguard.dto.users.UserDecisionRequestDto;
-import com.cloudmen.cloudguard.dto.users.UserDto;
+import com.cloudmen.cloudguard.dto.users.*;
 import com.cloudmen.cloudguard.exception.UserNotFoundException;
 import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.AccessRequestEmailService;
 import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleApiFactory;
 import com.google.api.services.admin.directory.DirectoryScopes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +32,7 @@ import java.util.Optional;
  */
 @Service
 public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final AccessRequestEmailService accessRequestEmailService;
     private final OrganizationService organizationService;
@@ -106,6 +109,7 @@ public class UserService {
 
             if (!user.isAccessRequested()) {
                 user.setAccessRequested(true);
+                user.setAccessRequestedAt(LocalDateTime.now());
                 userRepository.save(user);
 
                 accessRequestEmailService.notifyAccessRequest(email);
@@ -204,12 +208,16 @@ public class UserService {
         return false;
     }
 
-    public DatabaseUsersResponse getAll(String pageToken, int size, String query, String orgIdFilter) {
+    public DatabaseUsersResponse<UserDto> getAll(String pageToken, int size, String query, String orgIdFilter) {
         return fetchUsersFromDb(pageToken, size, query, orgIdFilter, true);
     }
 
-    public DatabaseUsersResponse getAllRequested(String pageToken, int size, String query) {
+    public DatabaseUsersResponse<UserDto> getAllRequested(String pageToken, int size, String query) {
         return fetchUsersFromDb(pageToken, size, query, "", false);
+    }
+
+    public DatabaseUsersResponse<DeniedUser> getAllDenied(String pageToken, int size, String query) {
+        return fetchDeniedUsersFromDb(pageToken, size, query);
     }
 
     @Transactional
@@ -307,9 +315,15 @@ public class UserService {
 
         user.setAccessAccepted(true);
         user.setAccessDenied(false);
+
         user.setAccessRequested(false);
+        user.setAccessRequestedAt(null);
+
         user.setOrganizationRequested(false);
         user.setRoleRequested(false);
+
+        user.setAccessDeniedReason(null);
+        user.setAccessDeniedAt(null);
 
         user.setOrganizationId(Long.valueOf(request.organizationId()));
         user.setRoles(request.roles());
@@ -317,17 +331,38 @@ public class UserService {
         save(user);
     }
 
-    public void denyUser(String userEmail) {
-        User user = findByEmail(userEmail);
+    public void denyUser(UserDenyRequest request) {
+        User user = findByEmail(request.userEmail());
 
         user.setAccessDenied(true);
         user.setAccessAccepted(false);
+
         user.setAccessRequested(false);
+        user.setAccessRequestedAt(null);
+
+        user.setAccessDeniedReason(request.denyReason());
+
+        user.setAccessDeniedAt(LocalDateTime.now());
 
         save(user);
     }
 
-    private DatabaseUsersResponse fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
+    public void reacceptUser(String email) {
+        User user = findByEmail(email);
+        
+        user.setAccessDenied(false);
+        user.setAccessAccepted(false);
+
+        user.setAccessRequested(false);
+        user.setAccessRequestedAt(null);
+
+        user.setAccessDeniedReason(null);
+        user.setAccessDeniedAt(null);
+
+        save(user);
+    }
+
+    private DatabaseUsersResponse<UserDto> fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName").ascending());
@@ -342,7 +377,7 @@ public class UserService {
             }
 
             userPage = userRepository.findAllWithoutRequested(parsedOrgId, query, pageable);
-        } else {
+        }else {
             userPage = userRepository.findAllByAccessRequestedWithSearch(query, pageable);
         }
 
@@ -350,7 +385,21 @@ public class UserService {
 
         List<UserDto> filteredList = userPage.getContent().stream().map(this::convertToDto).toList();
 
-        return new DatabaseUsersResponse(filteredList, nextPageToken);
+        return new DatabaseUsersResponse<>(filteredList, nextPageToken);
+    }
+
+    private DatabaseUsersResponse<DeniedUser> fetchDeniedUsersFromDb(String pageToken, int size, String query) {
+        int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("firstName").ascending());
+
+        Page<User> userPage = userRepository.findAllDenied(query, pageable);
+
+        String nextPageToken = userPage.hasNext() ? String.valueOf(page + 1) : null;
+
+        List<DeniedUser> filteredList = userPage.getContent().stream().map(this::convertToDeniedUser).toList();
+
+        return new DatabaseUsersResponse<>(filteredList, nextPageToken);
     }
 
     private boolean verifyDwdStatus(String adminEmail) {
@@ -366,5 +415,18 @@ public class UserService {
             // DWD is mogelijk ingetrokken of onjuist geconfigureerd
             return false;
         }
+    }
+
+    private DeniedUser convertToDeniedUser(User user) {
+        return new DeniedUser(
+                getFullName(user),
+                user.getEmail(),
+                user.getAccessDeniedReason(),
+                DateTimeConverter.parseWithPattern(user.getAccessDeniedAt(), "dd-MM-yyyy HH:mm")
+        );
+    }
+
+    private String getFullName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
     }
 }

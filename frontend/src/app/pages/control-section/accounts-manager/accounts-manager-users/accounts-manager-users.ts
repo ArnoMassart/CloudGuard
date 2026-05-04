@@ -81,6 +81,7 @@ export class AccountsManagerUsers {
       this.loadUsers();
       this.loadOrganizations();
       this.loadAccessRequestsCount();
+      this.loadDeniedCount();
     });
   }
 
@@ -192,6 +193,7 @@ export class AccountsManagerUsers {
           this.users.set(page.users);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
+          this.userService.refreshDeniedCount();
         },
         error: (err) => {
           console.error('Failed to load users', err);
@@ -240,11 +242,24 @@ export class AccountsManagerUsers {
   }
 
   goToRequests() {
-    this.#router.navigate(['/accounts-manager/requests']);
+    this.#router.navigate(['accounts-manager/requests']);
+  }
+
+  goToDenied() {
+    this.#router.navigate(['/accounts-manager/denied-list']);
   }
 
   loadAccessRequestsCount() {
     this.userService.refreshRequestedCount().subscribe({
+      next: (res) => {},
+      error: (err) => {
+        console.error('Error getting the access request count', err);
+      },
+    });
+  }
+
+  loadDeniedCount() {
+    this.userService.refreshDeniedCount().subscribe({
       next: (res) => {},
       error: (err) => {
         console.error('Error getting the access request count', err);

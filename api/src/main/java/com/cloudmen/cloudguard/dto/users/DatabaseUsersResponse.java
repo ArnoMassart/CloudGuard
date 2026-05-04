@@ -13,8 +13,8 @@ import java.util.List;
  * @param nextPageToken the token used to request the next page of results, or {@code null} if no additional results
  *                      are available
  */
-public record DatabaseUsersResponse(
-        List<UserDto> users,
+public record DatabaseUsersResponse<T>(
+        List<T> users,
         String nextPageToken
 ) {
 }

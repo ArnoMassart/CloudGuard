@@ -2,10 +2,7 @@ package com.cloudmen.cloudguard.controller;
 
 import com.cloudmen.cloudguard.domain.model.User;
 import com.cloudmen.cloudguard.domain.model.UserRole;
-import com.cloudmen.cloudguard.dto.users.DatabaseUsersResponse;
-import com.cloudmen.cloudguard.dto.users.UserDecisionRequestDto;
-import com.cloudmen.cloudguard.dto.users.UserUpdateRoleRequest;
-import com.cloudmen.cloudguard.dto.users.UsersUpdateOrganizationRequest;
+import com.cloudmen.cloudguard.dto.users.*;
 import com.cloudmen.cloudguard.service.CloudguardStaffService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.user.UserService;
@@ -241,7 +238,7 @@ public class UserController {
      * @return a {@link ResponseEntity} containing a {@link DatabaseUsersResponse} with user and pagination data
      */
     @GetMapping("/all")
-    public ResponseEntity<DatabaseUsersResponse> getAllUsers(
+    public ResponseEntity<DatabaseUsersResponse<UserDto>> getAllUsers(
             @CookieValue(name="AuthToken", required = false) String token,
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "4") int size,
@@ -261,7 +258,7 @@ public class UserController {
      * @return a {@link ResponseEntity} containing a {@link DatabaseUsersResponse} with the requested users
      */
     @GetMapping("/all/requested-access")
-    public ResponseEntity<DatabaseUsersResponse> getAllRequestedUsers(
+    public ResponseEntity<DatabaseUsersResponse<UserDto>> getAllRequestedUsers(
             @CookieValue(name="AuthToken", required=false) String token,
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "4") int size,
@@ -400,11 +397,45 @@ public class UserController {
      * @return an empty {@link ResponseEntity} indicating the request was successfully logged
      */
     @PostMapping("/denied")
-    public ResponseEntity<String> userDenied(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserDecisionRequestDto request) {
+    public ResponseEntity<String> userDenied(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody UserDenyRequest request) {
         jwtService.validateInternalToken(token);
 
-        userService.denyUser(request.userEmail());
+        userService.denyUser(request);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Set the denied state of the user to false so they can again submit an access request
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return an empty {@link ResponseEntity} indicating the request was successfully logged
+     */
+    @PostMapping("/reaccept")
+    public ResponseEntity<String> userReaccepted(@CookieValue(name = "AuthToken", required = false) String token, @RequestBody String email) {
+        jwtService.validateInternalToken(token);
+
+        userService.reacceptUser(email);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Retrieves a paginated list of users who have been denied access from CloudGuard.
+     *
+     * @param pageToken an optional token indicating which page to fetch
+     * @param size      the maximum number of users to return (default is 4)
+     * @param query     an optional search term to filter the list
+     * @return a {@link ResponseEntity} containing a {@link DatabaseUsersResponse} with the denied users
+     */
+    @GetMapping("/all/denied")
+    public ResponseEntity<DatabaseUsersResponse<DeniedUser>> getAllDeniedUsers(
+            @CookieValue(name="AuthToken", required=false) String token,
+            @RequestParam(required = false) String pageToken,
+            @RequestParam(defaultValue = "4") int size,
+            @RequestParam(required = false) String query) {
+        String email = jwtService.validateInternalToken(token);
+        cloudguardStaffService.requireCloudmenAdmin(email);
+        return ResponseEntity.ok(userService.getAllDenied(pageToken, size, query));
     }
 }

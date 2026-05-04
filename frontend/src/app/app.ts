@@ -6,6 +6,11 @@ import { AuthService } from '@auth0/auth0-angular';
 import { CommonModule } from '@angular/common';
 import { SplashScreen } from './components/splash-screen/splash-screen';
 
+type NavBarRoute = {
+  route: string;
+  preciseCheck: boolean;
+};
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, Navbar, CommonModule, SplashScreen],
@@ -31,25 +36,38 @@ export class App implements OnInit {
     this.hasSeenSplash.set(true);
   }
 
+  readonly noNavBarRoutes: NavBarRoute[] = [
+    { route: '/login', preciseCheck: false },
+    { route: '/callback', preciseCheck: false },
+    { route: '/forbidden', preciseCheck: true },
+    { route: '/access-denied', preciseCheck: true },
+    { route: '/no-access', preciseCheck: true },
+    { route: '/server-error', preciseCheck: true },
+    { route: '/request-access', preciseCheck: true },
+    { route: '/no-organization', preciseCheck: true },
+    { route: '/request-role', preciseCheck: true },
+    { route: '/setup', preciseCheck: true },
+    { route: '/no-page-access', preciseCheck: true },
+    { route: '/denied', preciseCheck: true },
+  ];
+
   ngOnInit(): void {
     this.#router.events.subscribe(() => {
-      this.showNavbar =
-        !this.#router.url.includes('/login') &&
-        !this.#router.url.includes('/forbidden') &&
-        !this.#router.url.includes('/access-denied') &&
-        !this.#router.url.includes('/no-access') &&
-        !this.#router.url.includes('/server-error') &&
-        !this.#router.url.includes('/request-access') &&
-        !this.#router.url.includes('/request-role') &&
-        !this.#router.url.includes('/no-organization') &&
-        !this.#router.url.includes('/setup') &&
-        !this.#router.url.includes('/no-page-access') &&
-        !this.#router.url.includes('/denied') &&
-        !this.#router.url.includes('/callback');
+      this.showNavbar = !this.noNavBarRoutes.some((item) =>
+        item.preciseCheck ? this.checkForPreciseRoute(item.route) : this.checkForRoute(item.route)
+      );
     });
 
     this.#auth0.error$.subscribe(() => {
       this.#router.navigate(['/forbidden']);
     });
+  }
+
+  checkForRoute(route: string): boolean {
+    return this.#router.url.includes(route);
+  }
+
+  checkForPreciseRoute(route: string): boolean {
+    return this.#router.url === route;
   }
 }
