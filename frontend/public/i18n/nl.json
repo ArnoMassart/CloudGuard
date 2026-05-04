@@ -662,5 +662,6 @@
   "account-manager.denied.activate": "Gebruiker activeren",
   "inactive.title": "Account Inactief",
   "inactive.description": "Je account is momenteel op inactief gezet door een beheerder. Hierdoor heb je geen toegang tot deze applicatie.",
-  "inactive.sub-description": "Neem contact op met je beheerder of de IT-helpdesk als je denkt dat dit een fout is of om je account opnieuw te laten activeren."
+  "inactive.sub-description": "Neem contact op met je beheerder of de IT-helpdesk als je denkt dat dit een fout is of om je account opnieuw te laten activeren.",
+  "help-contact": "Help & Contact"
 }

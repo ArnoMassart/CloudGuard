@@ -117,6 +117,11 @@ export class Navbar {
       Route: '/reports-reactions',
     },
     {
+      Icon: this.Icons.LifeBuoy,
+      Label: 'help-contact',
+      Route: '/contact',
+    },
+    {
       Icon: this.Icons.Settings,
       Label: 'security-preferences',
       Route: '/security-preferences',

@@ -662,5 +662,6 @@
   "account-manager.denied.deactivate": "Deactivate user",
   "inactive.description": "Your account is currently inactive by an administrator. \nThis means you do not have access to this application.",
   "inactive.sub-description": "If you believe this is an error or to have your account reactivated, please contact your administrator or IT Helpdesk.",
-  "inactive.title": "Account Inactive"
+  "inactive.title": "Account Inactive",
+  "help-contact": "Help & Contact"
 }

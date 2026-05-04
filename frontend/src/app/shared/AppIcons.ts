@@ -57,6 +57,7 @@ import {
   CircleMinus,
   UserRoundX,
   Undo,
+  LifeBuoy,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -91,6 +92,7 @@ export class AppIcons {
   static readonly HardDrive = HardDrive;
   static readonly Info = Info;
   static readonly Key = Key;
+  static readonly LifeBuoy = LifeBuoy;
   static readonly Loader = Loader;
   static readonly Lock = Lock;
   static readonly LogOut = LogOut;

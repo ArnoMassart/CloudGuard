@@ -5,6 +5,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../../components/language-bar/language-bar';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,7 @@ export class Login {
   readonly Icons = AppIcons;
 
   private readonly auth0 = inject(AuthService);
+  private readonly router = inject(Router);
 
   loginWithGoogle() {
     sessionStorage.setItem('auth0_redirect_pending', '1');
@@ -28,5 +30,9 @@ export class Login {
         redirect_uri: globalThis.location.origin + '/callback',
       },
     });
+  }
+
+  goToContact() {
+    this.router.navigate(['/contact']);
   }
 }
