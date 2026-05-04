@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../../components/page-header/page-header';
 import { OrgUnitService } from '../../../services/org-unit-service';
+import { OrgUnitPoliciesSessionService } from '../../../services/org-unit-policies-session.service';
 import { OrgUnitNodeDto } from '../../../models/org-unit/OrgUnitNodeDto';
 import { OrgUnitPolicyDto } from '../../../models/org-unit/OrgUnitPolicyDto';
 import { AppIcons } from '../../../shared/AppIcons';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { Subscription } from 'rxjs';
+import { skip, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiError } from '../../../components/api-error/api-error';
 
@@ -36,6 +37,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
   readonly expandedPolicies = signal<Set<string>>(new Set());
 
   readonly #orgUnitService = inject(OrgUnitService);
+  readonly #policiesSession = inject(OrgUnitPoliciesSessionService);
   readonly tree = signal<OrgUnitNode | null>(null);
   readonly loading = signal(true);
   readonly isRefreshing = signal<boolean>(false);
@@ -57,10 +59,19 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
         return;
       }
       const path = unit.orgUnitPath ?? unit.id ?? '/';
+      const cached = this.#policiesSession.get(path);
+      if (cached) {
+        this.policies.set(cached);
+        this.policiesLoading.set(false);
+        this.policiesError.set(null);
+        return;
+      }
+
       this.policiesLoading.set(true);
       this.policiesError.set(null);
       this.#orgUnitService.getPoliciesForOrgUnit(path).subscribe({
         next: (list) => {
+          this.#policiesSession.put(path, list);
           this.policies.set(list);
           this.policiesLoading.set(false);
         },
@@ -77,9 +88,15 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.langSubscription = this.#translocoService.langChanges$.subscribe(() => {
-      this.loadUnitTree();
-    });
+    this.loadUnitTree();
+    // langChanges$ emits the active language when you subscribe; that is not a user-driven change.
+    // Clearing the policy cache on that first emission wiped session cache on every navigation back to this page.
+    this.langSubscription = this.#translocoService.langChanges$
+      .pipe(skip(1))
+      .subscribe(() => {
+        this.#policiesSession.clear();
+        this.loadUnitTree();
+      });
   }
 
   ngOnDestroy(): void {
@@ -152,6 +169,7 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
 
     this.isRefreshing.set(true);
     this.refreshError.set(null);
+    this.#policiesSession.clear();
 
     this.#orgUnitService.refreshOrgUnitsCache().subscribe({
       next: () => {
