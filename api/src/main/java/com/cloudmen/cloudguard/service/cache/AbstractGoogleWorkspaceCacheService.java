@@ -20,13 +20,17 @@ public abstract class AbstractGoogleWorkspaceCacheService<T> {
     private final OrganizationService organizationService;
     private final Cache<String, T> cache;
 
-    protected AbstractGoogleWorkspaceCacheService(UserService userService, OrganizationService organizationService, long expireDuration) {
+    protected AbstractGoogleWorkspaceCacheService(UserService userService, OrganizationService organizationService, long expireDuration, TimeUnit timeUnit) {
         this.userService = userService;
         this.organizationService = organizationService;
         this.cache = Caffeine.newBuilder()
-                .expireAfterWrite(expireDuration, TimeUnit.HOURS)
+                .expireAfterWrite(expireDuration, timeUnit)
                 .maximumSize(100)
                 .build();
+    }
+
+    protected AbstractGoogleWorkspaceCacheService(UserService userService, OrganizationService organizationService, long expireDurationHours) {
+        this(userService, organizationService, expireDurationHours, TimeUnit.HOURS);
     }
 
     public void forceRefreshCache(String loggedInEmail) {
