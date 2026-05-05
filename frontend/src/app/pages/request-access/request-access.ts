@@ -1,14 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideAngularModule } from 'lucide-angular';
-import { LanguageBar } from '../../components/language-bar/language-bar';
-import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
 import { UserService } from '../../services/user-service';
+import { StatusLayout } from '../../components/status-layout/status-layout';
+import { StatusRequestCard } from '../../components/status-request-card/status-request-card';
 
 @Component({
   selector: 'app-request-access',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, StatusLayout, StatusRequestCard],
   templateUrl: './request-access.html',
   styleUrl: './request-access.css',
 })
@@ -16,7 +15,6 @@ export class RequestAccess implements OnInit {
   readonly Icons = AppIcons;
 
   readonly #userService = inject(UserService);
-  readonly #authService = inject(CustomAuthService);
 
   requestSent = signal(false);
 
@@ -40,9 +38,5 @@ export class RequestAccess implements OnInit {
       },
       error: (err) => console.error('Fout bij ophalen request', err),
     });
-  }
-
-  tryAgain() {
-    this.#authService.logout();
   }
 }

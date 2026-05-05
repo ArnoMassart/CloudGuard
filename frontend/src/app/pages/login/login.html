@@ -1,10 +1,7 @@
 <div class="login-page bg-navbar-background py-4 md:py-8 overflow-hidden">
   <!-- Branding header -->
-  <header class="login-header">
-    <i-lucide [img]="Icons.ShieldCheck" class="logo-icon w-12 h-12 md:w-14 md:h-14" />
-    <h1 class="brand-title text-3xl">CloudGuard</h1>
-    <p class="brand-subtitle">by CLOUDMEN</p>
-  </header>
+  <app-brand-header />
+
   <div class="mx-5">
     <!-- Main content card -->
     <main class="login-card">
@@ -40,10 +37,6 @@
     </main>
   </div>
 
-  <!-- Footer -->
-  <footer class="text-center text-sm text-white/60 mt-8">
-    <app-language-bar />
-
-    <p class="pt-5">Powered by <span class="text-primary font-medium">CLOUDMEN</span></p>
-  </footer>
+  <!-- Branding footer -->
+  <app-brand-footer />
 </div>

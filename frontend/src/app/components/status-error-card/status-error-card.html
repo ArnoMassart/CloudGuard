@@ -1,0 +1,31 @@
+<div
+    class="bg-white text-black mx-5 px-5 py-7 rounded-xl flex flex-col items-center justify-center gap-3 w-full max-w-[calc(100%-2.5rem)]">
+    <div class="flex items-center justify-center bg-[#fee2e2] p-3 mt-1 rounded-full">
+        <lucide-icon [img]="Icon()" size="28" class="text-destructive w-5 h-5 md:w-7 md:h-7"></lucide-icon>
+    </div>
+    <h2 class="flex justify-center text-xl">{{ TitleKey() | transloco }}</h2>
+    <span class="flex items-center justify-center text-center text-black/50 mb-3">{{ DescriptionKey() | transloco
+        }}</span>
+    <div class="bg-[#f9fafb] py-3 px-2 mb-3 text-black/50 text-center text-[13px] rounded-lg border-muted border">
+        <span class="font-semibold">{{ Note() | transloco }}: </span>
+        <span>
+            {{ SubDescriptionKey() | transloco }}</span>
+    </div>
+
+    @if (BackToLogin()) {
+    <button (click)="backToLogin()"
+        class="bg-primary text-white w-full p-2 rounded-lg hover:bg-primary/80 cursor-pointer">{{
+        'back-to-login' | transloco }}
+    </button>
+    } @else {
+    <button (click)="backToHome()"
+        class="bg-primary text-white w-full p-2 rounded-lg hover:bg-primary/80 cursor-pointer">{{
+        'back-home' | transloco }}
+    </button>
+    }
+
+    <div (click)="openContactPage()" class="hover:opacity-75 cursor-pointer flex gap-2 text-muted-foreground underline">
+        <span class="text-[13px]">{{ 'contact-text' | transloco }}</span>
+        <i-lucide [img]="Icons.ExternalLink" [size]="15" />
+    </div>
+</div>

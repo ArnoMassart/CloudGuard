@@ -42,7 +42,6 @@ export class App implements OnInit {
     { route: '/forbidden', preciseCheck: true },
     { route: '/access-denied', preciseCheck: true },
     { route: '/no-access', preciseCheck: true },
-    { route: '/server-error', preciseCheck: true },
     { route: '/request-access', preciseCheck: true },
     { route: '/no-organization', preciseCheck: true },
     { route: '/request-role', preciseCheck: true },

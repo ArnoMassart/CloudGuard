@@ -1,21 +1,15 @@
-<div class="px-4 pt-20 pb-6 md:px-10 md:pb-6 lg:px-10 lg:py-6">
-  <app-page-header
-    Title="{{ 'preferences.title' | transloco }}"
-    Description="{{ 'preferences.description' | transloco }}"
-    [NeedAdminLink]="false"
-  />
+<app-page-content-wrapper>
+  <app-page-header Title="{{ 'preferences.title' | transloco }}"
+    Description="{{ 'preferences.description' | transloco }}" [NeedAdminLink]="false" />
 
   @if (loadError()) {
   <div
     class="mt-4 sm:mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    role="alert"
-  >
+    role="alert">
     <span>{{ loadError() }}</span>
-    <button
-      type="button"
+    <button type="button"
       class="shrink-0 rounded-lg bg-red-100 px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-200"
-      (click)="retryLoad()"
-    >
+      (click)="retryLoad()">
       {{ 'try-again' | transloco }}
     </button>
   </div>
@@ -23,14 +17,11 @@
   @if (saveError()) {
   <div
     class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    role="alert"
-  >
+    role="alert">
     <span>{{ saveError() }}</span>
-    <button
-      type="button"
+    <button type="button"
       class="shrink-0 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-200"
-      (click)="dismissSaveError()"
-    >
+      (click)="dismissSaveError()">
       {{ 'cancel' | transloco }}
     </button>
   </div>
@@ -38,14 +29,11 @@
   @if (preferencesFacade.disabledKeysRefreshFailed()) {
   <div
     class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-    role="status"
-  >
+    role="status">
     <span>{{ 'preferences.error.sync' | transloco }}</span>
-    <button
-      type="button"
+    <button type="button"
       class="shrink-0 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-200"
-      (click)="dismissSyncWarning()"
-    >
+      (click)="dismissSyncWarning()">
       {{ 'cancel' | transloco }}
     </button>
   </div>
@@ -54,7 +42,7 @@
   <div class="mt-4 sm:mt-6" role="note" aria-label="{{ 'preferences.info.label' | transloco }}">
     <app-page-warnings [isInfo]="true" title="{{ 'preferences.info.title' | transloco }}">
       <app-page-warnings-item body [isInfo]="true">
-        {{ 'preferences.info.description' | transloco }}      
+        {{ 'preferences.info.description' | transloco }}
       </app-page-warnings-item>
     </app-page-warnings>
   </div>
@@ -68,25 +56,13 @@
   <div class="mx-auto mt-6 sm:mt-8 flex max-w-3xl flex-col gap-5 sm:gap-6 min-w-0">
     @for (section of sections; track section.section) {
     @let stats = sectionStats(section);
-    <section
-      class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm min-w-0"
-      [attr.aria-label]="section.label | transloco"
-    >
-      <button
-        type="button"
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm min-w-0"
+      [attr.aria-label]="section.label | transloco">
+      <button type="button"
         class="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-slate-50/90 sm:gap-4 sm:px-5 sm:py-4"
-        (click)="toggleSection(section.section)"
-        [attr.aria-expanded]="sectionExpanded(section.section)"
-      >
-        <div
-          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#d8f2ef]"
-          aria-hidden="true"
-        >
-          <i-lucide
-            [img]="sectionNavIcon(section.route)"
-            size="22"
-            class="shrink-0 text-[#3abfad]"
-          />
+        (click)="toggleSection(section.section)" [attr.aria-expanded]="sectionExpanded(section.section)">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#d8f2ef]" aria-hidden="true">
+          <i-lucide [img]="sectionNavIcon(section.route)" size="22" class="shrink-0 text-[#3abfad]" />
         </div>
         <div class="min-w-0 flex-1">
           <h2 class="m-0 text-base font-medium leading-tight text-slate-900">
@@ -95,46 +71,31 @@
           <p class="mt-1 text-sm text-slate-500">
             {{ 'preferences.section.checks_summary' | transloco: { active: stats.active, total: stats.total } }}
           </p>
-          <span
-            class="mt-2 inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-medium sm:hidden"
-            [ngClass]="sectionBadgeClass(section)"
-          >
+          <span class="mt-2 inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-medium sm:hidden"
+            [ngClass]="sectionBadgeClass(section)">
             {{ sectionBadgeLabel(section) }}
           </span>
         </div>
-        <span
-          class="hidden shrink-0 rounded-full px-3 py-1 text-xs font-medium sm:inline-flex"
-          [ngClass]="sectionBadgeClass(section)"
-        >
+        <span class="hidden shrink-0 rounded-full px-3 py-1 text-xs font-medium sm:inline-flex"
+          [ngClass]="sectionBadgeClass(section)">
           {{ sectionBadgeLabel(section) }}
         </span>
-        <i-lucide
-          [img]="Icons.ChevronUp"
-          size="20"
-          class="shrink-0 text-slate-400"
-          [class.rotate-180]="!sectionExpanded(section.section)"
-          aria-hidden="true"
-        />
+        <i-lucide [img]="Icons.ChevronUp" size="20" class="shrink-0 text-slate-400"
+          [class.rotate-180]="!sectionExpanded(section.section)" aria-hidden="true" />
       </button>
 
       @if (sectionExpanded(section.section)) {
       <div class="space-y-3 border-t border-slate-100 bg-slate-50/90 px-4 pb-4 pt-1 sm:px-5 sm:pb-5">
         @for (pref of section.preferences; track pref.key) {
         <div
-          class="flex items-start gap-3 mt-3 rounded-xl border border-slate-200 px-3 py-3 bg-white sm:items-center sm:gap-4 sm:px-4 sm:py-3.5"
-        >
-          <div
-            class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:mt-0"
+          class="flex items-start gap-3 mt-3 rounded-xl border border-slate-200 px-3 py-3 bg-white sm:items-center sm:gap-4 sm:px-4 sm:py-3.5">
+          <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:mt-0"
             [class.bg-[#d8f2ef]]="pref.control === 'dnsImportance' || isEnabled(section.section, pref.key)"
             [class.bg-slate-200]="pref.control !== 'dnsImportance' && !isEnabled(section.section, pref.key)"
-            aria-hidden="true"
-          >
-            <i-lucide
-              [img]="Icons.Shield"
-              size="18"
+            aria-hidden="true">
+            <i-lucide [img]="Icons.Shield" size="18"
               [class.text-[#3abfad]]="pref.control === 'dnsImportance' || isEnabled(section.section, pref.key)"
-              [class.text-slate-500]="pref.control !== 'dnsImportance' && !isEnabled(section.section, pref.key)"
-            />
+              [class.text-slate-500]="pref.control !== 'dnsImportance' && !isEnabled(section.section, pref.key)" />
           </div>
           <div class="min-w-0 flex-1 pr-1">
             <div class="text-sm font-medium leading-snug text-slate-900">
@@ -144,41 +105,31 @@
           <div class="shrink-0 self-center pt-0.5 sm:pt-0" (click)="$event.stopPropagation()">
             @if (pref.control === 'dnsImportance' && pref.dnsType) {
             <label class="sr-only" [for]="section.section + '-' + pref.key">{{ pref.label | transloco }}</label>
-            <select
-              [id]="section.section + '-' + pref.key"
-              [disabled]="saving() !== null"
+            <select [id]="section.section + '-' + pref.key" [disabled]="saving() !== null"
               class="w-full min-w-[10.5rem] max-w-[13rem] rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-70 sm:py-1.5"
               [value]="dnsSelectValue(pref.dnsType)"
-              (change)="setDnsImportance(section.section, pref.key, pref.dnsType, $any($event.target).value)"
-            >
+              (change)="setDnsImportance(section.section, pref.key, pref.dnsType, $any($event.target).value)">
               <option value="">{{ 'preferences.dns.standard' | transloco }}</option>
               <option value="REQUIRED">{{ 'preferences.dns.required' | transloco }}</option>
               <option value="RECOMMENDED">{{ 'preferences.dns.recommended' | transloco }}</option>
               <option value="OPTIONAL">{{ 'preferences.dns.optional' | transloco }}</option>
             </select>
             } @else {
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="isEnabled(section.section, pref.key)"
+            <button type="button" role="switch" [attr.aria-checked]="isEnabled(section.section, pref.key)"
               [attr.aria-label]="
                 (pref.label | transloco) +
                 (isEnabled(section.section, pref.key)
                   ? ': ' + ('preferences.toggle-off' | transloco)
                   : ': ' + ('preferences.toggle-on' | transloco))
-              "
-              [id]="section.section + '-' + pref.key"
-              [disabled]="saving() !== null"
+              " [id]="section.section + '-' + pref.key" [disabled]="saving() !== null"
               (click)="toggle(section.section, pref.key)"
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
               [class.bg-teal-500]="isEnabled(section.section, pref.key)"
-              [class.bg-slate-300]="!isEnabled(section.section, pref.key)"
-            >
+              [class.bg-slate-300]="!isEnabled(section.section, pref.key)">
               <span
                 class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform"
                 [class.translate-x-5]="isEnabled(section.section, pref.key)"
-                [class.translate-x-0.5]="!isEnabled(section.section, pref.key)"
-              ></span>
+                [class.translate-x-0.5]="!isEnabled(section.section, pref.key)"></span>
             </button>
             }
           </div>
@@ -190,4 +141,4 @@
     }
   </div>
   }
-</div>
+</app-page-content-wrapper>

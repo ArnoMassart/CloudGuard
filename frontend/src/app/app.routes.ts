@@ -16,7 +16,6 @@ import { SecurityPreferences } from './pages/control-section/security-preference
 import { authGuard } from './auth/auth.guard';
 import { Forbidden } from './pages/forbidden/forbidden';
 import { TeamleaderAccessDenied } from './pages/teamleader-access-denied/teamleader-access-denied';
-import { ServerError } from './pages/server-error/server-error';
 import { accessGuard } from './access/access.guard';
 import { Login } from './pages/login/login';
 import { RequestAccess } from './pages/request-access/request-access';
@@ -79,10 +78,6 @@ export const routes: Routes = [
   {
     path: 'no-organization',
     component: NoOrganization,
-  },
-  {
-    path: 'server-error',
-    component: ServerError,
   },
   {
     path: 'setup',
