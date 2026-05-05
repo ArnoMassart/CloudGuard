@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTransloco, TranslocoLoader } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
 import { OrgUnitService } from '../../../services/org-unit-service';
+import { OrgUnitPoliciesSessionService } from '../../../services/org-unit-policies-session.service';
 import { OrganizationalUnits, OrgUnitNode } from './organizational-units';
 
 const ORG_UNITS_I18N_STUB: Record<string, string> = {
@@ -168,6 +169,7 @@ describe('OrganizationalUnits', () => {
     orgUnitServiceMock.getPoliciesForOrgUnit.mockReturnValueOnce(
       throwError(() => new Error('Policy HTTP 500')),
     );
+    TestBed.inject(OrgUnitPoliciesSessionService).clear();
     fixture = TestBed.createComponent(OrganizationalUnits);
     component = fixture.componentInstance;
     fixture.detectChanges();

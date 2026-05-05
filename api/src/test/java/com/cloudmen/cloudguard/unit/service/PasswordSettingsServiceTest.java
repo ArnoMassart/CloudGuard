@@ -115,7 +115,7 @@ class PasswordSettingsServiceTest {
     }
 
     @Test
-    void getPasswordSettings_emptyUsers_summaryAndScoreStillCoherent() throws Exception {
+    void getPasswordSettings_emptyUsers_noSecurityScore() throws Exception {
         stubMinimalTenant();
 
         when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
@@ -125,8 +125,8 @@ class PasswordSettingsServiceTest {
         PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(0, dto.summary().totalUsers());
-        assertEquals(100, dto.securityScore());
-        assertEquals("perfect", dto.securityScoreBreakdown().status());
+        assertNull(dto.securityScore());
+        assertNull(dto.securityScoreBreakdown());
     }
 
     @Test

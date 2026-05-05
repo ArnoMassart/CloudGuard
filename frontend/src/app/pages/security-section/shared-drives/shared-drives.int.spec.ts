@@ -96,7 +96,7 @@ describe('SharedDrives Integration', () => {
 
     // Check of de top card de juiste waarde toont
     const totalCard = fixture.debugElement.query(By.css('app-section-top-card'));
-    expect(totalCard.componentInstance.Value).toBe(10);
+    expect(totalCard.componentInstance.Value()).toBe(10);
 
     // Check of de drive naam in de lijst staat
     const driveTitle = fixture.debugElement.query(By.css('article p')).nativeElement;

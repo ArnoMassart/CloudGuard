@@ -207,8 +207,8 @@ public class DashboardServiceTest {
         assertEquals(-1, response.scores().drivesScore());
         assertEquals(-1, response.scores().dnsScore());
 
-        // Het totaal gemiddelde moet 0 zijn (voorkomt division by zero in calculateTotalScore)
-        assertEquals(0, response.overallScore());
+        // No module contributes a score (-1 = no access); overall average is undefined (N/A).
+        assertNull(response.overallScore());
 
         // Omdat alle rechten ontbreken, zou GEEN ENKELE API service mogen worden aangeroepen
         verify(usersService, never()).getUsersPageOverview(anyString(), anySet());

@@ -8,15 +8,23 @@ import { CustomAuthService } from '../auth/custom-auth-service';
 import { Role, User } from '../models/users/User';
 
 function minimalUser(roles: Role[]): User {
+  const now = new Date();
   return {
     email: 'user@example.com',
     firstName: 'U',
     lastName: 'User',
     roles,
-    createdAt: new Date(),
+    createdAt: now,
+    isActive: true,
     roleRequested: false,
     organizationRequested: false,
     organizationId: 1,
+    accessRequested: false,
+    accessAccepted: true,
+    accessDenied: false,
+    accessDeniedAt: now,
+    accessDeniedReason: '',
+    accessRequestedAt: now,
   };
 }
 

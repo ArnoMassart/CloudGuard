@@ -95,7 +95,7 @@ describe('UsersSection Integration', () => {
     expect(component.orgUsers().length).toBe(1);
 
     const cards = fixture.debugElement.queryAll(By.css('app-section-top-card'));
-    expect(cards[0].componentInstance.Value).toBe(100); // totalUsers
+    expect(cards[0].componentInstance.Value()).toBe(100); // totalUsers
 
     const row = fixture.debugElement.query(By.css('tbody tr')).nativeElement;
     expect(row.textContent).toContain('Test Admin');

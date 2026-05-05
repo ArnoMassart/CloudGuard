@@ -150,14 +150,14 @@ public class GoogleUsersServiceTest {
     }
 
     @Test
-    void getUsersPageOverview_noUsers_perfectScore() {
+    void getUsersPageOverview_noUsers_scoreNotApplicable() {
         mockCacheEntry(usersCacheService, List.of(), Map.of(), Map.of());
 
         var overview = service.getUsersPageOverview(ADMIN);
 
         assertEquals(0, overview.totalUsers());
-        assertEquals(0, overview.securityScore());
-        assertEquals("bad", overview.securityScoreBreakdown().status());
+        assertNull(overview.securityScore());
+        assertNull(overview.securityScoreBreakdown());
         assertFalse(overview.warnings().hasWarnings());
     }
 

@@ -134,14 +134,14 @@ public class GoogleOAuthServiceTest {
     }
 
     @Test
-    void getOAuthPageOverview_noApps_perfectScore() {
+    void getOAuthPageOverview_noThirdPartyApps_scoreNotApplicable() {
         mockCacheEntry(oAuthCacheService, List.of(), 10);
 
         var overview = service.getOAuthPageOverview(ADMIN, Set.of());
 
         assertEquals(0, overview.totalThirdPartyApps());
-        assertEquals(100, overview.securityScore());
-        assertEquals("perfect", overview.securityScoreBreakdown().status());
+        assertNull(overview.securityScore());
+        assertNull(overview.securityScoreBreakdown());
     }
 
     @Test

@@ -118,20 +118,15 @@ public class GoogleSharedDriveServiceTest {
     }
 
     @Test
-    void getDrivesPageOverview_noDrives_perfectScore() {
+    void getDrivesPageOverview_noDrives_scoreNotApplicable() {
         mockCacheEntry(sharedDriveCacheService, List.of());
 
         var overview = service.getDrivesPageOverview(ADMIN, null);
 
         assertEquals(0, overview.totalDrives());
-        assertEquals(0, overview.securityScore());
-        assertEquals("bad", overview.securityScoreBreakdown().status());
+        assertNull(overview.securityScore());
+        assertNull(overview.securityScoreBreakdown());
         assertFalse(overview.warnings().hasWarnings());
-
-        var factors = overview.securityScoreBreakdown().factors();
-        long withZeroMax =
-                factors.stream().filter(f -> f.maxScore() == 0).count();
-        assertEquals(3, withZeroMax, "All risk tiers hidden when there are no drives; maxScore 0 for UI");
     }
 
     @Test

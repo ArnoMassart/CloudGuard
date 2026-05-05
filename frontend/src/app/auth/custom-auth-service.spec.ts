@@ -14,16 +14,26 @@ describe('CustomAuthService', () => {
   let httpMock: HttpTestingController;
   let isCloudmenStaffMock: ReturnType<typeof vi.fn>;
 
-  const minimalUser: User = {
-    email: 'u@example.com',
-    firstName: 'U',
-    lastName: 'User',
-    roles: [Role.DEVICES_VIEWER],
-    createdAt: new Date(),
-    roleRequested: false,
-    organizationRequested: false,
-    organizationId: 1,
-  };
+  const minimalUser: User = (() => {
+    const now = new Date();
+    return {
+      email: 'u@example.com',
+      firstName: 'U',
+      lastName: 'User',
+      roles: [Role.DEVICES_VIEWER],
+      createdAt: now,
+      isActive: true,
+      roleRequested: false,
+      organizationRequested: false,
+      organizationId: 1,
+      accessRequested: false,
+      accessAccepted: true,
+      accessDenied: false,
+      accessDeniedAt: now,
+      accessDeniedReason: '',
+      accessRequestedAt: now,
+    };
+  })();
 
   beforeEach(() => {
     isCloudmenStaffMock = vi.fn(() => of(true));
