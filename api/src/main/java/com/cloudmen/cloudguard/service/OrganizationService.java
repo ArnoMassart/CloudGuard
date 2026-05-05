@@ -71,6 +71,19 @@ public class OrganizationService {
         });
     }
 
+    @Transactional
+    public void clearTeamleaderCompanyId(Long organizationId){
+        if(organizationId == null){
+            return;
+        }
+
+        organizationRepository.findById(organizationId).ifPresent(organization -> {
+            organization.setTeamleaderCompanyId(null);
+            organizationRepository.save(organization);
+            log.warn("Cleared stored teamleader_company_id for organization id={}", organizationId);
+        });
+    }
+
     public Optional<Organization> findById(Long id) {
         if (id == null) {
             throw new OrganizationIdNotNullException("The organization id cannot be null");

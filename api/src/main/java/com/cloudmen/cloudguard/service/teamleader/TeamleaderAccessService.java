@@ -127,6 +127,7 @@ public class TeamleaderAccessService {
                 String stored = orgOpt.get().getTeamleaderCompanyId();
                 if (stored != null && !stored.isBlank()) {
                     companyId = stored;
+                    log.info("Stored teamleader company ID: {}", stored);
                     log.debug("Teamleader access: using stored company id {} for organizationId={}", companyId, organizationId);
                 }
             }
