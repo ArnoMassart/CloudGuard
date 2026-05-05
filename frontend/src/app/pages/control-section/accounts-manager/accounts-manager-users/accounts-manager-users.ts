@@ -14,7 +14,7 @@ import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { DeactivateUserDialog } from '../../../../components/deactivate-user-dialog/deactivate-user-dialog';
 
 const ITEMS_PER_PAGE = 4;
