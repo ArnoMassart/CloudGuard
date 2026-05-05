@@ -312,6 +312,18 @@ public class UserService {
         return false;
     }
 
+    public boolean isActive(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            return user.isActive();
+        }
+
+        return false;
+    }
+
     public void acceptUser(UserDecisionRequestDto request) {
         User user = findByEmail(request.userEmail());
 

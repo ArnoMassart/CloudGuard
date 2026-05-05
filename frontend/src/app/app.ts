@@ -59,6 +59,7 @@ export class App implements OnInit {
     });
 
     this.#auth0.error$.subscribe(() => {
+      this.onSplashEnded();
       this.#router.navigate(['/forbidden']);
     });
   }
