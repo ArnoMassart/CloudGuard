@@ -10,8 +10,8 @@
     </div>
 
     <div class="flex shrink-0 flex-wrap items-center gap-3 justify-end w-full sm:w-auto">
-        @if (NeedAdminLink) {
-        <button (click)="UtilityMethods.openAdminPage(`https://admin.google.com/ac/${this.AdminLink}`)"
+    @if (NeedAdminLink) {
+    <button (click)="UtilityMethods.openAdminPage(adminHref())"
             class="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer bg-primary text-white hover:bg-primary/80 py-2 md:py-2.5 md:px-5 rounded-lg font-medium transition-colors shadow-sm">
             <span class="whitespace-nowrap text-[15px] md:text-base">{{ 'to-admin-console' | transloco }}</span>
             <lucide-icon [img]="Icons.ExternalLink" size="16"></lucide-icon>

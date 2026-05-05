@@ -17,5 +17,14 @@ export class PageHeader {
   @Input() Title: string = '';
   @Input() Description: string = '';
   @Input() NeedAdminLink: boolean = true;
+  /** Relative path under https://admin.google.com/ac/ — used when AdminUrl is not set */
   @Input() AdminLink: string = '';
+  /** Full Google Admin URL for “To Admin Console”. When set, overrides AdminLink. */
+  @Input() AdminUrl: string = '';
+
+  adminHref(): string {
+    const full = this.AdminUrl?.trim();
+    if (full) return full;
+    return `https://admin.google.com/ac/${this.AdminLink}`;
+  }
 }

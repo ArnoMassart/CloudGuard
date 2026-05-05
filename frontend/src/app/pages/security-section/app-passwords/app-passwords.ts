@@ -41,6 +41,8 @@ const ITEMS_PER_PAGE = 4;
 })
 export class AppPasswords implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
+  readonly adminConsoleUrl =
+    'https://admin.google.com/u/1/ac/security/2sv';
   readonly pageOverview = signal<AppPasswordOverviewResponse | null>(null);
   readonly #appPasswordsService = inject(AppPasswordsService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
