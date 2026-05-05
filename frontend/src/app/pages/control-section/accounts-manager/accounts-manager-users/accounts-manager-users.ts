@@ -16,6 +16,7 @@ import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
 import { Router } from '@angular/router';
 import { DeactivateUserDialog } from '../../../../components/deactivate-user-dialog/deactivate-user-dialog';
+import { AccountStatus } from '../../../../models/account/AccountStatus';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -35,6 +36,7 @@ const ITEMS_PER_PAGE = 4;
 })
 export class AccountsManagerUsers {
   readonly Icons = AppIcons;
+  readonly AccountStatus = AccountStatus;
   readonly userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
   readonly #orgService = inject(OrgService);
@@ -51,6 +53,7 @@ export class AccountsManagerUsers {
   readonly dialog = inject(MatDialog);
 
   readonly expandedRoles = signal<Set<string>>(new Set<string>());
+  readonly statusOptions = Object.values(AccountStatus);
 
   toggleRolesSummary(email: string, rolesLength: number) {
     if (rolesLength > 2) {
@@ -73,6 +76,8 @@ export class AccountsManagerUsers {
   // PRIVATE PROPERTIES
   // ==========================================
   private langSubscription?: Subscription;
+
+  readonly selectedStatus = signal<AccountStatus>(AccountStatus.All);
 
   // ==========================================
   // LIFECYCLE HOOKS
@@ -101,6 +106,11 @@ export class AccountsManagerUsers {
   // ==========================================
   onOrgFilterChange(orgId: string) {
     this.selectedOrganization.set(orgId);
+    this.#resetAndLoad();
+  }
+
+  onStatusChange(newStatus: AccountStatus) {
+    this.selectedStatus.set(newStatus);
     this.#resetAndLoad();
   }
 
@@ -191,7 +201,8 @@ export class AccountsManagerUsers {
         ITEMS_PER_PAGE,
         token || undefined,
         this.searchQuery(),
-        this.selectedOrganization()
+        this.selectedOrganization(),
+        this.selectedStatus()
       )
       .subscribe({
         next: (page) => {
@@ -298,5 +309,16 @@ export class AccountsManagerUsers {
         });
       }
     });
+  }
+
+  getCorrectTranslocoKeyForStatus(status: AccountStatus): string {
+    switch (status) {
+      case AccountStatus.Active:
+        return 'active-2';
+      case AccountStatus.Inactive:
+        return 'inactive-caps';
+      default:
+        return 'devices.all-states';
+    }
   }
 }

@@ -147,7 +147,7 @@ class CloudguardStaffUserControllerIT {
     void getAllUsers_withStaffCookie_callsRequireAndService() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn(STAFF_EMAIL);
         DatabaseUsersResponse body = new DatabaseUsersResponse(List.of(), null);
-        when(userService.getAll(isNull(), eq(4), isNull(), isNull())).thenReturn(body);
+        when(userService.getAll(isNull(), eq(4), isNull(), isNull(), isNull())).thenReturn(body);
 
         mockMvc.perform(
                         get("/api/user/all")
@@ -157,7 +157,7 @@ class CloudguardStaffUserControllerIT {
                 .andExpect(jsonPath("$.users").isArray());
 
         verify(cloudguardStaffService).requireCloudmenAdmin(STAFF_EMAIL);
-        verify(userService).getAll(null, 4, null, null);
+        verify(userService).getAll(null, 4, null, null, null);
     }
 
     @Test

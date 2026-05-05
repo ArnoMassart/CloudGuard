@@ -10,7 +10,7 @@ import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/U
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { AssignRoleDialog } from '../../../../components/assign-role-dialog/assign-role-dialog';
-import { AccountSectionType } from '../../../../models/AccountSectionType';
+import { AccountSectionType } from '../../../../models/account/AccountSectionType';
 import { Organization } from '../../../../models/org/Organization';
 import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';

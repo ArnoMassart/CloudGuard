@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SplashScreen } from '../../components/splash-screen/splash-screen';
 import { AuthService } from '@auth0/auth0-angular';
 import { CustomAuthService } from '../custom-auth-service';
-import { Router } from '@angular/router';
+import { isActive, Router } from '@angular/router';
 import { switchMap, filter, take, forkJoin, timer } from 'rxjs';
 import { UserService } from '../../services/user-service';
 import { WarmupCacheService } from '../../services/warmup-cache-service';
@@ -49,6 +49,7 @@ export class Callback implements OnInit {
           isSetupActive: this.userService.isOrganizationSetup(),
           isAccepted: this.userService.hasValidField('/is-accepted'),
           isDenied: this.userService.hasValidField('/is-denied'),
+          isActive: this.userService.hasValidField('/is-active'),
         });
       })
     );
@@ -75,6 +76,8 @@ export class Callback implements OnInit {
             this.router.navigate(['/setup']);
           } else if (!loginData.hasValidRole) {
             this.router.navigate(['/request-role']);
+          } else if (!loginData.isActive) {
+            this.router.navigate(['/inactive']);
           } else {
             this.warmupCacheService.triggerWarmup();
             this.router.navigate(['/home']);

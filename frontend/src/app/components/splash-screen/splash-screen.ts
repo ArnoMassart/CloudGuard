@@ -24,12 +24,18 @@ export class SplashScreen implements OnInit, OnDestroy {
   progress = signal(0);
   #intervalId: any;
   #authSub?: Subscription;
+  #failSafeId: any;
 
   ngOnInit() {
     const startTime = Date.now();
     const minDurationMs = 2000;
+    const maxDurationMs = 5500;
 
     this.startLoadingSimulation();
+
+    this.#failSafeId = setTimeout(() => {
+      this.finishLoading();
+    }, maxDurationMs);
 
     // 1. Luister naar jouw CustomAuthService (voor als ze WEL ingelogd zijn)
     this.#authSub = this.#authService.isLoggedIn$
@@ -56,6 +62,8 @@ export class SplashScreen implements OnInit, OnDestroy {
 
   // Helper functie om dubbele code te voorkomen
   private triggerFinish(startTime: number, minDurationMs: number) {
+    if (this.#failSafeId) clearTimeout(this.#failSafeId);
+
     const elapsed = Date.now() - startTime;
     const remaining = Math.max(0, minDurationMs - elapsed);
     setTimeout(() => this.finishLoading(), remaining);
@@ -73,6 +81,7 @@ export class SplashScreen implements OnInit, OnDestroy {
   }
 
   finishLoading() {
+    this.progress.set(100);
     setTimeout(() => {
       this.animationFinished.emit();
     }, 1200);
@@ -80,5 +89,6 @@ export class SplashScreen implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.#intervalId) clearInterval(this.#intervalId);
+    if (this.#authSub) this.#authSub.unsubscribe();
   }
 }
