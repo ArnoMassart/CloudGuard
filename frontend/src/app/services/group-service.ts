@@ -59,7 +59,7 @@ export interface GroupOverviewResponse {
   highRiskGroups: number;
   mediumRiskGroups: number;
   lowRiskGroups: number;
-  securityScore: number;
+  securityScore: number | null;
   securityScoreBreakdown?: SecurityScoreBreakdown;
   warnings?: SectionWarnings;
 }

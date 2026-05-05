@@ -283,8 +283,8 @@
         <div class="score-box">
             <div class="score-label">Overall Security Score</div>
             <div class="score-circle"
-                 th:classappend="${report.overallScore < 50 ? 'text-red' : (report.overallScore < 75 ? 'text-orange' : 'text-green')}"
-                 th:text="${report.overallScore} + '/100'">0/100</div>
+                 th:classappend="${report.overallScore != null ? (report.overallScore < 50 ? 'text-red' : (report.overallScore < 75 ? 'text-orange' : 'text-green')) : ''}"
+                 th:text="${report.overallScore != null ? report.overallScore + '/100' : '—'}">0/100</div>
         </div>
 
         <h2 style="margin-bottom: 15px;">Critical Findings</h2>
@@ -306,7 +306,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.users.securityScore < 50 ? 'text-red' : (report.users.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.users.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.users.securityScore != null ? (report.users.securityScore < 50 ? 'text-red' : (report.users.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.users.securityScore != null ? report.users.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
@@ -384,7 +384,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.groups.securityScore < 50 ? 'text-red' : (report.groups.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.groups.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.groups.securityScore != null ? (report.groups.securityScore < 50 ? 'text-red' : (report.groups.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.groups.securityScore != null ? report.groups.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
@@ -446,7 +446,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.drives.securityScore < 50 ? 'text-red' : (report.drives.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.drives.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.drives.securityScore != null ? (report.drives.securityScore < 50 ? 'text-red' : (report.drives.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.drives.securityScore != null ? report.drives.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
@@ -512,7 +512,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.devices.securityScore < 50 ? 'text-red' : (report.devices.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.devices.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.devices.securityScore != null ? (report.devices.securityScore < 50 ? 'text-red' : (report.devices.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.devices.securityScore != null ? report.devices.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
@@ -596,7 +596,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.appAccess.securityScore < 50 ? 'text-red' : (report.appAccess.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.appAccess.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.appAccess.securityScore != null ? (report.appAccess.securityScore < 50 ? 'text-red' : (report.appAccess.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.appAccess.securityScore != null ? report.appAccess.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
@@ -660,7 +660,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.appPasswords.securityScore < 50 ? 'text-red' : (report.appPasswords.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.appPasswords.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.appPasswords.securityScore != null ? (report.appPasswords.securityScore < 50 ? 'text-red' : (report.appPasswords.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.appPasswords.securityScore != null ? report.appPasswords.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>
@@ -712,7 +712,7 @@
         <table class="full-card-table">
             <tr>
                 <td class="card-stat-cell">
-                    <div class="metric-val" th:classappend="${report.passwordSettings.securityScore < 50 ? 'text-red' : (report.passwordSettings.securityScore < 75 ? 'text-orange' : 'text-green')}" th:text="${report.passwordSettings.securityScore} + '%'">0%</div>
+                    <div class="metric-val" th:classappend="${report.passwordSettings.securityScore != null ? (report.passwordSettings.securityScore < 50 ? 'text-red' : (report.passwordSettings.securityScore < 75 ? 'text-orange' : 'text-green')) : ''}" th:text="${report.passwordSettings.securityScore != null ? report.passwordSettings.securityScore + '%' : '—'}">0%</div>
                 </td>
                 <td class="card-text-cell">
                     <div class="fw-title">Security Score</div>

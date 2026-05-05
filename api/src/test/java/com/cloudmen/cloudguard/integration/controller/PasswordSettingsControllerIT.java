@@ -3,7 +3,7 @@ package com.cloudmen.cloudguard.integration.controller;
 import com.cloudmen.cloudguard.configuration.SecurityConfig;
 import com.cloudmen.cloudguard.configuration.WebConfig;
 import com.cloudmen.cloudguard.controller.PasswordSettingsController;
-import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsOverviewResponse;
 import com.cloudmen.cloudguard.dto.password.PasswordSettingsSummaryDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
@@ -77,7 +77,7 @@ class PasswordSettingsControllerIT {
         }
     }
 
-    private static PasswordSettingsDto minimalSettings(int securityScore) {
+    private static PasswordSettingsOverviewResponse minimalSettings(int securityScore) {
         var breakdown =
                 new SecurityScoreBreakdownDto(
                         securityScore,
@@ -85,7 +85,7 @@ class PasswordSettingsControllerIT {
                         List.of(
                                 new SecurityScoreFactorDto(
                                         "t", "d", 10, 20, "low")));
-        return new PasswordSettingsDto(
+        return new PasswordSettingsOverviewResponse(
                 List.of(),
                 new TwoStepVerificationDto(List.of(), 0, 0, 0),
                 List.of(),

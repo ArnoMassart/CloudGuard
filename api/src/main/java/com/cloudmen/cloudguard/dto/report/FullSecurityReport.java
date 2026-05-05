@@ -21,7 +21,7 @@ import java.util.List;
  * @param domains          a detailed security breakdown for each individual domain in the organization
  */
 public record FullSecurityReport(
-        int overallScore,
+        Integer overallScore,
         List<RiskItem> criticalRisks,
         UsersMetrics users,
         GroupsMetrics groups,
@@ -59,7 +59,7 @@ public record FullSecurityReport(
             int mfaPct,
             int admins,
             int inactive,
-            int securityScore,
+            Integer securityScore,
             boolean hasError
     ) { }
 
@@ -76,7 +76,7 @@ public record FullSecurityReport(
             int total,
             int withExternalMembers,
             int highRisk,
-            int securityScore,
+            Integer securityScore,
             boolean hasError
     ) { }
 
@@ -93,7 +93,7 @@ public record FullSecurityReport(
             int total,
             int externallyShared,
             int noManagers,
-            int securityScore,
+            Integer securityScore,
             boolean hasError
     ) { }
 
@@ -116,7 +116,7 @@ public record FullSecurityReport(
             int unsafe, int unsafePct,
             int encrypted, int encryptedPct,
             int updated, int updatedPct,
-            int securityScore,
+            Integer securityScore,
             boolean hasError
     ) { }
 
@@ -133,7 +133,7 @@ public record FullSecurityReport(
             int totalConnected,
             int trusted,
             int highRisk,
-            int securityScore,
+            Integer securityScore,
             boolean hasError
     ) { }
 
@@ -147,7 +147,7 @@ public record FullSecurityReport(
      */
     public record AppPasswordMetrics(int activePasswords,
                                      int usersUsingThem,
-                                     int securityScore,
+                                     Integer securityScore,
                                      boolean hasError
     ) { }
 
@@ -165,7 +165,7 @@ public record FullSecurityReport(
                                   int enforced2FaOus,
                                   long unenforcedOusWithUsers,
                                   int adminsWithoutKeys,
-                                  int securityScore,
+                                  Integer securityScore,
                                   boolean hasError
     ) { }
 

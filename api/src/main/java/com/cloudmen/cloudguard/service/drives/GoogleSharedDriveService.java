@@ -1,5 +1,6 @@
 package com.cloudmen.cloudguard.service.drives;
 
+import com.cloudmen.cloudguard.dto.devices.DeviceOverviewResponse;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveBasicDetail;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveCacheEntry;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
@@ -119,14 +120,28 @@ public class GoogleSharedDriveService {
 
         int totalDrives = drives.size();
 
+        if (totalDrives == 0) {
+            SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
+                    .check("notOnlyDomainUsersAllowedWarning", 0, "shared-drives", "outsideDomain")
+                    .check("notOnlyMembersCanAccessWarning", 0, "shared-drives", "nonMemberAccess")
+                    .check("externalMembersWarning", 0, "shared-drives", "external")
+                    .check("orphanDrivesWarning", 0, "shared-drives", "orphan")
+                    .build();
+            return new SharedDriveOverviewResponse(
+                    0, 0, 0, 0,
+                    null, 0, 0, 0,
+                    null,
+                    warnings
+            );
+        }
+
         int orphanDrives = (int) drives.stream().filter(d -> d.totalOrganizers() <= 0).count();
         int totalLowRisk = (int) drives.stream().filter(d -> d.risk().equals("low")).count();
         int totalMediumRisk = (int) drives.stream().filter(d -> d.risk().equals("middle")).count();
         int totalHighRisk = (int) drives.stream().filter(d -> d.risk().equals("high")).count();
         int totalExternalMembersCount = (int) drives.stream().filter(d -> d.externalMembers() > 0).count();
 
-        int riskOnlyScore = totalDrives == 0 ? 100
-                : (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
+        int riskOnlyScore = (int) Math.round((totalLowRisk * 100.0 + totalMediumRisk * 60.0 + totalHighRisk * 20.0) / totalDrives);
 
         int notOnlyDomainUsersAllowedCount = (int) drives.stream().filter(d -> !d.onlyDomainUsersAllowed()).count();
         int notOnlyMembersCanAccessCount = (int) drives.stream().filter(d -> !d.onlyMembersCanAccess()).count();

@@ -190,7 +190,7 @@ public class PdfReportServiceTest {
 
         FullSecurityReport reportData = (FullSecurityReport) contextCaptor.getValue().getVariable("report");
 
-        assertEquals(100, reportData.overallScore());
+        assertNull(reportData.overallScore());
         assertTrue(reportData.users().hasError());
         assertTrue(reportData.groups().hasError());
         assertTrue(reportData.drives().hasError());

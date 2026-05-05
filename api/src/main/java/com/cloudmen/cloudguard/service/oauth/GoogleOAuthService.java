@@ -132,6 +132,16 @@ public class GoogleOAuthService {
                 .filter(app -> scorer.isAppHighRisk(app.allScopes))
                 .count();
 
+        if (totalThirdPartyApps == 0) {
+            return new OAuthOverviewResponse(
+                    totalThirdPartyApps,
+                    totalHighRiskApps,
+                    totalPermissionsGranted,
+                    null,
+                    null
+            );
+        }
+
         boolean ignHighRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-access", "highRisk");
 
         int securityScore = scorer.calculateSecurityScore(totalThirdPartyApps, totalHighRiskApps, ignHighRisk);

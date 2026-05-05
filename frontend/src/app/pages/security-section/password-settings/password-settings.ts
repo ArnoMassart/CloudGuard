@@ -270,10 +270,13 @@ export class PasswordSettings implements OnInit, OnDestroy {
     const settings = this.data();
     const breakdown =
       settings?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(
-        settings?.securityScore ?? 0,
-        'security-score.password-settings'
-      );
+      (settings?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(
+            settings.securityScore,
+            'security-score.password-settings'
+          )
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'security-score.password-settings');
   }
 

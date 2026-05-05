@@ -37,7 +37,7 @@ public class PasswordSettingsService {
     private final AdminSecurityKeysService adminSecurityKeysService;
     private final UserSecurityPreferenceService userSecurityPreferenceService;
 
-    private final Cache<String, PasswordSettingsDto> cache = Caffeine.newBuilder()
+    private final Cache<String, PasswordSettingsOverviewResponse> cache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(100)
             .build();
@@ -69,11 +69,11 @@ public class PasswordSettingsService {
         adminSecurityKeysService.forceRefreshCache(loggedInEmail);
     }
 
-    public PasswordSettingsDto getPasswordSettings(String loggedInEmail) {
+    public PasswordSettingsOverviewResponse getPasswordSettings(String loggedInEmail) {
         return cache.get(loggedInEmail, this::fetchPasswordSettings);
     }
 
-    private PasswordSettingsDto fetchPasswordSettings(String loggedInEmail) {
+    private PasswordSettingsOverviewResponse fetchPasswordSettings(String loggedInEmail) {
         String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
         var entry = usersCache.getOrFetchData(loggedInEmail);
@@ -105,7 +105,13 @@ public class PasswordSettingsService {
                 passwordPoliciesByOu,
                 disabledPrefs);
 
-        return new PasswordSettingsDto(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
+        if(summary.totalUsers()==0){
+            return new PasswordSettingsOverviewResponse(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
+                    adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, null, null
+            );
+        }
+
+        return new PasswordSettingsOverviewResponse(passwordPoliciesByOu, twoStepVerification, forcedChange, summary,
                 adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, scoreResult.score(), scoreResult.breakdown());
     }
 

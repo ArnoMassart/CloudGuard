@@ -191,7 +191,10 @@ export class AppAccess implements OnInit, OnDestroy {
     const overview = this.pageOverview();
     const breakdown =
       overview?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'app-access');
+      (overview?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(overview.securityScore, 'app-access')
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'app-access');
   }
 

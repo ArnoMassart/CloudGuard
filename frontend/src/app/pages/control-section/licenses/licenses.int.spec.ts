@@ -68,8 +68,8 @@ describe('Licenses Integration', () => {
 
     // Assert: Top cards moeten data bevatten
     const cards = fixture.debugElement.queryAll(By.css('app-section-top-card'));
-    expect(cards[0].componentInstance.Value).toBe(150);
-    expect(cards[1].componentInstance.Value).toBe(3);
+    expect(cards[0].componentInstance.Value()).toBe(150);
+    expect(cards[1].componentInstance.Value()).toBe(3);
 
     // Assert: Tabel moet rij bevatten
     const tableRows = fixture.debugElement.queryAll(By.css('tbody tr'));

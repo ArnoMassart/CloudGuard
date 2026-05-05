@@ -141,14 +141,19 @@ public class GoogleUsersService {
         boolean ignore2fa = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "2fa");
         boolean ignoreActivity = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "activity");
 
-        int securityScore = scorer.calculateSecurityScoreWithPreferenceMask(googleUsers, ignore2fa, ignoreActivity);
-        SecurityScoreBreakdownDto breakdown = scorer.buildUsersBreakdown(googleUsers, (int) totalUsers, securityScore, ignore2fa, ignoreActivity);
-
         SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
                 .check("twoFactorWarning", (int) withoutTwoFactor, "users-groups", "2fa")
                 .check("activeWithLongNoLogin", (int) activeLongNoLoginCount, "users-groups", "activity")
                 .check("notActiveWithRecentLogin", (int) inactiveRecentLoginCount, "users-groups", "activity")
                 .build();
+
+        if (totalUsers == 0) {
+            return new UserOverviewResponse(
+                    0, 0, 0, null, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, null, warnings);
+        }
+
+        int securityScore = scorer.calculateSecurityScoreWithPreferenceMask(googleUsers, ignore2fa, ignoreActivity);
+        SecurityScoreBreakdownDto breakdown = scorer.buildUsersBreakdown(googleUsers, (int) totalUsers, securityScore, ignore2fa, ignoreActivity);
 
         return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, securityScore,
                 (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown, warnings);

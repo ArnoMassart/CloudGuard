@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { LucideIconData, LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../shared/AppIcons';
 
@@ -12,7 +12,8 @@ export class SectionTopCard {
   readonly Icons = AppIcons;
 
   @Input() Title: string = '';
-  @Input() Value: string | number | undefined = 0;
+  /** Signal input so template bindings accept `number | null` (e.g. dashboard score). */
+  readonly Value = input<string | number | null | undefined>(0);
   @Input() Icon: LucideIconData = this.Icons.Shield;
   @Input() BackgroundColor: string = '#dbeafe';
   @Input() IconColor: string = '#155dfc';
@@ -20,20 +21,27 @@ export class SectionTopCard {
   @Input() IsPercentage: boolean = false;
   @Input() IsCurrency: boolean = false;
 
+  private readonly naMuted = '#94a3b8';
+
   getValue(): string {
+    const v = this.Value();
+    if (this.IsPercentage && (v === undefined || v === null)) {
+      return '—';
+    }
+
     let result = '';
 
-    if (this.Value === undefined || this.Value === null) {
+    if (v === undefined || v === null) {
       result = '0';
     } else if (this.IsCurrency) {
       result = '€';
-      if (typeof this.Value === 'number') {
-        result += this.Value.toFixed(2);
+      if (typeof v === 'number') {
+        result += v.toFixed(2);
       } else {
-        result += this.Value;
+        result += v;
       }
     } else {
-      result = this.Value.toString();
+      result = v.toString();
     }
 
     if (this.IsPercentage) {
@@ -43,16 +51,15 @@ export class SectionTopCard {
     return result;
   }
 
-  /*
-  {{IsCurrency ? "€" : ""}}{{Value !=
-            undefined ? IsCurrency && Value typeof number ? Value.toFixed(2) : Value :
-            0}}{{IsPercentage ? "%" : ""}}
-  */
-
   getTextColor(): string {
     if (!this.IsPercentage) return this.TextColor;
 
-    const num = typeof this.Value === 'number' ? this.Value : undefined;
+    const v = this.Value();
+    if (v === undefined || v === null) {
+      return this.naMuted;
+    }
+
+    const num = typeof v === 'number' ? v : undefined;
     if (num != undefined) {
       if (num < 50) return '#e7000b';
       else if (num < 75) return '#d38700';
@@ -65,7 +72,12 @@ export class SectionTopCard {
   getIconColor(): string {
     if (!this.IsPercentage) return this.IconColor;
 
-    const num = typeof this.Value === 'number' ? this.Value : undefined;
+    const v = this.Value();
+    if (v === undefined || v === null) {
+      return this.naMuted;
+    }
+
+    const num = typeof v === 'number' ? v : undefined;
     if (num != undefined) {
       if (num < 50) return '#f54a00';
       else if (num < 75) return '#d38700';
@@ -78,7 +90,12 @@ export class SectionTopCard {
   getBackgroundColor(): string {
     if (!this.IsPercentage) return this.BackgroundColor;
 
-    const num = typeof this.Value === 'number' ? this.Value : undefined;
+    const v = this.Value();
+    if (v === undefined || v === null) {
+      return '#f1f5f9';
+    }
+
+    const num = typeof v === 'number' ? v : undefined;
     if (num != undefined) {
       if (num < 50) return '#ffe2e2';
       else if (num < 75) return '#fef9c2';

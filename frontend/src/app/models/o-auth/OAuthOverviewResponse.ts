@@ -4,6 +4,6 @@ export type OAuthOverviewResponse = {
   totalThirdPartyApps: number;
   totalHighRiskApps: number;
   totalPermissionsGranted: number;
-  securityScore: number;
+  securityScore: number | null;
   securityScoreBreakdown?: SecurityScoreBreakdown;
 };

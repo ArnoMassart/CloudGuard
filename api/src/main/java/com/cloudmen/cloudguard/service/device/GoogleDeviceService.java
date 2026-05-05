@@ -139,7 +139,23 @@ public class GoogleDeviceService {
             }
         }
 
-        int securityScore = totalDevices == 100 ? 0 : (int) Math.round((double) totalScoreSum / totalDevices);
+        if (totalDevices == 0) {
+            SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
+                    .check("lockScreenWarning", totalLockScreenCount, "mobile-devices", "lockscreen")
+                    .check("encryptionWarning", totalEncryptionCount, "mobile-devices", "encryption")
+                    .check("osVersionWarning", totalOsVersionCount, "mobile-devices", "osVersion")
+                    .check("integrityWarning", totalIntegrityCount, "mobile-devices", "integrity")
+                    .build();
+            return new DeviceOverviewResponse(
+                    0, 0, 0,
+                    null,
+                    0, 0, 0, 0,
+                    null,
+                    warnings
+            );
+        }
+
+        int securityScore = (int) Math.round((double) totalScoreSum / totalDevices);
 
         SecurityScoreBreakdownDto breakdown = deviceComplianceScorer.buildDevicesBreakdown(
                 totalDevices, totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,

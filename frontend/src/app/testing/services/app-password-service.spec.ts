@@ -81,6 +81,7 @@ describe('AppPasswordsService', () => {
       const body: AppPasswordOverviewResponse = {
         allowed: false,
         totalAppPasswords: 3,
+        usersWithAppPasswords: 2,
         securityScore: 70,
       };
       service.getOverview().subscribe((res) => expect(res).toEqual(body));

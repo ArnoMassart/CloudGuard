@@ -23,7 +23,7 @@ public record OAuthOverviewResponse(
         long totalThirdPartyApps,
         long totalHighRiskApps,
         long totalPermissionsGranted,
-        int securityScore,
+        Integer securityScore,
         SecurityScoreBreakdownDto securityScoreBreakdown
 ) {
 }
