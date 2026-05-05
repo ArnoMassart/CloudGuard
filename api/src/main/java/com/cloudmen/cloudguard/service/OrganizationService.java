@@ -56,6 +56,34 @@ public class OrganizationService {
         }
     }
 
+    @Transactional
+    public void saveTeamleaderCompanyIdIfAbsent(Long organizationId, String teamleaderId){
+        if (organizationId == null || teamleaderId == null || teamleaderId.isBlank()) {
+            return;
+        }
+
+        organizationRepository.findById(organizationId).ifPresent(organization -> {
+            if(organization.getTeamleaderCompanyId() == null || organization.getTeamleaderCompanyId().isBlank()){
+                organization.setTeamleaderCompanyId(teamleaderId);
+                organizationRepository.save(organization);
+                log.info("Stored teamleader company id for organization {}", organizationId);
+            }
+        });
+    }
+
+    @Transactional
+    public void clearTeamleaderCompanyId(Long organizationId){
+        if(organizationId == null){
+            return;
+        }
+
+        organizationRepository.findById(organizationId).ifPresent(organization -> {
+            organization.setTeamleaderCompanyId(null);
+            organizationRepository.save(organization);
+            log.warn("Cleared stored teamleader_company_id for organization id={}", organizationId);
+        });
+    }
+
     public Optional<Organization> findById(Long id) {
         if (id == null) {
             throw new OrganizationIdNotNullException("The organization id cannot be null");

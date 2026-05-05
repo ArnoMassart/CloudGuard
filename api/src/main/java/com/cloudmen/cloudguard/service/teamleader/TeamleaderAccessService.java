@@ -1,5 +1,9 @@
 package com.cloudmen.cloudguard.service.teamleader;
 
+import com.cloudmen.cloudguard.domain.model.Organization;
+import com.cloudmen.cloudguard.domain.model.User;
+import com.cloudmen.cloudguard.service.OrganizationService;
+import com.cloudmen.cloudguard.service.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +14,7 @@ import org.springframework.web.client.ResourceAccessException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 /**
@@ -26,13 +31,18 @@ public class TeamleaderAccessService {
 
     private final TeamleaderService teamleaderService;
     private final TeamleaderCompanyService teamleaderCompanyService;
+    private final UserService userService;
+    private final OrganizationService organizationService;
 
     @Value("${teamleader.customfield.cloudguard.id}")
     private String cloudGuardFieldId;
 
-    public TeamleaderAccessService(TeamleaderService teamleaderService, TeamleaderCompanyService teamleaderCompanyService) {
+    public TeamleaderAccessService(TeamleaderService teamleaderService, TeamleaderCompanyService teamleaderCompanyService,
+            UserService userService, OrganizationService organizationService) {
         this.teamleaderService = teamleaderService;
         this.teamleaderCompanyService = teamleaderCompanyService;
+        this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     /**
@@ -105,14 +115,34 @@ public class TeamleaderAccessService {
         teamleaderService.updateCredentials(accessToken, refreshToken);
     }
 
-    private boolean executeAccessCheckFlow(String domainEmail) {
+    private boolean executeAccessCheckFlow(String loggedInEmail) {
         HttpHeaders headers = teamleaderService.createHeaders();
 
-        String companyId = teamleaderCompanyService.getCompanyIdByDomain(domainEmail, headers);
+        Long organizationId = userService.findByEmailOptional(loggedInEmail).map(User::getOrganizationId).orElse(null);
+
+        String companyId = null;
+        if (organizationId != null) {
+            Optional<Organization> orgOpt = organizationService.findById(organizationId);
+            if (orgOpt.isPresent()) {
+                String stored = orgOpt.get().getTeamleaderCompanyId();
+                if (stored != null && !stored.isBlank()) {
+                    companyId = stored;
+                    log.info("Stored teamleader company ID: {}", stored);
+                    log.debug("Teamleader access: using stored company id {} for organizationId={}", companyId, organizationId);
+                }
+            }
+        }
+
+        boolean resolvedViaStoredId = companyId != null;
+
+        if (companyId == null) {
+            companyId = teamleaderCompanyService.getCompanyIdByDomain(loggedInEmail, headers);
+        }
+
         if (companyId == null) {
             log.info(
                     "Teamleader access: geen bedrijf gevonden (login-email={}; bedrijf wordt opgelost via domein uit dit adres)",
-                    domainEmail);
+                    loggedInEmail);
             return false;
         }
 
@@ -126,11 +156,17 @@ public class TeamleaderAccessService {
                 "Teamleader access check: companyId={}, hasCustomFields={}",
                 companyId,
                 companyDetails.get("custom_fields") != null);
-        return extractCloudGuardAccessValue(companyDetails);
+
+        boolean allowed = extractCloudGuardAccessValue(companyDetails);
+
+        if (allowed && organizationId != null && !resolvedViaStoredId) {
+            organizationService.saveTeamleaderCompanyIdIfAbsent(organizationId, companyId);
+        }
+
+        return allowed;
     }
 
     private boolean extractCloudGuardAccessValue(Map<String, Object> companyDetails) {
-        @SuppressWarnings("unchecked")
         List<Map<String, Object>> customFields = (List<Map<String, Object>>) companyDetails.get("custom_fields");
 
         if (customFields == null || customFields.isEmpty()) {

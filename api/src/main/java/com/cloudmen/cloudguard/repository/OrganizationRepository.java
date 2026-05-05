@@ -40,4 +40,7 @@ public interface OrganizationRepository extends JpaRepository<Organization,Long>
     Page<Organization> findAllWithSearch(
             @Param("query") String query,
             Pageable pageable);
+
+    @Query("SELECT o FROM Organization o WHERE o.teamleaderCompanyId IS NOT NULL AND TRIM(o.teamleaderCompanyId) <> ''")
+    List<Organization> findAllWithTeamleaderCompanyIdSet();
 }
