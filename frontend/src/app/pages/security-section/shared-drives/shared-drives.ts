@@ -147,7 +147,10 @@ export class SharedDrives implements OnInit, OnDestroy {
     const overview = this.pageOverview();
     const breakdown =
       overview?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'drives');
+      (overview?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(overview.securityScore, 'drives')
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'drives');
   }
 

@@ -19,13 +19,13 @@ package com.cloudmen.cloudguard.dto.dashboard;
  * @param dnsScore              The security score evaluating domain configurations such as SPF, DKIM, and DMARC
  */
 public record DashboardScores(
-        int usersScore,
-        int groupsScore,
-        int drivesScore,
-        int devicesScore,
-        int appAccessScore,
-        int appPasswordsScore,
-        int passwordSettingsScore,
-        int dnsScore
+        Integer usersScore,
+        Integer groupsScore,
+        Integer drivesScore,
+        Integer devicesScore,
+        Integer appAccessScore,
+        Integer appPasswordsScore,
+        Integer passwordSettingsScore,
+        Integer dnsScore
 ) {
 }

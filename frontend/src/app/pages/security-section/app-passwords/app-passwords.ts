@@ -299,10 +299,13 @@ export class AppPasswords implements OnInit, OnDestroy {
     const overview = this.pageOverview();
     const breakdown =
       overview?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(
-        overview?.securityScore ?? 0,
-        'App Wachtwoorden'
-      );
+      (overview?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(
+            overview.securityScore,
+            'App Wachtwoorden'
+          )
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'app-passwords');
   }
 

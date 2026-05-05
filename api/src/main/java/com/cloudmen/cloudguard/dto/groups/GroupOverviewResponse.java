@@ -9,7 +9,7 @@ public record GroupOverviewResponse(
         int highRiskGroups,
         int mediumRiskGroups,
         int lowRiskGroups,
-        int securityScore,
+        Integer securityScore,
         SecurityScoreBreakdownDto securityScoreBreakdown,
         SectionWarningsDto warnings
 ) {}

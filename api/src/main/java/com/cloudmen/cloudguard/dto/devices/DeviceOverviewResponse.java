@@ -25,7 +25,7 @@ public record DeviceOverviewResponse(
         int totalDevices,
         int totalNonCompliant,
         int totalApprovedDevices,
-        int securityScore,
+        Integer securityScore,
         int lockScreenCount,
         int encryptionCount,
         int osVersionCount,

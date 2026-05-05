@@ -52,6 +52,7 @@ public class GoogleGroupsService {
         List<GroupOrgDetail> result = pagedItems.stream().map(CachedGroupItem::detail).toList();
 
         String nextTokenToReturn = (endIndex < totalGroups) ? String.valueOf(page + 1) : null;
+
         return new GroupPageResponse(result, nextTokenToReturn);
     }
 
@@ -78,8 +79,16 @@ public class GoogleGroupsService {
             }
         }
 
-        int securityScore = totalGroups == 0 ? 100
-                : (int) Math.round((lowRiskGroups * 100.0 + mediumRiskGroups * 60.0 + highRiskGroups * 20.0) / totalGroups);
+        if (totalGroups == 0) {
+            return new GroupOverviewResponse(
+                    0, 0, 0, 0, 0,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        int securityScore = (int) Math.round((lowRiskGroups * 100.0 + mediumRiskGroups * 60.0 + highRiskGroups * 20.0) / totalGroups);
 
         SecurityScoreBreakdownDto breakdown = buildGroupsBreakdown(
                 totalGroups, groupsWithExternal, highRiskGroups, mediumRiskGroups, lowRiskGroups, securityScore, false);
@@ -92,6 +101,18 @@ public class GoogleGroupsService {
     public GroupOverviewResponse getGroupsOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         GroupOverviewResponse base = getGroupsOverview(loggedInEmail);
+
+        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
+                .check("externalMember", base.groupsWithExternal(), "users-groups", "groupExternal")
+                .check("highRisk", base.highRiskGroups(), "users-groups", "groupExternal")
+                .build();
+
+        if (base.securityScore() == null) {
+            return new GroupOverviewResponse(
+                    base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
+                    base.mediumRiskGroups(), base.lowRiskGroups(), null, null, warnings);
+        }
+
         boolean ignoreGroupRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "groupExternal");
         int securityScore = ignoreGroupRisk ? 100 : base.securityScore();
 
@@ -99,10 +120,6 @@ public class GoogleGroupsService {
                 ? buildGroupsBreakdown(base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
                 base.mediumRiskGroups(), base.lowRiskGroups(), 100, true)
                 : base.securityScoreBreakdown();
-        SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
-                .check("externalMember", base.groupsWithExternal(), "users-groups", "groupExternal")
-                .check("highRisk", base.highRiskGroups(), "users-groups", "groupExternal")
-                .build();
         return new GroupOverviewResponse(
                 base.totalGroups(), base.groupsWithExternal(), base.highRiskGroups(),
                 base.mediumRiskGroups(), base.lowRiskGroups(), securityScore,

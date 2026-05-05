@@ -5,7 +5,7 @@ export type DevicesOverviewResponse = {
   totalDevices: number;
   totalNonCompliant: number;
   totalApprovedDevices: number;
-  securityScore: number;
+  securityScore: number | null;
   lockScreenCount: number;
   encryptionCount: number;
   osVersionCount: number;

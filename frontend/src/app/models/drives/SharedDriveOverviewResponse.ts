@@ -6,7 +6,7 @@ export type SharedDriveOverviewResponse = {
   orphanDrives: number;
   totalHighRisk: number;
   totalExternalMembers: number;
-  securityScore: number;
+  securityScore: number | null;
   notOnlyDomainUsersAllowedCount: number;
   notOnlyMembersCanAccessCount: number;
   externalMembersDriveCount: number;

@@ -122,7 +122,7 @@ class PasswordSettingsServiceTest {
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
         when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+        PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(0, dto.summary().totalUsers());
         assertEquals(100, dto.securityScore());
@@ -164,7 +164,7 @@ class PasswordSettingsServiceTest {
                 .thenReturn(new AdminSecurityKeysResponse(List.of(missingKeyAdmin), 2, null));
         when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+        PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(1, dto.usersWithForcedChange().size());
         assertEquals(1, dto.summary().usersWithForcedChange());

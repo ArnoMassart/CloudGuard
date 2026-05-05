@@ -13,7 +13,7 @@ import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
 import com.cloudmen.cloudguard.dto.password.OrgUnit2SvDto;
-import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsOverviewResponse;
 import com.cloudmen.cloudguard.dto.report.DomainTip;
 import com.cloudmen.cloudguard.dto.report.FullSecurityReport;
 import com.cloudmen.cloudguard.dto.report.ReportResponse;
@@ -191,7 +191,7 @@ public class PdfReportService {
 
     private FullSecurityReport getFullSecurityReport(String loggedInEmail, Locale locale, List<UserRole> roles) {
         // Haal de overall score veilig op
-        int overallScore = 100;
+        Integer overallScore = null;
         try {
             overallScore = dashboardService.getDashboardSecurityScores(loggedInEmail).overallScore();
         } catch (Exception e) {
@@ -302,7 +302,7 @@ public class PdfReportService {
 
     private FullSecurityReport.PasswordMetrics getSecurityReportPasswordMetrics(String loggedInEmail) {
         try {
-            PasswordSettingsDto response = passwordSettingsService.getPasswordSettings(loggedInEmail);
+            PasswordSettingsOverviewResponse response = passwordSettingsService.getPasswordSettings(loggedInEmail);
             int enforcedOus = (int) response.twoStepVerification().byOrgUnit().stream().filter(OrgUnit2SvDto::enforced).count();
             long unenforcedWithUsers = response.twoStepVerification().byOrgUnit().stream().filter(ou -> !ou.enforced() && ou.totalCount() > 0).count();
             return new FullSecurityReport.PasswordMetrics(response.passwordPoliciesByOu().size(), enforcedOus, unenforcedWithUsers, response.adminsWithoutSecurityKeys().size(), response.securityScore(), false);

@@ -169,7 +169,10 @@ export class GroupsSection implements OnInit, OnDestroy {
     const overview = this.pageOverview();
     const breakdown =
       overview?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'groups');
+      (overview?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(overview.securityScore, 'groups')
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'groups');
   }
 

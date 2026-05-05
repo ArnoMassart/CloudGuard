@@ -147,7 +147,10 @@ export class Devices implements OnInit, OnDestroy {
     const overview = this.pageOverview();
     const breakdown =
       overview?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'devices');
+      (overview?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(overview.securityScore, 'devices')
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'devices');
   }
 

@@ -11,9 +11,8 @@ import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
-import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
-import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -87,9 +86,9 @@ public class PdfReportTestHelper {
         return mock;
     }
 
-    public static PasswordSettingsDto mockPasswordSettings() {
+    public static PasswordSettingsOverviewResponse mockPasswordSettings() {
         // Gezien de complexiteit van de inner classes bij password settings mocken we deze heel oppervlakkig
-        var mock = mock(PasswordSettingsDto.class);
+        var mock = mock(PasswordSettingsOverviewResponse.class);
         lenient().when(mock.securityScore()).thenReturn(90);
 
         var twoStepMock = mock(com.cloudmen.cloudguard.dto.password.TwoStepVerificationDto.class);
