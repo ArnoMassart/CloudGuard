@@ -4,7 +4,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AppIcons } from '../../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
-import { AccountSectionType } from '../../../models/AccountSectionType';
+import { AccountSectionType } from '../../../models/account/AccountSectionType';
 import { CommonModule } from '@angular/common';
 import { AccountsManagerUsers } from './accounts-manager-users/accounts-manager-users';
 import { AccountsManagerOrganizations } from './accounts-manager-organizations/accounts-manager-organizations';

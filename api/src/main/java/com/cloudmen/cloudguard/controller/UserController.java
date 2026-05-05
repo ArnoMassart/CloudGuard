@@ -243,10 +243,12 @@ public class UserController {
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "4") int size,
             @RequestParam(required = false) String query,
-            @RequestParam(required = false) String orgFilter) {
+            @RequestParam(required = false) String orgFilter,
+            @RequestParam(required = false) String status
+            ) {
         String email = jwtService.validateInternalToken(token);
         cloudguardStaffService.requireCloudmenAdmin(email);
-        return ResponseEntity.ok(userService.getAll(pageToken, size, query, orgFilter));
+        return ResponseEntity.ok(userService.getAll(pageToken, size, query, orgFilter, status));
     }
 
     /**

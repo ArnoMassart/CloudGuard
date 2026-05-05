@@ -29,7 +29,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<User> findAllByAccessRequestedWithSearch(
+    Page<User> findAllByAccessRequested(
             @Param("query") String query,
             Pageable pageable);
 
@@ -40,18 +40,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * performs a case-insensitive match on the user's name or email.
      *
      * @param organizationId    the ID of the organization to filter by, or {@code null} to skip this filter
+     * @param isActive          the status of the user
      * @param query             the search string to match against user details
      * @param pageable          pagination and sorting instructions
      * @return a paginated result of users without pending requests
      */
-    @Query("SELECT u FROM tbl_users u WHERE u.accessAccepted " +
+    @Query("SELECT u FROM tbl_users u WHERE u.accessAccepted = true " +
             "AND (:organizationId IS NULL OR u.organizationId = :organizationId) " +
+            "AND (:isActive IS NULL OR u.isActive = :isActive) " +
             "AND (:query IS NULL OR :query = '' OR " +
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<User> findAllAccepted(
             @Param("organizationId") Long organizationId,
+            @Param("isActive") Boolean isActive, // Gebruik het Boolean wrapper object zodat het null kan zijn
             @Param("query") String query,
             Pageable pageable);
 

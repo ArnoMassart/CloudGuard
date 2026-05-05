@@ -105,14 +105,20 @@ export class UserService {
     size: number,
     pageToken?: string,
     query?: string,
-    org?: string
+    org?: string,
+    status?: string
   ): Observable<DatabaseUsersResponse<User>> {
     const url = RouteService.getBackendUrl('/user/all');
     let params = new HttpParams().set('size', size.toString());
 
+    console.log('Status', status);
+
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
     if (org) params = params.set('orgFilter', org);
+    if (status && status !== 'all') {
+      params = params.set('status', status);
+    }
 
     return this.#http.get<DatabaseUsersResponse<User>>(url, {
       params: params,
