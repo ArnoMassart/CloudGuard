@@ -17,6 +17,10 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { PageContentWrapper } from '../../components/page-content-wrapper/page-content-wrapper';
 import { ApiError } from '../../components/api-error/api-error';
+import { Role, User } from '../../models/users/User';
+import { UserService } from '../../services/user-service';
+import { AuthService } from '@auth0/auth0-angular';
+import { CustomAuthService } from '../../auth/custom-auth-service';
 
 @Component({
   selector: 'app-home',
@@ -43,9 +47,9 @@ export class Home implements OnInit, OnDestroy {
   readonly UtilityMethods = UtilityMethods;
   readonly #dashboardService = inject(DashboardService);
   readonly #reportService = inject(ReportService);
-  readonly #router = inject(Router);
-
+  readonly router = inject(Router);
   readonly #translocoService = inject(TranslocoService);
+  readonly #authService = inject(CustomAuthService);
 
   private langSubscription?: Subscription;
 
@@ -91,7 +95,7 @@ export class Home implements OnInit, OnDestroy {
   // ==========================================
 
   routeToPage(link: string) {
-    this.#router.navigate([link]);
+    this.router.navigate([link]);
   }
 
   generateRapport() {
@@ -158,4 +162,29 @@ export class Home implements OnInit, OnDestroy {
       this.hasWarnings.set(true);
     }
   }
+
+  hasFullAccess(): boolean {
+    const user = this.#authService.currentUser();
+
+    if (user && this.hasValidRoleForDashboard(user)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  hasValidRoleForDashboard(user: User) {
+    return user.roles.some((r) => this.DASHBOARD_ALLOWED_ROLES.includes(r));
+  }
+
+  private readonly DASHBOARD_ALLOWED_ROLES: Role[] = [
+    Role.SUPER_ADMIN,
+    Role.USERS_GROUPS_VIEWER,
+    Role.SHARED_DRIVES_VIEWER,
+    Role.DEVICES_VIEWER,
+    Role.APP_ACCESS_VIEWER,
+    Role.APP_PASSWORDS_VIEWER,
+    Role.PASSWORD_SETTINGS_VIEWER,
+    Role.DOMAIN_DNS_VIEWER,
+  ];
 }

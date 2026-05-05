@@ -7,6 +7,7 @@ import { UserGroupSectionType } from '../../../models/UserGroupSectionType';
 import { CommonModule } from '@angular/common';
 import { AppIcons } from '../../../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-users-groups',
@@ -17,6 +18,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
     GroupsSection,
     CommonModule,
     TranslocoPipe,
+    PageContentWrapper,
   ],
   templateUrl: './users-groups.html',
   styleUrl: './users-groups.css',

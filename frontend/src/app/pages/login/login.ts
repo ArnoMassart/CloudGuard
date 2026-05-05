@@ -6,11 +6,22 @@ import { AppIcons } from '../../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../../components/language-bar/language-bar';
 import { Router } from '@angular/router';
+import { BrandFooter } from '../../components/brand-footer/brand-footer';
+import { BrandHeader } from '../../components/brand-header/brand-header';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    TranslocoPipe,
+    LanguageBar,
+    BrandFooter,
+    BrandHeader,
+    StatusLayout,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

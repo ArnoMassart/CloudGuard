@@ -4,10 +4,11 @@ import { AppIcons } from '../../shared/AppIcons';
 import { LucideAngularModule } from 'lucide-angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../../components/language-bar/language-bar';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-teamleader-access-denied',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
   templateUrl: './teamleader-access-denied.html',
   styleUrl: './teamleader-access-denied.css',
 })

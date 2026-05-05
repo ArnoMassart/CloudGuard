@@ -4,10 +4,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { LanguageBar } from '../../components/language-bar/language-bar';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-denied',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
   templateUrl: './denied.html',
   styleUrl: './denied.css',
 })

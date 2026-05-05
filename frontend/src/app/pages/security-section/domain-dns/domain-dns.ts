@@ -15,10 +15,19 @@ import { forkJoin } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { ApiError } from '../../../components/api-error/api-error';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-domain-dns',
-  imports: [PageHeader, SectionTopCard, LucideAngularModule, FormsModule, TranslocoPipe, ApiError],
+  imports: [
+    PageHeader,
+    SectionTopCard,
+    LucideAngularModule,
+    FormsModule,
+    TranslocoPipe,
+    ApiError,
+    PageContentWrapper,
+  ],
   templateUrl: './domain-dns.html',
   styleUrl: './domain-dns.css',
 })

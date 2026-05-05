@@ -16,6 +16,7 @@ import { ApiError } from '../../../components/api-error/api-error';
 
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-reports-reactions',
@@ -28,6 +29,7 @@ import { catchError, distinctUntilChanged, map, switchMap } from 'rxjs/operators
     FilterChips,
     TranslocoPipe,
     ApiError,
+    PageContentWrapper,
   ],
   templateUrl: './reports-reactions.html',
   styleUrl: './reports-reactions.css',

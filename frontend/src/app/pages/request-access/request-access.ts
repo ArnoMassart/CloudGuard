@@ -5,10 +5,11 @@ import { LanguageBar } from '../../components/language-bar/language-bar';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
 import { UserService } from '../../services/user-service';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-request-access',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
   templateUrl: './request-access.html',
   styleUrl: './request-access.css',
 })
