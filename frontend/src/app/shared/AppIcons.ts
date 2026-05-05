@@ -58,6 +58,7 @@ import {
   UserRoundX,
   Undo,
   LifeBuoy,
+  RotateCcw,
 } from 'lucide-angular';
 
 export class AppIcons {
@@ -101,6 +102,7 @@ export class AppIcons {
   static readonly MessageCircle = MessageCircle;
   static readonly Phone = Phone;
   static readonly RefreshCw = RefreshCw;
+  static readonly RotateCcw = RotateCcw;
   static readonly Search = Search;
   static readonly Send = Send;
   static readonly ServerCrash = ServerCrash;

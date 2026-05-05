@@ -36,4 +36,7 @@ public class Organization {
     /** Updated when {@link com.cloudmen.cloudguard.service.notification.NotificationProjectionSyncService#syncOrganization} completes. */
     @Column(name = "last_notification_sync_at")
     private java.time.LocalDateTime lastNotificationSyncAt;
+
+    @Column(name="teamleader_company_id")
+    private String teamleaderCompanyId;
 }
