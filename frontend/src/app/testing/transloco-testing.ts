@@ -584,6 +584,11 @@ export function provideTranslocoTesting() {
     config: {
       availableLangs: ['en'],
       defaultLang: 'en',
+      missingHandler: {
+        logMissingKey: false,
+        useFallbackTranslation: true,
+        allowEmpty: true,
+      },
     },
     loader: TranslocoTestLoader,
   });

@@ -115,18 +115,18 @@ class PasswordSettingsServiceTest {
     }
 
     @Test
-    void getPasswordSettings_emptyUsers_summaryAndScoreStillCoherent() throws Exception {
+    void getPasswordSettings_emptyUsers_noSecurityScore() throws Exception {
         stubMinimalTenant();
 
         when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
         when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+        PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(0, dto.summary().totalUsers());
-        assertEquals(100, dto.securityScore());
-        assertEquals("perfect", dto.securityScoreBreakdown().status());
+        assertNull(dto.securityScore());
+        assertNull(dto.securityScoreBreakdown());
     }
 
     @Test
@@ -164,7 +164,7 @@ class PasswordSettingsServiceTest {
                 .thenReturn(new AdminSecurityKeysResponse(List.of(missingKeyAdmin), 2, null));
         when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
 
-        PasswordSettingsDto dto = service.getPasswordSettings(ADMIN);
+        PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(1, dto.usersWithForcedChange().size());
         assertEquals(1, dto.summary().usersWithForcedChange());

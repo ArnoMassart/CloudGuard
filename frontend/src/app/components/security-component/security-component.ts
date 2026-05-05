@@ -15,7 +15,7 @@ export class SecurityComponent {
   readonly #router = inject(Router);
 
   @Input() Label: string = '';
-  @Input() Value: number | undefined = 68;
+  @Input() Value: number | null | undefined = 68;
   @Input() Icon: LucideIconData = this.Icons.Users;
   @Input() NoValueShow: boolean = false;
   @Input() Route: string = '/users-groups';

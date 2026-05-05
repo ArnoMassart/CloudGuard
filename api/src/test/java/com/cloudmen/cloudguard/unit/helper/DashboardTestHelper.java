@@ -6,9 +6,8 @@ import com.cloudmen.cloudguard.dto.domain.DomainDto;
 import com.cloudmen.cloudguard.dto.drives.SharedDriveOverviewResponse;
 import com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
-import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.when;
@@ -50,8 +49,8 @@ public class DashboardTestHelper {
         return mock;
     }
 
-    public static PasswordSettingsDto mockPasswordSettingsResponse(int score) {
-        var mock = Mockito.mock(PasswordSettingsDto.class);
+    public static PasswordSettingsOverviewResponse mockPasswordSettingsResponse(int score) {
+        var mock = Mockito.mock(PasswordSettingsOverviewResponse.class);
         when(mock.securityScore()).thenReturn(score);
         return mock;
     }

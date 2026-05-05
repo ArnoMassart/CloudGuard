@@ -26,6 +26,11 @@ describe('AccountsManager', () => {
             availableLangs: ['en', 'nl'],
             defaultLang: 'en',
             reRenderOnLangChange: true,
+            missingHandler: {
+              logMissingKey: false,
+              useFallbackTranslation: true,
+              allowEmpty: true,
+            },
           },
           loader: AccountsManagerTranslocoLoader,
         }),

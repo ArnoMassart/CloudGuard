@@ -6,7 +6,7 @@ public record AppPasswordOverviewResponse(
         boolean allowed,
         int totalAppPasswords,
         int usersWithAppPasswords,
-        int securityScore,
+        Integer securityScore,
         SecurityScoreBreakdownDto securityScoreBreakdown
 ) {
 }

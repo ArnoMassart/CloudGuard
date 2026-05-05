@@ -13,7 +13,7 @@
       <div class="cursor-pointer transition-opacity hover:opacity-90" (click)="openSecurityScoreDetail()" role="button"
         tabindex="0" (keydown.enter)="openSecurityScoreDetail()"
         (keydown.space)="openSecurityScoreDetail(); $event.preventDefault()">
-        <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore" [IsPercentage]="true"
+        <app-section-top-card Title="Security Score" [Value]="pageOverview()?.securityScore ?? undefined" [IsPercentage]="true"
           BackgroundColor="#fef9c2" IconColor="#d69518" />
       </div>
     </div>

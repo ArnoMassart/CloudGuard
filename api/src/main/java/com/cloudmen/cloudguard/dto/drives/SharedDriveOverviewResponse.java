@@ -25,7 +25,7 @@ public record SharedDriveOverviewResponse(
         int orphanDrives,
         int totalHighRisk,
         int totalExternalMembersCount,
-        int securityScore,
+        Integer securityScore,
         int notOnlyDomainUsersAllowedCount,
         int notOnlyMembersCanAccessCount,
         int externalMembersDriveCount,

@@ -6,7 +6,7 @@ import { UserPageResponse } from '../../models/users/UserPageResponse';
 import { UserOverviewResponse } from '../../models/users/UserOverviewResponse';
 import { UsersWithoutTwoFactorResponse } from '../../models/users/UsersWithoutTwoFactorResponse';
 import { DatabaseUsersResponse } from '../../models/users/DatabaseUsersResponse';
-import { Role, RoleLabels } from '../../models/users/User';
+import { Role, RoleLabels, User } from '../../models/users/User';
 
 describe('UserService', () => {
   let service: UserService;
@@ -178,23 +178,23 @@ describe('UserService', () => {
   });
 
   describe('Role Access Requests', () => {
-    it('requestRoleAccess POSTs successfully', () => {
-      service.requestRoleAccess().subscribe();
+    it('requestAccess POSTs successfully', () => {
+      service.requestAccess('/request-access').subscribe();
       const req = httpMock.expectOne((r) => r.url.endsWith('/user/request-access'));
       expect(req.request.method).toBe('POST');
       expect(req.request.responseType).toBe('text');
       req.flush('OK');
     });
 
-    it('getRequestRoleAccessSent GETs boolean status', () => {
-      service.getRequestRoleAccessSent().subscribe((res) => expect(res).toBeTruthy());
+    it('getRequestSent GETs boolean status', () => {
+      service.getRequestSent('/request-access').subscribe((res: boolean) => expect(res).toBeTruthy());
       const req = httpMock.expectOne((r) => r.url.endsWith('/user/request-access'));
       expect(req.request.method).toBe('GET');
       req.flush(true);
     });
 
-    it('hasValidRole GETs boolean status', () => {
-      service.hasValidRole().subscribe((res) => expect(res).toBeTruthy());
+    it('hasValidField GETs boolean status', () => {
+      service.hasValidField('/valid-role').subscribe((res: boolean) => expect(res).toBeTruthy());
       const req = httpMock.expectOne((r) => r.url.endsWith('/user/valid-role'));
       expect(req.request.method).toBe('GET');
       req.flush(true);
@@ -207,7 +207,7 @@ describe('UserService', () => {
 
   describe('Database Users & Roles Management', () => {
     it('getAllDatabaseUsers fetches users with parameters', () => {
-      const mockResponse: DatabaseUsersResponse = { users: [], nextPageToken: 'token' };
+      const mockResponse: DatabaseUsersResponse<User> = { users: [], nextPageToken: 'token' };
       service
         .getAllDatabaseUsers(15, 'token1', 'query')
         .subscribe((res) => expect(res).toEqual(mockResponse));
@@ -220,13 +220,13 @@ describe('UserService', () => {
       req.flush(mockResponse);
     });
 
-    it('getAllDatabaseUsersWithoutRoles fetches users without roles', () => {
-      const mockResponse: DatabaseUsersResponse = { users: [], nextPageToken: '' };
+    it('getAllRequestedDatabaseUsers fetches requested-access users', () => {
+      const mockResponse: DatabaseUsersResponse<User> = { users: [], nextPageToken: '' };
       service
-        .getAllDatabaseUsersWithoutRoles(10)
+        .getAllRequestedDatabaseUsers(10)
         .subscribe((res) => expect(res).toEqual(mockResponse));
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/user/all/no-roles'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/user/all/requested-access'));
       expect(req.request.method).toBe('GET');
       expect(req.request.params.get('size')).toBe('10');
       expect(req.request.params.has('pageToken')).toBeFalsy();
@@ -248,32 +248,22 @@ describe('UserService', () => {
 
       service.refreshRequestedCount().subscribe();
 
-      const req = httpMock.expectOne((r) => r.url.endsWith('/user/all/requested-count'));
+      const req = httpMock.expectOne((r) => r.url.endsWith('/user/access-requests/count'));
       expect(req.request.method).toBe('GET');
       req.flush(42);
 
       expect(service.requestedCount()).toBe(42); // Signal moet nu geüpdatet zijn
     });
 
-    it('updateRolesForUserWithoutAny updates roles AND triggers count refresh via tap', () => {
+    it('updateRolesForUserWithoutAny POSTs roles without triggering count refresh', () => {
       const roles = [Role.SUPER_ADMIN];
 
-      // Act
       service.updateRolesForUserWithoutAny('test@test.com', roles).subscribe();
 
-      // Assert 1: De POST request moet gestuurd worden
       const postReq = httpMock.expectOne((r) => r.url.endsWith('/user/roles-without'));
       expect(postReq.request.method).toBe('POST');
       expect(postReq.request.body).toEqual({ userEmail: 'test@test.com', roles });
       postReq.flush({});
-
-      // Assert 2: Vanwege de .pipe(tap(...)) in de service, moet er direct een GET volgen
-      const countReq = httpMock.expectOne((r) => r.url.endsWith('/user/all/requested-count'));
-      expect(countReq.request.method).toBe('GET');
-      countReq.flush(5);
-
-      // Assert 3: De signal moet up-to-date zijn met de nieuwe data
-      expect(service.requestedCount()).toBe(5);
     });
   });
 });

@@ -20,7 +20,7 @@ import com.cloudmen.cloudguard.dto.notifications.NotificationDto;
 import com.cloudmen.cloudguard.dto.notifications.NotificationsResponse;
 import com.cloudmen.cloudguard.dto.oauth.OAuthOverviewResponse;
 import com.cloudmen.cloudguard.dto.apppasswords.AppPasswordOverviewResponse;
-import com.cloudmen.cloudguard.dto.password.PasswordSettingsDto;
+import com.cloudmen.cloudguard.dto.password.PasswordSettingsOverviewResponse;
 import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
@@ -742,7 +742,7 @@ public class NotificationAggregationService {
 
         // Password settings
         if (hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER)) {
-            PasswordSettingsDto passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(loggedInEmail));
+            PasswordSettingsOverviewResponse passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(loggedInEmail));
 
             if (passwordSettings != null) {
                 var twoStep = passwordSettings.twoStepVerification();

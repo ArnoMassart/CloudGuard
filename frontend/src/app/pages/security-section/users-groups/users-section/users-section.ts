@@ -188,7 +188,10 @@ export class UsersSection implements OnInit {
     const overview = this.pageOverview();
     const breakdown =
       overview?.securityScoreBreakdown ??
-      this.#securityScoreDetail.createSimpleBreakdown(overview?.securityScore ?? 0, 'users');
+      (overview?.securityScore != null
+        ? this.#securityScoreDetail.createSimpleBreakdown(overview.securityScore, 'users')
+        : undefined);
+    if (!breakdown) return;
     this.#securityScoreDetail.open(breakdown, 'users');
   }
 

@@ -67,7 +67,7 @@ export class Home implements OnInit, OnDestroy {
   pageResponse = signal<DashboardPageResponse | null>(null);
   pageOverview = signal<DashboardOverviewResponse | null>(null);
 
-  score = signal<number>(0);
+  score = signal<number | null>(null);
 
   // ==========================================
   // PRIVATE PROPERTIES

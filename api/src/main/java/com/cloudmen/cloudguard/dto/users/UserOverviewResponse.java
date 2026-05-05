@@ -27,7 +27,7 @@ public record UserOverviewResponse(
             int totalUsers,
             int withoutTwoFactor,
             int adminUsers,
-            int securityScore,
+            Integer securityScore,
             int activeLongNoLoginCount,
             int inactiveRecentLoginCount,
             SecurityScoreBreakdownDto securityScoreBreakdown,

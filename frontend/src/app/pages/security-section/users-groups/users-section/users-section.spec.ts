@@ -151,7 +151,7 @@ describe('UsersSection', () => {
           USER_SECURITY_VIOLATION.NO_2FA,
           USER_SECURITY_VIOLATION.ACTIVITY_STALE,
         ],
-      } as UserOrgDetail;
+      } as unknown as UserOrgDetail;
 
       // Alles gemuted
       prefsFacadeMock.isDisabled.mockImplementation((cat, key) => true);

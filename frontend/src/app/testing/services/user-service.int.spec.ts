@@ -4,7 +4,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { UserPageResponse } from '../../models/users/UserPageResponse';
 import { UserService } from '../../services/user-service';
 import { Role, RoleLabels } from '../../models/users/User';
-import { DatabaseUsersResponse } from '../../models/users/DatabaseUsersResponse';
 
 describe('UserService Integration', () => {
   let service: UserService;
@@ -98,21 +97,21 @@ describe('UserService Integration', () => {
     });
 
     it('should send role access request', () => {
-      service.requestRoleAccess().subscribe();
+      service.requestAccess('/request-access').subscribe();
       const req = httpTesting.expectOne((r) => r.url.endsWith('/user/request-access'));
       expect(req.request.method).toBe('POST');
       req.flush('success');
     });
 
     it('should check if role access is sent', () => {
-      service.getRequestRoleAccessSent().subscribe((res) => expect(res).toBeTruthy());
+      service.getRequestSent('/request-access').subscribe((res: boolean) => expect(res).toBeTruthy());
       const req = httpTesting.expectOne((r) => r.url.endsWith('/user/request-access'));
       expect(req.request.method).toBe('GET');
       req.flush(true);
     });
 
     it('should check for valid roles', () => {
-      service.hasValidRole().subscribe((res) => expect(res).toBeTruthy());
+      service.hasValidField('/valid-role').subscribe((res: boolean) => expect(res).toBeTruthy());
       const req = httpTesting.expectOne((r) => r.url.endsWith('/user/valid-role'));
       expect(req.request.method).toBe('GET');
       req.flush(true);
@@ -128,17 +127,17 @@ describe('UserService Integration', () => {
       expect(req.request.params.get('size')).toBe('5');
       expect(req.request.params.get('pageToken')).toBe('page2');
       expect(req.request.params.get('query')).toBe('john');
-      req.flush({ users: [], nextPageToken: null });
+      req.flush({ users: [], nextPageToken: '' });
     });
 
-    it('should fetch all database users without roles with params', () => {
-      service.getAllDatabaseUsersWithoutRoles(5).subscribe();
+    it('should fetch requested-access database users', () => {
+      service.getAllRequestedDatabaseUsers(5).subscribe();
 
-      const req = httpTesting.expectOne((r) => r.url.endsWith('/user/all/no-roles'));
+      const req = httpTesting.expectOne((r) => r.url.endsWith('/user/all/requested-access'));
       expect(req.request.method).toBe('GET');
       expect(req.request.params.get('size')).toBe('5');
       expect(req.request.params.has('pageToken')).toBeFalsy();
-      req.flush({ users: [], nextPageToken: null });
+      req.flush({ users: [], nextPageToken: '' });
     });
 
     it('should update roles for user', () => {
@@ -152,26 +151,14 @@ describe('UserService Integration', () => {
       req.flush({});
     });
 
-    it('should update roles for user without roles AND refresh requested count via tap', () => {
+    it('should update roles for user without triggering requested-count refresh', () => {
       const roles = [Role.USERS_GROUPS_VIEWER];
 
-      // Roep de functie aan
       service.updateRolesForUserWithoutAny('test@domain.com', roles).subscribe();
 
-      // 1. Verwacht eerst de POST call voor het updaten
       const postReq = httpTesting.expectOne((r) => r.url.endsWith('/user/roles-without'));
       expect(postReq.request.method).toBe('POST');
       postReq.flush({});
-
-      // 2. Door de tap() verwachten we nu automatisch een GET call voor de count
-      const countReq = httpTesting.expectOne((r) => r.url.endsWith('/user/all/requested-count'));
-      expect(countReq.request.method).toBe('GET');
-
-      // Simuleer dat er nog 3 requests openstaan
-      countReq.flush(3);
-
-      // 3. Controleer of de signal succesvol is geüpdatet!
-      expect(service.requestedCount()).toBe(3);
     });
 
     it('should refresh requested count signal directly', () => {
@@ -180,7 +167,7 @@ describe('UserService Integration', () => {
 
       service.refreshRequestedCount().subscribe();
 
-      const req = httpTesting.expectOne((r) => r.url.endsWith('/user/all/requested-count'));
+      const req = httpTesting.expectOne((r) => r.url.endsWith('/user/access-requests/count'));
       expect(req.request.method).toBe('GET');
       req.flush(8);
 

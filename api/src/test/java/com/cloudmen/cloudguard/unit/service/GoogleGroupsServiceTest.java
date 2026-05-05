@@ -131,18 +131,15 @@ class GoogleGroupsServiceTest {
     }
 
     @Test
-    void getGroupsOverview_noGroups_securityScore100() {
+    void getGroupsOverview_noGroups_securityScoreNotApplicable() {
         when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(List.of()));
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
 
         assertEquals(0, overview.totalGroups());
-        assertEquals(100, overview.securityScore());
-        assertEquals("perfect", overview.securityScoreBreakdown().status());
+        assertNull(overview.securityScore());
+        assertNull(overview.securityScoreBreakdown());
         assertNull(overview.warnings());
-        long zeroMaxTiers =
-                overview.securityScoreBreakdown().factors().stream().filter(f -> f.maxScore() == 0).count();
-        assertEquals(3, zeroMaxTiers, "All risk tiers omitted from detail UI when there are no groups");
     }
 
     @Test

@@ -94,7 +94,7 @@ describe('Devices Integration', () => {
 
     // Check of de top card de juiste waarde toont
     const totalCard = fixture.debugElement.query(By.css('app-section-top-card'));
-    expect(totalCard.componentInstance.Value).toBe(10);
+    expect(totalCard.componentInstance.Value()).toBe(10);
 
     // Check of de tabel de device naam toont
     const row = fixture.debugElement.query(By.css('tbody tr')).nativeElement;

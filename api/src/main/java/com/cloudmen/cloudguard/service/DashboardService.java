@@ -78,7 +78,7 @@ public class DashboardService {
     public DashboardPageResponse getDashboardSecurityScores(String loggedInEmail) {
         try {
             DashboardScores scores = getAllScores(loggedInEmail);
-            int overallScore = calculateTotalScore(scores);
+            Integer overallScore = calculateTotalScore(scores);
             LocalDateTime lastUpdated = LocalDateTime.now();
 
             return new DashboardPageResponse(
@@ -185,14 +185,14 @@ public class DashboardService {
                     passwordSettingsFuture, dnsAverageFuture
             ).join();
 
-            int usersScore = usersFuture.join();
-            int groupsScore = groupsFuture.join();
-            int drivesScore = drivesFuture.join();
-            int devicesScore = devicesFuture.join();
-            int appAccessScore = appAccessFuture.join();
-            int appPasswordsScore = appPasswordsFuture.join();
-            int passwordSettingsScore = passwordSettingsFuture.join();
-            int dnsScore = dnsAverageFuture.join();
+            Integer usersScore = usersFuture.join();
+            Integer groupsScore = groupsFuture.join();
+            Integer drivesScore = drivesFuture.join();
+            Integer devicesScore = devicesFuture.join();
+            Integer appAccessScore = appAccessFuture.join();
+            Integer appPasswordsScore = appPasswordsFuture.join();
+            Integer passwordSettingsScore = passwordSettingsFuture.join();
+            Integer dnsScore = dnsAverageFuture.join();
 
             return new DashboardScores(usersScore, groupsScore, drivesScore,
                     devicesScore, appAccessScore, appPasswordsScore, passwordSettingsScore, dnsScore);
@@ -253,21 +253,49 @@ public class DashboardService {
         return fallbackScore;
     }
 
-    private int calculateTotalScore(DashboardScores scores) {
+    /**
+     * Averages module scores the user may see ({@code >= 0}). {@code null} = no data to score (N/A), excluded;
+     * {@code -1} = no RBAC access, excluded.
+     */
+    private Integer calculateTotalScore(DashboardScores scores) {
         int totalScore = 0;
         int categoriesCount = 0;
 
-        if (scores.usersScore() >= 0) { totalScore += scores.usersScore(); categoriesCount++; }
-        if (scores.groupsScore() >= 0) { totalScore += scores.groupsScore(); categoriesCount++; }
-        if (scores.drivesScore() >= 0) { totalScore += scores.drivesScore(); categoriesCount++; }
-        if (scores.devicesScore() >= 0) { totalScore += scores.devicesScore(); categoriesCount++; }
-        if (scores.appAccessScore() >= 0) { totalScore += scores.appAccessScore(); categoriesCount++; }
-        if (scores.appPasswordsScore() >= 0) { totalScore += scores.appPasswordsScore(); categoriesCount++; }
-        if (scores.passwordSettingsScore() >= 0) { totalScore += scores.passwordSettingsScore(); categoriesCount++; }
-        if (scores.dnsScore() >= 0) { totalScore += scores.dnsScore(); categoriesCount++; }
+        if (scores.usersScore() != null && scores.usersScore() >= 0) {
+            totalScore += scores.usersScore();
+            categoriesCount++;
+        }
+        if (scores.groupsScore() != null && scores.groupsScore() >= 0) {
+            totalScore += scores.groupsScore();
+            categoriesCount++;
+        }
+        if (scores.drivesScore() != null && scores.drivesScore() >= 0) {
+            totalScore += scores.drivesScore();
+            categoriesCount++;
+        }
+        if (scores.devicesScore() != null && scores.devicesScore() >= 0) {
+            totalScore += scores.devicesScore();
+            categoriesCount++;
+        }
+        if (scores.appAccessScore() != null && scores.appAccessScore() >= 0) {
+            totalScore += scores.appAccessScore();
+            categoriesCount++;
+        }
+        if (scores.appPasswordsScore() != null && scores.appPasswordsScore() >= 0) {
+            totalScore += scores.appPasswordsScore();
+            categoriesCount++;
+        }
+        if (scores.passwordSettingsScore() != null && scores.passwordSettingsScore() >= 0) {
+            totalScore += scores.passwordSettingsScore();
+            categoriesCount++;
+        }
+        if (scores.dnsScore() != null && scores.dnsScore() >= 0) {
+            totalScore += scores.dnsScore();
+            categoriesCount++;
+        }
 
         if (categoriesCount == 0) {
-            return 0;
+            return null;
         }
 
         return Math.round((float) totalScore / categoriesCount);

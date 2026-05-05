@@ -101,11 +101,17 @@ public class AppPasswordsService {
                 .mapToInt(u -> u.passwords().size())
                 .sum();
         int totalUserCount = entry.totalUserCount();
+
+        if (totalUserCount == 0) {
+            return new AppPasswordOverviewResponse(true, totalAppPasswords, usersWithAppPasswords, null, null);
+        }
+
         boolean ignored = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-passwords", "appPassword");
-        int securityScore = ignored ? 100 : totalUserCount == 0 ? 0
+        int securityScore = ignored ? 100
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
         SecurityScoreBreakdownDto breakdown = buildAppPasswordsBreakdown(
                 totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore, ignored);
+
         return new AppPasswordOverviewResponse(true, totalAppPasswords, usersWithAppPasswords, securityScore, breakdown);
     }
 

@@ -2,6 +2,6 @@ import { DashboardScores } from './DashboardScores';
 
 export type DashboardPageResponse = {
   scores: DashboardScores;
-  overallScore: number;
+  overallScore: number | null;
   lastUpdated: string;
 };
