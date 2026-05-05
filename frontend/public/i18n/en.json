@@ -663,5 +663,14 @@
   "inactive.description": "Your account is currently inactive by an administrator. \nThis means you do not have access to this application.",
   "inactive.sub-description": "If you believe this is an error or to have your account reactivated, please contact your administrator or IT Helpdesk.",
   "inactive.title": "Account Inactive",
-  "help-contact": "Help & Contact"
+  "help-contact": "Help & Contact",
+  "dashboard.no-access.contact-button": "Contact CLOUDMEN",
+  "dashboard.no-access.description": "Your current role does not provide access to the overall security score and summary views. \nYou can view the specific parts for which you have rights via the menu on the left.",
+  "dashboard.no-access.help-text": "Do you think this is a mistake and do you need more insight for your work? \nThen request a role change from the support team.",
+  "dashboard.no-access.title": "Limited dashboard access",
+  "no-access.description": "Your account is not configured correctly or is not currently assigned any role within CloudGuard.",
+  "no-access.sub-description": "Contact your application manager or CLOUDMEN to have your account permissions set.",
+  "no-access.title": "No Access",
+  "note": "Remark",
+  "contact-text": "Contact us"
 }

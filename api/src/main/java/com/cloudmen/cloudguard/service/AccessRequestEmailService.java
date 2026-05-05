@@ -58,8 +58,9 @@ public class AccessRequestEmailService {
 
         String requestType = "Koppeling aan een organisatie";
         String actionRequired = "Deze gebruiker heeft nog geen organisatie. Wijs een organisatie toe via de Accounts Manager.";
+        String subject = "Actie vereist: Organisatie aan gebruiker koppelen in CloudGuard";
 
-        sendEmail(userEmail, requestType, actionRequired, locale);
+        sendEmail(userEmail, requestType, actionRequired, subject, locale);
     }
 
     /**
@@ -72,8 +73,10 @@ public class AccessRequestEmailService {
         Locale locale = LocaleContextHolder.getLocale();
         String requestType = "Toewijzing van een CloudGuard rol";
         String actionRequired = "Deze gebruiker heeft succesvol ingelogd, maar heeft nog geen rol (of staat op Unassigned). Wijs een rol toe via de Accounts Manager.";
+        String subject = "Actie vereist: Toewijzen van rol aan gebruiker in CloudGuard";
 
-        sendEmail(userEmail, requestType, actionRequired, locale);
+
+        sendEmail(userEmail, requestType, actionRequired, subject, locale);
     }
 
     /**
@@ -86,11 +89,14 @@ public class AccessRequestEmailService {
         Locale locale = LocaleContextHolder.getLocale();
         String requestType = "Toegangsaanvraag voor CloudGuard";
         String actionRequired = "Deze gebruiker is succesvol ingelogd, maar heeft nog geen toegang tot het platform. Keur de toegangsaanvraag goed via de Accounts Manager.";
+        String subject = "Actie vereist: Nieuw toegangsverzoek in CloudGuard";
 
-        sendEmail(userEmail, requestType, actionRequired, locale);
+        messageSource.getMessage("email.access.subject", null, "Actie vereist: Nieuw toegangsverzoek in CloudGuard", locale);
+
+        sendEmail(userEmail, requestType, actionRequired, subject, locale);
     }
 
-    private void sendEmail(String userEmail, String requestType, String actionRequired, Locale locale) {
+    private void sendEmail(String userEmail, String requestType, String actionRequired, String subject, Locale locale) {
         if (recipientEmails == null || recipientEmails.isEmpty()) {
             log.warn("Geen ontvangst e-mails geconfigureerd voor access requests.");
             return;
@@ -101,7 +107,6 @@ public class AccessRequestEmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(recipientEmails.toArray(new String[0]));
 
-            String subject = messageSource.getMessage("email.access.subject", null, "Actie vereist: Nieuw toegangsverzoek in CloudGuard", locale);
             helper.setSubject(subject);
 
             try {

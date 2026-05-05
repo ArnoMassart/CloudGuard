@@ -1,17 +1,3 @@
 <app-status-layout>
-    <div class="flex items-center justify-center bg-[#fee2e2] p-3 mt-1 rounded-4xl">
-        <lucide-icon [img]="Icons.CircleX" size="28" class="text-destructive w-5 h-5 md:w-7 md:h-7"></lucide-icon>
-    </div>
-    <h2 class="flex justify-center text-xl">{{ 'forbidden.access-denied' | transloco }}</h2>
-    <span class="flex items-center justify-center text-center text-black/50 mb-3">{{ 'forbidden.no-access' |
-        transloco }}</span>
-    <div class="bg-[#f9fafb] py-3 px-2 mb-3 text-black/50 text-center text-[13px] rounded-lg border-muted border">
-        <span class="font-semibold">{{ 'forbidden.note' | transloco }}: </span>
-        <span>
-            {{ 'forbidden.note.description' | transloco }}</span>
-    </div>
-
-    <button (click)="tryAgain()"
-        class="bg-primary text-white w-full p-2 rounded-lg hover:bg-primary/80 cursor-pointer">{{
-        'back-to-login' | transloco }}</button>
+    <app-status-error-card DescriptionKey="forbidden.no-access" SubDescriptionKey="forbidden.note.description" />
 </app-status-layout>

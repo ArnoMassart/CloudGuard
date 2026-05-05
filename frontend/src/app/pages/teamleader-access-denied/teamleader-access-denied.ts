@@ -1,23 +1,12 @@
-import { Component, inject } from '@angular/core';
-import { CustomAuthService } from '../../auth/custom-auth-service';
-import { AppIcons } from '../../shared/AppIcons';
+import { Component } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { LanguageBar } from '../../components/language-bar/language-bar';
 import { StatusLayout } from '../../components/status-layout/status-layout';
+import { StatusErrorCard } from '../../components/status-error-card/status-error-card';
 
 @Component({
   selector: 'app-teamleader-access-denied',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
+  imports: [LucideAngularModule, StatusLayout, StatusErrorCard],
   templateUrl: './teamleader-access-denied.html',
   styleUrl: './teamleader-access-denied.css',
 })
-export class TeamleaderAccessDenied {
-  readonly Icons = AppIcons;
-
-  readonly #authService = inject(CustomAuthService);
-
-  tryAgain() {
-    this.#authService.logout();
-  }
-}
+export class TeamleaderAccessDenied {}

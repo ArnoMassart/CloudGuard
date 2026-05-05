@@ -1,23 +1,12 @@
-import { Component, inject } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { Component } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { LanguageBar } from '../../components/language-bar/language-bar';
-import { CustomAuthService } from '../../auth/custom-auth-service';
-import { AppIcons } from '../../shared/AppIcons';
 import { StatusLayout } from '../../components/status-layout/status-layout';
+import { StatusErrorCard } from '../../components/status-error-card/status-error-card';
 
 @Component({
   selector: 'app-denied',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
+  imports: [LucideAngularModule, StatusLayout, StatusErrorCard],
   templateUrl: './denied.html',
   styleUrl: './denied.css',
 })
-export class Denied {
-  readonly Icons = AppIcons;
-
-  readonly #authService = inject(CustomAuthService);
-
-  backToLogin() {
-    this.#authService.logout();
-  }
-}
+export class Denied {}

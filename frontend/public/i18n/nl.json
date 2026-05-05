@@ -667,5 +667,10 @@
   "dashboard.no-access.title": "Beperkte dashboard toegang",
   "dashboard.no-access.description": "Je huidige rol geeft geen toegang tot de algemene beveiligingsscore en de totaaloverzichten. Je kunt via het menu aan de linkerkant wel de specifieke onderdelen bekijken waar je rechten voor hebt.",
   "dashboard.no-access.help-text": "Denk je dat dit een vergissing is en heb je meer inzicht nodig voor je werkzaamheden? Vraag dan een rolwijziging aan bij het support team.",
-  "dashboard.no-access.contact-button": "Neem contact op met CLOUDMEN"
+  "dashboard.no-access.contact-button": "Neem contact op met CLOUDMEN",
+  "no-access.title": "Geen Toegang",
+  "no-access.description": "Je account is niet correct geconfigureerd of heeft momenteel geen enkele rol toegewezen gekregen binnen CloudGuard.",
+  "note": "Opmerking",
+  "no-access.sub-description": "Neem contact op met je applicatiebeheerder of CLOUDMEN om je accountrechten te laten instellen.",
+  "contact-text": "Contacteer ons"
 }

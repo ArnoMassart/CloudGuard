@@ -1,21 +1,4 @@
 <app-status-layout>
-    <div class="flex items-center justify-center bg-[#fee2e2] p-3 mt-1 rounded-full">
-        <lucide-icon [img]="Icons.UserX" size="28" class="text-destructive w-5 h-5 md:w-7 md:h-7"></lucide-icon>
-    </div>
-
-    <h2 class="flex justify-center text-xl font-medium mt-2">{{ 'inactive.title' | transloco }}</h2>
-    <span class="flex items-center justify-center text-center text-black/50 mb-3 leading-relaxed">
-        {{ 'inactive.description' | transloco }}
-    </span>
-
-    <div
-        class="bg-[#f9fafb] py-3 px-4 mb-3 text-black/60 text-center text-[13px] rounded-lg border-muted border w-full">
-        <span class="font-semibold text-black/80">{{ 'forbidden.note' | transloco }}: </span>
-        <span>{{ 'inactive.sub-description' | transloco }}</span>
-    </div>
-
-    <button (click)="backToLogin()"
-        class="bg-primary text-white font-medium w-full py-2.5 px-4 rounded-lg hover:bg-primary/90 transition-all cursor-pointer shadow-sm">
-        {{ 'back-to-login' | transloco }}
-    </button>
+    <app-status-error-card [Icon]="Icons.UserX" TitleKey="inactive.title" DescriptionKey="inactive.description"
+        SubDescriptionKey="inactive.sub-description" />
 </app-status-layout>
