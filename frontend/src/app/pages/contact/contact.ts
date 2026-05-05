@@ -6,11 +6,18 @@ import { AppIcons } from '../../shared/AppIcons';
 import { RouteService } from '../../services/route-service';
 import { LucideAngularModule } from 'lucide-angular';
 import { PageHeader } from '../../components/page-header/page-header';
+import { PageContentWrapper } from '../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [TranslocoPipe, ReactiveFormsModule, LucideAngularModule, PageHeader],
+  imports: [
+    TranslocoPipe,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    PageHeader,
+    PageContentWrapper,
+  ],
   templateUrl: './contact.html',
   styleUrl: './contact.css',
 })

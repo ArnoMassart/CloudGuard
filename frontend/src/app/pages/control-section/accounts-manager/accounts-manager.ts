@@ -8,6 +8,7 @@ import { AccountSectionType } from '../../../models/AccountSectionType';
 import { CommonModule } from '@angular/common';
 import { AccountsManagerUsers } from './accounts-manager-users/accounts-manager-users';
 import { AccountsManagerOrganizations } from './accounts-manager-organizations/accounts-manager-organizations';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-accounts-manager',
@@ -19,6 +20,7 @@ import { AccountsManagerOrganizations } from './accounts-manager-organizations/a
     CommonModule,
     AccountsManagerUsers,
     AccountsManagerOrganizations,
+    PageContentWrapper,
   ],
   templateUrl: './accounts-manager.html',
   styleUrl: './accounts-manager.css',

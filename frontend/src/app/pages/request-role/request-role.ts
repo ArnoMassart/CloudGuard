@@ -5,10 +5,11 @@ import { LanguageBar } from '../../components/language-bar/language-bar';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { UserService } from '../../services/user-service';
 import { AppIcons } from '../../shared/AppIcons';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-request-role',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
   templateUrl: './request-role.html',
   styleUrl: './request-role.css',
 })

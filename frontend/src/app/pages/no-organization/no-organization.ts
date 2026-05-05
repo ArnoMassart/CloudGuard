@@ -5,10 +5,11 @@ import { CustomAuthService } from '../../auth/custom-auth-service';
 import { LanguageBar } from '../../components/language-bar/language-bar';
 import { UserService } from '../../services/user-service';
 import { AppIcons } from '../../shared/AppIcons';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-no-organization',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
   templateUrl: './no-organization.html',
   styleUrl: './no-organization.css',
 })

@@ -11,6 +11,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { skip, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiError } from '../../../components/api-error/api-error';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 export interface OrgUnitNode {
   id: string;
@@ -24,7 +25,14 @@ export interface OrgUnitNode {
 @Component({
   selector: 'app-organizational-units',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, PageHeader, TranslocoPipe, ApiError],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    PageHeader,
+    TranslocoPipe,
+    ApiError,
+    PageContentWrapper,
+  ],
   templateUrl: './organizational-units.html',
   styleUrl: './organizational-units.css',
 })
@@ -91,12 +99,10 @@ export class OrganizationalUnits implements OnInit, OnDestroy {
     this.loadUnitTree();
     // langChanges$ emits the active language when you subscribe; that is not a user-driven change.
     // Clearing the policy cache on that first emission wiped session cache on every navigation back to this page.
-    this.langSubscription = this.#translocoService.langChanges$
-      .pipe(skip(1))
-      .subscribe(() => {
-        this.#policiesSession.clear();
-        this.loadUnitTree();
-      });
+    this.langSubscription = this.#translocoService.langChanges$.pipe(skip(1)).subscribe(() => {
+      this.#policiesSession.clear();
+      this.loadUnitTree();
+    });
   }
 
   ngOnDestroy(): void {

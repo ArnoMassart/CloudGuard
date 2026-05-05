@@ -18,6 +18,7 @@ import { KPI_COLORS, kpiColors } from '../../../shared/KpiColors';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiError } from '../../../components/api-error/api-error';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -33,6 +34,7 @@ const ITEMS_PER_PAGE = 4;
     PageWarningsItem,
     TranslocoPipe,
     ApiError,
+    PageContentWrapper,
   ],
   templateUrl: './app-passwords.html',
   styleUrl: './app-passwords.css',

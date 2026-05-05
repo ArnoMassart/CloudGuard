@@ -9,11 +9,19 @@ import { CustomAuthService } from '../../auth/custom-auth-service';
 import { AppIcons } from '../../shared/AppIcons';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LanguageBar } from '../../components/language-bar/language-bar';
+import { BrandFooter } from '../../components/brand-footer/brand-footer';
 
 @Component({
   selector: 'app-workspace-setup',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    TranslocoPipe,
+    LanguageBar,
+    BrandFooter,
+  ],
   templateUrl: './workspace-setup.html',
 })
 export class WorkspaceSetup {

@@ -5,6 +5,9 @@
   <div class="pt-6">
     <div class="w-full flex flex-col gap-5">
 
+      @if (hasFullAccess()) {
+
+
       <div class="w-full grid grid-cols-2 md:grid-cols-3 md:gap-4 gap-2">
         <app-section-top-card Title="{{ 'home.section-card.meldingen' | transloco }}"
           [Value]="pageOverview()?.totalNotifications" BackgroundColor="#ffedd4" IconColor="#f54a00" TextColor="#f54a00"
@@ -135,6 +138,36 @@
             </span>
           </div>
         </div>
+      </div>
+      }
+      } @else {
+      <div
+        class="bg-white border-2 border-muted/50 rounded-xl shadow-sm p-10 md:p-16 flex flex-col items-center justify-center text-center">
+
+        <div
+          class="w-20 h-20 bg-slate-50 border border-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <i-lucide [img]="Icons.ShieldAlert" size="36"></i-lucide>
+        </div>
+
+        <h2 class="text-xl md:text-2xl font-medium text-slate-900 m-0 mb-3">
+          {{ 'dashboard.no-access.title' | transloco }}
+        </h2>
+
+        <p class="text-slate-500 max-w-lg m-0 mb-8 text-sm md:text-base leading-relaxed">
+          {{ 'dashboard.no-access.description' | transloco }}
+        </p>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-5 max-w-lg w-full mb-8">
+          <p class="text-sm text-slate-600 m-0">
+            {{ 'dashboard.no-access.help-text' | transloco }}
+          </p>
+        </div>
+
+        <button type="button" (click)="UtilityMethods.goToPage('/contact', router);"
+          class="bg-primary hover:opacity-90 text-white text-sm font-medium py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto">
+          <i-lucide [img]="Icons.Mail" size="18"></i-lucide>
+          {{ 'dashboard.no-access.contact-button' | transloco }}
+        </button>
       </div>
       }
     </div>

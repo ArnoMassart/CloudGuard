@@ -21,6 +21,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiError } from '../../../components/api-error/api-error';
+import { PageContentWrapper } from '../../../components/page-content-wrapper/page-content-wrapper';
 
 @Component({
   selector: 'app-password-settings',
@@ -33,6 +34,7 @@ import { ApiError } from '../../../components/api-error/api-error';
     LucideAngularModule,
     TranslocoPipe,
     ApiError,
+    PageContentWrapper,
   ],
   templateUrl: './password-settings.html',
 })

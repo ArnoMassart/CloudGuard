@@ -4,10 +4,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../shared/AppIcons';
 import { CustomAuthService } from '../../auth/custom-auth-service';
 import { LanguageBar } from '../../components/language-bar/language-bar';
+import { StatusLayout } from '../../components/status-layout/status-layout';
 
 @Component({
   selector: 'app-inactive',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar],
+  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
   templateUrl: './inactive.html',
   styleUrl: './inactive.css',
 })

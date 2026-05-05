@@ -15,11 +15,12 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
 import { MessageDialog } from '../../../components/message-dialog/message-dialog';
+import { PageContentWrapper } from "../../../components/page-content-wrapper/page-content-wrapper";
 
 @Component({
   selector: 'app-security-preferences',
   standalone: true,
-  imports: [CommonModule, PageHeader, PageWarnings, PageWarningsItem, LucideAngularModule, TranslocoPipe],
+  imports: [CommonModule, PageHeader, PageWarnings, PageWarningsItem, LucideAngularModule, TranslocoPipe, PageContentWrapper],
   templateUrl: './security-preferences.html',
   styleUrl: './security-preferences.css',
 })
