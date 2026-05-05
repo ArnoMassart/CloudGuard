@@ -1,0 +1,10 @@
+GOOGLE_CLIENT_EMAIL=google-client-service-account
+GOOGLE_PRIVATE_KEY=google-service-account-private-key
+TEAMLEADER_CLIENT_ID=teamleader-api-client-id
+TEAMLEADER_CLIENT_SECRET=teamleader-api-client-secret
+SUPABASE_URL=supabase-project-url
+SUPABASE_KEY=supabase-project-secret-key
+MAIL_USERNAME=mail-account-username
+MAIL_PASSWORD=mail-account-password
+BACKEND_PORT=port-for-backend-connection
+CLOUDMEN_ADMIN_EMAILS=emails-for-CLOUDMEN-admin-accounts,
