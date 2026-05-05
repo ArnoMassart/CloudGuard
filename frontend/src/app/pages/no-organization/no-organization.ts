@@ -1,15 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideAngularModule } from 'lucide-angular';
-import { CustomAuthService } from '../../auth/custom-auth-service';
-import { LanguageBar } from '../../components/language-bar/language-bar';
 import { UserService } from '../../services/user-service';
 import { AppIcons } from '../../shared/AppIcons';
 import { StatusLayout } from '../../components/status-layout/status-layout';
+import { StatusRequestCard } from '../../components/status-request-card/status-request-card';
 
 @Component({
   selector: 'app-no-organization',
-  imports: [LucideAngularModule, TranslocoPipe, LanguageBar, StatusLayout],
+  imports: [LucideAngularModule, StatusLayout, StatusRequestCard],
   templateUrl: './no-organization.html',
   styleUrl: './no-organization.css',
 })
@@ -17,7 +15,6 @@ export class NoOrganization {
   readonly Icons = AppIcons;
 
   readonly #userService = inject(UserService);
-  readonly #authService = inject(CustomAuthService);
 
   requestSent = signal(false);
 
@@ -41,9 +38,5 @@ export class NoOrganization {
       },
       error: (err) => console.error('Fout bij ophalen request', err),
     });
-  }
-
-  tryAgain() {
-    this.#authService.logout();
   }
 }

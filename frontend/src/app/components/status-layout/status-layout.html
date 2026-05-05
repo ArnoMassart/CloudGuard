@@ -2,10 +2,7 @@
     class="min-h-screen w-full bg-navbar-background flex flex-col items-center justify-center overflow-hidden py-4 text-white md:pb-8">
     <div class="flex-1 flex flex-col items-center justify-center mt-auto w-full max-w-md">
         <app-brand-header />
-        <div
-            class="bg-white text-black mx-5 px-5 py-7 rounded-xl flex flex-col items-center justify-center gap-3 w-full max-w-[calc(100%-2.5rem)]">
-            <ng-content></ng-content>
-        </div>
+        <ng-content></ng-content>
     </div>
     <app-brand-footer />
 </div>
