@@ -31,7 +31,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
       # We zeggen hier: "Als het domein klopt, EN de URL begint met /api, stuur het naar de backend"
-      - "traefik.http.routers.backend.rule=Host(`cloudguard.cloudmen.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=le"
       # Pas deze poort aan als je Spring Boot applicatie op een andere poort draait (standaard is vaak 8080)
