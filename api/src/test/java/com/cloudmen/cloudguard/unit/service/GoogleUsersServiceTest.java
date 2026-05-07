@@ -1,6 +1,7 @@
 package com.cloudmen.cloudguard.unit.service;
 
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.users.GoogleUserMapper;
 import com.cloudmen.cloudguard.service.users.GoogleUsersService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
@@ -22,13 +23,19 @@ import java.util.Set;
 import static com.cloudmen.cloudguard.unit.helper.GlobalTestHelper.*;
 import static com.cloudmen.cloudguard.unit.helper.GoogleUsersTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class GoogleUsersServiceTest {
 
     @Mock
     private GoogleUsersCacheService usersCacheService;
+
+    @Mock
+    private UserRepository userRepository;
 
     private GoogleUsersService service;
 
@@ -37,7 +44,9 @@ public class GoogleUsersServiceTest {
         UsersComplianceScorer scorer = new UsersComplianceScorer(getMessageSource());
         GoogleUserMapper mapper = new GoogleUserMapper();
 
-        service = new GoogleUsersService(usersCacheService, scorer, mapper);
+        lenient().when(userRepository.findByEmailIn(any())).thenReturn(List.of());
+
+        service = new GoogleUsersService(usersCacheService, scorer, mapper, userRepository);
     }
 
     @AfterEach
@@ -132,6 +141,24 @@ public class GoogleUsersServiceTest {
 
         assertEquals("Super Admin", page.users().get(0).role());
         assertEquals("Regular User", page.users().get(1).role());
+    }
+
+    @Test
+    void getWorkspaceUsersPaged_fallsBackToDbPictureWhenDirectoryHasNoThumbnail() {
+        User googleUser = createUser("synced@x.com", "Synced User", false, true, false, daysAgo(5));
+        assertNull(googleUser.getThumbnailPhotoUrl());
+
+        com.cloudmen.cloudguard.domain.model.User dbUser = new com.cloudmen.cloudguard.domain.model.User();
+        dbUser.setEmail("synced@x.com");
+        dbUser.setPictureUrl("https://lh3.googleusercontent.com/oauth-picture");
+
+        mockCacheEntry(usersCacheService, List.of(googleUser), Map.of(), Map.of());
+        when(userRepository.findByEmailIn(any())).thenReturn(List.of(dbUser));
+
+        var page = service.getWorkspaceUsersPaged(ADMIN, null, 10, null);
+
+        assertEquals(1, page.users().size());
+        assertEquals("https://lh3.googleusercontent.com/oauth-picture", page.users().get(0).pictureUrl());
     }
 
     @Test

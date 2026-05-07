@@ -29,8 +29,9 @@
             class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden hover:bg-gray-50 transition-colors">
 
             <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="font-medium text-slate-900 text-sm">{{ user.name }}</span>
+                <div class="flex items-center gap-3 min-w-0">
+                    <app-user-avatar [initials]="deniedUserInitials(user)" />
+                    <span class="font-medium text-slate-900 text-sm truncate">{{ user.name }}</span>
                 </div>
             </td>
 

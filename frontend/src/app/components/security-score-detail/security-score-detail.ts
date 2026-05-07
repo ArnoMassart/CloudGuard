@@ -39,9 +39,9 @@ export class SecurityScoreDetailComponent {
   }
 
   getStatusBgColor(): string {
-    const s = this.breakdown.status;
-    if (s === 'perfect' || s === 'good') return 'rgba(58, 191, 173, 0.08)';
-    if (s === 'average') return 'rgba(214, 149, 24, 0.08)';
+    const n = this.breakdown.totalScore;
+    if (n === 100 || n >= 75) return 'rgba(58, 191, 173, 0.08)';
+    if (n > 50) return 'rgba(214, 149, 24, 0.08)';
     return 'rgba(231, 0, 11, 0.08)';
   }
 

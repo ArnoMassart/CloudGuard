@@ -1,6 +1,27 @@
 <app-page-content-wrapper>
   <app-page-header Title="{{ 'accounts-manager' | transloco }}"
-    Description="{{ 'account-manager.description' | transloco }}" [NeedAdminLink]="false" />
+    Description="{{ 'account-manager.description' | transloco }}" [NeedAdminLink]="false">
+    <div pageHeaderActions class="flex flex-wrap items-center gap-3 justify-end">
+      <button type="button"
+        class="flex gap-2 sm:gap-3 items-center text-muted-foreground border-2 border-muted/50 bg-transparent rounded-lg py-2 px-3 leading-none hover:bg-gray-100 relative"
+        (click)="goToDenied()">
+        <i-lucide [img]=" Icons.UserRoundX" [size]="20" />
+        <span>{{ 'denied' | transloco }} ({{userService.deniedCount()}})</span>
+      </button>
+      <button type="button"
+        class="flex gap-2 sm:gap-3 items-center text-white bg-primary rounded-lg py-2 px-3 leading-none hover:opacity-85 relative"
+        (click)="goToRequests()">
+        <i-lucide [img]=" Icons.UserRoundCheck" [size]="20" />
+        <span>{{ 'account-manager.new-requests' | transloco }}</span>
+        @if (userService.requestedCount()) {
+        <span
+          class="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm">
+          {{ userService.requestedCount() > 99 ? '99+' : userService.requestedCount() }}
+        </span>
+        }
+      </button>
+    </div>
+  </app-page-header>
 
   <div class="flex items-center gap-6 sm:gap-10 md:gap-12 pt-4 sm:pt-6 border-b border-gray-200">
     <button (click)="togglePage('USERS')"

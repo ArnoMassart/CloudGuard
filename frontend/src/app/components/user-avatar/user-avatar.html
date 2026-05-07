@@ -1,0 +1,16 @@
+<div
+  class="shrink-0 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden ring-1 ring-slate-200/80"
+  [ngClass]="sizeClass()">
+  @if (pictureUrl() && !imageFailed()) {
+  <img
+    [src]="pictureUrl()!"
+    alt=""
+    loading="lazy"
+    class="w-full h-full object-cover"
+    (error)="onImgError()" />
+  } @else {
+  <span class="text-slate-600 font-semibold leading-none select-none" [ngClass]="textSizeClass()">{{
+    initials()
+  }}</span>
+  }
+</div>

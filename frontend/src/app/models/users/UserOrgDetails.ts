@@ -8,11 +8,11 @@ export const USER_SECURITY_VIOLATION = {
 export type UserOrgDetail = {
   fullName: string;
   email: string;
+  pictureUrl?: string | null;
   role: string;
   isActive: boolean;
   lastLogin: string;
   isTwoFactorEnabled: boolean;
   isSecurityConform: boolean;
-  /** When every listed violation is muted by Beveiligingsvoorkeuren, UI shows Conform. */
   securityViolationCodes?: string[];
 };

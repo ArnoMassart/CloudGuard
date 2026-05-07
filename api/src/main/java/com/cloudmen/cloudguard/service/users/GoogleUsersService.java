@@ -5,6 +5,7 @@ import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.dto.users.*;
 import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -16,7 +17,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The main orchestration service for managing Google Workspace user data. <p>
@@ -30,11 +35,17 @@ public class GoogleUsersService {
     private final GoogleUsersCacheService usersCacheService;
     private final UsersComplianceScorer scorer;
     private final GoogleUserMapper mapper;
+    private final UserRepository userRepository;
 
-    public GoogleUsersService(GoogleUsersCacheService usersCacheService, UsersComplianceScorer scorer, GoogleUserMapper mapper) {
+    public GoogleUsersService(
+            GoogleUsersCacheService usersCacheService,
+            UsersComplianceScorer scorer,
+            GoogleUserMapper mapper,
+            UserRepository userRepository) {
         this.usersCacheService = usersCacheService;
         this.scorer = scorer;
         this.mapper = mapper;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -77,12 +88,41 @@ public class GoogleUsersService {
 
         List<User> pagedGoogleUsers = (startIndex >= totalUsers) ? Collections.emptyList() : sortedList.subList(startIndex, endIndex);
 
+        Map<String, String> pictureFallbackByEmailLower = pictureFallbackByEmailLower(pagedGoogleUsers);
+
         List<UserOrgDetail> mappedUsers = pagedGoogleUsers.stream()
-                .map(user -> mapper.mapToOrgDetail(user, cachedData.userRoleAssignments(), cachedData.roleDictionary()))
+                .map(user -> mapper.mapToOrgDetail(
+                        user,
+                        cachedData.userRoleAssignments(),
+                        cachedData.roleDictionary(),
+                        user.getPrimaryEmail() == null
+                                ? null
+                                : pictureFallbackByEmailLower.get(user.getPrimaryEmail().toLowerCase(Locale.ROOT))))
                 .toList();
 
         String nextTokenToReturn = (endIndex < totalUsers) ? String.valueOf(page + 1) : null;
         return new UserPageResponse(mappedUsers, nextTokenToReturn);
+    }
+
+    /**
+     * CloudGuard DB stores the Google OAuth {@code picture} claim per user; Directory may omit {@code thumbnailPhotoUrl}.
+     * One batch lookup fills gaps for the current page only.
+     */
+    private Map<String, String> pictureFallbackByEmailLower(List<User> googleUsers) {
+        List<String> emails = googleUsers.stream()
+                .map(User::getPrimaryEmail)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (emails.isEmpty()) {
+            return Map.of();
+        }
+        return userRepository.findByEmailIn(emails).stream()
+                .filter(u -> u.getPictureUrl() != null && !u.getPictureUrl().isBlank())
+                .collect(Collectors.toMap(
+                        u -> u.getEmail().toLowerCase(Locale.ROOT),
+                        com.cloudmen.cloudguard.domain.model.User::getPictureUrl,
+                        (a, b) -> a));
     }
 
     /**

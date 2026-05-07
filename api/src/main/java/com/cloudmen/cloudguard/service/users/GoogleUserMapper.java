@@ -14,7 +14,14 @@ import java.util.*;
  */
 @Component
 public class GoogleUserMapper {
-    public UserOrgDetail mapToOrgDetail(User user, Map<String, Long> roleAssignments, Map<Long, String> roleDictionary) {
+    /**
+     * @param cloudguardPictureFallback stored OAuth/JWT picture URL for this email when Directory has no thumbnail
+     */
+    public UserOrgDetail mapToOrgDetail(
+            User user,
+            Map<String, Long> roleAssignments,
+            Map<Long, String> roleDictionary,
+            String cloudguardPictureFallback) {
         Long roleId = roleAssignments.get(user.getId());
         String roleName = (roleId != null) ? roleDictionary.getOrDefault(roleId, "Unknown Role") : "Regular User";
 
@@ -23,9 +30,12 @@ public class GoogleUserMapper {
 
         var security = GoogleServiceHelperMethods.evaluateUserSecurity(isActive, user.getLastLoginTime(), twoFAEnabled);
 
+        String pictureUrl = firstNonBlank(user.getThumbnailPhotoUrl(), cloudguardPictureFallback);
+
         return new UserOrgDetail(
                 user.getName().getFullName(),
                 user.getPrimaryEmail(),
+                pictureUrl,
                 GoogleServiceHelperMethods.translateRoleName(roleName),
                 isActive,
                 user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
@@ -33,5 +43,15 @@ public class GoogleUserMapper {
                 security.conform(),
                 security.violationCodes()
         );
+    }
+
+    private static String firstNonBlank(String primary, String fallback) {
+        if (primary != null && !primary.isBlank()) {
+            return primary;
+        }
+        if (fallback != null && !fallback.isBlank()) {
+            return fallback;
+        }
+        return null;
     }
 }

@@ -26,6 +26,7 @@ export class Contact {
   #http = inject(HttpClient);
 
   readonly Icons = AppIcons; // Voor de Lucide icons in de HTML
+  readonly chatUrl = 'https://cloudmen.com/pages/contact#intercom';
 
   contactForm: FormGroup = this.#fb.group({
     topic: ['support', Validators.required],

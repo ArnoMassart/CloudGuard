@@ -6,6 +6,7 @@
                 @case (1) { {{(data.isAccepted ? 'accept' : 'deny') | transloco }}? }
                 @case (2) { {{ 'select-an-org' | transloco }} }
                 @case (3) { {{ 'roles.assign-title' | transloco }} }
+                @case (4) { {{ 'account-manager.confirm-access-title' | transloco }} }
                 }
             </h3>
             @if (step === 3) {
@@ -68,7 +69,7 @@
                 [class.border-primary]="isSuperAdmin" [class.bg-primary/5]="isSuperAdmin"
                 [class.border-slate-200]="!isSuperAdmin">
                 <input type="checkbox" class="w-4 h-4 accent-primary cursor-pointer" [(ngModel)]="isSuperAdmin">
-                <span class="font-medium text-slate-900">Super Admin</span>
+                <span class="font-medium text-slate-900">{{ 'user.role.super-admin' | transloco }}</span>
             </label>
 
             @for (roleObj of data.regularRoles; track roleObj.value) {
@@ -82,32 +83,77 @@
             }
         </div>
         }
+
+        @case (4) {
+        <div class="flex flex-col gap-4">
+            <p class="m-0 text-sm text-slate-600">
+                {{ 'account-manager.confirm-access-hint' | transloco }}
+            </p>
+
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-col gap-3">
+                <div>
+                <span class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ 'user-cap' | transloco }}</span>
+                <p class="m-0 mt-1 font-medium text-slate-900">
+                    {{ data.user.firstName }} {{ data.user.lastName }}
+                </p>
+                <p class="m-0 text-sm text-slate-500">{{ data.user.email }}</p>
+                </div>
+
+                <div class="border-t border-slate-200 pt-3">
+                <span class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ 'organization' | transloco }}</span>
+                <p class="m-0 mt-1 text-sm text-slate-800">{{ selectedOrgName() }}</p>
+                </div>
+
+                <div class="border-t border-slate-200 pt-3">
+                <span class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ 'role' | transloco }}</span>
+                <div class="m-0 mt-1 flex flex-wrap gap-2">
+                    @for (r of summaryRoles(); track r.trackId) {
+                    <span class="inline-flex rounded-lg bg-white px-2.5 py-1 text-sm text-slate-800 ring-1 ring-slate-200">
+                        {{ r.labelKey | transloco }}
+                    </span>
+                    }
+                </div>
+                </div>
+            </div>
+        </div>
+        }
         }
     </div>
 
     <div class="px-6 py-4 flex justify-end gap-3 border-t border-slate-100 bg-slate-50/50 rounded-b-xl">
-        @if (step > 1) {
-        <button type="button" (click)="prevStep()"
-            class="cursor-pointer hover:bg-slate-100 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
-            {{ 'back' | transloco }}
-        </button>
+        @if (step === 4) {
+            <button type="button" (click)="prevStep()"
+                class="cursor-pointer hover:bg-slate-100 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
+                {{ 'back' | transloco }}
+            </button>
+            <button type="button" (click)="confirmAndSubmit()"
+                class="cursor-pointer hover:opacity-90 rounded-lg bg-primary text-white text-sm font-medium py-2.5 px-6 transition-all shadow-sm">
+                {{ 'confirm' | transloco }}
+            </button>
         } @else {
-        <button type="button" mat-dialog-close
-            class="cursor-pointer hover:bg-slate-100 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
-            {{ 'cancel' | transloco }}
-        </button>
-        }
-
-        <button type="button" (click)="nextStep()"
-            [disabled]="(step === 2 && !selectedOrganizationId) || (!data.isAccepted && step === 1 && !denyReason.trim())"
-            [class.opacity-50]="(step === 2 && !selectedOrganizationId) || (!data.isAccepted && step === 1 && !denyReason.trim())"
-            [class.bg-red-500]="!data.isAccepted && step === 1" [class.bg-primary]="data.isAccepted || step > 1"
-            class="cursor-pointer hover:opacity-90 rounded-lg text-white text-sm font-medium py-2.5 px-6 transition-all shadow-sm">
-            @switch (step) {
-            @case (1) { {{(data.isAccepted ? 'accept' : 'deny') | transloco }} }
-            @case (2) { {{ 'next' | transloco }} }
-            @case (3) { {{ 'assign' | transloco }} }
+            @if (step > 1) {
+                <button type="button" (click)="prevStep()"
+                    class="cursor-pointer hover:bg-slate-100 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
+                    {{ 'back' | transloco }}
+                </button>
+            } @else {
+                <button type="button" mat-dialog-close
+                    class="cursor-pointer hover:bg-slate-100 border border-slate-200 py-2.5 px-6 rounded-lg bg-white text-sm font-medium text-slate-600 transition-colors">
+                    {{ 'cancel' | transloco }}
+                </button>
             }
-        </button>
+
+            <button type="button" (click)="nextStep()"
+                [disabled]="(step === 2 && !selectedOrganizationId) || (!data.isAccepted && step === 1 && !denyReason.trim()) || (data.isAccepted && step === 3 && !canAdvanceFromRolesStep())"
+                [class.opacity-50]="(step === 2 && !selectedOrganizationId) || (!data.isAccepted && step === 1 && !denyReason.trim()) || (data.isAccepted && step === 3 && !canAdvanceFromRolesStep())"
+                [class.bg-red-500]="!data.isAccepted && step === 1" [class.bg-primary]="data.isAccepted || step > 1"
+                class="cursor-pointer hover:opacity-90 rounded-lg text-white text-sm font-medium py-2.5 px-6 transition-all shadow-sm">
+                @switch (step) {
+                    @case (1) { {{(data.isAccepted ? 'accept' : 'deny') | transloco }} }
+                    @case (2) { {{ 'next' | transloco }} }
+                    @case (3) { {{ 'next' | transloco }} }
+                }
+            </button>
+        }
     </div>
 </div>

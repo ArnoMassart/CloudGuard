@@ -1,18 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { UserAvatar } from '../../../../components/user-avatar/user-avatar';
 import { Organization } from '../../../../models/org/Organization';
 import { Role, RoleLabels, RolePriority, User } from '../../../../models/users/User';
+import { UserService } from '../../../../services/user-service';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppIcons } from '../../../../shared/AppIcons';
-import { MatDialog } from '@angular/material/dialog';
-import { ViewRolesDialog } from '../../../../components/view-roles-dialog/view-roles-dialog';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-accounts-manager-table',
-  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule, MatTooltipModule],
+  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule, MatTooltipModule, UserAvatar],
   templateUrl: './accounts-manager-table.html',
   styleUrl: './accounts-manager-table.css',
 })
@@ -20,6 +20,11 @@ export class AccountsManagerTable {
   readonly Icons = AppIcons;
 
   readonly #translocoService = inject(TranslocoService);
+  readonly #userService = inject(UserService);
+
+  userInitials(user: User): string {
+    return this.#userService.getInitials(user);
+  }
 
   // Inputs
   readonly users = input.required<User[]>();
@@ -31,12 +36,8 @@ export class AccountsManagerTable {
   readonly actionClick = output<User>();
   readonly orgChange = output<{ user: User; newOrgId: number | null }>();
   readonly toggleRoles = output<{ email: string; length: number }>();
-
   readonly activeSwitch = output<User>();
 
-  readonly dialog = inject(MatDialog);
-
-  /** Chips shown in the Role column (Super Admin + Cloudmen admin are two chips when both apply). */
   getRolesTranslated(user: User): {
     trackKey: string;
     value: Role;
@@ -108,7 +109,7 @@ export class AccountsManagerTable {
     }
     switch (roleValue) {
       case Role.SUPER_ADMIN:
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-purple-100 text-purple-700 border-purple-200';
       case Role.UNASSIGNED:
         return 'bg-gray-100 text-gray-500 border-gray-200';
       default:
@@ -121,32 +122,12 @@ export class AccountsManagerTable {
     return user.isCloudmenStaff === true;
   }
 
+  showRoles(user: User): void {
+    this.toggleRoles.emit({ email: user.email, length: this.displayRoleChipCount(user) });
+  }
+
   hasValidRole(user: User): boolean {
-    return !user.roles.includes(Role.UNASSIGNED);
-  }
-
-  showRoles(user: User) {
-    if (user.roles.length <= 1) return;
-
-    this.dialog.open(ViewRolesDialog, {
-      width: '400px',
-      panelClass: 'custom-dialog-container',
-      data: {
-        roles: this.getSortedTranslatedRoles(user),
-      },
-    });
-  }
-
-  getSortedTranslatedRoles(user: User) {
-    return user.roles
-      .map((role) => ({
-        value: role,
-        label: RoleLabels[role],
-      }))
-      .sort((a, b) => {
-        const transA = this.#translocoService.translate(a.label);
-        const transB = this.#translocoService.translate(b.label);
-        return transA.localeCompare(transB);
-      });
+    if (!user.roles?.length) return false;
+    return user.roles.some((r) => (r as Role) !== Role.UNASSIGNED);
   }
 }

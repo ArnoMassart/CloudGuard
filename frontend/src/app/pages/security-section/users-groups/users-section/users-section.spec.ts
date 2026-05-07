@@ -41,19 +41,27 @@ describe('UsersSection', () => {
 
   const mockUsers: UserOrgDetail[] = [
     {
+      fullName: 'Test',
       email: 'test@cloudmen.com',
-      twoFactorEnabled: true,
-      securityConform: true,
+      pictureUrl: null,
+      role: 'Super Admin',
+      isActive: true,
+      lastLogin: 'Today',
+      isTwoFactorEnabled: true,
+      isSecurityConform: true,
       securityViolationCodes: [],
-      roles: ['Super Admin'],
-    } as unknown as UserOrgDetail,
+    },
     {
+      fullName: 'Risk',
       email: 'risk@cloudmen.com',
-      twoFactorEnabled: false,
-      securityConform: false,
+      pictureUrl: null,
+      role: 'Regular User',
+      isActive: true,
+      lastLogin: 'Today',
+      isTwoFactorEnabled: false,
+      isSecurityConform: false,
       securityViolationCodes: [USER_SECURITY_VIOLATION.NO_2FA],
-      roles: ['Regular User'],
-    } as unknown as UserOrgDetail,
+    },
   ];
 
   const mockPageRes = {
@@ -133,7 +141,7 @@ describe('UsersSection', () => {
 
   describe('Muting and Conform logic', () => {
     it('twoFactorCellMuted returns true only if 2fa is disabled and preference is muted', () => {
-      const userNo2fa = { ...mockUsers[1], twoFactorEnabled: false } as UserOrgDetail;
+      const userNo2fa = { ...mockUsers[1], isTwoFactorEnabled: false } as UserOrgDetail;
 
       // Niet gemuted in prefs
       prefsFacadeMock.isDisabled.mockReturnValue(false);
@@ -146,7 +154,7 @@ describe('UsersSection', () => {
 
     it('effectiveSecurityConform returns true if violations are muted in preferences', () => {
       const userWithViolations = {
-        securityConform: false,
+        isSecurityConform: false,
         securityViolationCodes: [
           USER_SECURITY_VIOLATION.NO_2FA,
           USER_SECURITY_VIOLATION.ACTIVITY_STALE,
