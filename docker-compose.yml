@@ -31,7 +31,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
       # We zeggen hier: "Als het domein klopt, EN de URL begint met /api, stuur het naar de backend"
-      - "traefik.http.routers.backend.rule=Host(`cloudguard.cloudmen.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=le"
       # Pas deze poort aan als je Spring Boot applicatie op een andere poort draait (standaard is vaak 8080)
@@ -49,7 +49,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
-      - "traefik.http.routers.frontend.rule=Host(`cloudguard.cloudmen.net`)"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_NAME}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=le"
       - "traefik.http.services.frontend.loadbalancer.server.port=80" # Interne Angular/Nginx poort
