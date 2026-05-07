@@ -1,93 +1,198 @@
-# CLOUDMEN-Stage-Project
+# CloudGuard - CLOUDMEN
 
+CloudGuard is a comprehensive internal management and authorization portal developed for **CLOUDMEN**. It manages user roles, access requests, and system statuses, and seamlessly integrates with external services like Google Workspace, Teamleader, Auth0, and Supabase.
 
+## 🚀 Tech Stack
 
-## Getting started
+**Frontend:**
+* Angular (v17+)
+* Tailwind CSS (Styling)
+* Lucide Angular (Icons)
+* Transloco (Internationalization / i18n)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+**Backend**
+* Java (v21)
+* Spring Boot (v3+)
+* Maven
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+**Infrastructure & Services:**
+* **Main Database:** MySQL (Containerized)
+* **Token Storage:** Supabase (Used exclusively for Teamleader tokens)
+* **Authentication:** Auth0 (Single Page Application)
+* **Integrations:** Teamleader API, Google Admin SDK (Domain-wide Delegation)
+* **Deployment:** Docker, Docker Compose, Traefik (Reverse Proxy)
+* **CI/CD:** Gitlab Pipelines
 
-## Add your files
+## ✨ Key Features
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+* **User & Role Management:** Comprehensive system to manage user accounts, assign roles, and control platform permissions.
 
+* **Access Request Workflow:** Streamlined process for users to request access or specific roles, with an admin approval interface.
+
+* **Google Workspace Integration:** Deep integration with Google Admin SDK to monitor and manage Workspace users, groups, and drive data.
+
+* **Teamleader Synchronization:** Automated connectivity with the Teamleader API, including secure OAuth token management.
+
+* **Advanced Authorization:** Secure Auth0-based authentication flow using custom post-login actions for email verification.
+
+* **Security Dashboards:** Visual representation of system security statuses and account activities using interactive charts.
+
+* **Multi-language Support:** Fully localized interface with support for multiple languages (Dutch and English).
+
+* **Automated Deployment:** Robust CI/CD pipeline and containerized infrastructure for seamless updates and high availability.
+
+## 👥 User Roles & Permissions
+CloudGuard utilizes a role-based access control (RBAC) system to ensure secure and appropriate access to its features. The following roles are currently supported:
+
+* **Super Admin:** Has broad access to the platform's data and can view all security dashboards.
+
+* **CLOUDMEN Super Admin:** A specialized, top-level administrator. Inherits all standard Super Admin functionalities, with the exclusive ability to manage all users, approve or deny access requests, assign roles, and allocate organizations to users.
+
+* **Security Dashboard Viewers:** Instead of an all-or-nothing approach, read-only access is divided into specific viewer roles. Each of these roles corresponds directly to a specific security module within the system. Users can be assigned one or multiple of the following:
+    * `USERS_GROUPS_VIEWER`
+    * `ORG_UNITS_VIEWER`
+    * `SHARED_DRIVES_VIEWER`
+    * `DEVICES_VIEWER`
+    * `APP_ACCESS_VIEWER`
+    * `APP_PASSWORDS_VIEWER`
+    * `PASSWORD_SETTINGS_VIEWER`
+    * `DOMAIN_DNS_VIEWER`
+    * `LICENSES_VIEWER`
+    * `SECURITY_PREFERENCES_VIEWER`
+
+* **Unassigned:** The default state for newly registered users. These users have successfully authenticated via Auth0 but have not yet been granted access to any specific dashboards by an administrator. Users with no roles will automatically been assigned this status and will not have any access to the platform's content.
+
+## ⚙️ Prerequisites
+
+Before you begin, ensure you have met the following requirements:
+* Git installed
+* Node.js and npm (for local frontend development)
+* Java 21 and Maven (for local backend development)
+* Docker & Docker Compose (for containerized deployment)
+* Access to the project's external services (Auth0, Supabase, Teamleader, Google Cloud)
+
+## 🛠️ Configuration & Environment Variables
+
+To connect the backend to the required services, you must create an `.env` file in the backend directory based on the provided `env-vars` template.
+
+```env
+# Google Configuration
+GOOGLE_CLIENT_EMAIL=your-service-account-email
+GOOGLE_PRIVATE_KEY=your-private-key
+
+# Teamleader Configuration
+TEAMLEADER_CLIENT_ID=your-client-id
+TEAMLEADER_CLIENT_SECRET=your-client-secret
+
+# Supabase Configuration (For Teamleader tokens only)
+SUPABASE_URL=[https://your-project.supabase.co](https://your-project.supabase.co)
+SUPABASE_KEY=your-service-role-secret-key
+
+# Auth0 Configuration
+AUTH0_DOMAIN=your-tenant.eu.auth0.com
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+AUTH0_AUDIENCE=[https://your-tenant.eu.auth0.com/api/v2/](https://your-tenant.eu.auth0.com/api/v2/)
+
+# Mail & System
+MAIL_USERNAME=your-mail-account
+MAIL_PASSWORD=your-mail-password
+BACKEND_PORT=8080
+CLOUDMEN_ADMIN_EMAILS=admin1@example.com,admin2@example.com
 ```
-cd existing_repo
-git remote add origin https://gitlab.apstudent.be/s142427/cloudmen-stage-project.git
-git branch -M main
-git push -uf origin main
+
+## 🔐 Auth0 Post-Login Action Setup
+
+To securely pass the user's Google Workspace email to the backend, you must configure a Custom Action in your Auth0 dashboard.
+
+1. Navigate to **Actions** &rarr; **Triggers** &rarr; **Post Login** in Auth0.
+
+2. Create a new "Custom Action" (e.g., `Check Google Admin Status`).
+
+3. Replace the default code with the following script:
+```js
+exports.onExecutePostLogin = async (event, api) => {
+  if (event.connection.strategy !== 'google-oauth2') return;
+
+  const userEmail = event.user.email;
+
+  // We sent only the email as secure claim
+  // The backend will decide the roles later (Admin or User).
+  api.idToken.setCustomClaim('https://cloudguard.com/workspace_email', userEmail);
+  api.accessToken.setCustomClaim('https://cloudguard.com/workspace_email', userEmail);
+
+  console.log(`Successful login via Google Workspace for: ${userEmail}`);
+};
 ```
 
-## Integrate with your tools
+4. Click **Deploy** to save the script.
 
-- [ ] [Set up project integrations](https://gitlab.apstudent.be/s142427/cloudmen-stage-project/-/settings/integrations)
+5. Drag and drop this new action between "Start" and "Complete" in the Post-Login flow diagram.
 
-## Collaborate with your team
+6. Click **Apply** in the top right corner to make the flow live. <br>
+⚠️ **IMPORTANT:** For a complete, step-by-step guide with screenshots on how to configure Auth0 and other external platforms, please refer to the [Releaseplan CloudGuard.pdf](./docs/Releaseplan%20CloudGuard.pdf).
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## 💻 Local Development
 
-## Test and Deploy
+**Frontend**
 
-Use the built-in continuous integration in GitLab.
+1. Navigate to the frontend directory: `cd frontend`
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+2. Install dependencies: `npm install`
 
-***
+3. Start the development server: `npm start`
 
-# Editing this README
+4. The application will be available at `http://localhost:4200`.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+**Backend**
 
-## Suggestions for a good README
+1. Navigate to the backend directory: `cd api`
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+2. Ensure your `.env` file is properly configured.
 
-## Name
-Choose a self-explaining name for your project.
+3. Build the project: `mvn clean install`
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+4. Run the Spring Boot Application: `mvn spring-boot:run`
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+5. The backend API will be available at `http://localhost:8080` (the port here is determined by what you have set in the `.env` for `${BACKEND_PORT}`).
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## 🐳 Docker Deployment (Production / Staging)
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+The application is fully containerized and uses **Traefik** as a reverse proxy for routing and automatic SSL (HTTPS) certificate generation.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+1. **Install Docker:** Ensure Docker and Docker Compose are installed on your server.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+2. **Create the Traefik Network:**
+```bash
+docker network create traefik
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+3. **Configure Environment Variables:** Ensure the `.env` files in both the Traefik directory and the project root directory are filled out.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+4. **Start Traefik:**
+``` bash
+cd traefik
+docker compose up -d --build
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+5. **Start CloudGuard (Frontend, Backend, MySQL):**
+``` bash
+cd ..
+docker compose up -d --build
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## 🔄 CI/CD Pipeline
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+This project uses **Gitlab CI/CD** for automated testing, building, and deployment.
+- **Test Stage:** Automatically runs Maven tests on the backend.
 
-## License
-For open source projects, say how it is licensed.
+- **Build Stage:** Compiles the Spring Boot `.jar` and the Angular `dist` folder as pipeline artifacts.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- **Deploy Stage:** Upon merging to the `main` branch, the pipeline connects to the server via SSH, pulls the latest code, and restarts the Docker containers.
+
+## 📝 License & Authors
+- **Authors:**
+    - [Anna Yang](https://github.com/03ayv)
+    - [Arno Massart](https://github.com/ArnoMassart)
+
+- Developed as an internship project for **CLOUDMEN**.
