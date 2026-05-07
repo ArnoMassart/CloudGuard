@@ -208,12 +208,12 @@ public class UserService {
         return false;
     }
 
-    public DatabaseUsersResponse<UserDto> getAll(String pageToken, int size, String query, String orgIdFilter) {
-        return fetchUsersFromDb(pageToken, size, query, orgIdFilter, true);
+    public DatabaseUsersResponse<UserDto> getAll(String pageToken, int size, String query, String orgIdFilter, String statusParam) {
+        return fetchUsersFromDb(pageToken, size, query, orgIdFilter, statusParam, true);
     }
 
     public DatabaseUsersResponse<UserDto> getAllRequested(String pageToken, int size, String query) {
-        return fetchUsersFromDb(pageToken, size, query, "", false);
+        return fetchUsersFromDb(pageToken, size, query, "", null, false);
     }
 
     public DatabaseUsersResponse<DeniedUser> getAllDenied(String pageToken, int size, String query) {
@@ -312,6 +312,18 @@ public class UserService {
         return false;
     }
 
+    public boolean isActive(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            return user.isActive();
+        }
+
+        return false;
+    }
+
     public void acceptUser(UserDecisionRequestDto request) {
         User user = findByEmail(request.userEmail());
 
@@ -372,7 +384,7 @@ public class UserService {
         save(user);
     }
 
-    private DatabaseUsersResponse<UserDto> fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, boolean withoutRequests) {
+    private DatabaseUsersResponse<UserDto> fetchUsersFromDb(String pageToken, int size, String query, String orgIdFilter, String statusParam, boolean withoutRequests) {
         int page = (pageToken == null || pageToken.isEmpty()) ? 0 : Integer.parseInt(pageToken);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName").ascending());
@@ -386,9 +398,17 @@ public class UserService {
                 parsedOrgId = Long.parseLong(orgIdFilter);
             }
 
-            userPage = userRepository.findAllAccepted(parsedOrgId, query, pageable);
+            Boolean isActive = null;
+
+            if ("active".equalsIgnoreCase(statusParam)) {
+                isActive = true;
+            } else if ("inactive".equalsIgnoreCase(statusParam)) {
+                isActive = false;
+            }
+
+            userPage = userRepository.findAllAccepted(parsedOrgId, isActive, query, pageable);
         }else {
-            userPage = userRepository.findAllByAccessRequestedWithSearch(query, pageable);
+            userPage = userRepository.findAllByAccessRequested(query, pageable);
         }
 
         String nextPageToken = userPage.hasNext() ? String.valueOf(page + 1) : null;

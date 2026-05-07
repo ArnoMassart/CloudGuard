@@ -226,6 +226,19 @@ public class UserController {
     }
 
     /**
+     * Verifies if the authenticated user is active in the CloudGuard system.
+     *
+     * @param token the {@code AuthToken} cookie provided by the client used to authenticate the request
+     * @return a {@link ResponseEntity} containing a boolean indicating if the user is active
+     */
+    @GetMapping("/is-active")
+    public ResponseEntity<Boolean> isActive(@CookieValue(name = "AuthToken", required = false) String token) {
+        String loggedInEmail = jwtService.validateInternalToken(token);
+
+        return ResponseEntity.ok(userService.isActive(loggedInEmail));
+    }
+
+    /**
      * Retrieves a paginated and conditionally filtered list of all users. <p>
      *
      * This endpoint is used to oversee all users across the system, with optional filters for search terms and
@@ -243,10 +256,12 @@ public class UserController {
             @RequestParam(required = false) String pageToken,
             @RequestParam(defaultValue = "4") int size,
             @RequestParam(required = false) String query,
-            @RequestParam(required = false) String orgFilter) {
+            @RequestParam(required = false) String orgFilter,
+            @RequestParam(required = false) String status
+            ) {
         String email = jwtService.validateInternalToken(token);
         cloudguardStaffService.requireCloudmenAdmin(email);
-        return ResponseEntity.ok(userService.getAll(pageToken, size, query, orgFilter));
+        return ResponseEntity.ok(userService.getAll(pageToken, size, query, orgFilter, status));
     }
 
     /**
