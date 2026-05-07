@@ -619,6 +619,8 @@
   "contact.thanks": "Thank you for your message. \nWe will contact you as soon as possible via your registered email address.",
   "telephone": "Telephone",
   "contact.office-hours": "Mon - Fri: 9am - 12pm and 1pm - 5pm",
+  "contact.chat.title": "Chat",
+  "contact.chat.button": "Chat with CLOUDMEN",
   "contact.subject.account-problems": "Account problem",
   "contact.subject.feedback-suggestion": "Feedback or suggestion",
   "contact.subject.other": "Other",
