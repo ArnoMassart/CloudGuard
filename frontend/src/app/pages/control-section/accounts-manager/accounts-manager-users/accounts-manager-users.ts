@@ -14,7 +14,6 @@ import { OrgService } from '../../../../services/org-service';
 import { UserService } from '../../../../services/user-service';
 import { AppIcons } from '../../../../shared/AppIcons';
 import { AccountsManagerTable } from '../accounts-manager-table/accounts-manager-table';
-import { Router } from '@angular/router';
 import { DeactivateUserDialog } from '../../../../components/deactivate-user-dialog/deactivate-user-dialog';
 import { AccountStatus } from '../../../../models/account/AccountStatus';
 
@@ -40,7 +39,6 @@ export class AccountsManagerUsers {
   readonly userService = inject(UserService);
   readonly #translocoService = inject(TranslocoService);
   readonly #orgService = inject(OrgService);
-  readonly #router = inject(Router);
 
   readonly pagination = viewChild(PaginationBar);
 
@@ -86,8 +84,6 @@ export class AccountsManagerUsers {
     const reload = () => {
       this.loadUsers();
       this.loadOrganizations();
-      this.loadAccessRequestsCount();
-      this.loadDeniedCount();
     };
     reload();
     this.langSubscription = this.#translocoService.langChanges$
@@ -255,32 +251,6 @@ export class AccountsManagerUsers {
   #resetAndLoad() {
     this.pagination()?.reset();
     this.loadUsers();
-  }
-
-  goToRequests() {
-    this.#router.navigate(['accounts-manager/requests']);
-  }
-
-  goToDenied() {
-    this.#router.navigate(['/accounts-manager/denied-list']);
-  }
-
-  loadAccessRequestsCount() {
-    this.userService.refreshRequestedCount().subscribe({
-      next: (res) => {},
-      error: (err) => {
-        console.error('Error getting the access request count', err);
-      },
-    });
-  }
-
-  loadDeniedCount() {
-    this.userService.refreshDeniedCount().subscribe({
-      next: (res) => {},
-      error: (err) => {
-        console.error('Error getting the access request count', err);
-      },
-    });
   }
 
   hasRequest(): boolean {

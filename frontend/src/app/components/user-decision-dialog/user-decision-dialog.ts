@@ -24,6 +24,7 @@ import { AppIcons } from '../../shared/AppIcons';
 })
 export class UserDecisionDialog {
   readonly Icons = AppIcons;
+  readonly maxStepAccept = 4;
 
   step: number = 1;
 
@@ -36,6 +37,34 @@ export class UserDecisionDialog {
     @Inject(MAT_DIALOG_DATA) public data: any,
     private dialogRef: MatDialogRef<UserDecisionDialog>
   ) {}
+
+  selectedOrgName(): string {
+    const id = this.selectedOrganizationId;
+    if (!id || !this.data.uniqueOrganizations?.length) {
+      return '\u2014';
+    }
+    const org = this.data.uniqueOrganizations.find(
+      (o: { id: string | number; name: string }) => String(o.id) === String(id),
+    );
+    return org?.name ?? '\u2014';
+  }
+
+  /** Role label keys for Transloco (`regularRoles` uses `label`, not `labelKey`). */
+  summaryRoles(): { labelKey: string; trackId: string }[] {
+    if (this.isSuperAdmin) {
+      return [{ labelKey: 'user.role.super-admin', trackId: '__super_admin__' }];
+    }
+
+    const roles = this.data.regularRoles ?? [];
+    return Array.from(this.selectedRoles).map((value) => {
+      const r = roles.find((x: { value: string; label: string }) => x.value === value);
+      return { labelKey: r?.label ?? value, trackId: value };
+    });
+  }
+
+  canAdvanceFromRolesStep(): boolean {
+    return this.isSuperAdmin || this.selectedRoles.size > 0;
+  }
 
   onOrgFilterChange(orgId: string) {
     this.selectedOrganizationId = orgId;
@@ -51,18 +80,17 @@ export class UserDecisionDialog {
   }
 
   nextStep() {
-    // Als het een weigering is, zijn we direct klaar
     if (!this.data.isAccepted) {
       this.submit();
       return;
     }
-
-    // Anders gaan we naar de volgende stap
-    if (this.step < 3) {
+    if (this.step < this.maxStepAccept) {
       this.step++;
-    } else {
-      this.submit();
     }
+  }
+
+  confirmAndSubmit(){
+    this.submit();
   }
 
   prevStep() {

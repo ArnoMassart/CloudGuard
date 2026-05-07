@@ -40,6 +40,8 @@ import { PageContentWrapper } from '../../../components/page-content-wrapper/pag
 })
 export class PasswordSettings implements OnInit, OnDestroy {
   readonly Icons = AppIcons;
+  readonly adminConsoleUrl =
+    'https://admin.google.com/u/1/ac/security/passwordmanagement';
   readonly #passwordSettingsService = inject(PasswordSettingsService);
   readonly #securityScoreDetail = inject(SecurityScoreDetailService);
   readonly #preferencesFacade = inject(SecurityPreferencesFacade);

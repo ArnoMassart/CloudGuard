@@ -27,10 +27,11 @@ const MOCK_USERS_PAGE = {
     {
       fullName: 'Test Admin',
       email: 'test@admin.com',
+      pictureUrl: null,
       role: 'Super Admin',
-      active: true,
-      twoFactorEnabled: false, // Risico!
-      securityConform: false,
+      isActive: true,
+      isTwoFactorEnabled: false, // Risico!
+      isSecurityConform: false,
       securityViolationCodes: [USER_SECURITY_VIOLATION.NO_2FA],
       lastLogin: '2024-03-25',
     },

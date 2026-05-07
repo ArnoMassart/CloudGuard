@@ -105,9 +105,12 @@
 
           <td
             class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-200 bg-gray-50/30 xl:bg-transparent">
-            <div class="flex flex-col">
-              <span class="font-medium text-slate-900 text-sm">{{ user.fullName }}</span>
-              <span class="text-xs text-gray-500">{{ user.email }}</span>
+            <div class="flex items-center gap-3 min-w-0">
+              <app-user-avatar [pictureUrl]="user.pictureUrl" [initials]="userOrgInitials(user)" />
+              <div class="flex flex-col min-w-0">
+                <span class="font-medium text-slate-900 text-sm truncate">{{ user.fullName }}</span>
+                <span class="text-xs text-gray-500 truncate">{{ user.email }}</span>
+              </div>
             </div>
           </td>
 

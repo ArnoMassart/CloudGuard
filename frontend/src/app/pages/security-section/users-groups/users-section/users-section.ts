@@ -19,6 +19,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Subscription } from 'rxjs';
 import { PaginationBar } from '../../../../components/pagination-bar/pagination-bar';
 import { ApiError } from '../../../../components/api-error/api-error';
+import { UserAvatar } from '../../../../components/user-avatar/user-avatar';
 
 // ==========================================
 // CONSTANTS
@@ -39,6 +40,7 @@ const ITEMS_PER_PAGE = 4;
     TranslocoPipe,
     PaginationBar,
     ApiError,
+    UserAvatar,
   ],
   templateUrl: './users-section.html',
   styleUrl: './users-section.css',
@@ -182,6 +184,20 @@ export class UsersSection implements OnInit {
       }
       return false;
     });
+  }
+
+  userOrgInitials(user: UserOrgDetail): string {
+    const parts = user.fullName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    if (parts.length === 1 && parts[0].length >= 2) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    if (parts.length === 1) {
+      return (parts[0][0] + (parts[0][1] ?? '?')).toUpperCase();
+    }
+    return user.email.slice(0, 2).toUpperCase();
   }
 
   openSecurityScoreDetail() {

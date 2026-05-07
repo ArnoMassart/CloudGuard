@@ -20,8 +20,8 @@ export class LanguageBar implements OnInit {
   activeLang: string = this.#translocoService.getActiveLang();
 
   languages = [
-    { label: 'Nederlands', value: 'nl', flag: '/img/nl.png' },
-    { label: 'English', value: 'en', flag: '/img/en.png' },
+    { label: 'Nederlands', value: 'nl'},
+    { label: 'English', value: 'en'},
   ];
 
   ngOnInit(): void {
@@ -54,11 +54,6 @@ export class LanguageBar implements OnInit {
   #updateState(lang: string) {
     this.activeLang = lang;
     this.#translocoService.setActiveLang(lang);
-  }
-
-  getSelectedFlag(): string {
-    const selected = this.languages.find((lang) => lang.value === this.activeLang);
-    return selected ? selected.flag : '';
   }
 
   changeLanguage(newLang: string) {

@@ -12,6 +12,8 @@ import java.util.List;
 public record UserOrgDetail(
         String fullName,
         String email,
+        /** Google Workspace profile thumbnail URL from Directory API, may be null */
+        String pictureUrl,
         String role,
         boolean isActive,
         String lastLogin,

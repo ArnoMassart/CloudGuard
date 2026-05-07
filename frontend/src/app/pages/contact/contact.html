@@ -25,6 +25,17 @@
                         </div>
                     </div>
                     <div class="flex items-start gap-3">
+                        <lucide-icon [img]="Icons.MessageCircle" size="20" class="text-primary mt-0.5"></lucide-icon>
+                        <div class="flex flex-col gap-2 min-w-0">
+                            <p class="text-sm font-medium text-slate-900 m-0">{{ 'contact.chat.title' | transloco }}</p>
+                            <a [href]="chatUrl" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center justify-center gap-2 self-start cursor-pointer bg-primary hover:opacity-90 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-opacity shadow-sm">
+                                {{ 'contact.chat.button' | transloco }}
+                                <lucide-icon [img]="Icons.ExternalLink" size="16"></lucide-icon>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
                         <lucide-icon [img]="Icons.Clock" size="20" class="text-primary mt-0.5"></lucide-icon>
                         <div>
                             <p class="text-sm font-medium text-slate-900 m-0">{{ 'availability' | transloco }}</p>
