@@ -32,13 +32,16 @@
       class="block xl:table-row mb-4 xl:mb-0 bg-white xl:bg-transparent border border-gray-200 xl:border-0 xl:border-b xl:border-gray-100 rounded-lg xl:rounded-none overflow-hidden transition-colors">
 
       <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100 align-middle">
-        <div class="flex flex-col gap-0.5 max-w-45">
-          <span class="font-medium text-slate-900 text-[14px] truncate" [title]="user.firstName + ' ' + user.lastName">
-            {{ user.firstName }} {{ user.lastName }}
-          </span>
-          <span class="text-[13px] text-slate-500 truncate" [title]="user.email">
-            {{ user.email }}
-          </span>
+        <div class="flex items-center gap-3 min-w-0">
+          <app-user-avatar [pictureUrl]="user.pictureUrl" [initials]="userInitials(user)" />
+          <div class="flex flex-col gap-0.5 min-w-0 max-w-45">
+            <span class="font-medium text-slate-900 text-[14px] truncate" [title]="user.firstName + ' ' + user.lastName">
+              {{ user.firstName }} {{ user.lastName }}
+            </span>
+            <span class="text-[13px] text-slate-500 truncate" [title]="user.email">
+              {{ user.email }}
+            </span>
+          </div>
         </div>
       </td>
 

@@ -1,15 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
+import { UserAvatar } from '../../../../../components/user-avatar/user-avatar';
 import { Role, RoleLabels, RolePriority, User } from '../../../../../models/users/User';
 import { Organization } from '../../../../../models/org/Organization';
+import { UserService } from '../../../../../services/user-service';
 import { AppIcons } from '../../../../../shared/AppIcons';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-accounts-manager-requests-table',
-  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule],
+  imports: [TranslocoPipe, FormsModule, CommonModule, LucideAngularModule, UserAvatar],
   templateUrl: './accounts-manager-requests-table.html',
   styleUrl: './accounts-manager-requests-table.css',
 })
@@ -17,6 +19,11 @@ export class AccountsManagerRequestsTable {
   readonly Icons = AppIcons;
 
   readonly #translocoService = inject(TranslocoService);
+  readonly #userService = inject(UserService);
+
+  userInitials(user: User): string {
+    return this.#userService.getInitials(user);
+  }
 
   // Inputs
   readonly users = input.required<User[]>();
