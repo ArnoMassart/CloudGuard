@@ -1,0 +1,13 @@
+{
+  "kind": "admin#directory#roles",
+  "items": [
+    {
+      "roleId": "70000000000000001",
+      "roleName": "_SUPER_ADMIN"
+    },
+    {
+      "roleId": "70000000000000002",
+      "roleName": "_HELP_DESK_ADMIN"
+    }
+  ]
+}

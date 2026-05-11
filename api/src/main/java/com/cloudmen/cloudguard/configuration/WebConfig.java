@@ -40,7 +40,16 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/auth/**","/google/**", "cache-warmup/**", "/dashboard/**", "/notifications/**", "/report/**", "/user/**", "/teamleader/**")
+                .addPathPatterns(
+                        "/auth/**",
+                        "/google/**",
+                        "cache-warmup/**",
+                        "/dashboard/**",
+                        "/notifications/**",
+                        "/report/**",
+                        "/user/**",
+                        "/teamleader/**",
+                        "/contact/**")
                 .excludePathPatterns("/auth/login", "/teamleader/setup");
     }
 
