@@ -1,0 +1,18 @@
+{
+  "kind": "admin#directory#users",
+  "etag": "\"contract-test-etag\"",
+  "users": [
+    {
+      "kind": "admin#directory#user",
+      "id": "104994514742784813963",
+      "primaryEmail": "contract.user@example.com",
+      "name": {
+        "fullName": "Contract Test User"
+      },
+      "thumbnailPhotoUrl": "https://lh3.googleusercontent.com/a/contract-thumbnail=s96-c",
+      "isEnrolledIn2Sv": true,
+      "suspended": false,
+      "lastLoginTime": "2026-05-11T08:30:00.000Z"
+    }
+  ]
+}
