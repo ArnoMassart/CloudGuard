@@ -3,15 +3,24 @@ package com.cloudmen.cloudguard.service.device;
 import com.cloudmen.cloudguard.dto.devices.DeviceDetail;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
 import java.util.Set;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 @Component
 public class DeviceComplianceScorer {
+    private final MessageSource messageSource;
+
+    public DeviceComplianceScorer(@Qualifier("messageSource") MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
     private int calculateDeviceScore(int totalDevices, int violationCount) {
         if (totalDevices == 0) return 100;
 
@@ -26,37 +35,39 @@ public class DeviceComplianceScorer {
 
         boolean show = totalDevices > 0;
 
+        Locale locale = LocaleContextHolder.getLocale();
+
         var factors = java.util.List.of(
                 securityScoreFactorForDetail(
                         show,
-                        "Vergrendelscherm",
-                        lockScreenCount == 0 ? "Alle apparaten hebben vergrendelscherm" : lockScreenCount + " apparaat/apparaten zonder vergrendelscherm",
+                        getMessage(messageSource, "devices.score.factor.lock_screen.title", locale),
+                        lockScreenCount == 0 ? getMessage(messageSource, "devices.score.factor.lock_screen.description.all", locale) : getMessage(messageSource, "devices.score.factor.lock_screen.description", new Object[]{lockScreenCount}, locale),
                         lockScore,
                         100,
                         severity(lockScore)),
                 securityScoreFactorForDetail(
                         show,
-                        "Encryptie",
-                        encryptionCount == 0 ? "Alle apparaten hebben encryptie" : encryptionCount + " apparaat/apparaten zonder encryptie",
+                        getMessage(messageSource, "devices.score.factor.enc.title", locale),
+                        encryptionCount == 0 ? getMessage(messageSource, "devices.score.factor.enc.description.all", locale) : getMessage(messageSource, "devices.score.factor.enc.description", new Object[]{encryptionCount}, locale),
                         encScore,
                         100,
                         severity(encScore)),
                 securityScoreFactorForDetail(
                         show,
-                        "OS versie",
-                        osVersionCount == 0 ? "Alle apparaten hebben actuele OS versie" : osVersionCount + " apparaat/apparaten met verouderde OS",
+                        getMessage(messageSource, "devices.score.factor.os_version.title", locale),
+                        osVersionCount == 0 ? getMessage(messageSource, "devices.score.factor.os_version.description.all", locale) : getMessage(messageSource, "devices.score.factor.os_version.description", new Object[]{osVersionCount}, locale),
                         osScore,
                         100,
                         severity(osScore)),
                 securityScoreFactorForDetail(
                         show,
-                        "Integriteit",
-                        integrityCount == 0 ? "Geen apparaten met root/jailbreak gedetecteerd" : integrityCount + " apparaat/apparaten met integriteitsproblemen",
+                        getMessage(messageSource, "devices.score.factor.int.title", locale),
+                        integrityCount == 0 ? getMessage(messageSource, "devices.score.factor.int.description.none", locale) : getMessage(messageSource, "devices.score.factor.int.description", new Object[]{integrityCount}, locale),
                         intScore,
                         100,
                         severity(intScore))
         );
-        String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
+        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

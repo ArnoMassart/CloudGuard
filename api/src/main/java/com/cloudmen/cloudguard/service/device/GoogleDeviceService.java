@@ -99,7 +99,9 @@ public class GoogleDeviceService {
      */
     public DeviceOverviewResponse getDevicesPageOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
-        List<DeviceDetail> allDevices = getAllMappedDevices(loggedInEmail);
+
+        Locale locale = LocaleContextHolder.getLocale();
+        List<DeviceDetail> allDevices = getAllMappedDevices(loggedInEmail, locale);
 
         int totalDevices = allDevices.size();
         int approvedDevices = 0;
@@ -172,7 +174,9 @@ public class GoogleDeviceService {
      * @param loggedInEmail the email of the authenticated user
      */
     public List<String> getUniqueDeviceTypes(String loggedInEmail) {
-        List<DeviceDetail> allDevices = getAllMappedDevices(loggedInEmail);
+        Locale locale = LocaleContextHolder.getLocale();
+
+        List<DeviceDetail> allDevices = getAllMappedDevices(loggedInEmail, locale);
         Set<String> uniqueTypes = new HashSet<>();
 
         for (DeviceDetail device : allDevices) {
@@ -196,11 +200,11 @@ public class GoogleDeviceService {
 
         // Map Mobile
         if (cachedData.mobileDevices() != null) {
-            cachedData.mobileDevices().forEach(d -> allDevices.add(mapper.mapMobile(d)));
+            cachedData.mobileDevices().forEach(d -> allDevices.add(mapper.mapMobile(d, locale)));
         }
         // Map ChromeOS
         if (cachedData.chromeOsDevices() != null) {
-            cachedData.chromeOsDevices().forEach(d -> allDevices.add(mapper.mapChromeOs(d)));
+            cachedData.chromeOsDevices().forEach(d -> allDevices.add(mapper.mapChromeOs(d, locale)));
         }
         // Map Endpoints (Windows/Mac)
         if (cachedData.endpointDevices() != null) {

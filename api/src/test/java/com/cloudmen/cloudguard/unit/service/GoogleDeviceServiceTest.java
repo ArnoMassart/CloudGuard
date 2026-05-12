@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.util.ArrayList;
@@ -28,12 +29,15 @@ public class GoogleDeviceServiceTest {
     @Mock
     private GoogleDeviceCacheService deviceCacheService;
 
+    @Mock
+    private MessageSource messageSource;
+
     private GoogleDeviceService service;
 
     @BeforeEach
     void setUp() {
-        DeviceComplianceScorer scorer = new DeviceComplianceScorer();
-        GoogleDeviceMapper mapper = new GoogleDeviceMapper(scorer);
+        DeviceComplianceScorer scorer = new DeviceComplianceScorer(messageSource);
+        GoogleDeviceMapper mapper = new GoogleDeviceMapper(scorer, messageSource);
 
         service = new GoogleDeviceService(deviceCacheService, mapper, scorer);
     }
