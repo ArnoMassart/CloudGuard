@@ -48,7 +48,7 @@ export const SECTION_PREFERENCE_CONFIGS: SectionPreferenceConfig[] = [
     ],
   },
   {
-    section: 'mobile-devices',
+    section: 'devices',
     label: 'preferences.devices',
     route: '/devices',
     preferences: [

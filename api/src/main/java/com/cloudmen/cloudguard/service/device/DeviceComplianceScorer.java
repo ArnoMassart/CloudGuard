@@ -13,10 +13,10 @@ import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severit
 @Component
 public class DeviceComplianceScorer {
     public DeviceDetail applyPreferenceAdjustedCompliance(DeviceDetail d, Set<String> off) {
-        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "lockscreen");
-        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "encryption");
-        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "osVersion");
-        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "integrity");
+        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "devices", "lockscreen");
+        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "devices", "encryption");
+        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "devices", "osVersion");
+        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "devices", "integrity");
         int adj = adjustedDeviceComplianceScore(d, ignLock, ignEnc, ignOs, ignInt);
         return new DeviceDetail(
                 d.resourceId(), d.deviceType(), d.userName(), d.userEmail(), d.deviceName(),
