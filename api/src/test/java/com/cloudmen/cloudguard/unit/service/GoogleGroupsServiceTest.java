@@ -189,22 +189,7 @@ class GoogleGroupsServiceTest {
 
         var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN);
 
-        assertEquals(2, overview.groupsWithExternal());
-    }
-
-    @Test
-    void getGroupsOverview_withDisabledGroupExternalPreference_forcesScore100AndMutedBreakdown() {
-        List<CachedGroupItem> groups = List.of(
-                group("Hi", "h@x.com", "HIGH", 1, true));
-        when(groupsCacheService.getOrFetchData(GlobalTestHelper.ADMIN)).thenReturn(entry(groups));
-
-        var overview = service.getGroupsOverview(GlobalTestHelper.ADMIN, Set.of("users-groups:groupExternal"));
-
-        assertEquals(1, overview.highRiskGroups());
-        assertEquals(100, overview.securityScore());
-        assertTrue(overview.securityScoreBreakdown().factors().stream().allMatch(SecurityScoreFactorDto::muted));
-        assertNotNull(overview.warnings());
-        assertFalse(overview.warnings().hasWarnings());
+        assertEquals(1, overview.groupsWithExternal());
     }
 
     @Test

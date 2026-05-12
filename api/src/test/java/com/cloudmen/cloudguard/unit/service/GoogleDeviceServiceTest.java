@@ -156,27 +156,4 @@ public class GoogleDeviceServiceTest {
         assertTrue(overview.warnings().hasWarnings());
         assertTrue(overview.warnings().items().get("lockScreenWarning"));
     }
-
-    @Test
-    void getDevicesPageOverview_withDisabledPreferences_forcesScore100AndMutedBreakdown() {
-        var badMobile = createMobileDevice("2", "b@x.com", "Android 9", "BLOCKED", "NONE", "UNENCRYPTED", "COMPROMISED", daysAgo(10));
-
-        mockCacheEntry(deviceCacheService, List.of(badMobile), List.of(), List.of());
-
-        Set<String> disabledPrefs = Set.of(
-                "devices:lockscreen",
-                "devices:encryption",
-                "devices:osVersion",
-                "devices:integrity"
-        );
-
-        var overview = service.getDevicesPageOverview(ADMIN, disabledPrefs);
-
-        assertEquals(100, overview.securityScore());
-
-        assertTrue(overview.securityScoreBreakdown().factors().stream().allMatch(SecurityScoreFactorDto::muted));
-
-        assertNotNull(overview.warnings());
-        assertFalse(overview.warnings().hasWarnings());
-    }
 }

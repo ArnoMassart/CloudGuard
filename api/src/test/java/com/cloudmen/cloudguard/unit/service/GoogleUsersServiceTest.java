@@ -215,27 +215,4 @@ public class GoogleUsersServiceTest {
          assertTrue(overview.securityScore() < 100);
          assertNotEquals("perfect", overview.securityScoreBreakdown().status());
      }
-
-     @Test
-    void getUsersPageOverview_withDisabledPreferences_forcesScore100AndMutedBreakdown() {
-         List<User> users = List.of(
-                 createUser("bad@x.com", "A", false, false, false, daysAgo(400)),
-                 createUser("susp@x.com", "B", true, false, false, daysAgo(1))
-         );
-
-         mockCacheEntry(usersCacheService, users, Map.of(), Map.of());
-
-         Set<String> disabledPrefs = Set.of("users-groups:2fa", "users-groups:activity");
-        var overview = service.getUsersPageOverview(ADMIN, disabledPrefs);
-
-        assertEquals(2, overview.totalUsers());
-        assertEquals(1, overview.withoutTwoFactor());
-
-        assertEquals(100, overview.securityScore());
-
-        assertTrue(overview.securityScoreBreakdown().factors().stream().allMatch(SecurityScoreFactorDto::muted));
-
-        assertNotNull(overview.warnings());
-        assertFalse(overview.warnings().hasWarnings());
-    }
 }

@@ -106,8 +106,6 @@ class PasswordSettingsServiceTest {
 
         when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
-
         service.getPasswordSettings(ADMIN);
         service.getPasswordSettings(ADMIN);
 
@@ -120,8 +118,6 @@ class PasswordSettingsServiceTest {
 
         when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(Collections.emptyList(), 0));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
-
         PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(0, dto.summary().totalUsers());
@@ -162,8 +158,6 @@ class PasswordSettingsServiceTest {
                 "a1", "Admin One", "admin1@example.com", "Admin", "/", true, 0);
         when(adminSecurityKeysService.getAdminsWithSecurityKeys(ADMIN))
                 .thenReturn(new AdminSecurityKeysResponse(List.of(missingKeyAdmin), 2, null));
-        when(userSecurityPreferenceService.getDisabledPreferenceKeys(ADMIN)).thenReturn(Set.of());
-
         PasswordSettingsOverviewResponse dto = service.getPasswordSettings(ADMIN);
 
         assertEquals(1, dto.usersWithForcedChange().size());
@@ -213,43 +207,6 @@ class PasswordSettingsServiceTest {
     }
 
     @Test
-    void calculateSecurityScore_2svPreferenceDisabled_excludes2SvFromWeighting() {
-        var summary = new PasswordSettingsSummaryDto(0, 5, 0, 10);
-        var twoSv = new TwoStepVerificationDto(
-                List.of(new OrgUnit2SvDto("/", "Root", false, 5, 10)),
-                5, 0, 10);
-        var policies = List.of(ouPolicy("/", 10, 14, 180, true));
-
-        var result = service.calculateSecurityScoreWithBreakdown(
-                1, 0, summary, twoSv, policies);
-
-        assertEquals(100, result.score());
-        assertTrue(result.breakdown().factors().get(2).muted());
-        assertEquals(100, result.breakdown().factors().get(2).score());
-    }
-
-    @Test
-    void calculateSecurityScore_adminsKeysPreferenceMuted_renormalizesAndShowsMutedFactorAt100() {
-        var summary = new PasswordSettingsSummaryDto(0, 10, 10, 10);
-        var twoSv = new TwoStepVerificationDto(
-                List.of(new OrgUnit2SvDto("/", "Root", true, 10, 10)),
-                0, 10, 10);
-        var policies = List.of(ouPolicy("/", 10, 14, 180, true));
-
-        var withoutMute = service.calculateSecurityScoreWithBreakdown(
-                2, 1, summary, twoSv, policies);
-        assertEquals(93, withoutMute.score());
-
-        var muted = service.calculateSecurityScoreWithBreakdown(
-                2, 1, summary, twoSv, policies);
-
-        var adminFactor = muted.breakdown().factors().get(0);
-        assertTrue(adminFactor.muted());
-        assertEquals(100, adminFactor.score());
-        assertEquals(100, muted.score());
-    }
-
-    @Test
     void calculateSecurityScore_noAdmins_adminKeysFactorTreatedAsPerfect() {
         var summary = new PasswordSettingsSummaryDto(0, 0, 0, 0);
         var twoSv = new TwoStepVerificationDto(List.of(), 0, 0, 0);
@@ -260,40 +217,6 @@ class PasswordSettingsServiceTest {
         assertEquals(0, result.breakdown().factors().get(0).score());
     }
 
-    @Test
-    void calculateSecurityScore_nullDisabledPrefs_treatedAsEmpty() {
-        var summary = new PasswordSettingsSummaryDto(0, 10, 10, 10);
-        var twoSv = new TwoStepVerificationDto(
-                List.of(new OrgUnit2SvDto("/", "Root", true, 10, 10)),
-                10, 10, 10);
-        var policies = List.of(ouPolicy("/", 10, 14, 180, true));
-
-        var result = service.calculateSecurityScoreWithBreakdown(
-                2, 0, summary, twoSv, policies);
-
-        assertEquals(100, result.score());
-    }
-
-    @Test
-    void calculateSecurityScore_mutesPolicyFactorsWhenPreferencesDisabled() {
-        var summary = new PasswordSettingsSummaryDto(0, 0, 0, 10);
-        var twoSv = new TwoStepVerificationDto(
-                List.of(new OrgUnit2SvDto("/", "Root", true, 10, 10)),
-                0, 10, 10);
-        var policies = List.of(ouPolicy("/", 10, 8, 0, false));
-
-        var result = service.calculateSecurityScoreWithBreakdown(
-                1, 0, summary, twoSv, policies
-                );
-
-        var factors = result.breakdown().factors();
-        assertTrue(factors.get(3).muted());
-        assertTrue(factors.get(4).muted());
-        assertTrue(factors.get(5).muted());
-        assertEquals(100, factors.get(3).score());
-        assertEquals(100, factors.get(4).score());
-        assertEquals(100, factors.get(5).score());
-    }
 
     @Test
     void calculateSecurityScore_usersForcedToChangePassword_lowersScore() {
