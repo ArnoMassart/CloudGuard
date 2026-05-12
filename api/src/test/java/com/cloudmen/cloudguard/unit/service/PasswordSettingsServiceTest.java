@@ -190,7 +190,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         PasswordSettingsService.SecurityScoreResult result = service.calculateSecurityScoreWithBreakdown(
-                2, 0, summary, twoSv, policies, Set.of());
+                2, 0, summary, twoSv, policies);
 
         assertEquals(100, result.score());
         assertEquals("perfect", result.breakdown().status());
@@ -205,7 +205,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                1, 0, summary, twoSv, policies, Set.of());
+                1, 0, summary, twoSv, policies);
 
         assertEquals(85, result.score());
         assertEquals(50, result.breakdown().factors().get(2).score());
@@ -221,8 +221,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                1, 0, summary, twoSv, policies,
-                Set.of("password-settings:2sv"));
+                1, 0, summary, twoSv, policies);
 
         assertEquals(100, result.score());
         assertTrue(result.breakdown().factors().get(2).muted());
@@ -238,12 +237,11 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var withoutMute = service.calculateSecurityScoreWithBreakdown(
-                2, 1, summary, twoSv, policies, Set.of());
+                2, 1, summary, twoSv, policies);
         assertEquals(93, withoutMute.score());
 
         var muted = service.calculateSecurityScoreWithBreakdown(
-                2, 1, summary, twoSv, policies,
-                Set.of("password-settings:adminsSecurityKeys"));
+                2, 1, summary, twoSv, policies);
 
         var adminFactor = muted.breakdown().factors().get(0);
         assertTrue(adminFactor.muted());
@@ -257,7 +255,7 @@ class PasswordSettingsServiceTest {
         var twoSv = new TwoStepVerificationDto(List.of(), 0, 0, 0);
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                0, 0, summary, twoSv, List.of(), Set.of());
+                0, 0, summary, twoSv, List.of());
 
         assertEquals(0, result.breakdown().factors().get(0).score());
     }
@@ -271,7 +269,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                2, 0, summary, twoSv, policies, null);
+                2, 0, summary, twoSv, policies);
 
         assertEquals(100, result.score());
     }
@@ -285,8 +283,8 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 8, 0, false));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                1, 0, summary, twoSv, policies,
-                Set.of("password-settings:length", "password-settings:expiration", "password-settings:strongPassword"));
+                1, 0, summary, twoSv, policies
+                );
 
         var factors = result.breakdown().factors();
         assertTrue(factors.get(3).muted());
@@ -306,7 +304,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                2, 0, summary, twoSv, policies, Set.of());
+                2, 0, summary, twoSv, policies);
 
         assertEquals(50, result.breakdown().factors().get(1).score());
         assertTrue(result.score() < 100);
@@ -321,7 +319,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                2, 0, summary, twoSv, policies, Set.of());
+                2, 0, summary, twoSv, policies);
 
         assertEquals(100, result.breakdown().factors().get(1).score());
         assertFalse(result.breakdown().factors().get(1).muted());
@@ -336,7 +334,7 @@ class PasswordSettingsServiceTest {
         var policies = List.of(ouPolicy("/", 10, 14, 180, true));
 
         var result = service.calculateSecurityScoreWithBreakdown(
-                4, 2, summary, twoSv, policies, Set.of());
+                4, 2, summary, twoSv, policies);
 
         assertEquals(50, result.breakdown().factors().get(0).score());
         assertFalse(result.breakdown().factors().get(0).muted());

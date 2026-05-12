@@ -142,11 +142,9 @@ public class GoogleOAuthService {
             );
         }
 
-        boolean ignHighRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-access", "highRisk");
+        int securityScore = scorer.calculateSecurityScore(totalThirdPartyApps, totalHighRiskApps);
 
-        int securityScore = scorer.calculateSecurityScore(totalThirdPartyApps, totalHighRiskApps, ignHighRisk);
-
-        SecurityScoreBreakdownDto breakdown = scorer.buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, totalPermissionsGranted, securityScore, ignHighRisk);
+        SecurityScoreBreakdownDto breakdown = scorer.buildOAuthBreakdown(totalThirdPartyApps, totalHighRiskApps, securityScore);
 
         return new OAuthOverviewResponse(
                 totalThirdPartyApps,

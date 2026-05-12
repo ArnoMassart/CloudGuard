@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Locale;
 
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.getOverviewStatus;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
 @Service
@@ -117,7 +118,7 @@ public class DnsRecordsService {
             };
             factors.add(new SecurityScoreFactorDto(title, row.message(), score, 100, severity(score), optional));
         }
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

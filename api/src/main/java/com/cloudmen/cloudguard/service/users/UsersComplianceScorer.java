@@ -14,8 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 /**
  * Component responsible for calculating compliance scores and analyzing security risks associated with user
@@ -120,7 +119,7 @@ public class UsersComplianceScorer {
                         100,
                         severity(score3))
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

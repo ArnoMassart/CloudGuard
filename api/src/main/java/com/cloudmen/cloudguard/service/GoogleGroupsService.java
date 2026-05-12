@@ -18,8 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Locale;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 @Service
 public class GoogleGroupsService {
@@ -178,7 +177,7 @@ public class GoogleGroupsService {
                         severity(externalAllowedScore))
 
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 }

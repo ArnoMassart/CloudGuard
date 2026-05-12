@@ -244,4 +244,8 @@ public final class GoogleServiceHelperMethods {
     public static String getMessage(MessageSource messageSource, String key, Object[] args, Locale locale) {
         return messageSource.getMessage(key, args, locale);
     }
+
+    public static String getOverviewStatus(int securityScore) {
+        return securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+    }
 }

@@ -67,7 +67,7 @@ public class DeviceComplianceScorer {
                         100,
                         severity(intScore))
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

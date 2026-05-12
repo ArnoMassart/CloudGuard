@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 /**
  * Component responsible for calculating compliance scores and evaluating the risk levels of Google Workspace Shared
@@ -88,7 +87,7 @@ public class DrivesComplianceScorer {
                         notOnlyMembersCanAccessCount == 0 ? messageSource.getMessage("drives.score.factor.only_members_not.description", null, locale) : messageSource.getMessage("drives.score.factor.only_members.description", new Object[]{notOnlyMembersCanAccessCount}, locale),
                         membersOnlyScore, 100, severity(membersOnlyScore), false)
         );
-        String status = combinedScore == 100 ? "perfect" : combinedScore >= 75 ? "good" : combinedScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(combinedScore);
         return new SecurityScoreBreakdownDto(combinedScore, status, factors);
     }
 

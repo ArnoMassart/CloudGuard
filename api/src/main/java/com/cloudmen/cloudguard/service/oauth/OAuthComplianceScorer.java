@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 /**
  * Component responsible for evaluating the risk level of OAuth
@@ -34,25 +33,20 @@ public class OAuthComplianceScorer {
         );
     }
 
-    public int calculateSecurityScore(long totalThirdPartyApps, long totalHighRiskApps, boolean ignoreHighRiskPref) {
-        if (ignoreHighRiskPref || totalThirdPartyApps == 0) {
+    public int calculateSecurityScore(long totalThirdPartyApps, long totalHighRiskApps) {
+        if (totalThirdPartyApps == 0) {
             return 100;
         }
         double penalty = ((double) totalHighRiskApps / totalThirdPartyApps) * 100;
         return (int) Math.max(0, 100 - Math.round(penalty));
     }
 
-    public SecurityScoreBreakdownDto buildOAuthBreakdown(long totalThirdPartyApps, long totalHighRiskApps, long totalPermissionsGranted, int securityScore,
-                                                          boolean ignoreHighRiskPref) {
+    public SecurityScoreBreakdownDto buildOAuthBreakdown(long totalThirdPartyApps, long totalHighRiskApps, int securityScore) {
         int highRiskScore = totalThirdPartyApps == 0 ? 100 : (int) Math.round((totalThirdPartyApps - totalHighRiskApps) * 100.0 / totalThirdPartyApps);
-        if (ignoreHighRiskPref) {
-            highRiskScore = 100;
-        }
-        int noAppsScore = 100;
 
         Locale locale = LocaleContextHolder.getLocale();
 
-        boolean showHighRiskFactor = totalThirdPartyApps > 0 || ignoreHighRiskPref;
+        boolean showHighRiskFactor = totalThirdPartyApps > 0;
 
         var factors = java.util.List.of(
                 securityScoreFactorForDetail(
@@ -63,10 +57,9 @@ public class OAuthComplianceScorer {
                                 : messageSource.getMessage("apps.score.factor.without_high_risk.description", new Object[]{totalHighRiskApps, totalThirdPartyApps}, locale),
                         highRiskScore,
                         100,
-                        severity(highRiskScore)),
-                new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore), false)
+                        severity(highRiskScore))
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 }
