@@ -150,7 +150,7 @@ public class GoogleSharedDriveService {
         SecurityScoreBreakdownDto breakdown = drivesComplianceScorer.buildDrivesBreakdown(
                 totalDrives, totalLowRisk, totalMediumRisk, totalHighRisk, orphanDrives,
                 notOnlyDomainUsersAllowedCount, notOnlyMembersCanAccessCount,
-                riskOnlyScore, off);
+                riskOnlyScore);
 
         SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
                 .check("notOnlyDomainUsersAllowedWarning", notOnlyDomainUsersAllowedCount, "shared-drives", "outsideDomain")

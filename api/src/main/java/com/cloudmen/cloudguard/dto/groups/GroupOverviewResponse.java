@@ -6,6 +6,7 @@ import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 public record GroupOverviewResponse(
         int totalGroups,
         int groupsWithExternal,
+        int groupsWithExternalAllowed,
         int highRiskGroups,
         int mediumRiskGroups,
         int lowRiskGroups,

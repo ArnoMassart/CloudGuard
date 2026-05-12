@@ -11,7 +11,7 @@ class GoogleServiceHelperMethodsSecurityScoreTest {
     void securityScoreFactorForDetail_whenNotShown_usesZeroMaxScore() {
         SecurityScoreFactorDto f =
                 GoogleServiceHelperMethods.securityScoreFactorForDetail(
-                        false, "T", "D", 50, 100, "warning", false);
+                        false, "T", "D", 50, 100, "warning");
         assertEquals(0, f.maxScore());
         assertEquals(0, f.score());
         assertEquals("success", f.severity());
@@ -21,7 +21,7 @@ class GoogleServiceHelperMethodsSecurityScoreTest {
     void securityScoreFactorForDetail_whenShown_preservesValues() {
         SecurityScoreFactorDto f =
                 GoogleServiceHelperMethods.securityScoreFactorForDetail(
-                        true, "T", "D", 50, 100, "warning", false);
+                        true, "T", "D", 50, 100, "warning");
         assertEquals(100, f.maxScore());
         assertEquals(50, f.score());
         assertEquals("warning", f.severity());

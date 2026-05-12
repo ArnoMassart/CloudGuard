@@ -63,8 +63,7 @@ public class OAuthComplianceScorer {
                                 : messageSource.getMessage("apps.score.factor.without_high_risk.description", new Object[]{totalHighRiskApps, totalThirdPartyApps}, locale),
                         highRiskScore,
                         100,
-                        severity(highRiskScore),
-                        ignoreHighRiskPref),
+                        severity(highRiskScore)),
                 new SecurityScoreFactorDto("3rd-party apps", totalThirdPartyApps == 0 ? messageSource.getMessage("apps.score.factor.third_party.description.none", null, locale) : messageSource.getMessage("apps.score.factor.third_party.description", new Object[]{totalThirdPartyApps, totalPermissionsGranted}, locale), noAppsScore, 100, severity(noAppsScore), false)
         );
         String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";

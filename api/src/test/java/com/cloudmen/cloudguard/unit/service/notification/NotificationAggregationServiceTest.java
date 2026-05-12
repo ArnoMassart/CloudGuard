@@ -227,7 +227,7 @@ class NotificationAggregationServiceTest {
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
         lenient().when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse(
-                        1, 1, 0, 0, 0, 100, null, null));
+                        1, 1, 0, 0,0,  0, 100, null, null));
 
         long critical = service.getNotificationsCriticalCount(GlobalTestHelper.ADMIN);
 
@@ -241,7 +241,7 @@ class NotificationAggregationServiceTest {
                 .thenReturn(new UserOverviewResponse(10, 2, 0, 100, 0, 0, null, null));
         lenient().when(groupsService.getGroupsOverview(eq(GlobalTestHelper.ADMIN), any()))
                 .thenReturn(new com.cloudmen.cloudguard.dto.groups.GroupOverviewResponse(
-                        1, 1, 0, 0, 0, 100, null, null));
+                        1, 1, 0, 0, 0, 0, 100, null, null));
 
         var critical = service.getCriticalNotifications(GlobalTestHelper.ADMIN, Locale.ENGLISH);
 

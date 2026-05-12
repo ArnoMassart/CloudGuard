@@ -53,7 +53,7 @@ public class GoogleDeviceServiceTest {
     void getDevicesPaged_emptyCache_returnsEmptyPageAndNoNextToken() {
         mockCacheEntry(deviceCacheService, List.of(), List.of(), List.of());
 
-        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all", Set.of());
+        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all");
 
         assertTrue(page.devices().isEmpty());
         assertNull(page.nextPageToken());
@@ -67,7 +67,7 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile), List.of(chrome), List.of(endpoint));
 
-        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all", Set.of());
+        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all");
 
         assertEquals(3, page.devices().size());
         assertTrue(page.devices().stream().anyMatch(d -> d.os().contains("Android")));
@@ -83,10 +83,10 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile1, mobile2), List.of(chrome), List.of());
 
-        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "all", Set.of());
+        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "all");
         assertEquals(2, pageStatus.devices().size());
 
-        var pageType = service.getDevicesPaged(ADMIN, null, 10, "ALL", "ios", Set.of());
+        var pageType = service.getDevicesPaged(ADMIN, null, 10, "ALL", "ios");
         assertEquals(1, pageType.devices().size());
         assertEquals("iOS 17", pageType.devices().get(0).os());
     }
@@ -99,11 +99,11 @@ public class GoogleDeviceServiceTest {
         }
         mockCacheEntry(deviceCacheService, mobiles, List.of(), List.of());
 
-        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "all", Set.of());
+        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "all");
         assertEquals(2, page1.devices().size());
         assertEquals("2", page1.nextPageToken());
 
-        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "all", Set.of());
+        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "all");
         assertEquals(1, page3.devices().size());
         assertNull(page3.nextPageToken());
     }

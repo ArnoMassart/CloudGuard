@@ -9,6 +9,8 @@ import com.google.api.services.admin.directory.model.ChromeOsDevice;
 import com.google.api.services.admin.directory.model.MobileDevice;
 import org.springframework.stereotype.Component;
 
+import java.util.Locale;
+
 @Component
 public class GoogleDeviceMapper {
     private final DeviceComplianceScorer deviceComplianceScorer;
@@ -71,22 +73,36 @@ public class GoogleDeviceMapper {
         );
     }
 
-    public DeviceDetail mapEndpoint(DeviceCacheEntry.EndpointWrapper wrapper) {
+    public DeviceDetail mapEndpoint(DeviceCacheEntry.EndpointWrapper wrapper, Locale locale) {
         // Haal het apparaat en de gebruikers uit het envelopje
         var d = wrapper.device();
         var users = wrapper.deviceUsers();
 
         String type = d.getDeviceType();
         String userEmail = "Onbekend";
-        DeviceStatus status = DeviceStatus.APPROVED;
+        DeviceStatus status = null;
 
         // Lees uit de meegeleverde gebruikerslijst
         if (users != null && !users.isEmpty()) {
             var firstUser = users.get(0);
             userEmail = firstUser.getUserEmail() != null ? firstUser.getUserEmail() : "Onbekend";
 
-            if (firstUser.getCompromisedState() != null && "COMPROMISED".equalsIgnoreCase(firstUser.getCompromisedState())) {
-                status = DeviceStatus.BLOCKED;
+            String managementState = firstUser.getManagementState();
+
+            if (managementState != null) {
+                switch (managementState.toUpperCase()) {
+                    case "BLOCKED":
+                    case "WIPING":
+                    case "WIPED":
+                        status = DeviceStatus.BLOCKED;
+                        break;
+                    case "APPROVED":
+                        status = DeviceStatus.APPROVED;
+                        break;
+                    default:
+                        status = DeviceStatus.PENDING;
+                        break;
+                }
             }
         }
 

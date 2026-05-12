@@ -12,65 +12,49 @@ import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severit
 
 @Component
 public class DeviceComplianceScorer {
-    public DeviceDetail applyPreferenceAdjustedCompliance(DeviceDetail d, Set<String> off) {
-        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "lockscreen");
-        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "encryption");
-        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "osVersion");
-        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "integrity");
-        int adj = adjustedDeviceComplianceScore(d, ignLock, ignEnc, ignOs, ignInt);
-        return new DeviceDetail(
-                d.resourceId(), d.deviceType(), d.userName(), d.userEmail(), d.deviceName(),
-                d.model(), d.os(), d.lastSync(), d.status(), adj,
-                d.lockSecure(), d.screenLockText(), d.encSecure(), d.encryptionText(),
-                d.osSecure(), d.osText(), d.intSecure(), d.integrityText()
-        );
+    private int calculateDeviceScore(int totalDevices, int violationCount) {
+        if (totalDevices == 0) return 100;
+
+        return (int) Math.round((totalDevices - violationCount) * 100.0 / totalDevices);
     }
 
-    public SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore,
-                                                            boolean ignLock, boolean ignEnc, boolean ignOs, boolean ignInt) {
-        int lockScore = totalDevices == 0 || ignLock ? 100 : (int) Math.round((totalDevices - lockScreenCount) * 100.0 / totalDevices);
-        int encScore = totalDevices == 0 || ignEnc ? 100 : (int) Math.round((totalDevices - encryptionCount) * 100.0 / totalDevices);
-        int osScore = totalDevices == 0 || ignOs ? 100 : (int) Math.round((totalDevices - osVersionCount) * 100.0 / totalDevices);
-        int intScore = totalDevices == 0 || ignInt ? 100 : (int) Math.round((totalDevices - integrityCount) * 100.0 / totalDevices);
+    public SecurityScoreBreakdownDto buildDevicesBreakdown(int totalDevices, int lockScreenCount, int encryptionCount, int osVersionCount, int integrityCount, int securityScore) {
+        int lockScore = calculateDeviceScore(totalDevices, lockScreenCount);
+        int encScore = calculateDeviceScore(totalDevices, encryptionCount);
+        int osScore = calculateDeviceScore(totalDevices, osVersionCount);
+        int intScore = calculateDeviceScore(totalDevices, integrityCount);
 
-        boolean showLock = totalDevices > 0 || ignLock;
-        boolean showEnc = totalDevices > 0 || ignEnc;
-        boolean showOs = totalDevices > 0 || ignOs;
-        boolean showInt = totalDevices > 0 || ignInt;
+        boolean show = totalDevices > 0;
 
         var factors = java.util.List.of(
                 securityScoreFactorForDetail(
-                        showLock,
+                        show,
                         "Vergrendelscherm",
                         lockScreenCount == 0 ? "Alle apparaten hebben vergrendelscherm" : lockScreenCount + " apparaat/apparaten zonder vergrendelscherm",
                         lockScore,
                         100,
-                        severity(lockScore),
-                        ignLock),
+                        severity(lockScore)),
                 securityScoreFactorForDetail(
-                        showEnc,
+                        show,
                         "Encryptie",
                         encryptionCount == 0 ? "Alle apparaten hebben encryptie" : encryptionCount + " apparaat/apparaten zonder encryptie",
                         encScore,
                         100,
-                        severity(encScore),
-                        ignEnc),
+                        severity(encScore)),
                 securityScoreFactorForDetail(
-                        showOs,
+                        show,
                         "OS versie",
                         osVersionCount == 0 ? "Alle apparaten hebben actuele OS versie" : osVersionCount + " apparaat/apparaten met verouderde OS",
                         osScore,
                         100,
-                        severity(osScore),
-                        ignOs),
+                        severity(osScore)),
                 securityScoreFactorForDetail(
-                        showInt,
+                        show,
                         "Integriteit",
                         integrityCount == 0 ? "Geen apparaten met root/jailbreak gedetecteerd" : integrityCount + " apparaat/apparaten met integriteitsproblemen",
                         intScore,
                         100,
-                        severity(intScore),
-                        ignInt)
+                        severity(intScore))
         );
         String status = securityScore == 100 ? "Perfect" : securityScore >= 75 ? "Goed" : securityScore > 50 ? "Matig" : "Slecht";
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
@@ -85,28 +69,13 @@ public class DeviceComplianceScorer {
         return score;
     }
 
-    int adjustedDeviceComplianceScore(DeviceDetail device, boolean ignLock, boolean ignEnc, boolean ignOs, boolean ignInt) {
+    public int calculateScore(DeviceDetail device) {
         int sum = 0;
-        int max = 0;
-        if (!ignLock) {
-            max += 25;
-            sum += device.lockSecure() ? 25 : 0;
-        }
-        if (!ignEnc) {
-            max += 25;
-            sum += device.encSecure() ? 25 : 0;
-        }
-        if (!ignOs) {
-            max += 25;
-            sum += device.osSecure() ? 25 : 0;
-        }
-        if (!ignInt) {
-            max += 25;
-            sum += device.intSecure() ? 25 : 0;
-        }
-        if (max == 0) {
-            return 100;
-        }
-        return (int) Math.round(sum * 100.0 / max);
+        // Elke check is 25 punten waard, maximaal 100.
+        if (device.lockSecure()) sum += 25;
+        if (device.encSecure()) sum += 25;
+        if (device.osSecure()) sum += 25;
+        if (device.intSecure()) sum += 25;
+        return sum;
     }
 }

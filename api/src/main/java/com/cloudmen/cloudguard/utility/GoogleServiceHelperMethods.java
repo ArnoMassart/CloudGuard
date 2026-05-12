@@ -220,11 +220,10 @@ public final class GoogleServiceHelperMethods {
             String description,
             int score,
             int maxScore,
-            String severity,
-            boolean muted) {
+            String severity) {
         if (!showInDetail) {
-            return new SecurityScoreFactorDto(title, description, 0, 0, "success", muted);
+            return new SecurityScoreFactorDto(title, description, 0, 0, "success");
         }
-        return new SecurityScoreFactorDto(title, description, score, maxScore, severity, muted);
+        return new SecurityScoreFactorDto(title, description, score, maxScore, severity);
     }
 }

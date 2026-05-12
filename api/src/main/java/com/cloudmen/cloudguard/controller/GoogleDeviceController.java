@@ -64,8 +64,7 @@ public class GoogleDeviceController {
             ) {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(loggedInEmail);
-        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType, disabled));
+        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType));
     }
 
     /**

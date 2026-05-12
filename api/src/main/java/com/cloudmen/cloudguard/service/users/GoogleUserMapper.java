@@ -1,11 +1,13 @@
 package com.cloudmen.cloudguard.service.users;
 
 import com.cloudmen.cloudguard.dto.users.UserOrgDetail;
+import com.google.api.client.util.DateTime;
 import org.springframework.stereotype.Component;
 import com.cloudmen.cloudguard.utility.DateTimeConverter;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import com.google.api.services.admin.directory.model.User;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -38,7 +40,7 @@ public class GoogleUserMapper {
                 pictureUrl,
                 GoogleServiceHelperMethods.translateRoleName(roleName),
                 isActive,
-                user.getLastLoginTime() != null ? DateTimeConverter.convertToTimeAgo(user.getLastLoginTime()) : "Nooit",
+                lastLoginConverter(user.getLastLoginTime()),
                 twoFAEnabled,
                 security.conform(),
                 security.violationCodes()
@@ -53,5 +55,9 @@ public class GoogleUserMapper {
             return fallback;
         }
         return null;
+    }
+
+    private String lastLoginConverter(DateTime lastLogin) {
+        return lastLogin != null && lastLogin.getValue() != 0 ? DateTimeConverter.convertToTimeAgo(lastLogin) : "Nooit";
     }
 }

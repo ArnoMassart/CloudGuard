@@ -7,6 +7,7 @@ import com.cloudmen.cloudguard.service.cache.GoogleDeviceCacheService;
 import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -50,16 +51,15 @@ public class GoogleDeviceService {
      * @param size              number of items per page
      * @param filterStatusStr   filter by device status (e.g., APPROVED)
      * @param filterType        filter by OS type (e.g., Android, Windows)
-     * @param disabledKeys      set of security check keys to ignore
      * @return q {@link DevicePageResponse} containing the filtered devices
      */
     public DevicePageResponse getDevicesPaged(
             String loggedInEmail, String pageToken, int size,
-            String filterStatusStr, String filterType, Set<String> disabledKeys) {
+            String filterStatusStr, String filterType) {
 
-        Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
+        Locale locale = LocaleContextHolder.getLocale();
 
-        List<DeviceDetail> filteredList = getAllMappedDevices(loggedInEmail);
+        List<DeviceDetail> filteredList = getAllMappedDevices(loggedInEmail, locale);
         DeviceStatus filterStatus = DeviceStatus.fromString(filterStatusStr);
 
         if (filterStatus != null && filterStatus != DeviceStatus.ALL) {
@@ -83,12 +83,8 @@ public class GoogleDeviceService {
                 ? Collections.emptyList()
                 : filteredList.subList(startIndex, endIndex);
 
-        List<DeviceDetail> adjustedPage = pagedDevices.stream()
-                .map(d -> deviceComplianceScorer.applyPreferenceAdjustedCompliance(d, off))
-                .toList();
-
         String nextTokenToReturn = (endIndex < totalDevices) ? String.valueOf(page + 1) : null;
-        return new DevicePageResponse(adjustedPage, nextTokenToReturn);
+        return new DevicePageResponse(pagedDevices, nextTokenToReturn);
     }
 
     /**
@@ -115,24 +111,19 @@ public class GoogleDeviceService {
         int totalOsVersionCount = 0;
         int totalIntegrityCount = 0;
 
-        boolean ignLock = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "lockscreen");
-        boolean ignEnc = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "encryption");
-        boolean ignOs = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "osVersion");
-        boolean ignInt = SecurityPreferenceScoreSupport.preferenceDisabled(off, "mobile-devices", "integrity");
-
         for (DeviceDetail device : allDevices) {
             String status = device.status();
             if ("APPROVED".equalsIgnoreCase(status) || "ACTIVE".equalsIgnoreCase(status) || "PROVISIONED".equalsIgnoreCase(status)) {
                 approvedDevices++;
             }
 
-            int adj = deviceComplianceScorer.adjustedDeviceComplianceScore(device, ignLock, ignEnc, ignOs, ignInt);
+            int adj = deviceComplianceScorer.calculateScore(device);
             totalScoreSum += adj;
 
-            if (!ignLock && !device.lockSecure()) totalLockScreenCount++;
-            if (!ignEnc && !device.encSecure()) totalEncryptionCount++;
-            if (!ignInt && !device.intSecure()) totalIntegrityCount++;
-            if (!ignOs && !device.osSecure()) totalOsVersionCount++;
+            if (!device.lockSecure()) totalLockScreenCount++;
+            if (!device.encSecure()) totalEncryptionCount++;
+            if (!device.intSecure()) totalIntegrityCount++;
+            if (!device.osSecure()) totalOsVersionCount++;
 
             if (adj < 75) {
                 nonCompliantDevices++;
@@ -159,7 +150,7 @@ public class GoogleDeviceService {
 
         SecurityScoreBreakdownDto breakdown = deviceComplianceScorer.buildDevicesBreakdown(
                 totalDevices, totalLockScreenCount, totalEncryptionCount, totalOsVersionCount, totalIntegrityCount,
-                securityScore, ignLock, ignEnc, ignOs, ignInt);
+                securityScore);
 
         SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
                 .check("lockScreenWarning", totalLockScreenCount, "mobile-devices", "lockscreen")
@@ -199,7 +190,7 @@ public class GoogleDeviceService {
         return sortedTypes;
     }
 
-    private List<DeviceDetail> getAllMappedDevices(String loggedInEmail) {
+    private List<DeviceDetail> getAllMappedDevices(String loggedInEmail, Locale locale) {
         DeviceCacheEntry cachedData = deviceCacheService.getOrFetchData(loggedInEmail);
         List<DeviceDetail> allDevices = new ArrayList<>();
 
@@ -213,7 +204,7 @@ public class GoogleDeviceService {
         }
         // Map Endpoints (Windows/Mac)
         if (cachedData.endpointDevices() != null) {
-            cachedData.endpointDevices().forEach(d -> allDevices.add(mapper.mapEndpoint(d)));
+            cachedData.endpointDevices().forEach(d -> allDevices.add(mapper.mapEndpoint(d, locale)));
         }
 
         return allDevices;

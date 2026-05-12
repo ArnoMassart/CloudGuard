@@ -8,4 +8,5 @@ import lombok.Getter;
 public class GroupSettingsDto {
     private String whoCanJoin;
     private String whoCanView;
+    private boolean allowExternalMembers;
 }

@@ -483,40 +483,36 @@ public class PasswordSettingsService {
         boolean showStr = totalPolicyUsers > 0 || muteStr;
 
         List<SecurityScoreFactorDto> factors = List.of(
-                securityScoreFactorForDetail(showAdmin, "Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin), muteAdmin),
+                securityScoreFactorForDetail(showAdmin, "Admin Security Keys", adminKeysDesc, dispAdmin, 100, severity(dispAdmin)),
                 securityScoreFactorForDetail(
                         showUserChange,
                         messageSource.getMessage("password-settings.score.factor.users_change.title", null, locale),
                         usersNeedChangeDesc,
                         (int) Math.round(usersNeedChangeScore),
                         100,
-                        severity(usersNeedChangeScore),
-                        false),
-                securityScoreFactorForDetail(show2fa, "2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa), mute2sv),
+                        severity(usersNeedChangeScore)),
+                securityScoreFactorForDetail(show2fa, "2-Step Verification", twoFaDesc, disp2fa, 100, severity(disp2fa)),
                 securityScoreFactorForDetail(
                         showLen,
                         messageSource.getMessage("password-settings.score.factor.length.title", null, locale),
                         lengthDesc,
                         dispLen,
                         100,
-                        severity(dispLen),
-                        muteLen),
+                        severity(dispLen)),
                 securityScoreFactorForDetail(
                         showExp,
                         messageSource.getMessage("password-settings.score.factor.expiration.title", null, locale),
                         expirationDesc,
                         dispExp,
                         100,
-                        severity(dispExp),
-                        muteExp),
+                        severity(dispExp)),
                 securityScoreFactorForDetail(
                         showStr,
                         messageSource.getMessage("password-settings.score.factor.strength.title", null, locale),
                         strengthDesc,
                         dispStr,
                         100,
-                        severity(dispStr),
-                        muteStr)
+                        severity(dispStr))
         );
 
         String status = totalScore == 100 ? "perfect" : totalScore >= 75 ? "good" : totalScore > 50 ? "average" : "bad";

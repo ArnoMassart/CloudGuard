@@ -96,7 +96,7 @@ public class GoogleDeviceControllerIT {
 
         DevicePageResponse mockResponse = new DevicePageResponse(List.of(), "next-page");
         when(googleDeviceService.getDevicesPaged(
-                eq(EMAIL), isNull(), eq(5), isNull(), isNull(), eq(Set.of())))
+                eq(EMAIL), isNull(), eq(5), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         mockMvc.perform(
@@ -108,7 +108,7 @@ public class GoogleDeviceControllerIT {
                 .andExpect(jsonPath("$.nextPageToken").value("next-page"));
 
         verify(preferenceService).getDisabledPreferenceKeys(EMAIL);
-        verify(googleDeviceService).getDevicesPaged(EMAIL, null, 5, null, null, Set.of());
+        verify(googleDeviceService).getDevicesPaged(EMAIL, null, 5, null, null);
     }
 
     @Test
@@ -118,7 +118,7 @@ public class GoogleDeviceControllerIT {
 
         DevicePageResponse mockResponse = new DevicePageResponse(List.of(), null);
         when(googleDeviceService.getDevicesPaged(
-                EMAIL, "page-token", 20, "APPROVED", "Android", Set.of("pref1")))
+                EMAIL, "page-token", 20, "APPROVED", "Android"))
                 .thenReturn(mockResponse);
 
         mockMvc.perform(
@@ -132,7 +132,7 @@ public class GoogleDeviceControllerIT {
                 .andExpect(status().isOk());
 
         verify(preferenceService).getDisabledPreferenceKeys(EMAIL);
-        verify(googleDeviceService).getDevicesPaged(EMAIL, "page-token", 20, "APPROVED", "Android", Set.of("pref1"));
+        verify(googleDeviceService).getDevicesPaged(EMAIL, "page-token", 20, "APPROVED", "Android");
     }
 
     // =========================================================================================
