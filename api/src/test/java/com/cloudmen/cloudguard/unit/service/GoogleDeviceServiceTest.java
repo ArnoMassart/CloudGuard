@@ -160,10 +160,10 @@ public class GoogleDeviceServiceTest {
         mockCacheEntry(deviceCacheService, List.of(badMobile), List.of(), List.of());
 
         Set<String> disabledPrefs = Set.of(
-                "mobile-devices:lockscreen",
-                "mobile-devices:encryption",
-                "mobile-devices:osVersion",
-                "mobile-devices:integrity"
+                "devices:lockscreen",
+                "devices:encryption",
+                "devices:osVersion",
+                "devices:integrity"
         );
 
         var overview = service.getDevicesPageOverview(ADMIN, disabledPrefs);

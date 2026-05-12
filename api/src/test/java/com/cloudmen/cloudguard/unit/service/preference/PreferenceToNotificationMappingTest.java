@@ -64,6 +64,6 @@ class PreferenceToNotificationMappingTest {
         assertEquals(18, keys.size());
         assertTrue(keys.contains("users-groups:2fa"));
         assertTrue(keys.contains("password-settings:strongPassword"));
-        assertTrue(keys.contains("mobile-devices:lockscreen"));
+        assertTrue(keys.contains("devices:lockscreen"));
     }
 }
