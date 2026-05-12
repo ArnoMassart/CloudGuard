@@ -134,10 +134,10 @@ public class GoogleDeviceService {
 
         if (totalDevices == 0) {
             SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
-                    .check("lockScreenWarning", totalLockScreenCount, "mobile-devices", "lockscreen")
-                    .check("encryptionWarning", totalEncryptionCount, "mobile-devices", "encryption")
-                    .check("osVersionWarning", totalOsVersionCount, "mobile-devices", "osVersion")
-                    .check("integrityWarning", totalIntegrityCount, "mobile-devices", "integrity")
+                    .check("lockScreenWarning", totalLockScreenCount, "devices", "lockscreen")
+                    .check("encryptionWarning", totalEncryptionCount, "devices", "encryption")
+                    .check("osVersionWarning", totalOsVersionCount, "devices", "osVersion")
+                    .check("integrityWarning", totalIntegrityCount, "devices", "integrity")
                     .build();
             return new DeviceOverviewResponse(
                     0, 0, 0,
@@ -155,10 +155,10 @@ public class GoogleDeviceService {
                 securityScore);
 
         SectionWarningsDto warnings = SectionWarningEvaluator.with(off)
-                .check("lockScreenWarning", totalLockScreenCount, "mobile-devices", "lockscreen")
-                .check("encryptionWarning", totalEncryptionCount, "mobile-devices", "encryption")
-                .check("osVersionWarning", totalOsVersionCount, "mobile-devices", "osVersion")
-                .check("integrityWarning", totalIntegrityCount, "mobile-devices", "integrity")
+                .check("lockScreenWarning", totalLockScreenCount, "devices", "lockscreen")
+                .check("encryptionWarning", totalEncryptionCount, "devices", "encryption")
+                .check("osVersionWarning", totalOsVersionCount, "devices", "osVersion")
+                .check("integrityWarning", totalIntegrityCount, "devices", "integrity")
                 .build();
 
         return new DeviceOverviewResponse(

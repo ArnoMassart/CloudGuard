@@ -25,7 +25,7 @@ class SecurityPreferenceScoreSupportTest {
     @Test
     void preferenceDisabled_trueWhenSectionKeyPresent() {
         assertTrue(SecurityPreferenceScoreSupport.preferenceDisabled(
-                Set.of("password-settings:2sv", "mobile-devices:lockscreen"),
+                Set.of("password-settings:2sv", "devices:lockscreen"),
                 "password-settings", "2sv"));
     }
 }
