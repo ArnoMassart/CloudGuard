@@ -188,7 +188,7 @@ export class Devices implements OnInit, OnDestroy {
       ...f,
       state: f.secure
         ? ('ok' as const)
-        : this.#preferencesFacade.isDisabled('mobile-devices', f.key)
+        : this.#preferencesFacade.isDisabled('devices', f.key)
         ? ('muted' as const)
         : ('warn' as const),
     }));
