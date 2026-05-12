@@ -1,0 +1,9 @@
+{
+  "kind": "admin#directory#roleAssignments",
+  "items": [
+    {
+      "roleId": "70000000000000001",
+      "assignedTo": "contract.user@example.com"
+    }
+  ]
+}

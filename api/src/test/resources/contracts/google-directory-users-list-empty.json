@@ -1,0 +1,5 @@
+{
+  "kind": "admin#directory#users",
+  "etag": "\"empty-page\"",
+  "users": []
+}
