@@ -13,11 +13,15 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 /**
- * Policy provider for Chrome extension management.
- * Status logic:
- * - Managed: force-installed extensions OR (default blocked AND only certain extensions allowed)
- * - Restricted: default allow BUT block list exists, or force-installed extensions
- * - Open: default allow, no other extension rules
+ * {@link OrgUnitPolicyProvider} for Chrome <strong>extension install policies</strong>: resolves Chrome Policy API payloads
+ * for the OU’s Directory id ({@link com.cloudmen.cloudguard.service.cache.PolicyApiCacheService#resolvePathToOuId}),
+ * parses ExtensionSettings / blocklist / allowlist / forcelist, and maps outcomes to Managed / Restricted / Open cards.
+ * <p>
+ * Status rules (summary): <strong>Managed</strong> when extensions are force-installed or default-installation is blocked
+ * with an allowlist; <strong>Restricted</strong> when default allows installs but a blocklist exists; otherwise
+ * <strong>Open</strong>. Inheritance from parent OUs is not inferred today ({@link #resolveSourceOuPath} returns {@code null}).
+ *
+ * @see ChromePolicyApiService#resolveChromePoliciesForOrgUnit(String, String)
  */
 @Order(4)
 @Component
@@ -30,17 +34,28 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
     private final ChromePolicyApiService chromePolicyApi;
     private final MessageSource messageSource;
 
+    /**
+     * @param policyCache       OU id/path resolution + shared Policy API cache where relevant
+     * @param chromePolicyApi   Chrome Policy API {@code policies:resolve} client
+     * @param messageSource     {@code orgUnits.*} and extension detail strings
+     */
     public ChromeExtensionPolicyProvider(PolicyApiCacheService policyCache, ChromePolicyApiService chromePolicyApi, MessageSource messageSource) {
         this.policyCache = policyCache;
         this.chromePolicyApi = chromePolicyApi;
         this.messageSource = messageSource;
     }
 
+    /**
+     * Stable key {@code ou_chrome_extensions}.
+     */
     @Override
     public String key() {
         return "ou_chrome_extensions";
     }
 
+    /**
+     * Loads resolved Chrome user extension policies for {@code orgUnitPath}, classifies install posture, and builds the OU policy card.
+     */
     @Override
     public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
         String path = (orgUnitPath == null || orgUnitPath.isBlank()) ? "/" : orgUnitPath.trim();
@@ -124,6 +139,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         );
     }
 
+    /** Aggregates counts from Chrome Policy protobuf JSON ({@code ExtensionSettings}, lists, forcelist). */
     private ExtensionCounts parseExtensionCounts(Map<String, JsonNode> chromePolicies) {
         ExtensionCounts counts = new ExtensionCounts();
 
@@ -149,6 +165,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         return counts;
     }
 
+    /** Parses {@code ExtensionSettings} map entries and {@code *} default installation mode. */
     private void parseExtensionSettings(JsonNode value, ExtensionCounts counts) {
         if (value == null || !value.isObject()) return;
         Iterator<String> keys = value.fieldNames();
@@ -172,6 +189,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         }
     }
 
+    /** Accepts protobuf {@code listValue} shapes or plain JSON arrays for block/allow lists. */
     private void parseStringList(JsonNode value, Set<String> target) {
         if (value == null) return;
         // Chrome Policy API may return protobuf Struct: listValue.values[].stringValue
@@ -196,6 +214,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         }
     }
 
+    /** Extracts extension ids from force-install entries ({@code id;updateUrl}). */
     private void parseForcelist(JsonNode value, ExtensionCounts counts) {
         if (value == null) return;
         // Forcelist format: ["extId;updateUrl", ...] or listValue
@@ -210,12 +229,16 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         }
     }
 
+    /**
+     * Placeholder for deriving which OU owns the winning policy; Chrome resolve payload does not expose source OU in this integration yet.
+     */
     private String resolveSourceOuPath(Map<String, JsonNode> chromePolicies, Map<String, String> ouMap) {
         // Chrome Policy API ResolvedPolicy has sourceKey - we don't have it in our simplified response.
         // For now, we cannot easily determine inheritance from Chrome API - assume direct.
         return null;
     }
 
+    /** Neutral card when the OU id is unknown, the Chrome API errors, or no extension schemas were returned. */
     private OrgUnitPolicyDto buildNotConfigured(boolean apiError) {
         Locale locale = LocaleContextHolder.getLocale();
 
@@ -240,6 +263,7 @@ public class ChromeExtensionPolicyProvider implements OrgUnitPolicyProvider {
         );
     }
 
+    /** Mutable tallies while scanning policy schemas (final counts copied to UI strings). */
     private static class ExtensionCounts {
         final Set<String> blockedIds = new HashSet<>();
         final Set<String> allowedIds = new HashSet<>();

@@ -30,8 +30,11 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Shared cache for Cloud Identity Policy API responses and Directory OU id→path maps,
- * per Workspace admin, via Caffeine (15 min expiry; Policy API quota aware).
+ * Shared cache for Cloud Identity <strong>Policy API</strong> list payloads and Admin SDK <strong>OU id→path</strong>
+ * mappings, keyed by workspace admin. Feeds OU-scoped cards such as
+ * {@link com.cloudmen.cloudguard.service.policy.SharedDriveCreationPolicyProvider} and path/id resolution for
+ * {@link com.cloudmen.cloudguard.service.policy.ChromeExtensionPolicyProvider}. Uses a fifteen-minute Caffeine window with
+ * 429 backoff when fetching policies.
  */
 @Service
 public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<PolicyApiCacheEntry> {
@@ -45,6 +48,12 @@ public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<P
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * @param directoryFactory      credential + Directory factory for OU enumeration and Policy scope tokens
+     * @param messageSource         localized errors when Policy API fails terminally
+     * @param userService           resolves admin email from viewer login via superclass helpers
+     * @param organizationService   tenant context for admin resolution
+     */
     public PolicyApiCacheService(
             GoogleApiFactory directoryFactory,
             @Qualifier("messageSource") MessageSource messageSource,
@@ -55,6 +64,7 @@ public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<P
         this.messageSource = messageSource;
     }
 
+    /** Loads Policy API policies plus OU map from Google or returns {@code fallback} when configured. */
     @Override
     protected PolicyApiCacheEntry fetchFromGoogle(String adminEmail, PolicyApiCacheEntry fallback) {
         try {
@@ -71,10 +81,16 @@ public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<P
         }
     }
 
+    /**
+     * Immutable policy rows previously fetched from {@code cloudidentity.googleapis.com/v1/policies} for {@code adminEmail}.
+     */
     public List<JsonNode> getAllPolicies(String adminEmail) {
         return getOrFetchDataByAdmin(adminEmail).policies();
     }
 
+    /**
+     * Directory org-unit id → {@link com.google.api.services.admin.directory.model.OrgUnit#getOrgUnitPath()} for the tenant.
+     */
     public Map<String, String> getOuIdToPathMap(String adminEmail) {
         return getOrFetchDataByAdmin(adminEmail).ouIdToPath();
     }
@@ -106,6 +122,7 @@ public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<P
         return null;
     }
 
+    /** Loads {@code ALL_INCLUDING_PARENT} org units and builds id→path map used when correlating Policy API {@code orgUnits/…} refs. */
     private Map<String, String> fetchOuIdToPathMap(String adminEmail) throws Exception {
         Directory directory = directoryFactory.getDirectoryService(
                 Set.of(DirectoryScopes.ADMIN_DIRECTORY_ORGUNIT_READONLY), adminEmail);
@@ -123,6 +140,7 @@ public class PolicyApiCacheService extends AbstractGoogleWorkspaceCacheService<P
         return map;
     }
 
+    /** GETs all policy pages with exponential backoff on HTTP 429. */
     private List<JsonNode> fetchAllPolicies(String adminEmail) throws Exception {
         var creds = directoryFactory.getCredentials(Set.of(POLICY_API_SCOPE), adminEmail);
         creds.refreshIfExpired();

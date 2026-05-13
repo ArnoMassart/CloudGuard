@@ -12,9 +12,11 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Policy card for Shared drive creation: Allowed / Not allowed.
- * Uses Cloud Identity Policy API setting: drive_and_docs.shared_drive_creation.
- * Note: the API returns the *opposite* of the Admin Console UI for allow_shared_drive_creation.
+ * {@link OrgUnitPolicyProvider} for <strong>shared drive creation</strong> ({@code settings/drive_and_docs.shared_drive_creation}): scans cached Cloud Identity
+ * policies, picks the winning rule for {@code orgUnitPath} by deepest matching OU and highest {@code sortOrder}, and maps
+ * {@code allowSharedDriveCreation} to Allowed / Not allowed. Note: API polarity may differ from Admin Console wording.
+ *
+ * @see PolicyApiCacheService#getAllPolicies(String)
  */
 @Order(3)
 @Component
@@ -25,16 +27,26 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
     private final PolicyApiCacheService policyCache;
     private final MessageSource messageSource;
 
+    /**
+     * @param policyCache    tenant-scoped Policy API list + OU id→path map
+     * @param messageSource  {@code orgUnits.shared_drive.*} strings
+     */
     public SharedDriveCreationPolicyProvider(PolicyApiCacheService policyCache, MessageSource messageSource) {
         this.policyCache = policyCache;
         this.messageSource = messageSource;
     }
 
+    /**
+     * Stable key {@code ou_shared_drive_creation}.
+     */
     @Override
     public String key() {
         return "ou_shared_drive_creation";
     }
 
+    /**
+     * Selects the effective shared-drive-creation policy for {@code orgUnitPath} from cached Policy API rows.
+     */
     @Override
     public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
         String path = (orgUnitPath == null || orgUnitPath.isBlank()) ? "/" : orgUnitPath.trim();
@@ -136,12 +148,14 @@ public class SharedDriveCreationPolicyProvider implements OrgUnitPolicyProvider 
         );
     }
 
+    /** {@code true} when {@code policyOuPath} is {@code /}, equals {@code target}, or is a strict prefix path segment of {@code target}. */
     private static boolean isAncestorOrSelf(String target, String policyOuPath) {
         if ("/".equals(policyOuPath)) return true;
         if (target.equals(policyOuPath)) return true;
         return target.startsWith(policyOuPath + "/");
     }
 
+    /** Number of {@code '/'} characters in the path (depth hint for policy precedence). */
     private static int depthOf(String ouPath) {
         if (ouPath == null || "/".equals(ouPath)) return 0;
         int count = 0;

@@ -10,21 +10,37 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+/**
+ * Builds a navigable <strong>organizational unit tree</strong> for the UI from {@link OrgUnitCacheEntry}: synthetic
+ * domain root at {@code "/"}, children matched via Admin SDK {@link OrgUnit#getParentOrgUnitPath()}, sorted display
+ * names, and user totals keyed by {@link OrgUnit#getOrgUnitPath()}.
+ */
 @Service
-public class GoogleOrgUnitService { 
+public class GoogleOrgUnitService {
 
     private final GoogleOrgUnitCacheService orgUnitCacheService;
     private final MessageSource messageSource;
 
+    /**
+     * @param orgUnitCacheService Directory-backed OU list and user counts per path
+     * @param messageSource       bundle keys such as {@code orgUnits.empty_root}
+     */
     public GoogleOrgUnitService(GoogleOrgUnitCacheService orgUnitCacheService, MessageSource messageSource) {
         this.orgUnitCacheService = orgUnitCacheService;
         this.messageSource = messageSource;
     }
 
+    /** Triggers a synchronous refresh of the tenant’s OU cache entry. */
     public void forceRefreshCache(String loggedInEmail) {
         orgUnitCacheService.forceRefreshCache(loggedInEmail);
     }
 
+    /**
+     * Returns the OU hierarchy for the authenticated user’s workspace. When Google returns no units, yields a single
+     * root node with an i18n placeholder name.
+     *
+     * @param loggedInEmail user email; primary domain for the synthetic root label is taken from the part after {@code @}
+     */
     public OrgUnitNodeDto getOrgUnitTree(String loggedInEmail) {
         OrgUnitCacheEntry cachedData = orgUnitCacheService.getOrFetchData(loggedInEmail);
         List<OrgUnit> allOrgUnits = cachedData.allOrgUnits();
@@ -34,11 +50,11 @@ public class GoogleOrgUnitService {
             return buildEmptyRoot(messageSource);
         }
 
-        // 2. Bouw de boom
         String domain = loggedInEmail.substring(loggedInEmail.indexOf('@') + 1);
         return buildTree(allOrgUnits, domain, userCounts);
     }
 
+    /** Domain root plus recursive children; {@code id} is the OU path string. */
     private OrgUnitNodeDto buildTree(List<OrgUnit> allOrgUnits, String domain, Map<String, Integer> userCounts) {
         OrgUnitNodeDto root = new OrgUnitNodeDto();
         root.setId("/");
@@ -50,6 +66,7 @@ public class GoogleOrgUnitService {
         return root;
     }
 
+    /** Direct children of {@code parentPath}, excluding self-references and paths not under the expected parent. */
     private List<OrgUnitNodeDto> buildChildren(String parentPath, List<OrgUnit> allOrgUnits, Map<String, Integer> userCounts) {
         List<OrgUnitNodeDto> children = new ArrayList<>();
         String normParent = normalizePath(parentPath);

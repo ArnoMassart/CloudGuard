@@ -30,6 +30,7 @@ public class ChromePolicyApiService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /** @param googleApiFactory delegated credential factory for Chrome Policy scope */
     public ChromePolicyApiService(GoogleApiFactory googleApiFactory) {
         this.googleApiFactory = googleApiFactory;
     }
