@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.util.ArrayList;
@@ -28,12 +29,15 @@ public class GoogleDeviceServiceTest {
     @Mock
     private GoogleDeviceCacheService deviceCacheService;
 
+    @Mock
+    private MessageSource messageSource;
+
     private GoogleDeviceService service;
 
     @BeforeEach
     void setUp() {
-        DeviceComplianceScorer scorer = new DeviceComplianceScorer();
-        GoogleDeviceMapper mapper = new GoogleDeviceMapper(scorer);
+        DeviceComplianceScorer scorer = new DeviceComplianceScorer(messageSource);
+        GoogleDeviceMapper mapper = new GoogleDeviceMapper(scorer, messageSource);
 
         service = new GoogleDeviceService(deviceCacheService, mapper, scorer);
     }
@@ -53,7 +57,7 @@ public class GoogleDeviceServiceTest {
     void getDevicesPaged_emptyCache_returnsEmptyPageAndNoNextToken() {
         mockCacheEntry(deviceCacheService, List.of(), List.of(), List.of());
 
-        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all", Set.of());
+        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all");
 
         assertTrue(page.devices().isEmpty());
         assertNull(page.nextPageToken());
@@ -67,7 +71,7 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile), List.of(chrome), List.of(endpoint));
 
-        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all", Set.of());
+        var page = service.getDevicesPaged(ADMIN, null, 10, "ALL", "all");
 
         assertEquals(3, page.devices().size());
         assertTrue(page.devices().stream().anyMatch(d -> d.os().contains("Android")));
@@ -83,10 +87,10 @@ public class GoogleDeviceServiceTest {
 
         mockCacheEntry(deviceCacheService, List.of(mobile1, mobile2), List.of(chrome), List.of());
 
-        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "all", Set.of());
+        var pageStatus = service.getDevicesPaged(ADMIN, null, 10, "APPROVED", "all");
         assertEquals(2, pageStatus.devices().size());
 
-        var pageType = service.getDevicesPaged(ADMIN, null, 10, "ALL", "ios", Set.of());
+        var pageType = service.getDevicesPaged(ADMIN, null, 10, "ALL", "ios");
         assertEquals(1, pageType.devices().size());
         assertEquals("iOS 17", pageType.devices().get(0).os());
     }
@@ -99,11 +103,11 @@ public class GoogleDeviceServiceTest {
         }
         mockCacheEntry(deviceCacheService, mobiles, List.of(), List.of());
 
-        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "all", Set.of());
+        var page1 = service.getDevicesPaged(ADMIN, "1", 2, "ALL", "all");
         assertEquals(2, page1.devices().size());
         assertEquals("2", page1.nextPageToken());
 
-        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "all", Set.of());
+        var page3 = service.getDevicesPaged(ADMIN, "3", 2, "ALL", "all");
         assertEquals(1, page3.devices().size());
         assertNull(page3.nextPageToken());
     }
@@ -151,28 +155,5 @@ public class GoogleDeviceServiceTest {
 
         assertTrue(overview.warnings().hasWarnings());
         assertTrue(overview.warnings().items().get("lockScreenWarning"));
-    }
-
-    @Test
-    void getDevicesPageOverview_withDisabledPreferences_forcesScore100AndMutedBreakdown() {
-        var badMobile = createMobileDevice("2", "b@x.com", "Android 9", "BLOCKED", "NONE", "UNENCRYPTED", "COMPROMISED", daysAgo(10));
-
-        mockCacheEntry(deviceCacheService, List.of(badMobile), List.of(), List.of());
-
-        Set<String> disabledPrefs = Set.of(
-                "devices:lockscreen",
-                "devices:encryption",
-                "devices:osVersion",
-                "devices:integrity"
-        );
-
-        var overview = service.getDevicesPageOverview(ADMIN, disabledPrefs);
-
-        assertEquals(100, overview.securityScore());
-
-        assertTrue(overview.securityScoreBreakdown().factors().stream().allMatch(SecurityScoreFactorDto::muted));
-
-        assertNotNull(overview.warnings());
-        assertFalse(overview.warnings().hasWarnings());
     }
 }

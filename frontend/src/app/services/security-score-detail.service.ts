@@ -35,7 +35,6 @@ export class SecurityScoreDetailService {
           score,
           maxScore: 100,
           severity: severity as 'success' | 'warning' | 'error',
-          muted: false,
         },
       ],
     };

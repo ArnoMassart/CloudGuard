@@ -92,11 +92,9 @@ public class GoogleDeviceControllerIT {
     @Test
     void getDevices_withValidCookie_returnsPageJson() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn(EMAIL);
-        when(preferenceService.getDisabledPreferenceKeys(EMAIL)).thenReturn(Set.of());
-
         DevicePageResponse mockResponse = new DevicePageResponse(List.of(), "next-page");
         when(googleDeviceService.getDevicesPaged(
-                eq(EMAIL), isNull(), eq(5), isNull(), isNull(), eq(Set.of())))
+                eq(EMAIL), isNull(), eq(5), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         mockMvc.perform(
@@ -107,18 +105,16 @@ public class GoogleDeviceControllerIT {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.nextPageToken").value("next-page"));
 
-        verify(preferenceService).getDisabledPreferenceKeys(EMAIL);
-        verify(googleDeviceService).getDevicesPaged(EMAIL, null, 5, null, null, Set.of());
+        verify(googleDeviceService).getDevicesPaged(EMAIL, null, 5, null, null);
     }
 
     @Test
     void getDevices_passesAllParamsToService() throws Exception {
         when(jwtService.validateInternalToken(VALID_TOKEN)).thenReturn(EMAIL);
-        when(preferenceService.getDisabledPreferenceKeys(EMAIL)).thenReturn(Set.of("pref1"));
 
         DevicePageResponse mockResponse = new DevicePageResponse(List.of(), null);
         when(googleDeviceService.getDevicesPaged(
-                EMAIL, "page-token", 20, "APPROVED", "Android", Set.of("pref1")))
+                EMAIL, "page-token", 20, "APPROVED", "Android"))
                 .thenReturn(mockResponse);
 
         mockMvc.perform(
@@ -131,8 +127,7 @@ public class GoogleDeviceControllerIT {
                                 .cookie(new Cookie(AUTH_COOKIE, VALID_TOKEN)))
                 .andExpect(status().isOk());
 
-        verify(preferenceService).getDisabledPreferenceKeys(EMAIL);
-        verify(googleDeviceService).getDevicesPaged(EMAIL, "page-token", 20, "APPROVED", "Android", Set.of("pref1"));
+        verify(googleDeviceService).getDevicesPaged(EMAIL, "page-token", 20, "APPROVED", "Android");
     }
 
     // =========================================================================================

@@ -156,7 +156,7 @@ class GoogleGroupsControllerIT {
         var warnings = new SectionWarningsDto(Map.of(), false, false);
         when(googleGroupsService.getGroupsOverview("admin@acme.com", Set.of()))
                 .thenReturn(
-                        new GroupOverviewResponse(1, 0, 0, 0, 0, 80, breakdown, warnings));
+                        new GroupOverviewResponse(1, 0 ,0, 0, 0, 0, 80, breakdown, warnings));
 
         mockMvc.perform(
                         get("/api/google/groups/overview")

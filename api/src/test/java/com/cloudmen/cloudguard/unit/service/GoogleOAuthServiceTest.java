@@ -160,19 +160,4 @@ public class GoogleOAuthServiceTest {
         assertEquals(0, overview.securityScore());
         assertNotEquals("perfect", overview.securityScoreBreakdown().status());
     }
-
-    @Test
-    void getOAuthPageOverview_withDisabledPreferences_forcesScore100AndMutedBreakdown() {
-        var highRiskToken = createToken("c1", "Very Bad App", "u@x.com", List.of("/auth/admin.directory", "/auth/drive"), false, false);
-
-        mockCacheEntry(oAuthCacheService, List.of(highRiskToken), 10);
-
-        var overview = service.getOAuthPageOverview(ADMIN, Set.of("app-access:highRisk"));
-
-        assertEquals(1, overview.totalThirdPartyApps());
-        assertEquals(1, overview.totalHighRiskApps());
-        assertEquals(100, overview.securityScore());
-
-        assertTrue(overview.securityScoreBreakdown().factors().stream().anyMatch(SecurityScoreFactorDto::muted));
-    }
 }

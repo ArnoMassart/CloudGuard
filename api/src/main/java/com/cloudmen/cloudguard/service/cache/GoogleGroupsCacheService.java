@@ -105,11 +105,15 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
                     String groupEmail = group.getEmail();
                     if (groupEmail == null || groupEmail.isBlank()) continue;
 
+                    GroupSettingsDto settings = getGroupSettings(adminEmail, groupEmail);
+
                     int[] counts = countMembers(service, groupEmail, primaryDomain);
                     int total = counts[0];
                     int external = counts[1];
-                    boolean externalAllowed = external > 0;
-                    String risk = deriveRisk(external);
+
+                    boolean externalAllowed = settings.isAllowExternalMembers();
+
+                    String risk = deriveRisk(external, externalAllowed);
                     List<String> tags = new ArrayList<>(deriveRiskTags(risk));
 
                     if (cloudIdentity != null) {
@@ -130,8 +134,6 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
 
                     String adminId = group.getId() != null ? group.getId() : "";
                     String groupName = group.getName() != null ? group.getName() : "";
-
-                    GroupSettingsDto settings = getGroupSettings(adminEmail, groupEmail);
 
                     GroupOrgDetail detail = new GroupOrgDetail(
                             groupEmail, adminId, risk, tags, total, external, externalAllowed, settings.getWhoCanJoin(), settings.getWhoCanView()
@@ -168,9 +170,9 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         return new int[]{total, external};
     }
 
-    private String deriveRisk(int external) {
+    private String deriveRisk(int external, boolean externalAllowed) {
         if (external > 0) return "HIGH";
-        if (external < 0) return "MEDIUM";
+        if (externalAllowed) return "MEDIUM";
         return "LOW";
     }
 
@@ -206,17 +208,20 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
 
     private GroupSettingsDto getGroupSettings(String loggedInEmail, String groupEmail) {
         if (groupEmail == null || groupEmail.isBlank()) {
-            return new GroupSettingsDto("—", "—");
+            return new GroupSettingsDto("—", "—", false);
         }
         try {
             Groupssettings settingsService = getGroupsSettingsService(loggedInEmail);
             Groups settings = settingsService.groups().get(groupEmail).execute();
             String whoCanJoin = mapWhoCanJoin(settings.getWhoCanJoin());
             String whoCanView = mapWhoCanViewMembership(settings.getWhoCanViewMembership());
-            return new GroupSettingsDto(whoCanJoin, whoCanView);
+
+            boolean allowExternal = "true".equalsIgnoreCase(settings.getAllowExternalMembers());
+
+            return new GroupSettingsDto(whoCanJoin, whoCanView, allowExternal);
         } catch (Throwable t) {
             log.warn("Could not fetch Groups Settings for {}: {}", groupEmail, t.getMessage());
-            return new GroupSettingsDto("—", "—");
+            return new GroupSettingsDto("—", "—", false);
         }
     }
 

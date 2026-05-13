@@ -14,8 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 /**
  * Component responsible for calculating compliance scores and analyzing security risks associated with user
@@ -29,36 +28,30 @@ public class UsersComplianceScorer {
         this.messageSource = messageSource;
     }
 
-    public int calculateSecurityScoreWithPreferenceMask(List<User> googleUsers, boolean ignore2fa, boolean ignoreActivity) {
+    public int calculateSecurityScoreWithPreferenceMask(List<User> googleUsers) {
         if (googleUsers.isEmpty()) {
             return 0;
         }
-        int parts = 0;
+
         long sum = 0;
+        int totalParts = googleUsers.size() * 2;
+
         for (User user : googleUsers) {
             boolean isActive = !Boolean.TRUE.equals(user.getSuspended());
             boolean twoFAEnabled = Boolean.TRUE.equals(user.getIsEnrolledIn2Sv());
 
-            if (!ignore2fa) {
-                parts++;
-                sum += (!isActive || twoFAEnabled) ? 1 : 0;
-            }
-            if (!ignoreActivity) {
-                parts++;
-                sum += activityMeasuresComply(isActive, user.getLastLoginTime()) ? 1 : 0;
-            }
+            sum += (!isActive || twoFAEnabled) ? 1 : 0;
+
+            sum += activityMeasuresComply(isActive, user.getLastLoginTime()) ? 1 : 0;
         }
-        if (parts == 0) {
-            return 100;
-        }
-        return (int) Math.floor((double) sum / parts * 100);
+
+        return (int) Math.floor((double) sum / totalParts * 100);
     }
 
     /**
      * Each non-compliant user is attributed to exactly one failure reason (in order of checks).
      */
-    public SecurityScoreBreakdownDto buildUsersBreakdown(List<User> googleUsers, int totalUsers, int securityScore,
-                                                          boolean ignore2fa, boolean ignoreActivity) {
+    public SecurityScoreBreakdownDto buildUsersBreakdown(List<User> googleUsers, int totalUsers, int securityScore) {
         LocalDate now = LocalDate.now();
         int no2FACount = 0;
         int longNoLoginCount = 0;
@@ -78,7 +71,7 @@ public class UsersComplianceScorer {
                     longNoLoginCount++;
                 } else {
                     LocalDate loginDate = DateTimeConverter.convertGoogleDateTimeToLocalDate(lastLogin);
-                    if (ChronoUnit.YEARS.between(loginDate, now) >= 1) {
+                    if (ChronoUnit.DAYS.between(loginDate, now) >= 90) {
                         longNoLoginCount++;
                     }
                 }
@@ -96,18 +89,10 @@ public class UsersComplianceScorer {
         int score2 = totalUsers == 0 ? 100 : (int) Math.round(100.0 * (totalUsers - longNoLoginCount) / totalUsers);
         int score3 = totalUsers == 0 ? 100 : (int) Math.round(100.0 * (totalUsers - inactiveRecentCount) / totalUsers);
 
-        if (ignore2fa) {
-            score1 = 100;
-        }
-        if (ignoreActivity) {
-            score2 = 100;
-            score3 = 100;
-        }
-
         Locale locale = LocaleContextHolder.getLocale();
 
-        boolean show2faFactor = totalUsers > 0 || ignore2fa;
-        boolean showActivityFactors = totalUsers > 0 || ignoreActivity;
+        boolean show2faFactor = totalUsers > 0;
+        boolean showActivityFactors = totalUsers > 0;
 
         var factors = java.util.List.of(
                 securityScoreFactorForDetail(
@@ -116,26 +101,25 @@ public class UsersComplianceScorer {
                         no2FACount == 0 ? messageSource.getMessage("users.overview.2step.compliant", null, locale) : messageSource.getMessage("users.overview.2step.non_compliant", new Object[]{no2FACount}, locale),
                         score1,
                         100,
-                        severity(score1),
-                        ignore2fa),
+                        severity(score1)
+                        ),
                 securityScoreFactorForDetail(
                         showActivityFactors,
                         messageSource.getMessage("users.overview.activeLongNoLogin-title", null, locale),
                         longNoLoginCount == 0 ? messageSource.getMessage("users.overview.no_login.compliant", null, locale) : messageSource.getMessage("users.overview.no_login.non_compliant", new Object[]{longNoLoginCount}, locale),
                         score2,
                         100,
-                        severity(score2),
-                        ignoreActivity),
+                        severity(score2)
+                        ),
                 securityScoreFactorForDetail(
                         showActivityFactors,
                         messageSource.getMessage("users.overview.deactivatedRecentLogin-title", null, locale),
                         inactiveRecentCount == 0 ? messageSource.getMessage("users.overview.recent_login.compliant", null, locale) : messageSource.getMessage("users.overview.recent_login.non_compliant", new Object[]{inactiveRecentCount}, locale),
                         score3,
                         100,
-                        severity(score3),
-                        ignoreActivity)
+                        severity(score3))
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

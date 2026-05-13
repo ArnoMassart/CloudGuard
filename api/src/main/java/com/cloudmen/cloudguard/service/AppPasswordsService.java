@@ -25,8 +25,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
 @Service
 public class AppPasswordsService {
@@ -107,23 +106,20 @@ public class AppPasswordsService {
         }
 
         boolean ignored = SecurityPreferenceScoreSupport.preferenceDisabled(off, "app-passwords", "appPassword");
-        int securityScore = ignored ? 100
-                : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
+        int securityScore = (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
         SecurityScoreBreakdownDto breakdown = buildAppPasswordsBreakdown(
-                totalUserCount, usersWithAppPasswords, totalAppPasswords, securityScore, ignored);
+                totalUserCount, usersWithAppPasswords, securityScore);
 
         return new AppPasswordOverviewResponse(true, totalAppPasswords, usersWithAppPasswords, securityScore, breakdown);
     }
 
-    private SecurityScoreBreakdownDto buildAppPasswordsBreakdown(int totalUserCount, int usersWithAppPasswords, int totalAppPasswords, int securityScore,
-                                                                 boolean ignorePref) {
-        int usersWithoutScore = ignorePref ? 100 : totalUserCount == 0 ? 100
+    private SecurityScoreBreakdownDto buildAppPasswordsBreakdown(int totalUserCount, int usersWithAppPasswords, int securityScore) {
+        int usersWithoutScore = totalUserCount == 0 ? 100
                 : (int) Math.round(100.0 * (totalUserCount - usersWithAppPasswords) / totalUserCount);
-        int totalCountScore = ignorePref ? 100 : totalAppPasswords == 0 ? 100 : (int) Math.max(0, 100 - Math.min(totalAppPasswords, 50) * 2);
 
         Locale locale = LocaleContextHolder.getLocale();
 
-        boolean showFactors = totalUserCount > 0 || ignorePref;
+        boolean showFactors = totalUserCount > 0;
 
         var factors = java.util.List.of(
                 securityScoreFactorForDetail(
@@ -134,20 +130,9 @@ public class AppPasswordsService {
                                 : messageSource.getMessage("app-passwords.score.factor.users_without.description", new Object[]{usersWithAppPasswords, totalUserCount}, locale),
                         usersWithoutScore,
                         100,
-                        severity(usersWithoutScore),
-                        ignorePref),
-                securityScoreFactorForDetail(
-                        showFactors,
-                        messageSource.getMessage("app-passwords.score.factor.total.title", null, locale),
-                        totalAppPasswords == 0
-                                ? messageSource.getMessage("app-passwords.score.factor.total.description.none", null, locale)
-                                : messageSource.getMessage("app-passwords.score.factor.total.description", new Object[]{totalAppPasswords}, locale),
-                        totalCountScore,
-                        100,
-                        severity(totalCountScore),
-                        ignorePref)
+                        severity(usersWithoutScore))
         );
-        String status = securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
+        String status = getOverviewStatus(securityScore);
         return new SecurityScoreBreakdownDto(securityScore, status, factors);
     }
 

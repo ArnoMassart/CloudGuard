@@ -159,39 +159,4 @@ public class GoogleSharedDriveServiceTest {
         assertTrue(overview.securityScore() < 100);
         assertNotEquals("perfect", overview.securityScoreBreakdown().status());
     }
-
-    @Test
-    void getDrivesPageOverview_withDisabledPreferences_forcesScore100AndMutedBreakdown() {
-        var drives = List.of(
-                // A drive that violates EVERYTHING
-                createDrive("1", "Bad Drive", 50, 5, 0, false, false, "high", daysAgo(10))
-        );
-        mockCacheEntry(sharedDriveCacheService, drives);
-
-        // Disable ALL sections for Shared Drives
-        Set<String> disabledPrefs = Set.of(
-                "shared-drives:orphan",
-                "shared-drives:outsideDomain",
-                "shared-drives:nonMemberAccess",
-                "shared-drives:external"
-        );
-
-        var overview = service.getDrivesPageOverview(ADMIN, disabledPrefs);
-
-        // Counts should still be calculated
-        assertEquals(1, overview.totalDrives());
-        assertEquals(1, overview.orphanDrives());
-        assertEquals(1, overview.totalHighRisk());
-
-        // BUT Score is forced to 100 because all violations are ignored
-        assertEquals(100, overview.securityScore());
-
-        // Breakdown factors should all be muted
-        assertTrue(overview.securityScoreBreakdown().factors().stream()
-                .allMatch(SecurityScoreFactorDto::muted));
-
-        // Warnings should be suppressed completely
-        assertNotNull(overview.warnings());
-        assertFalse(overview.warnings().hasWarnings());
-    }
 }

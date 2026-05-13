@@ -8,12 +8,14 @@ import com.cloudmen.cloudguard.exception.NoAdminEmailConfiguredException;
 import com.cloudmen.cloudguard.service.OrganizationService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.google.api.client.util.DateTime;
+import org.springframework.context.MessageSource;
 
 import java.security.PrivateKey;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 /**
@@ -220,11 +222,30 @@ public final class GoogleServiceHelperMethods {
             String description,
             int score,
             int maxScore,
-            String severity,
-            boolean muted) {
+            String severity) {
         if (!showInDetail) {
-            return new SecurityScoreFactorDto(title, description, 0, 0, "success", muted);
+            return new SecurityScoreFactorDto(title, description, 0, 0, "success");
         }
-        return new SecurityScoreFactorDto(title, description, score, maxScore, severity, muted);
+        return new SecurityScoreFactorDto(title, description, score, maxScore, severity);
+    }
+
+    /**
+     * Get the message source translated value
+     *
+     * @param messageSource the messageSource resource
+     * @param key           the key of the message
+     * @param locale        the locale of the user
+     * @return a string containing the translated message from the messages resource bundle
+     */
+    public static String getMessage(MessageSource messageSource, String key, Locale locale) {
+        return getMessage(messageSource, key, null, locale);
+    }
+
+    public static String getMessage(MessageSource messageSource, String key, Object[] args, Locale locale) {
+        return messageSource.getMessage(key, args, locale);
+    }
+
+    public static String getOverviewStatus(int securityScore) {
+        return securityScore == 100 ? "perfect" : securityScore >= 75 ? "good" : securityScore > 50 ? "average" : "bad";
     }
 }

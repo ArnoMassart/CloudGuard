@@ -173,18 +173,6 @@ class AppPasswordsServiceTest {
     }
 
     @Test
-    void getOverview_disabledAppPasswordPreference_neutralizesScore() throws Exception {
-        stubDirectoryWithData();
-
-        var overview = service.getOverview(GlobalTestHelper.ADMIN, Set.of("app-passwords:appPassword"));
-
-        assertEquals(100, overview.securityScore());
-        assertTrue(overview.securityScoreBreakdown().factors().stream()
-                .allMatch(f -> f.muted()));
-        assertEquals("perfect", overview.securityScoreBreakdown().status());
-    }
-
-    @Test
     void getOverview_nullDisabledKeys_treatedAsEmpty() throws Exception {
         stubDirectoryWithData();
 

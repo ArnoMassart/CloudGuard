@@ -192,8 +192,8 @@ public class GoogleUsersService {
                     0, 0, 0, null, (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, null, warnings);
         }
 
-        int securityScore = scorer.calculateSecurityScoreWithPreferenceMask(googleUsers, ignore2fa, ignoreActivity);
-        SecurityScoreBreakdownDto breakdown = scorer.buildUsersBreakdown(googleUsers, (int) totalUsers, securityScore, ignore2fa, ignoreActivity);
+        int securityScore = scorer.calculateSecurityScoreWithPreferenceMask(googleUsers);
+        SecurityScoreBreakdownDto breakdown = scorer.buildUsersBreakdown(googleUsers, (int) totalUsers, securityScore);
 
         return new UserOverviewResponse((int) totalUsers, (int) withoutTwoFactor, (int) adminUsers, securityScore,
                 (int) activeLongNoLoginCount, (int) inactiveRecentLoginCount, breakdown, warnings);

@@ -5,10 +5,12 @@ import com.cloudmen.cloudguard.dto.devices.DevicePageResponse;
 import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.JwtService;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -64,8 +66,7 @@ public class GoogleDeviceController {
             ) {
         String loggedInEmail = jwtService.validateInternalToken(token);
 
-        Set<String> disabled = preferenceService.getDisabledPreferenceKeys(loggedInEmail);
-        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType, disabled));
+        return ResponseEntity.ok(googleDeviceService.getDevicesPaged(loggedInEmail, pageToken, size, status, deviceType));
     }
 
     /**
