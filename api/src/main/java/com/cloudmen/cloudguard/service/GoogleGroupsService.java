@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.dto.password.SecurityScoreBreakdownDto;
 import com.cloudmen.cloudguard.dto.password.SecurityScoreFactorDto;
 import com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto;
 import com.cloudmen.cloudguard.service.cache.GoogleGroupsCacheService;
-import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.SectionWarningEvaluator;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,23 +17,44 @@ import java.util.List;
 import java.util.Set;
 import java.util.Locale;
 
-import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.getOverviewStatus;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.securityScoreFactorForDetail;
+import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
+/**
+ * Application service for the <strong>Users &amp; Groups</strong> module’s <em>groups</em> slice: reads cached
+ * {@link GroupCacheEntry} data from {@link GoogleGroupsCacheService}, applies search and paging, and builds overview
+ * metrics plus a weighted security score and factor breakdown. The overload taking disabled preference keys attaches
+ * {@link com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto} so the UI can reflect org policy without changing the headline score.
+ */
 @Service
 public class GoogleGroupsService {
     private final GoogleGroupsCacheService groupsCacheService;
     private final MessageSource messageSource;
 
-
+    /**
+     * @param groupsCacheService tenant-scoped cache of Directory + settings snapshot
+     * @param messageSource      bundle for {@code groups.score.factor.*} breakdown strings
+     */
     public GoogleGroupsService(GoogleGroupsCacheService groupsCacheService, @Qualifier("messageSource") MessageSource messageSource) {
         this.groupsCacheService = groupsCacheService;
         this.messageSource = messageSource;
     }
 
+    /** Triggers a synchronous refresh of the tenant’s Google Groups cache entry. */
     public void forceRefreshCache(String loggedInEmail) {
         groupsCacheService.forceRefreshCache(loggedInEmail);
     }
 
+    /**
+     * Returns one page of {@link GroupOrgDetail} after optional substring filter on {@link CachedGroupItem}
+     * display name or email, using a 1-based string {@code pageToken} cursor.
+     *
+     * @param loggedInEmail authenticated user (workspace admin is resolved inside the cache layer)
+     * @param query         optional filter; blank or null lists all groups in cache order
+     * @param pageToken     previous response’s next token, or {@code null} for the first page
+     * @param size          maximum rows per page
+     */
     public GroupPageResponse getGroupsPaged(String loggedInEmail, String query, String pageToken, int size) {
         GroupCacheEntry cachedData = groupsCacheService.getOrFetchData(loggedInEmail);
 
@@ -55,6 +75,18 @@ public class GoogleGroupsService {
         return new GroupPageResponse(result, nextTokenToReturn);
     }
 
+    /**
+     * Raw overview from cache without applying org security preferences (used as the base for
+     * {@link #getGroupsOverview(String, Set)}).
+     * <p>
+     * Counting rules: {@code groupsWithExternal} increments per group with at least one external member
+     * ({@link GroupOrgDetail#getExternalMembers()} {@code > 0}); {@code groupsWithExternalAllowed} increments when
+     * {@link GroupOrgDetail#isExternalAllowed()} is true. Risk buckets follow {@link GroupOrgDetail#getRisk()}.
+     * The headline {@code securityScore} is a simple tier-weighted average (LOW=100, MEDIUM=60, HIGH=20 points per group)
+     * and is {@code null} when there are no groups.
+     *
+     * @param loggedInEmail authenticated user email used to resolve cached workspace groups
+     */
     public GroupOverviewResponse getGroupsOverview(String loggedInEmail) {
         GroupCacheEntry cachedData = groupsCacheService.getOrFetchData(loggedInEmail);
 
@@ -71,7 +103,6 @@ public class GoogleGroupsService {
             if (detail.isExternalAllowed()) {
                 groupsWithExternalAllowed++;
             }
-
             if (detail.getExternalMembers() > 0) {
                 groupsWithExternal++;
             }
@@ -102,6 +133,15 @@ public class GoogleGroupsService {
         );
     }
 
+    /**
+     * Overview for dashboards and the groups UI: same numeric score and breakdown as {@link #getGroupsOverview(String)},
+     * plus {@link com.cloudmen.cloudguard.dto.preferences.SectionWarningsDto} describing whether external-member /
+     * high-risk checks apply relative to disabled preferences ({@code users-groups:groupExternal} keys in
+     * {@code disabledKeys}).
+     *
+     * @param loggedInEmail authenticated user email used to resolve cached workspace groups
+     * @param disabledKeys  set of {@code section:preferenceKey} strings for the org (disabled = key present in the set)
+     */
     public GroupOverviewResponse getGroupsOverview(String loggedInEmail, Set<String> disabledKeys) {
         Set<String> off = disabledKeys == null ? Set.of() : disabledKeys;
         GroupOverviewResponse base = getGroupsOverview(loggedInEmail);
@@ -117,7 +157,6 @@ public class GoogleGroupsService {
                     base.mediumRiskGroups(), base.lowRiskGroups(), null, null, warnings);
         }
 
-//        boolean ignoreGroupRisk = SecurityPreferenceScoreSupport.preferenceDisabled(off, "users-groups", "groupExternal");
         int securityScore = base.securityScore();
 
         SecurityScoreBreakdownDto breakdown = base.securityScoreBreakdown();
@@ -127,13 +166,32 @@ public class GoogleGroupsService {
                 breakdown, warnings);
     }
 
-    private SecurityScoreBreakdownDto buildGroupsBreakdown(int totalGroups, int groupsWithExternal, int groupWithExternalAllowed, int highRiskGroups, int mediumRiskGroups, int lowRiskGroups, int securityScore
-    ) {
+    /**
+     * Builds the translated factor list for the groups score card: low / medium / high risk tiers (weighted subscores),
+     * external-member deduction ({@code groupsWithExternal}), and policy openness ({@code groupsWithExternalAllowed}).
+     * Rows with no contributing inventory omit tier bars via {@code maxScore == 0} helper behaviour.
+     *
+     * @param totalGroups                  total cached groups in the snapshot
+     * @param groupsWithExternal           groups with external USER members ({@link GroupOrgDetail#getExternalMembers()} {@code > 0})
+     * @param groupsWithExternalAllowed    groups whose settings allow external members ({@link GroupOrgDetail#isExternalAllowed()})
+     * @param highRiskGroups               count in {@code HIGH} tier
+     * @param mediumRiskGroups             count in {@code MEDIUM} tier
+     * @param lowRiskGroups                count in {@code LOW} tier (everything not HIGH/MEDIUM)
+     * @param securityScore                headline 0–100 score stored on the returned breakdown DTO
+     */
+    private SecurityScoreBreakdownDto buildGroupsBreakdown(
+            int totalGroups,
+            int groupsWithExternal,
+            int groupsWithExternalAllowed,
+            int highRiskGroups,
+            int mediumRiskGroups,
+            int lowRiskGroups,
+            int securityScore) {
         int lowScore = GoogleServiceHelperMethods.calculateWeightedScore(totalGroups, lowRiskGroups, 100.0, 100);
         int mediumScore = GoogleServiceHelperMethods.calculateWeightedScore(totalGroups, mediumRiskGroups, 60.0, 100);
         int highScore = GoogleServiceHelperMethods.calculateWeightedScore(totalGroups, highRiskGroups, 20.0, 100);
         int externalScore = GoogleServiceHelperMethods.calculateDeductionScore(totalGroups, groupsWithExternal);
-        int externalAllowedScore = GoogleServiceHelperMethods.calculateDeductionScore(totalGroups, groupWithExternalAllowed);
+        int externalAllowedScore = GoogleServiceHelperMethods.calculateDeductionScore(totalGroups, groupsWithExternalAllowed);
 
         Locale locale = LocaleContextHolder.getLocale();
 
@@ -171,7 +229,7 @@ public class GoogleGroupsService {
                         severity(externalScore)),
                 new SecurityScoreFactorDto(
                         messageSource.getMessage("groups.score.factor.external_members.title", null, locale),
-                        groupWithExternalAllowed == 0 ? messageSource.getMessage("groups.score.factor.external_members.description.none", null, locale) : messageSource.getMessage("groups.score.factor.external_members.description", new Object[]{groupWithExternalAllowed}, locale),
+                        groupsWithExternalAllowed == 0 ? messageSource.getMessage("groups.score.factor.external_members.description.none", null, locale) : messageSource.getMessage("groups.score.factor.external_members.description", new Object[]{groupsWithExternalAllowed}, locale),
                         externalAllowedScore,
                         100,
                         severity(externalAllowedScore))

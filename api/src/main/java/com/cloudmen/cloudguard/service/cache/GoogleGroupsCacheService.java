@@ -30,10 +30,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.decodePrivateKey;
 
+/**
+ * Loads Google Workspace groups via Admin SDK Directory (list groups + members), enriches each row with Group Settings
+ * (join rules, external-members flag), optional Cloud Identity labels, and derived risk. Results are cached per
+ * workspace admin for six hours through {@link AbstractGoogleWorkspaceCacheService}.
+ */
 @Service
 public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheService<GroupCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleGroupsCacheService.class);
@@ -50,11 +54,22 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
     @Value("${google.api.private-key}")
     private String privateKey;
 
+    /**
+     * @param googleApiFactory    builds Directory clients impersonating the resolved admin
+     * @param userService         resolves workspace admin email for a logged-in user
+     * @param organizationService tenant context for admin resolution
+     */
     public GoogleGroupsCacheService(GoogleApiFactory googleApiFactory, UserService userService, OrganizationService organizationService) {
         super(userService, organizationService, 6);
         this.googleApiFactory = googleApiFactory;
     }
 
+    /**
+     * Fetches all customer groups and membership summaries; on transient failure returns {@code fallbackEntry} when provided.
+     *
+     * @param adminEmail      workspace super-admin used for domain-wide delegation
+     * @param fallbackEntry   stale cache entry to return instead of failing when Google APIs error
+     */
     @Override
     protected GroupCacheEntry fetchFromGoogle(String adminEmail, GroupCacheEntry fallbackEntry) {
         try {
@@ -89,6 +104,7 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         }
     }
 
+    /** Pages Directory {@code groups.list} and maps each group to {@link CachedGroupItem}. */
     private List<CachedGroupItem> fetchAllGroups(Directory service, CloudIdentity cloudIdentity, String primaryDomain, String adminEmail) throws IOException {
         List<CachedGroupItem> allMappedGroups = new ArrayList<>();
         String pageToken = null;
@@ -148,6 +164,9 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         return allMappedGroups;
     }
 
+    /**
+     * @return pair {@code [total USER members, external USER members]} where “external” means email not under {@code primaryDomain}
+     */
     private int[] countMembers(Directory service, String groupEmail, String primaryDomain) {
         int total = 0; int external = 0;
         try {
@@ -170,12 +189,14 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         return new int[]{total, external};
     }
 
+    /** HIGH when external members exist; MEDIUM when policy allows externals but none counted; otherwise LOW. */
     private String deriveRisk(int external, boolean externalAllowed) {
         if (external > 0) return "HIGH";
         if (externalAllowed) return "MEDIUM";
         return "LOW";
     }
 
+    /** Base UI tag for the tier ({@code high-risk}, {@code middle-risk}, {@code low-risk}). */
     private List<String> deriveRiskTags(String risk) {
         List<String> tags = new ArrayList<>();
         tags.add(switch (risk) {
@@ -186,6 +207,7 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         return tags;
     }
 
+    /** Cloud Identity API client with delegated credentials for {@code loggedInEmail}. */
     private CloudIdentity getCloudIdentityService(String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
@@ -195,6 +217,7 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
                 .setApplicationName("CloudGuard").build();
     }
 
+    /** Groups Settings API client for per-group policy flags. */
     private Groupssettings getGroupsSettingsService(String loggedInEmail) throws Exception {
         String pk = privateKey.replace("\\n", "\n");
         ServiceAccountCredentials credentials = ServiceAccountCredentials.newBuilder()
@@ -206,6 +229,7 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
 
 
 
+    /** Loads settings for one group; failures yield neutral placeholders so listing continues. */
     private GroupSettingsDto getGroupSettings(String loggedInEmail, String groupEmail) {
         if (groupEmail == null || groupEmail.isBlank()) {
             return new GroupSettingsDto("—", "—", false);
@@ -225,6 +249,7 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         }
     }
 
+    /** Maps raw Group Settings join enums to {@code messages.properties} keys ({@code groups.whoCanJoin.*}). */
     private String mapWhoCanJoin(String who) {
         if (who == null || who.isBlank()) return "—";
         return switch (who) {
@@ -236,6 +261,7 @@ public class GoogleGroupsCacheService extends AbstractGoogleWorkspaceCacheServic
         };
     }
 
+    /** Maps membership visibility enums to {@code groups.whoCanView.*} keys. */
     private String mapWhoCanViewMembership(String who) {
         if (who == null || who.isBlank()) return "—";
         return switch (who) {
