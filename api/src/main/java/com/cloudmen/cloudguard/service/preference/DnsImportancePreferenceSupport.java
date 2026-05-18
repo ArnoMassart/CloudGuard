@@ -15,6 +15,7 @@ public final class DnsImportancePreferenceSupport {
 
     private DnsImportancePreferenceSupport() {}
 
+    /** Canonical DNS row types surfaced in UI and scoring. */
     public static final List<String> DNS_TYPES = List.of(
             "SPF", "DKIM", "DMARC", "MX", "DNSSEC", "CAA", "TXT", "CNAME"
     );
@@ -41,22 +42,29 @@ public final class DnsImportancePreferenceSupport {
             Map.entry("CNAME", "impCname")
     );
 
+    /** Preference key stored under {@code domain-dns} for the given DNS type (e.g. SPF → {@code impSpf}). */
     public static String preferenceKeyForType(String dnsType) {
         return TYPE_TO_PREF_KEY.get(dnsType);
     }
 
+    /** Product default when no org override exists for {@code dnsType}. */
     public static DnsRecordImportance systemDefaultImportance(String dnsType) {
         return SYSTEM_DEFAULTS.getOrDefault(dnsType, DnsRecordImportance.OPTIONAL);
     }
 
+    /** Mutable copy of {@link #SYSTEM_DEFAULTS} for UIs that need a starting map. */
     public static Map<String, DnsRecordImportance> systemDefaultsMap() {
         return new LinkedHashMap<>(SYSTEM_DEFAULTS);
     }
 
+    /** {@code true} for keys such as {@code impSpf} (DNS importance), not boolean mute toggles. */
     public static boolean isDnsImportancePreferenceKey(String preferenceKey) {
         return preferenceKey != null && preferenceKey.startsWith("imp");
     }
 
+    /**
+     * Builds type → importance from {@code domain-dns} rows; skips blank/invalid stored values.
+     */
     public static Map<String, DnsRecordImportance> parseOverridesFromDbRows(List<UserSecurityPreference> rows) {
         Map<String, DnsRecordImportance> out = new LinkedHashMap<>();
         for (var p : rows) {
@@ -79,6 +87,7 @@ public final class DnsImportancePreferenceSupport {
         return out;
     }
 
+    /** Inverse of {@link #preferenceKeyForType(String)}; {@code null} if unknown key. */
     public static String dnsTypeForPreferenceKey(String preferenceKey) {
         for (var e : TYPE_TO_PREF_KEY.entrySet()) {
             if (e.getValue().equals(preferenceKey)) {

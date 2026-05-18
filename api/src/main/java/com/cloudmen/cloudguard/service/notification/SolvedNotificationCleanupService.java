@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+/**
+ * Deletes aged SOLVED notification projection rows per {@link com.cloudmen.cloudguard.configuration.SolvedNotificationCleanupProperties}.
+ */
 @Service
 public class SolvedNotificationCleanupService {
 

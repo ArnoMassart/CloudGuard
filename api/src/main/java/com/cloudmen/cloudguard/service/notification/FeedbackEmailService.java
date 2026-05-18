@@ -18,6 +18,10 @@ import com.cloudmen.cloudguard.utility.UtilityFunctions;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Sends multipart HTML/plain emails for notification feedback to {@code app.feedback.notification-emails}.
+ * No-op when that list is empty.
+ */
 @Service
 public class FeedbackEmailService {
 
@@ -35,6 +39,10 @@ public class FeedbackEmailService {
         this.messageSource = messageSource;
     }
 
+    /**
+     * Dispatches feedback mail to all configured recipients; throws {@link FailedFeedbackEmailException} on mail failure.
+     * Does nothing when {@code recipientEmails} is unset or empty.
+     */
     public void sendFeedbackEmail(String userId, String source, String notificationType, String feedbackText) {
         if (recipientEmails == null || recipientEmails.isEmpty()) return;
 

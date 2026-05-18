@@ -21,20 +21,36 @@ import java.util.Locale;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.getOverviewStatus;
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.severity;
 
+/**
+ * Builds the DNS checklist for a domain: calls {@link DnsLookupService}, applies Google Workspace–oriented heuristics
+ * (SPF include, DKIM/DMARC markers, MX hosts, etc.), merges {@link DnsRecordImportance} defaults with user overrides,
+ * and computes a weighted security score plus {@link SecurityScoreBreakdownDto}.
+ *
+ * @see com.cloudmen.cloudguard.controller.DnsRecordsController
+ */
 @Service
 public class DnsRecordsService {
     private final DnsLookupService dns;
     private final MessageSource messageSource;
 
+    /**
+     * @param dns            live DNS resolver
+     * @param messageSource  localized row messages and TXT/CNAME factor titles
+     */
     public DnsRecordsService(DnsLookupService dns, @Qualifier("messageSource") MessageSource messageSource) {
         this.dns = dns;
         this.messageSource = messageSource;
     }
 
+    /** Row representing resolver failure with {@link DnsRecordStatus#ERROR} and the lookup error text as message. */
     private DnsRecordDto errorRecord(String type, String name, DnsRecordImportance importance, DnsLookupResult result) {
         return new DnsRecordDto(type, name, List.of(), DnsRecordStatus.ERROR, importance, result.errorMessage());
     }
 
+    /**
+     * Maps presence/optimal flags into {@link DnsRecordStatus} using importance: missing REQUIRED → {@code ACTION_REQUIRED},
+     * missing RECOMMENDED → {@code ATTENTION}, optional gaps stay {@code OK}.
+     */
     private DnsRecordStatus resolveStatus(DnsRecordImportance importance, boolean found, boolean optimal) {
         if (!found) {
             return switch (importance) {
@@ -52,12 +68,18 @@ public class DnsRecordsService {
         return DnsRecordStatus.VALID;
     }
 
+    /** Convenience overload with system default importance only (no user overrides). */
     public DnsRecordResponseDto getImportantRecords(String domain, String dkimSelector) {
         return getImportantRecords(domain, dkimSelector, Map.of());
     }
 
     /**
-     * @param importanceOverrides DNS type (SPF, DKIM, …) → user-chosen importance; missing entries use system defaults.
+     * Runs all checks for {@code domain}, using {@code dkimSelector} for the DKIM TXT hostname.
+     *
+     * @param domain                apex domain (e.g. {@code example.com})
+     * @param dkimSelector          left-hand label before {@code ._domainkey.}
+     * @param importanceOverrides   DNS logical type ({@code SPF}, {@code DKIM}, …) → user importance; missing keys use {@link DnsImportancePreferenceSupport}
+     * @return rows, headline score, and breakdown for charts
      */
     public DnsRecordResponseDto getImportantRecords(String domain, String dkimSelector, Map<String, DnsRecordImportance> importanceOverrides) {
         Map<String, DnsRecordImportance> overrides = importanceOverrides != null ? importanceOverrides : Map.of();
@@ -88,10 +110,12 @@ public class DnsRecordsService {
         return new DnsRecordResponseDto(domain, rows, securityScore, breakdown);
     }
 
+    /** Effective importance for a logical DNS row type with optional user override. */
     private static DnsRecordImportance eff(String type, Map<String, DnsRecordImportance> overrides) {
         return overrides.getOrDefault(type, DnsImportancePreferenceSupport.systemDefaultImportance(type));
     }
 
+    /** One {@link SecurityScoreFactorDto} per row; optional rows use {@code muted=true} and contribute display-only scores. */
     private SecurityScoreBreakdownDto buildDnsBreakdown(List<DnsRecordDto> rows, int securityScore) {
         List<SecurityScoreFactorDto> factors = new ArrayList<>();
         for (DnsRecordDto row : rows) {
@@ -153,6 +177,7 @@ public class DnsRecordsService {
         return (int) Math.round(Math.min(100.0, score));
     }
 
+    /** SPF TXT at apex; optimal includes {@code include:_spf.google.com}. */
     private DnsRecordDto buildSpf(String domain, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("SPF", overrides);
         DnsLookupResult result = dns.lookupTxt(domain);
@@ -172,6 +197,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("SPF", domain, spf, resolveStatus(importance, found, optimal), importance, message);
     }
 
+    /** DKIM TXT at {@code name} (already qualified selector host). */
     private DnsRecordDto buildDkim(String name, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("DKIM", overrides);
         DnsLookupResult result = dns.lookupTxt(name);
@@ -191,6 +217,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("DKIM", name, txt, resolveStatus(importance, found, optimal), importance, message);
     }
 
+    /** DMARC TXT at {@code _dmarc.<domain>}. */
     private DnsRecordDto buildDmarc(String name, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("DMARC", overrides);
         DnsLookupResult result = dns.lookupTxt(name);
@@ -209,6 +236,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("DMARC", name, txt, resolveStatus(importance, found, optimal), importance, message);
     }
 
+    /** MX at apex; optimal targets mention {@code google.com} / {@code googlemail.com}. */
     private DnsRecordDto buildMx(String domain, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("MX", overrides);
         DnsLookupResult result = dns.lookupMx(domain);
@@ -227,6 +255,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("MX", domain, mx, resolveStatus(importance, found, optimal), importance, message);
     }
 
+    /** DNSKEY lookup at apex as DNSSEC deployment signal. */
     private DnsRecordDto buildDnssec(String domain, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("DNSSEC", overrides);
         DnsLookupResult result = dns.lookupDnsKey(domain);
@@ -244,6 +273,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("DNSSEC", domain, keys, resolveStatus(importance, found, found), importance, message);
     }
 
+    /** CAA records at apex. */
     private DnsRecordDto buildCaa(String domain, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("CAA", overrides);
         DnsLookupResult result = dns.lookupCaa(domain);
@@ -261,6 +291,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("CAA", domain, caa, resolveStatus(importance, found, found), importance, message);
     }
 
+    /** Google site-verification TXT tokens at apex (filtered prefix {@code google-site-verification=}). */
     private DnsRecordDto buildSiteVerification(String domain, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("TXT", overrides);
         DnsLookupResult result = dns.lookupTxt(domain);
@@ -277,6 +308,7 @@ public class DnsRecordsService {
         return new DnsRecordDto("TXT", domain, ver, resolveStatus(importance, found, found), importance, message);
     }
 
+    /** Mail routing CNAME at {@code mail.<domain>}. */
     private DnsRecordDto buildCname(String name, Map<String, DnsRecordImportance> overrides) {
         DnsRecordImportance importance = eff("CNAME", overrides);
         DnsLookupResult result = dns.lookupCname(name);

@@ -4,15 +4,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Maps (source, notificationType) to (section, preferenceKey).
- * When a user disables a preference, all notifications with matching source:notificationType are hidden.
+ * Maps ({@code source}, {@code notificationType}) to ({@code section}, {@code preferenceKey}) for mute toggles.
+ * When a user disables a preference (stored as {@code enabled=false}), matching notifications are filtered out.
+ *
+ * @see UserSecurityPreferenceService#getDisabledPreferenceKeys(String)
  */
 public final class PreferenceToNotificationMapping {
 
     private PreferenceToNotificationMapping() {}
 
     /**
-     * Maps "source:notificationType" -> "section:preferenceKey"
+     * Maps {@code source:notificationType} → {@code section:preferenceKey} for known notifications.
      */
     private static final Map<String, String> NOTIFICATION_TO_PREFERENCE = Map.ofEntries(
             // users-groups
@@ -42,16 +44,16 @@ public final class PreferenceToNotificationMapping {
     );
 
     /**
-     * Returns true if the notification (source, notificationType) should be hidden
-     * when the user has disabled the corresponding preference.
+     * @return composite {@code section:preferenceKey} when this notification can be muted; otherwise {@code null}
      */
     public static String getPreferenceKey(String source, String notificationType) {
         return NOTIFICATION_TO_PREFERENCE.get(source + ":" + notificationType);
     }
 
     /**
-     * Check if a notification is disabled by user preferences.
-     * disabledPreferenceKeys should be the set of "section:preferenceKey" where enabled=false.
+     * {@code true} when {@code disabledPreferenceKeys} contains the mapped preference for this notification.
+     *
+     * @param disabledPreferenceKeys {@code section:preferenceKey} entries with {@code enabled=false}
      */
     public static boolean isDisabledByPreference(String source, String notificationType, Set<String> disabledPreferenceKeys) {
         String prefKey = getPreferenceKey(source, notificationType);
@@ -59,8 +61,7 @@ public final class PreferenceToNotificationMapping {
     }
 
     /**
-     * All (section, preferenceKey) pairs that can be toggled.
-     * Used for defaults and settings UI.
+     * All {@code section:preferenceKey} pairs exposed as boolean toggles in settings / defaults.
      */
     public static Set<String> getAllPreferenceKeys() {
         return Set.copyOf(NOTIFICATION_TO_PREFERENCE.values());

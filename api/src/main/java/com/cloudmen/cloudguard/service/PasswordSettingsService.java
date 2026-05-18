@@ -5,7 +5,6 @@ import com.cloudmen.cloudguard.dto.password.*;
 import com.cloudmen.cloudguard.service.cache.GoogleOrgUnitCacheService;
 import com.cloudmen.cloudguard.service.cache.GoogleUsersCacheService;
 import com.cloudmen.cloudguard.service.cache.PolicyApiCacheService;
-import com.cloudmen.cloudguard.service.preference.SecurityPreferenceScoreSupport;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.user.UserService;
 import com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods;
@@ -26,6 +25,22 @@ import java.util.stream.Collectors;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.*;
 
+/**
+ * Builds the password-settings overview for a tenant: merges cached Directory users, org-unit paths,
+ * Admin SDK policy payloads ({@code settings/security.password}, 2SV-related rules), and admin hardware-key coverage.
+ * <p>
+ * Responses are cached per logged-in user for one hour. Refresh explicitly invalidates this slice plus policy,
+ * users, org-unit, and admin-keys caches.
+ * </p>
+ * <p>
+ * The headline {@linkplain PasswordSettingsOverviewResponse#securityScore() security score} blends weighted factors:
+ * admin keys (15%), forced password change rate (15%), OU-weighted 2SV stance (30%), minimum length (15%),
+ * expiration (10%), strength (10%), and a neutral reuse-history slot (5%) for chart symmetry.
+ * When {@code summary.totalUsers() == 0}, scores are omitted ({@code null}).
+ * </p>
+ *
+ * @see PasswordSettingsController
+ */
 @Service
 public class PasswordSettingsService {
     private static final Logger log = LoggerFactory.getLogger(PasswordSettingsService.class);
@@ -44,6 +59,16 @@ public class PasswordSettingsService {
     private final UserService userService;
     private final OrganizationService organizationService;
 
+    /**
+     * @param policyCache                  Chrome / Workspace policy JSON and OU id→path maps
+     * @param usersCache                   Directory users for the tenant
+     * @param orgUnitCache                 OU tree and per-path user counts
+     * @param adminSecurityKeysService     admins missing registered security keys (Reports-backed where applicable)
+     * @param userSecurityPreferenceService injected for parity with preference-aware modules (reserved for future scoring tweaks)
+     * @param messageSource                localized score factor copy
+     * @param userService                  resolves impersonated admin email
+     * @param organizationService          tenant lookup for admin resolution
+     */
     public PasswordSettingsService(PolicyApiCacheService policyCache,
                                    GoogleUsersCacheService usersCache,
                                    GoogleOrgUnitCacheService orgUnitCache,
@@ -60,6 +85,7 @@ public class PasswordSettingsService {
         this.organizationService = organizationService;
     }
 
+    /** Clears this service’s cache entry and forces upstream caches used by {@link #fetchPasswordSettings(String)} to reload. */
     public void forceRefreshCache(String loggedInEmail) {
         cache.invalidate(loggedInEmail);
         policyCache.forceRefreshCache(loggedInEmail);
@@ -68,10 +94,19 @@ public class PasswordSettingsService {
         adminSecurityKeysService.forceRefreshCache(loggedInEmail);
     }
 
+    /**
+     * Cached overview for {@code loggedInEmail}’s organization (impersonated Google admin under the hood).
+     *
+     * @param loggedInEmail authenticated workspace user email (cookie-derived upstream)
+     */
     public PasswordSettingsOverviewResponse getPasswordSettings(String loggedInEmail) {
         return cache.get(loggedInEmail, this::fetchPasswordSettings);
     }
 
+    /**
+     * Assembles policies per OU, 2SV analytics, forced-change users, admin-key gaps, and weighted score in one pass.
+     * Score and breakdown are {@code null} when there are no users ({@code summary.totalUsers() == 0}).
+     */
     private PasswordSettingsOverviewResponse fetchPasswordSettings(String loggedInEmail) {
         String adminEmail = GoogleServiceHelperMethods.getAdminEmailForUser(loggedInEmail, userService, organizationService);
 
@@ -112,6 +147,10 @@ public class PasswordSettingsService {
                 adminsWithoutSecurityKeys, adminsSecurityKeysErrorMessage, scoreResult.score(), scoreResult.breakdown());
     }
 
+    /**
+     * One {@link OuPasswordPolicyDto} per known OU path (root plus cached org units), merging Policy API password rules.
+     * Missing upstream data yields empty policy lists and best-effort defaults logged at warn level.
+     */
     private List<OuPasswordPolicyDto> buildPasswordPoliciesPerOu(String loggedInEmail, String adminEmail) {
         Map<String, Integer> userCounts = new HashMap<>();
         List<String> ouPaths = new ArrayList<>();
@@ -156,6 +195,10 @@ public class PasswordSettingsService {
         return result;
     }
 
+    /**
+     * Picks the winning {@code settings/security.password} policy for {@code orgUnitPath} by deepest matching OU and
+     * tie-breaking {@code sortOrder}, then maps JSON fields into {@link OuPasswordPolicyDto}.
+     */
     private OuPasswordPolicyDto resolvePasswordPolicyForOu(String orgUnitPath, List<JsonNode> policies, Map<String, String> ouIdToPath, int userCount) {
         String displayName = "/".equals(orgUnitPath) ? "Root" : orgUnitPath.substring(orgUnitPath.lastIndexOf('/') + 1);
 
@@ -237,6 +280,7 @@ public class PasswordSettingsService {
         return Math.min(100, s);
     }
 
+    /** Counts weak signals (weak strength, no expiry, no reuse prevention, short minimum length). */
     private static int countProblems(Integer minLength, Integer expirationDays, Boolean strongPassword, Integer reuseCount) {
         int p = 0;
         if (strongPassword != null && !strongPassword) p++;
@@ -246,6 +290,7 @@ public class PasswordSettingsService {
         return p;
     }
 
+    /** Parses Policy API duration strings such as {@code "2592000s"} into whole days (fractional seconds truncated). */
     private static int parseDurationToDays(String duration) {
         if (duration == null || duration.isBlank()) return 0;
         try {
@@ -257,6 +302,7 @@ public class PasswordSettingsService {
         }
     }
 
+    /** Organizational depth used for “closest OU wins” policy resolution ({@code /} → {@code 0}). */
     private static int depthOf(String ouPath) {
         if (ouPath == null || "/".equals(ouPath)) return 0;
         int count = 0;
@@ -264,6 +310,7 @@ public class PasswordSettingsService {
         return count;
     }
 
+    /** Groups users by OU path and complements Directory enrollment flags with policy-derived enforcement hints. */
     private TwoStepVerificationDto buildTwoStepVerification(String adminEmail, List<User> allUsers) {
         Map<String, String> ouIdToPath = Collections.emptyMap();
         try {
@@ -309,6 +356,10 @@ public class PasswordSettingsService {
         return new TwoStepVerificationDto(ouList, totalEnrolled, totalEnforced, allUsers.size());
     }
 
+    /**
+     * {@code true} when any applicable policy node for {@code orgUnitPath} sets {@code enforced} under a type key that
+     * looks like two-step verification ({@code two_step}, {@code 2sv}, etc.).
+     */
     private boolean is2SvEnforcedForOu(String orgUnitPath, List<JsonNode> policies, Map<String, String> ouIdToPath) {
         for (JsonNode p : policies) {
             JsonNode setting = p.get("setting");
@@ -328,12 +379,14 @@ public class PasswordSettingsService {
         return false;
     }
 
+    /** {@code true} when {@code policyOuPath} is root, equals {@code target}, or is a strict prefix path of {@code target}. */
     private static boolean isAncestorOrSelf(String target, String policyOuPath) {
         if ("/".equals(policyOuPath)) return true;
         if (target.equals(policyOuPath)) return true;
         return target.startsWith(policyOuPath + "/");
     }
 
+    /** Users with Directory {@link User#getChangePasswordAtNextLogin()} {@code true}. */
     private List<PasswordChangeRequirementDto> getUsersWithForcedPasswordChange(List<User> allUsers) {
         return allUsers.stream()
                 .filter(u -> Boolean.TRUE.equals(u.getChangePasswordAtNextLogin()))
@@ -347,17 +400,32 @@ public class PasswordSettingsService {
     }
 
     /**
-     * Calculates weighted security score (0-100) based on:
-     * - Admin security keys (15%): more admins with keys = better
-     * - Users needing password change (15%): fewer = better
-     * - 2FA enforcement (30%): per OU, weighted by users (enforced→100, optional→50, disabled→0)
-     * - Password length (15%): ≥14→100, 12-13→90, 10-11→70, 8-9→40, <8→0
-     * - Password expiration (10%): never expires→0, else→100 (null excluded)
-     * - Password strength (10%): true→100, false→0
-     * - Password history (5%): not used for score, always 100
+     * Weighted headline score with localized factor rows for the UI.
+     *
+     * @param score     rounded 0–100 blend of admin keys, forced-change pressure, 2SV stance, length, expiry, strength, history slot
+     * @param breakdown translated titles/descriptions and per-factor severities
      */
     public record SecurityScoreResult(int score, SecurityScoreBreakdownDto breakdown) {}
 
+    /**
+     * Computes the tenant-level score and breakdown using fixed weights:
+     * <ul>
+     *   <li>Admin security keys (15%): fraction of admins with keys registered</li>
+     *   <li>Forced password change (15%): inverse of users with {@code changePasswordAtNextLogin}</li>
+     *   <li>2-step verification (30%): OU-user weighted; {@code enforced → 100}, otherwise {@code 50}</li>
+     *   <li>Minimum length (15%): bucket scores per OU user weights (≥14→100 down through &lt;8→0)</li>
+     *   <li>Expiration (10%): {@code expirationDays == 0 → 0}, else 100 when defined per OU</li>
+     *   <li>Strength (10%): strong required → 100 else 0, OU-user weighted</li>
+     *   <li>Reuse history (5%): contributes neutral 100 to the weighted sum (placeholder factor)</li>
+     * </ul>
+     *
+     * @param totalAdmins           admins considered for hardware-key coverage
+     * @param adminsWithoutKeys     admins missing keys ({@link AdminSecurityKeysService} semantics)
+     * @param summary               Directory rollups for forced change and totals
+     * @param twoStepVerification   per-OU rows driving weighted 2SV stance
+     * @param passwordPoliciesByOu  resolved OU policies after Policy API merge
+     * @return composite score and chart-ready breakdown (via {@link SecurityScoreResult})
+     */
     public SecurityScoreResult calculateSecurityScoreWithBreakdown(
             int totalAdmins,
             int adminsWithoutKeys,

@@ -9,6 +9,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Persisted notification projection per organization and logical notification identity ({@code source} + {@code notification_type}).
+ * Rows mirror aggregated Workspace findings; status drives active vs solved UI buckets.
+ *
+ * @see com.cloudmen.cloudguard.repository.NotificationInstanceRepository
+ */
 @Entity
 @Table(
         name="tbl_notifications",

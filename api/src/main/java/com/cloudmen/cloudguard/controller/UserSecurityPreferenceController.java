@@ -12,6 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST API for organization-scoped security preferences: boolean toggles per notification area, DNS importance overrides,
+ * and bulk section updates. Preferences apply to the tenant linked to the authenticated user ({@code AuthToken}).
+ *
+ * @see UserSecurityPreferenceService
+ */
 @RestController
 @RequestMapping("/user/preferences")
 public class UserSecurityPreferenceController {
@@ -20,6 +26,11 @@ public class UserSecurityPreferenceController {
     private final JwtService jwtService;
     private final PasswordSettingsService passwordSettingsService;
 
+    /**
+     * @param preferenceService        reads/writes {@link com.cloudmen.cloudguard.domain.model.preference.UserSecurityPreference} rows
+     * @param jwtService               resolves cookie to user email
+     * @param passwordSettingsService  invalidated when password-settings preferences change (cache coherence)
+     */
     public UserSecurityPreferenceController(UserSecurityPreferenceService preferenceService, JwtService jwtService,
                                             PasswordSettingsService passwordSettingsService) {
         this.preferenceService = preferenceService;
@@ -76,7 +87,7 @@ public class UserSecurityPreferenceController {
     }
 
     /**
-     * Set multiple preferences for a section.
+     * Replace or insert many boolean keys for one {@code section}. Does not accept DNS {@code imp*} keys (use single PUT).
      */
     @PutMapping("/section")
     public ResponseEntity<?> setSectionPreferences(

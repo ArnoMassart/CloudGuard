@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Persistence for {@link NotificationInstance} projection rows ({@code tbl_notifications}).
+ */
 public interface NotificationInstanceRepository extends JpaRepository<NotificationInstance, Long> {
     List<NotificationInstance> findByOrganizationId(Long organizationId);
 
@@ -28,13 +31,16 @@ public interface NotificationInstanceRepository extends JpaRepository<Notificati
     Optional<NotificationInstance> findByOrganizationIdAndSourceAndNotificationType(
             Long organizationId, String source, String notificationType);
 
+    /** Deletes SOLVED rows older than {@code cutoff} (scheduled retention cleanup). */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
             "DELETE FROM NotificationInstance n WHERE n.status = :status AND n.solvedAt IS NOT NULL AND n.solvedAt < :cutoff")
     int deleteByStatusAndSolvedAtBefore(
             @Param("status") NotificationInstanceStatus status, @Param("cutoff") LocalDateTime cutoff);
 
-    
+    /**
+     * Idempotent insert for sync bootstrap (MySQL {@code ON DUPLICATE KEY UPDATE}) so concurrent seeders do not fail hard.
+     */
     @Modifying
     @Query(value = """
             INSERT INTO tbl_notifications

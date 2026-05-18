@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Scheduled full-tenant projection sync: iterates distinct organization ids and calls {@link NotificationProjectionSyncService#syncOrganization(Long)}.
+ *
+ * @see com.cloudmen.cloudguard.configuration.NotificationProjectionProperties#isSyncEnabled()
+ */
 @Component
 public class NotificationProjectionScheduler {
 
@@ -27,6 +32,7 @@ public class NotificationProjectionScheduler {
         this.syncService = syncService;
     }
 
+    /** Best-effort sync per organization; failures logged without failing the batch. */
     @Scheduled(cron = "${cloudguard.notifications.projection.sync-cron:0 0 0 * * *}")
     public void syncAllOrganizations() {
         if (!properties.isSyncEnabled()) {

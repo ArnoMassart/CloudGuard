@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Persistence for {@link UserSecurityPreference} (organization + section + preference key uniqueness).
+ */
 public interface UserSecurityPreferenceRepository extends JpaRepository<UserSecurityPreference, Long> {
 
     List<UserSecurityPreference> findByOrganizationId(Long organizationId);
@@ -14,5 +17,6 @@ public interface UserSecurityPreferenceRepository extends JpaRepository<UserSecu
 
     Optional<UserSecurityPreference> findByOrganizationIdAndSectionAndPreferenceKey(Long organizationId, String section, String preferenceKey);
 
+    /** Cascade cleanup when an organization is removed. */
     void deleteByOrganizationId(Long organizationId);
 }

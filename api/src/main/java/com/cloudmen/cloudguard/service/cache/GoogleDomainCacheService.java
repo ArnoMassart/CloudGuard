@@ -21,6 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Cached pull of Admin SDK {@code domains.list} / domain aliases for the impersonated customer admin,
+ * enriched with per-domain user counts via paginated {@code users.list(domain=…)}.
+ *
+ * @see com.cloudmen.cloudguard.service.GoogleDomainService
+ */
 @Service
 public class GoogleDomainCacheService extends AbstractGoogleWorkspaceCacheService<DomainCacheEntry> {
     private static final Logger log = LoggerFactory.getLogger(GoogleDomainCacheService.class);
@@ -28,12 +34,22 @@ public class GoogleDomainCacheService extends AbstractGoogleWorkspaceCacheServic
     private final GoogleApiFactory apiFactory;
     private final MessageSource messageSource;
 
+    /**
+     * @param apiFactory           Directory client with domain + user read scopes
+     * @param messageSource        localized errors on hard failure without fallback
+     * @param userService          resolves admin email for delegation
+     * @param organizationService  tenant lookup
+     */
     public GoogleDomainCacheService(GoogleApiFactory apiFactory, @Qualifier("messageSource") MessageSource messageSource, UserService userService, OrganizationService organizationService) {
         super(userService, organizationService, 4);
         this.apiFactory = apiFactory;
         this.messageSource = messageSource;
     }
 
+    /**
+     * Loads domains for {@code my_customer}, attaches aliases when missing inline, and counts users per canonical domain.
+     * On API failure with a prior {@code fallbackEntry}, returns the stale cache instead of throwing.
+     */
     @Override
     protected DomainCacheEntry fetchFromGoogle(String adminEmail, DomainCacheEntry fallbackEntry) {
         try {
@@ -101,6 +117,7 @@ public class GoogleDomainCacheService extends AbstractGoogleWorkspaceCacheServic
         }
     }
 
+    /** Paginates Directory users filtered by {@code domainName}; failures log and yield {@code 0}. */
     private int countUsersForDomain(Directory directory, String domainName) {
         int count = 0;
         String pageToken = null;

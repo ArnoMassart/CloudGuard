@@ -15,6 +15,7 @@ public enum NotificationSeverity {
     WARNING,
     INFO;
 
+    /** Parses API / aggregation lowercase severity strings and legacy uppercase aliases. */
     public static NotificationSeverity fromDtoString(String s) {
         if (s == null || s.isBlank()) {
             return MEDIUM;
@@ -29,6 +30,7 @@ public enum NotificationSeverity {
         };
     }
 
+    /** Maps stored enum to API-facing lowercase strings ({@code critical}, {@code warning}, {@code info}). */
     public static String toDtoString(NotificationSeverity s) {
         if (s == null) {
             return "info";

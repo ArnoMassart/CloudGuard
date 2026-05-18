@@ -14,6 +14,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Validates and persists notification feedback; sends operator email via {@link FeedbackEmailService} when recipients configured.
+ * Re-submitting text when a row already has body is ignored (returns existing row).
+ */
 @Service
 public class NotificationFeedbackService {
 
@@ -30,6 +34,11 @@ public class NotificationFeedbackService {
         this.messageSource = messageSource;
     }
 
+    /**
+     * Saves feedback for ({@code userId}, {@code source}, {@code notificationType}) or fills text on an empty placeholder row.
+     *
+     * @return persisted entity (possibly unchanged if duplicate non-blank text already stored)
+     */
     @Transactional
     public NotificationFeedback submitFeedback(String userId, String source, String notificationType, String feedbackText) {
         validateSourceAndNotificationType(source, notificationType);
@@ -83,12 +92,14 @@ public class NotificationFeedbackService {
         }
     }
 
+    /** {@code true} when stored feedback text is non-blank for this triple. */
     public boolean hasFeedback(String userId, String source, String notificationType){
         return repository.findByUserIdAndSourceAndNotificationType(userId,source,notificationType)
                 .map(f->f.getFeedbackText()!=null && !f.getFeedbackText().isBlank())
                 .orElse(false);
     }
 
+    /** Keys {@code source:notificationType} with non-empty feedback for {@code userId}. */
     public Set<String> getFeedbackKeysForUser(String userId) {
         return repository.findByUserId(userId).stream()
                 .filter(f -> f.getFeedbackText() != null && !f.getFeedbackText().isBlank())
@@ -96,6 +107,7 @@ public class NotificationFeedbackService {
                 .collect(Collectors.toSet());
     }
 
+    /** All keys with feedback across users — used to populate {@code hasReported} hints even when another user reported. */
     public Set<String> getAllFeedbackKeys() {
         return repository.findAllWithFeedback().stream()
                 .map(f -> f.getSource() + ":" + f.getNotificationType())
