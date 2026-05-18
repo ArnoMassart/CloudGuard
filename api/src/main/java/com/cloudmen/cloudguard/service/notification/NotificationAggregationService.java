@@ -269,6 +269,11 @@ public class NotificationAggregationService {
                 .toList();
     }
 
+    /**
+     * Active list for the UI: either live {@link #aggregateActive} or persisted ACTIVE projection rows when read is
+     * enabled and the organization already has rows. On first visit for an org, seeds the projection (synchronized per
+     * org) via {@link #persistAggregatedNotifications}.
+     */
     private List<NotificationDto> resolveActiveNotifications(
             User user, String userId, Locale locale, Set<String> disabledPreferenceKeys) {
         List<UserRole> roles = user != null ? user.getRoles() : null;
@@ -334,6 +339,10 @@ public class NotificationAggregationService {
         }
     }
 
+    /**
+     * Maps a persisted {@link NotificationInstance} to an API DTO, localizing title, description, actions, and source
+     * label where keys exist for the notification type.
+     */
     private NotificationDto toDtoFromProjection(NotificationInstance f, Locale locale) {
         List<String> actions =
                 f.getRecommendedActions() != null ? f.getRecommendedActions() : List.of();
@@ -562,6 +571,10 @@ public class NotificationAggregationService {
         return response.active().stream().filter(n -> n.severity().equals("critical")).toList();
     }
 
+    /**
+     * Copies {@code n} with {@code hasReported} set when {@code feedbackKeys} contains
+     * {@code source + ":" + notificationType}.
+     */
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         boolean hasReported = feedbackKeys.contains(n.source() + ":" + n.notificationType());
         return new NotificationDto(
@@ -833,6 +846,7 @@ public class NotificationAggregationService {
                 .toList();
     }
 
+    /** Primary-domain DNS checklist for notification badges; merges org DNS importance overrides from preferences. */
     private DnsRecordResponseDto getDnsData(String adminEmail) {
         try {
             List<DomainDto> domains = domainService.getAllDomains(adminEmail);
@@ -861,6 +875,10 @@ public class NotificationAggregationService {
         }
     }
 
+    /**
+     * Builds a live-aggregated DTO with synthetic id prefix {@code n-}; sets {@code supportsDetails} when
+     * {@code notificationType} is in {@link #NOTIFICATION_TYPES_WITH_DETAILS}.
+     */
     private NotificationDto create(int id, String severity, String title, String description,
                                   List<String> recommendedActions, String notificationType,
                                   String source, String sourceLabel, String sourceRoute) {

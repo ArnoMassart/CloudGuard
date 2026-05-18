@@ -2,6 +2,11 @@ package com.cloudmen.cloudguard.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * Retention for SOLVED notification projection rows ({@code cloudguard.notifications.solved-cleanup.*}).
+ *
+ * @see com.cloudmen.cloudguard.service.notification.SolvedNotificationCleanupService
+ */
 @ConfigurationProperties(prefix = "cloudguard.notifications.solved-cleanup")
 public class SolvedNotificationCleanupProperties {
 
