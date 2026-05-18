@@ -18,10 +18,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Policy provider for mobile device management levels per OU.
- * Infers Basic vs Advanced per device from Directory API device fields
- * (Advanced devices report encryptionStatus, devicePasswordStatus, applications).
- * Aggregates per OU by mapping device owners to their orgUnitPath.
+ * {@link OrgUnitPolicyProvider} summarizing <strong>mobile management tier mix</strong> (Basic vs Advanced) for users in the
+ * selected OU. Walks cached Directory devices, attributes each to its owner’s {@link com.google.api.services.admin.directory.model.User#getOrgUnitPath()},
+ * and classifies devices via {@link #inferAdvanced(MobileDevice)}. Uses an in-memory per-admin TTL cache independent of the OU tree cache.
+ *
+ * @see GoogleDeviceCacheService
  */
 @Order(2)
 @Component
@@ -37,17 +38,28 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
     private static final long CACHE_TTL_MS = 3600000L;
     private final MessageSource messageSource;
 
+    /**
+     * @param deviceCache       Directory mobile devices snapshot for the tenant
+     * @param directoryFactory  user listing for owner-email → OU path joins
+     * @param messageSource     {@code mobile.management.dto.*} strings
+     */
     public MobileManagementPolicyProvider(GoogleDeviceCacheService deviceCache, GoogleApiFactory directoryFactory, MessageSource messageSource) {
         this.deviceCache = deviceCache;
         this.directoryFactory = directoryFactory;
         this.messageSource = messageSource;
     }
 
+    /**
+     * Stable key {@code mobile_management}.
+     */
     @Override
     public String key() {
         return "mobile_management";
     }
 
+    /**
+     * Returns aggregated Advanced/Basic counts for {@code orgUnitPath} (missing path → empty stats).
+     */
     @Override
     public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
         MdStats stats = getOrFetchStats(adminEmail).getOrDefault(
@@ -100,10 +112,12 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         );
     }
 
+    /** Clears the aggregated stats cache for {@code adminEmail} (e.g. after device refresh). */
     public void forceRefreshCache(String adminEmail) {
         cache.remove(adminEmail);
     }
 
+    /** Per-admin cached rollup keyed by normalized OU path. */
     private Map<String, MdStats> getOrFetchStats(String adminEmail) {
         return cache.compute(adminEmail, (email, existing) -> {
             long now = System.currentTimeMillis();
@@ -114,6 +128,7 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         }).statsMap();
     }
 
+    /** Rebuilds OU → stats from Directory users + mobile devices; keeps prior entry on soft failure when present. */
     private CacheEntry fetchAndAggregate(String adminEmail, CacheEntry fallback) {
         try {
             log.info("Ophalen mobiel beheerniveau per apparaat. Impersonatie via Admin: {}", adminEmail);
@@ -150,6 +165,7 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         }
     }
 
+    /** Pages all workspace users with primary email and OU path for joining devices to OUs. */
     private Map<String, String> fetchEmailToOuMap(String adminEmail) throws Exception {
         Directory directory = directoryFactory.getDirectoryService(Set.of(DIRECTORY_USER_READONLY), adminEmail);
         Map<String, String> map = new HashMap<>();
@@ -178,6 +194,7 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         return map;
     }
 
+    /** Best-effort owner mailbox from Directory {@link MobileDevice} payloads. */
     private String getOwnerEmail(MobileDevice d) {
         if (d.getEmail() != null && !d.getEmail().isEmpty()) {
             return d.getEmail().get(0);
@@ -201,10 +218,14 @@ public class MobileManagementPolicyProvider implements OrgUnitPolicyProvider {
         return false;
     }
 
+    /** Normalizes blank paths to {@code "/"}. */
     private static String normalizePath(String path) {
         return (path == null || path.isBlank()) ? "/" : path.trim();
     }
 
+    /** Cached map from OU path to Basic/Advanced totals plus fetch millis. */
     private record CacheEntry(Map<String, MdStats> statsMap, long timestamp) {}
+
+    /** Rollup counters for one OU path. */
     private record MdStats(int advanced, int basic, int total) {}
 }

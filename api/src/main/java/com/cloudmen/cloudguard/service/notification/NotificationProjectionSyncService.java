@@ -25,6 +25,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Writes notification projection rows to match {@link NotificationAggregationService#buildActiveSnapshot(String, java.util.Locale)}:
+ * upserts active definitions, marks missing keys SOLVED, honors muted preferences, and stamps {@code last_notification_sync_at} on the org.
+ *
+ * @see com.cloudmen.cloudguard.controller.NotificationController#syncNotifications(String)
+ */
 @Service
 public class NotificationProjectionSyncService {
 
@@ -36,6 +42,7 @@ public class NotificationProjectionSyncService {
     private final UserSecurityPreferenceService preferenceService;
     private final OrganizationRepository organizationRepository;
 
+    /** Dependencies wired by Spring for repository access and aggregation snapshot rebuild. */
     public NotificationProjectionSyncService(
             NotificationInstanceRepository instanceRepository,
             NotificationAggregationService aggregationService,

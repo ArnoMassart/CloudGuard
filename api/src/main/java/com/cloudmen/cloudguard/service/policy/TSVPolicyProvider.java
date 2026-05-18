@@ -19,6 +19,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * {@link OrgUnitPolicyProvider} for <strong>2-step verification adoption</strong> per OU: pages Directory users with
+ * {@code orgUnitPath} and {@code isEnrolledIn2Sv}, aggregates totals and “without 2SV” counts per path, and exposes a
+ * summary card. Maintains a separate per-admin TTL cache (default {@code 3600000} ms — one hour) refreshed via {@link #forceRefreshCache}.
+ */
 @Order(1)
 @Component
 public class TSVPolicyProvider implements OrgUnitPolicyProvider {
@@ -33,17 +38,33 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
     private static final long CACHE_TTL_MS = 3600000L;
     private final MessageSource messageSource;
 
+    /**
+     * @param directoryFactory Directory API factory with delegated credentials
+     * @param messageSource    {@code orgUnits.tsv.*} bundle keys
+     */
     public TSVPolicyProvider(GoogleApiFactory directoryFactory, @Qualifier("messageSource") MessageSource messageSource) {
         this.directoryFactory = directoryFactory;
         this.messageSource = messageSource;
     }
 
-    @Override public String key() {return "2sv_adoption";}
+    /**
+     * Stable key {@code 2sv_adoption}.
+     */
+    @Override
+    public String key() {
+        return "2sv_adoption";
+    }
 
+    /**
+     * Rebuilds the in-memory 2SV rollup for {@code adminEmail} on demand (does not invalidate other admins).
+     */
     public void forceRefreshCache(String adminEmail) {
         cache.compute(adminEmail, this::fetchAllUsersFromGoogle);
     }
 
+    /**
+     * Builds the TSV policy card for {@code orgUnitPath} using cached per-OU totals for {@code adminEmail}.
+     */
     @Override
     public OrgUnitPolicyDto fetch(String adminEmail, String orgUnitPath) throws Exception {
         Map<String, TsvStats> allStats = getOrFetchTsvData(adminEmail);
@@ -90,6 +111,7 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         );
     }
 
+    /** Loads or returns cached {@code orgUnitPath → TsvStats} for {@code adminEmail}. */
     private Map<String, TsvStats> getOrFetchTsvData(String adminEmail) {
         return cache.compute(adminEmail, (email, existingEntry) -> {
             long now = System.currentTimeMillis();
@@ -100,6 +122,9 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         }).statsMap();
     }
 
+    /**
+     * Pages all users under {@code my_customer}, tallying enrollment flags per OU path; falls back to {@code fallbackEntry} when Google errors.
+     */
     private CacheEntry fetchAllUsersFromGoogle(String adminEmail, CacheEntry fallbackEntry) {
         try {
             log.info("Ophalen LIVE 2SV data van Google. Impersonatie via Admin: {}", adminEmail);
@@ -150,6 +175,9 @@ public class TSVPolicyProvider implements OrgUnitPolicyProvider {
         }
     }
 
+    /** Immutable snapshot of path → stats plus fetch time. */
     private record CacheEntry(Map<String, TsvStats> statsMap, long timestamp) {}
+
+    /** {@code total} users in OU path; {@code without2sv} subset lacking {@link User#getIsEnrolledIn2Sv()}. */
     private record TsvStats(int total, int without2sv) {}
 }

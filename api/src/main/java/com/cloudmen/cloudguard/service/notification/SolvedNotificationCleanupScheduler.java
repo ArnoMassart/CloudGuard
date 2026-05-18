@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * Nightly (configurable cron) job invoking {@link SolvedNotificationCleanupService}.
+ */
 @Component
 public class SolvedNotificationCleanupScheduler {
 
@@ -20,6 +23,7 @@ public class SolvedNotificationCleanupScheduler {
         this.cleanupService = cleanupService;
     }
 
+    /** Cron-driven SOLVED row pruning; skipped when cleanup disabled in configuration. */
     @Scheduled(cron = "${cloudguard.notifications.solved-cleanup.cron:0 0 4 * * *}")
     public void runCleanup() {
         if (!properties.isEnabled()) {

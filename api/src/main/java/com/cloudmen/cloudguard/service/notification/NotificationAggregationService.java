@@ -25,9 +25,11 @@ import com.cloudmen.cloudguard.dto.users.UserOverviewResponse;
 import com.cloudmen.cloudguard.service.*;
 import com.cloudmen.cloudguard.service.device.GoogleDeviceService;
 import com.cloudmen.cloudguard.service.dns.DnsRecordsService;
-import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
 import com.cloudmen.cloudguard.service.drives.GoogleSharedDriveService;
 import com.cloudmen.cloudguard.service.oauth.GoogleOAuthService;
+import com.cloudmen.cloudguard.repository.NotificationInstanceRepository;
+import com.cloudmen.cloudguard.repository.OrganizationRepository;
+import com.cloudmen.cloudguard.repository.UserRepository;
 import com.cloudmen.cloudguard.service.preference.PreferenceToNotificationMapping;
 import com.cloudmen.cloudguard.service.preference.UserSecurityPreferenceService;
 import com.cloudmen.cloudguard.service.user.UserService;
@@ -39,6 +41,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +50,15 @@ import java.util.function.Supplier;
 
 import static com.cloudmen.cloudguard.utility.GoogleServiceHelperMethods.hasAccessToModule;
 
+/**
+ * Builds notifications by scanning Workspace module overviews (users, groups, drives, DNS, …), optionally merges
+ * persisted {@link NotificationInstance} rows for solved history, enforces RBAC via {@link NotificationSourceViewerRoles},
+ * respects security preferences, and marks items reported via {@link NotificationFeedbackService}.
+ * Seeds projection rows on first org access under concurrency locks when projection features are enabled.
+ *
+ * @see com.cloudmen.cloudguard.controller.NotificationController
+ * @see com.cloudmen.cloudguard.service.notification.NotificationProjectionSyncService
+ */
 @Service
 public class NotificationAggregationService {
 
@@ -101,6 +113,7 @@ public class NotificationAggregationService {
      */
     private final ConcurrentMap<Long, Object> seedLocksByOrgId = new ConcurrentHashMap<>();
 
+    /** Workspace scanners, preferences, persistence, and projection flags — injected by Spring. */
     public NotificationAggregationService(
             GoogleDomainService domainService,
             DnsRecordsService dnsRecordsService,
@@ -134,7 +147,12 @@ public class NotificationAggregationService {
         this.organizationService = organizationService;
     }
 
-    /** Live aggregation snapshot (used by the scheduled sync job). */
+    /**
+     * Live aggregation snapshot for projection sync (no solved/excluded merging — callers supply actor email/locale).
+     *
+     * @param userEmail delegated workspace admin mailbox used for Google reads
+     * @param locale    preferred language for generated titles/descriptions
+     */
     public List<NotificationDto> buildActiveSnapshot(String userEmail, Locale locale) {
         Set<String> disabled = preferenceService.getDisabledPreferenceKeys(userEmail);
 
@@ -144,6 +162,13 @@ public class NotificationAggregationService {
         return aggregateActive(userEmail, locale, disabled, roles);
     }
 
+    /**
+     * Notifications for the requesting user: filtered active list, solved projection slice, feedback flags,
+     * and organization {@code lastNotificationSyncAt} when available.
+     *
+     * @param userId authenticated email / internal subject id used elsewhere in APIs
+     * @param locale requested locale for localized projection fields
+     */
     public NotificationsResponse getNotifications(String userId, Locale locale) {
         User user = userService.findByEmailOptional(userId).orElse(null);
 
@@ -244,6 +269,11 @@ public class NotificationAggregationService {
                 .toList();
     }
 
+    /**
+     * Active list for the UI: either live {@link #aggregateActive} or persisted ACTIVE projection rows when read is
+     * enabled and the organization already has rows. On first visit for an org, seeds the projection (synchronized per
+     * org) via {@link #persistAggregatedNotifications}.
+     */
     private List<NotificationDto> resolveActiveNotifications(
             User user, String userId, Locale locale, Set<String> disabledPreferenceKeys) {
         List<UserRole> roles = user != null ? user.getRoles() : null;
@@ -309,6 +339,10 @@ public class NotificationAggregationService {
         }
     }
 
+    /**
+     * Maps a persisted {@link NotificationInstance} to an API DTO, localizing title, description, actions, and source
+     * label where keys exist for the notification type.
+     */
     private NotificationDto toDtoFromProjection(NotificationInstance f, Locale locale) {
         List<String> actions =
                 f.getRecommendedActions() != null ? f.getRecommendedActions() : List.of();
@@ -506,11 +540,13 @@ public class NotificationAggregationService {
         return PreferenceToNotificationMapping.isDisabledByPreference(source, notificationType, disabledPreferenceKeys);
     }
 
+    /** Count of active notifications after the same filters as {@link #getNotifications(String, Locale)}. */
     public long getNotificationsCount(String userId) {
         NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
         return response.active().size();
     }
 
+    /** Active notifications whose severity string is {@code critical}. */
     public long getNotificationsCriticalCount(String userId) {
         NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
         return response.active().stream()
@@ -518,11 +554,7 @@ public class NotificationAggregationService {
                 .count();
     }
 
-    /**
-     * Returns total + critical active notification counts in a single aggregation pass.
-     * Preferred over calling {@link #getNotificationsCount(String)} and
-     * {@link #getNotificationsCriticalCount(String)} separately, which would aggregate twice.
-     */
+    /** Dashboard tile counts derived from {@link #getNotifications(String, Locale)} active list. */
     public DashboardOverviewResponse getDashboardCounts(String userId) {
         NotificationsResponse response = getNotifications(userId, LocaleContextHolder.getLocale());
         List<NotificationDto> active = response.active();
@@ -533,11 +565,16 @@ public class NotificationAggregationService {
         return new DashboardOverviewResponse(total, critical);
     }
 
+    /** Active notifications filtered to {@code severity == critical}. */
     public List<NotificationDto> getCriticalNotifications(String userId, Locale locale) {
         NotificationsResponse response = getNotifications(userId, locale);
         return response.active().stream().filter(n -> n.severity().equals("critical")).toList();
     }
 
+    /**
+     * Copies {@code n} with {@code hasReported} set when {@code feedbackKeys} contains
+     * {@code source + ":" + notificationType}.
+     */
     private NotificationDto withStatus(NotificationDto n, Set<String> feedbackKeys) {
         boolean hasReported = feedbackKeys.contains(n.source() + ":" + n.notificationType());
         return new NotificationDto(
@@ -555,44 +592,44 @@ public class NotificationAggregationService {
                 n.createdAt());
     }
 
-    private List<NotificationDto> aggregateActive(String loggedInEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
+    private List<NotificationDto> aggregateActive(String adminEmail, Locale locale, Set<String> disabled, List<UserRole> roles) {
         List<NotificationDto> notifications = new ArrayList<>();
 
         int id = 0;
 
         UserOverviewResponse users = null;
         if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
-            users = safeGet(() -> usersService.getUsersPageOverview(loggedInEmail, disabled));
+            users = safeGet(() -> usersService.getUsersPageOverview(adminEmail, disabled));
         }
 
         SharedDriveOverviewResponse drives = null;
         if (hasAccessToModule(roles, UserRole.SHARED_DRIVES_VIEWER)) {
-        drives = safeGet(() -> driveService.getDrivesPageOverview(loggedInEmail, disabled));
+        drives = safeGet(() -> driveService.getDrivesPageOverview(adminEmail, disabled));
         }
 
         DeviceOverviewResponse devices = null;
         if (hasAccessToModule(roles, UserRole.DEVICES_VIEWER)) {
-            devices = safeGet(() -> deviceService.getDevicesPageOverview(loggedInEmail, disabled));
+            devices = safeGet(() -> deviceService.getDevicesPageOverview(adminEmail, disabled));
         }
 
         GroupOverviewResponse groups = null;
         if (hasAccessToModule(roles, UserRole.USERS_GROUPS_VIEWER)) {
-            groups = safeGet(() -> groupsService.getGroupsOverview(loggedInEmail, disabled));
+            groups = safeGet(() -> groupsService.getGroupsOverview(adminEmail, disabled));
         }
 
         OAuthOverviewResponse oAuth = null;
         if (hasAccessToModule(roles, UserRole.APP_ACCESS_VIEWER)) {
-            oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(loggedInEmail, disabled));
+            oAuth = safeGet(() -> oAuthService.getOAuthPageOverview(adminEmail, disabled));
         }
 
         AppPasswordOverviewResponse appPasswords = null;
         if (hasAccessToModule(roles, UserRole.APP_PASSWORDS_VIEWER)) {
-            appPasswords = safeGet(() -> appPasswordsService.getOverview(loggedInEmail, disabled));
+            appPasswords = safeGet(() -> appPasswordsService.getOverview(adminEmail, disabled));
         }
 
         DnsRecordResponseDto dns = null;
         if (hasAccessToModule(roles, UserRole.DOMAIN_DNS_VIEWER)) {
-            dns = getDnsData(loggedInEmail);
+            dns = getDnsData(adminEmail);
         }
 
         // DNS
@@ -742,7 +779,7 @@ public class NotificationAggregationService {
 
         // Password settings
         if (hasAccessToModule(roles, UserRole.PASSWORD_SETTINGS_VIEWER)) {
-            PasswordSettingsOverviewResponse passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(loggedInEmail));
+            PasswordSettingsOverviewResponse passwordSettings = safeGet(() -> passwordSettingsService.getPasswordSettings(adminEmail));
 
             if (passwordSettings != null) {
                 var twoStep = passwordSettings.twoStepVerification();
@@ -809,9 +846,10 @@ public class NotificationAggregationService {
                 .toList();
     }
 
-    private DnsRecordResponseDto getDnsData(String loggedInEmail) {
+    /** Primary-domain DNS checklist for notification badges; merges org DNS importance overrides from preferences. */
+    private DnsRecordResponseDto getDnsData(String adminEmail) {
         try {
-            List<DomainDto> domains = domainService.getAllDomains(loggedInEmail);
+            List<DomainDto> domains = domainService.getAllDomains(adminEmail);
             String primaryDomain = domains.stream()
                     .filter(d -> "Primary Domain".equals(d.domainType()))
                     .findFirst()
@@ -821,7 +859,7 @@ public class NotificationAggregationService {
                 return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
             }
             return dnsRecordsService.getImportantRecords(primaryDomain, "google",
-                    preferenceService.getDnsImportanceOverrides(loggedInEmail));
+                    preferenceService.getDnsImportanceOverrides(adminEmail));
         } catch (Exception e) {
             log.warn("Failed to fetch DNS data for notifications: {}", e.getMessage());
             return new DnsRecordResponseDto("", List.<DnsRecordDto>of(), 0, null);
@@ -837,6 +875,10 @@ public class NotificationAggregationService {
         }
     }
 
+    /**
+     * Builds a live-aggregated DTO with synthetic id prefix {@code n-}; sets {@code supportsDetails} when
+     * {@code notificationType} is in {@link #NOTIFICATION_TYPES_WITH_DETAILS}.
+     */
     private NotificationDto create(int id, String severity, String title, String description,
                                   List<String> recommendedActions, String notificationType,
                                   String source, String sourceLabel, String sourceRoute) {

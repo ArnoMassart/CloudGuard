@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Notifications API: lists active/solved items for the authenticated user and triggers organization-wide projection sync.
+ *
+ * @see com.cloudmen.cloudguard.service.notification.NotificationAggregationService
+ * @see com.cloudmen.cloudguard.service.notification.NotificationProjectionSyncService
+ */
 @RestController
 @RequestMapping("/notifications")
 public class NotificationController {
@@ -27,6 +33,7 @@ public class NotificationController {
     private final UserRepository userRepository;
     private final NotificationProjectionSyncService projectionSyncService;
 
+    /** Spring wiring: aggregation for reads, JWT auth, user lookup for org-scoped sync. */
     public NotificationController(
             NotificationAggregationService aggregationService,
             JwtService jwtService,
@@ -38,6 +45,10 @@ public class NotificationController {
         this.projectionSyncService = projectionSyncService;
     }
 
+    /**
+     * Active notifications (live aggregation + preference/RBAC filtering), solved projection rows when enabled,
+     * and last sync timestamp from the user’s organization.
+     */
     @GetMapping
     public ResponseEntity<NotificationsResponse> getNotifications(
             @CookieValue(name = "AuthToken", required = false) String token) {

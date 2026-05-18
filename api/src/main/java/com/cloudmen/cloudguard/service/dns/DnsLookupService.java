@@ -8,29 +8,40 @@ import org.xbill.DNS.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Thin wrapper around dnsjava ({@link Lookup}) for synchronous TXT/MX/CNAME/DNSKEY/CAA queries used by {@link DnsRecordsService}.
+ */
 @Service
 public class DnsLookupService {
 
+    /** TXT at {@code name} (apex or subdomain). */
     public DnsLookupResult lookupTxt(String name) {
         return lookup(name, Type.TXT);
     }
 
+    /** MX records at {@code name}. */
     public DnsLookupResult lookupMx(String name) {
         return lookup(name, Type.MX);
     }
 
+    /** CNAME at {@code name} (e.g. {@code mail.example.com}). */
     public DnsLookupResult lookupCname(String name) {
         return lookup(name, Type.CNAME);
     }
 
+    /** DNSKEY at {@code name} (used as DNSSEC signal at zone apex). */
     public DnsLookupResult lookupDnsKey(String name) {
         return lookup(name, Type.DNSKEY);
     }
 
+    /** CAA records at {@code name}. */
     public DnsLookupResult lookupCaa(String name) {
         return lookup(name, Type.CAA);
     }
 
+    /**
+     * Executes {@link Lookup#run()} and normalizes {@link Record} payloads into strings (TXT joined, MX with priority, etc.).
+     */
     private DnsLookupResult lookup(String name, int type) {
         try {
             Name n = Name.fromString(ensureDot(name));
@@ -56,6 +67,7 @@ public class DnsLookupService {
         }
     }
 
+    /** dnsjava expects absolute names with a trailing dot. */
     private String ensureDot(String name) {
         return name.endsWith(".") ? name : name + ".";
     }

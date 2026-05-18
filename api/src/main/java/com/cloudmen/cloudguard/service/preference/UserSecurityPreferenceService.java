@@ -24,6 +24,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Application service for tenant-wide security preferences stored in {@code user_security_preference}.
+ * Rows are keyed by organization (not individual users): any admin updating preferences affects the whole org snapshot.
+ * Supplies disabled-key sets to dashboards, DNS overrides to {@link com.cloudmen.cloudguard.service.dns.DnsRecordsService},
+ * and integrates with {@link PreferenceToNotificationMapping} for notification suppression.
+ */
 @Service
 public class UserSecurityPreferenceService {
 
@@ -31,6 +37,11 @@ public class UserSecurityPreferenceService {
     private final UserRepository userRepository;
     private final MessageSource messageSource;
 
+    /**
+     * @param repository    organization preference persistence
+     * @param userRepository resolves caller to organization id
+     * @param messageSource localized validation errors
+     */
     public UserSecurityPreferenceService(
             UserSecurityPreferenceRepository repository,
             UserRepository userRepository,
@@ -40,6 +51,7 @@ public class UserSecurityPreferenceService {
         this.messageSource = messageSource;
     }
 
+    /** Loads user or throws localized unauthorized. */
     private User requireUser(String userEmail) {
         return userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UnauthorizedException(
@@ -47,6 +59,7 @@ public class UserSecurityPreferenceService {
                                 "api.auth.session_invalid", null, LocaleContextHolder.getLocale())));
     }
 
+    /** Organization id for writes; throws when user has no tenant. */
     private Long requireOrganizationId(String userEmail) {
         User user = requireUser(userEmail);
         if (user.getOrganizationId() == null) {
@@ -57,6 +70,7 @@ public class UserSecurityPreferenceService {
         return user.getOrganizationId();
     }
 
+    /** Organization id for reads; empty when user not yet assigned (defaults apply). */
     private Optional<Long> organizationIdForRead(String userEmail) {
         Long orgId = requireUser(userEmail).getOrganizationId();
         return orgId != null ? Optional.of(orgId) : Optional.empty();
@@ -120,6 +134,7 @@ public class UserSecurityPreferenceService {
         return new PreferencesResponse(bools, effectiveDnsImportanceDisplay(orgId), dnsTypesWithStoredImportance(orgId));
     }
 
+    /** DNS types that have a non-blank {@code preference_value} row (UI “customized” hints). */
     private Set<String> dnsTypesWithStoredImportance(Long organizationId) {
         Set<String> overridden = new HashSet<>();
         for (UserSecurityPreference p : repository.findByOrganizationIdAndSection(organizationId, "domain-dns")) {
@@ -155,6 +170,7 @@ public class UserSecurityPreferenceService {
                         });
     }
 
+    /** Effective {@link DnsRecordImportance} names per DNS type for {@code orgId}. */
     private Map<String, String> effectiveDnsImportanceDisplay(Long organizationId) {
         Map<String, DnsRecordImportance> overrides = getDnsImportanceOverrides(organizationId);
         Map<String, String> out = new LinkedHashMap<>();
@@ -174,6 +190,7 @@ public class UserSecurityPreferenceService {
                 .orElseGet(Collections::emptyMap);
     }
 
+    /** Parses stored DNS importance rows for one organization. */
     private Map<String, DnsRecordImportance> getDnsImportanceOverrides(Long organizationId) {
         return DnsImportancePreferenceSupport.parseOverridesFromDbRows(
                 repository.findByOrganizationIdAndSection(organizationId, "domain-dns"));
@@ -214,6 +231,10 @@ public class UserSecurityPreferenceService {
         setPreferenceForOrganization(requireOrganizationId(userEmail), section, preferenceKey, enabled, value);
     }
 
+    /**
+     * Upserts or deletes one preference row for {@code orgId}. DNS {@code imp*} keys use {@code preferenceValue};
+     * other keys use {@code enabled} and clear {@code preferenceValue}.
+     */
     private void setPreferenceForOrganization(
             Long orgId, String section, String preferenceKey, Boolean enabled, String value) {
         validateSection(section);
@@ -293,6 +314,7 @@ public class UserSecurityPreferenceService {
         return PreferenceToNotificationMapping.isDisabledByPreference(source, notificationType, disabled);
     }
 
+    /** Non-blank {@code section} required for writes. */
     private void validateSection(String section) {
         if (section == null || section.isBlank()) {
             throw new SecurityPreferenceValidationException(
@@ -301,6 +323,7 @@ public class UserSecurityPreferenceService {
         }
     }
 
+    /** Non-blank {@code preferenceKey} required for writes. */
     private void validatePreferenceKey(String preferenceKey) {
         if (preferenceKey == null || preferenceKey.isBlank()) {
             throw new SecurityPreferenceValidationException(

@@ -4,9 +4,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Boolean toggles (section:key → enabled) plus per–DNS-type effective importance (SPF → REQUIRED, …).
+ * Full preferences payload for the security settings UI.
  *
- * @param dnsImportanceOverrideTypes DNS types (SPF, …) the user has explicitly stored an importance for.
+ * @param preferences                  {@code section:preferenceKey} → enabled (defaults {@code true} when no DB row)
+ * @param dnsImportance                DNS type → effective {@link com.cloudmen.cloudguard.domain.model.DnsRecordImportance} name
+ * @param dnsImportanceOverrideTypes   DNS types where an explicit {@code preference_value} row exists (UI emphasis)
  */
 public record PreferencesResponse(
         Map<String, Boolean> preferences,
