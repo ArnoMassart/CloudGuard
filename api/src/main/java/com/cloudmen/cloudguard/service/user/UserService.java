@@ -452,7 +452,8 @@ public class UserService {
                 getFullName(user),
                 user.getEmail(),
                 user.getAccessDeniedReason(),
-                DateTimeConverter.parseWithPattern(user.getAccessDeniedAt(), "dd-MM-yyyy HH:mm")
+                DateTimeConverter.parseWithPattern(user.getAccessDeniedAt(), "dd-MM-yyyy HH:mm"),
+                user.getPictureUrl()
         );
     }
 

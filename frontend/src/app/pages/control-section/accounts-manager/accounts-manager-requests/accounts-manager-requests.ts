@@ -155,7 +155,6 @@ export class AccountsManagerRequests {
     dialogRef.afterClosed().subscribe((result: DecisionResult) => {
       if (result && result.isAccepted) {
         // has been accepted
-        console.log(result);
         this.#userService.userAccepted(result).subscribe({
           next: () => {
             this.#resetAndLoad();
@@ -235,7 +234,6 @@ export class AccountsManagerRequests {
       .subscribe({
         next: (page) => {
           this.usersWithRequests.set(page.users);
-          console.log(page);
           this.nextPageToken.set(page.nextPageToken);
           this.isLoading.set(false);
         },

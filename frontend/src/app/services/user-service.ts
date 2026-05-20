@@ -111,8 +111,6 @@ export class UserService {
     const url = RouteService.getBackendUrl('/user/all');
     let params = new HttpParams().set('size', size.toString());
 
-    console.log('Status', status);
-
     if (pageToken) params = params.set('pageToken', pageToken);
     if (query) params = params.set('query', query);
     if (org) params = params.set('orgFilter', org);
