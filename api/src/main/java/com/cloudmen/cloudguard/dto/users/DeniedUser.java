@@ -4,6 +4,7 @@ public record DeniedUser(
         String name,
         String email,
         String accessDeniedReason,
-        String accessDeniedAt
+        String accessDeniedAt,
+        String pictureUrl
 ) {
 }

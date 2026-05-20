@@ -30,28 +30,38 @@
 
             <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
                 <div class="flex items-center gap-3 min-w-0">
-                    <app-user-avatar [initials]="deniedUserInitials(user)" />
+                    <app-user-avatar [pictureUrl]="user.pictureUrl" [initials]="deniedUserInitials(user)" />
                     <span class="font-medium text-slate-900 text-sm truncate">{{ user.name }}</span>
                 </div>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">Email</span>
                 <span class="text-gray-400">{{ user.email }}</span>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'reason-caps' | transloco
+                    }}</span>
                 <span class="tracking-wide text-gray-400">
                     <span>{{user.accessDeniedReason}}</span>
                 </span>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{
+                    'account-manager.denied.date-denied' | transloco }}</span>
                 <span class="tracking-wide text-gray-400">
                     <span>{{user.accessDeniedAt}}</span>
                 </span>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'actions' | transloco }}</span>
                 <div class="flex gap-3 items-center">
                     <button type="button" matTooltip="{{ 'reset-denial.title' | transloco }}" matTooltipPosition="above"
                         (click)="$event.stopPropagation(); actionClick.emit(user)"

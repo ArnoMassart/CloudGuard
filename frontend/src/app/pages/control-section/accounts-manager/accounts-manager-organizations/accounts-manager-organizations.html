@@ -37,7 +37,10 @@
                                 <span class="text-xs text-gray-400">{{ org.customerId }}</span>
                             </div>
                         </td>
-                        <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                        <td
+                            class="flex xl:table-cell justify-between items-center px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                            <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">Admin Email</span>
+
                             <span class="font-medium text-slate-600 text-sm">{{ org.adminEmail === null ?
                                 ('account-manager.no-email-bound' | transloco) : org.adminEmail }}</span>
                         </td>

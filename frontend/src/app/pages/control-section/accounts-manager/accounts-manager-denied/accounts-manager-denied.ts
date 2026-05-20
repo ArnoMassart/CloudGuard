@@ -145,7 +145,6 @@ export class AccountsManagerDenied {
     dialogRef.afterClosed().subscribe((result: DecisionResult) => {
       if (result && result.isAccepted) {
         // has been accepted
-        console.log(result);
         this.#userService.userAccepted(result).subscribe({
           next: () => {
             this.#resetAndLoad();

@@ -27,21 +27,29 @@
             <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
                 <div class="flex items-center gap-3 min-w-0">
                     <app-user-avatar [pictureUrl]="user.pictureUrl" [initials]="userInitials(user)" />
-                    <span class="font-medium text-slate-900 text-sm truncate">{{ user.firstName }} {{ user.lastName }}</span>
+                    <span class="font-medium text-slate-900 text-sm truncate">{{ user.firstName }} {{ user.lastName
+                        }}</span>
                 </div>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">Email</span>
                 <span class="text-gray-400">{{ user.email }}</span>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'required-changes' | transloco
+                    }}</span>
                 <span class="tracking-wide text-gray-400">
                     <span>{{ 'account-manager.requests.request-for-access' | transloco }}</span>
                 </span>
             </td>
 
-            <td class="block xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+            <td
+                class="flex items-center justify-between xl:table-cell px-4 xl:px-6 py-4 border-b xl:border-none border-gray-100">
+                <span class="xl:hidden text-xs font-medium text-gray-500 uppercase">{{ 'actions' | transloco }}</span>
                 <div class="flex gap-3 items-center">
                     <button (click)="$event.stopPropagation(); actionAcceptClick.emit(user)"
                         class="text-[11px] font-medium text-white uppercase py-1.5 px-3 bg-emerald-500 rounded-lg hover:opacity-75 transition-all shadow-sm">

@@ -3,4 +3,5 @@ export type DeniedUser = {
   email: string;
   accessDeniedReason: string;
   accessDeniedAt: string;
+  pictureUrl: string;
 };

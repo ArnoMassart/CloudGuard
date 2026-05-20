@@ -8,8 +8,8 @@
             <span>{{ 'account-manager.requests.back' | transloco }}</span>
         </div>
 
-        @if (usersWithRequests().length >= 1) {
         <app-search-bar placeholder="{{ 'users.search' | transloco }}..." (searchChange)="onSearch($event)" />
+        @if (usersWithRequests().length >= 1) {
 
         <div class="bg-white rounded-lg pt-6 border-2 border-muted/50">
             <div class="mx-6 mb-6">
