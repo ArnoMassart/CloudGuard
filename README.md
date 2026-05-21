@@ -130,7 +130,7 @@ exports.onExecutePostLogin = async (event, api) => {
 5. Drag and drop this new action between "Start" and "Complete" in the Post-Login flow diagram.
 
 6. Click **Apply** in the top right corner to make the flow live. <br>
-⚠️ **IMPORTANT:** For a complete, step-by-step guide with screenshots on how to configure Auth0 and other external platforms, please refer to the [Releaseplan CloudGuard.pdf](./docs/Releaseplan%20CloudGuard.pdf).
+⚠️ **IMPORTANT:** For a complete, step-by-step guide with screenshots on how to configure Auth0 and other external platforms, please refer to the [Releaseplan_CloudGuard_en.pdf](./docs/Releaseplan_CloudGuard_en.pdf) or the [Releaseplan_CloudGuard_nl.pdf](./docs/Releaseplan_CloudGuard_nl.pdf).
 
 ## 💻 Local Development
 
