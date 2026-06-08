@@ -87,12 +87,20 @@ public class AccessRequestEmailService {
     @Async
     public void notifyAccessRequest(String userEmail) {
         Locale locale = LocaleContextHolder.getLocale();
-        String requestType = "Toegangsaanvraag voor CloudGuard";
-        String actionRequired = "Deze gebruiker is succesvol ingelogd, maar heeft nog geen toegang tot het platform. Keur de toegangsaanvraag goed via de Accounts Manager.";
+        String requestType = messageSource.getMessage(
+                "email.access.admin.requestType",
+                null,
+                "CloudGuard access request",
+                locale);
+        String actionRequired = messageSource.getMessage(
+                "email.access.admin.actionRequired",
+                null,
+                "This user has signed in successfully but does not yet have access to the platform. Approve the access request via the Accounts Manager.",
+                locale);
         String subject = messageSource.getMessage(
                 "email.access.subject",
                 null,
-                "Actie vereist: Nieuw toegangsverzoek in CloudGuard",
+                "Action required: New CloudGuard access request",
                 locale);
 
         sendEmail(userEmail, requestType, actionRequired, subject, locale);
@@ -170,7 +178,7 @@ public class AccessRequestEmailService {
             }
 
             helper.setText(
-                    buildPlainText(userEmail, requestType, actionRequired),
+                    buildPlainText(userEmail, requestType, actionRequired, locale),
                     buildHtmlContent(userEmail, requestType, actionRequired, locale)
             );
             mailSender.send(message);
@@ -180,18 +188,43 @@ public class AccessRequestEmailService {
         }
     }
 
-    private String buildPlainText(String userEmail, String requestType, String actionRequired) {
+    private String buildPlainText(String userEmail, String requestType, String actionRequired, Locale locale) {
+        String intro = messageSource.getMessage(
+                "email.access.admin.plain.intro",
+                null,
+                "New request in CloudGuard",
+                locale);
+        String userLabel = messageSource.getMessage(
+                "email.access.admin.label.user",
+                null,
+                "User",
+                locale);
+        String requestTypeLabel = messageSource.getMessage(
+                "email.access.admin.label.requestType",
+                null,
+                "Request type",
+                locale);
+        String actionLabel = messageSource.getMessage(
+                "email.access.admin.label.actionRequired",
+                null,
+                "Action required",
+                locale);
+        String platformUrlLabel = messageSource.getMessage(
+                "email.access.admin.label.platformUrl",
+                null,
+                "Platform URL",
+                locale);
+
         StringBuilder sb = new StringBuilder();
-        sb.append("Nieuw toegangsverzoek in CloudGuard\n\n")
-                .append("Gebruiker: ").append(userEmail).append("\n")
-                .append("Type verzoek: ").append(requestType).append("\n\n")
-                .append("Vereiste actie:\n").append(actionRequired);
+        sb.append(intro).append("\n\n")
+                .append(userLabel).append(": ").append(userEmail).append("\n")
+                .append(requestTypeLabel).append(": ").append(requestType).append("\n\n")
+                .append(actionLabel).append(":\n").append(actionRequired);
 
         String baseUrl = appPublicUrl != null ? appPublicUrl.trim() : "";
         if (!baseUrl.isEmpty()) {
-            // Voorkom dubbele slashes!
             String link = baseUrl.endsWith("/") ? baseUrl + "accounts-manager" : baseUrl + "/accounts-manager";
-            sb.append("\n\nPlatform URL: ").append(link);
+            sb.append("\n\n").append(platformUrlLabel).append(": ").append(link);
         }
 
         return sb.toString();
@@ -229,29 +262,57 @@ public class AccessRequestEmailService {
                 """.formatted(safeHref(link), SecurityEmailHtml.PRIMARY, UtilityFunctions.escapeHtml(buttonLabel));
         }
 
+        String htmlTitle = messageSource.getMessage(
+                "email.access.admin.html.title",
+                null,
+                "Action required: Account update needed",
+                locale);
+        String userLabel = messageSource.getMessage(
+                "email.access.admin.label.user",
+                null,
+                "User",
+                locale);
+        String requestTypeLabel = messageSource.getMessage(
+                "email.access.admin.label.requestType",
+                null,
+                "Request type",
+                locale);
+        String actionLabel = messageSource.getMessage(
+                "email.access.admin.label.actionRequired",
+                null,
+                "Action required",
+                locale);
+        String footerText = messageSource.getMessage(
+                "email.access.admin.footer",
+                null,
+                "This is an automatically generated message from the CloudGuard platform.",
+                locale);
+
         String content =
                 """
-                          <h2 class="title">Actie vereist: Aanpassing account nodig</h2>
+                          <h2 class="title">%s</h2>
                           <div class="card">
-                            <div class="label">GEBRUIKER</div>
+                            <div class="label">%s</div>
                             <div class="value"><a href="mailto:%s" class="user-email">%s</a></div>
-                            <div class="label">TYPE AANVRAAG</div>
+                            <div class="label">%s</div>
                             <div class="value">%s</div>
-                            <div class="label">VEREISTE ACTIE</div>
+                            <div class="label">%s</div>
                             <div class="action-box">%s</div>
                           </div>
                           %s
                         """
                         .formatted(
+                                UtilityFunctions.escapeHtml(htmlTitle),
+                                UtilityFunctions.escapeHtml(userLabel.toUpperCase(locale)),
                                 UtilityFunctions.escapeHtml(userEmail),
                                 UtilityFunctions.escapeHtml(userEmail),
+                                UtilityFunctions.escapeHtml(requestTypeLabel.toUpperCase(locale)),
                                 UtilityFunctions.escapeHtml(requestType),
+                                UtilityFunctions.escapeHtml(actionLabel.toUpperCase(locale)),
                                 UtilityFunctions.escapeHtml(actionRequired),
                                 buttonBlock);
 
-        String footer =
-                UtilityFunctions.escapeHtml(
-                        "Dit is een automatisch gegenereerd bericht vanuit het CloudGuard platform.");
+        String footer = UtilityFunctions.escapeHtml(footerText);
 
         return SecurityEmailHtml.document(extraCss, true, content, footer);
     }
