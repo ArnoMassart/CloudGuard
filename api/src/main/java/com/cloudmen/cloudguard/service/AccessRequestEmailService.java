@@ -86,29 +86,16 @@ public class AccessRequestEmailService {
      */
     @Async
     public void notifyAccessRequest(String userEmail) {
-        Locale locale = LocaleContextHolder.getLocale();
-        String requestType = messageSource.getMessage(
-                "email.access.admin.requestType",
-                null,
-                "CloudGuard access request",
-                locale);
-        String actionRequired = messageSource.getMessage(
-                "email.access.admin.actionRequired",
-                null,
-                "This user has signed in successfully but does not yet have access to the platform. Approve the access request via the Accounts Manager.",
-                locale);
-        String subject = messageSource.getMessage(
-                "email.access.subject",
-                null,
-                "Action required: New CloudGuard access request",
-                locale);
+        Locale locale = Locale.forLanguageTag("nl");
+        String requestType = "Toegangsaanvraag voor CloudGuard";
+        String actionRequired = "Deze gebruiker is succesvol ingelogd, maar heeft nog geen toegang tot het platform. Keur de toegangsaanvraag goed via de Accounts Manager.";
+        String subject = "Actie vereist: Nieuw toegangsverzoek in CloudGuard";
 
         sendEmail(userEmail, requestType, actionRequired, subject, locale);
     }
 
     @Async
-    public void sendAccessRequestConfirmationEmailToUser(String userEmail) {
-        Locale locale = LocaleContextHolder.getLocale();
+    public void sendAccessRequestConfirmationEmailToUser(String userEmail, Locale locale) {
 
         try {
             String subject = messageSource.getMessage(
@@ -155,6 +142,74 @@ public class AccessRequestEmailService {
             log.info("Bevestigingsmail toegangsaanvraag verstuurd naar {}", userEmail);
         } catch (MessagingException | MailException e) {
             log.error("Fout bij versturen bevestigingsmail naar {}", userEmail, e);
+        }
+    }
+
+    @Async
+    public void sendRequestAcceptedEmailToUser(String userEmail, Locale locale) {
+        try {
+            String subject = messageSource.getMessage(
+                    "email.access.accepted.subject",
+                    null,
+                    "CloudGuard: Your access has been approved.",
+                    locale);
+            String intro = messageSource.getMessage(
+                    "email.access.accepted.intro",
+                    null,
+                    "Good news! Your CloudGuard access request has been approved.",
+                    locale);
+            String body = messageSource.getMessage(
+                    "email.access.accepted.body",
+                    null,
+                    "You can now sign in and use the platform. If you still need a role or workspace setup, you will be redirected to the appropriate page after login.",
+                    locale);
+            String footer = messageSource.getMessage(
+                    "email.access.accepted.footer",
+                    null,
+                    "This is an automated message from CloudGuard.",
+                    locale);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(userEmail);
+            helper.setSubject(subject);
+            try {
+                helper.setFrom(fromEmail, "CloudGuard");
+            } catch (Exception e) {
+                throw new MessagingException(e.getMessage(), e);
+            }
+
+            String plainText = intro + "\n\n" + body;
+            String buttonBlock = "";
+            String baseUrl = appPublicUrl != null ? appPublicUrl.trim() : "";
+            if (!baseUrl.isEmpty()) {
+                String link = baseUrl.endsWith("/") ? baseUrl : baseUrl;
+                String buttonLabel = messageSource.getMessage(
+                        "email.access.accepted.button",
+                        null,
+                        "Go to CloudGuard",
+                        locale);
+                buttonBlock = """
+                <div style="margin-top: 24px; text-align: center;">
+                    <a href="%s" style="display: inline-block; background: %s; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">%s</a>
+                </div>
+                """.formatted(safeHref(link), SecurityEmailHtml.PRIMARY, UtilityFunctions.escapeHtml(buttonLabel));
+                plainText += "\n\n" + link;
+            }
+
+            String html = SecurityEmailHtml.document(
+                    "",
+                    true,
+                    "<p>" + UtilityFunctions.escapeHtml(intro) + "</p><p>"
+                            + UtilityFunctions.escapeHtml(body) + "</p>" + buttonBlock,
+                    UtilityFunctions.escapeHtml(footer)
+            );
+            helper.setText(plainText, html);
+            mailSender.send(message);
+            log.info("Toegang-goedgekeurd e-mail verstuurd naar {}", userEmail);
+        } catch (MessagingException | MailException e) {
+            log.error("Fout bij het versturen van acceptatie bevestigingsmail naar {}", userEmail, e);
         }
     }
 
