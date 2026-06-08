@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import jakarta.mail.internet.MimeMessage.RecipientType;
 
 @ExtendWith(MockitoExtension.class)
 class AccessRequestEmailServiceTest {
@@ -47,8 +49,34 @@ class AccessRequestEmailServiceTest {
         ReflectionTestUtils.setField(service, "recipientEmails", List.of("ops@example.com"));
         ReflectionTestUtils.setField(service, "fromEmail", "noreply@example.com");
 
-        lenient().when(messageSource.getMessage(anyString(), isNull(), anyString(), any())).thenAnswer(inv -> inv.getArgument(2));
-        lenient().when(messageSource.getMessage(anyString(), isNull(), any())).thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(messageSource.getMessage(anyString(), isNull(), anyString(), any()))
+                .thenAnswer(inv -> inv.getArgument(2));
+    }
+
+    @Test
+    void notifyAccessRequest_sendsToConfiguredAdminsWithRequestingUserInBody() throws Exception {
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        service.notifyAccessRequest("requester@tenant.com");
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(captor.capture());
+        assertEquals("ops@example.com", captor.getValue().getRecipients(RecipientType.TO)[0].toString());
+        String combined = flattenContent(captor.getValue().getContent());
+        assertTrue(combined.contains("requester@tenant.com"));
+    }
+
+    @Test
+    void sendAccessRequestConfirmationEmailToUser_sendsToRequestingUser() throws Exception {
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        service.sendAccessRequestConfirmationEmailToUser("requester@tenant.com");
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(captor.capture());
+        assertEquals("requester@tenant.com", captor.getValue().getRecipients(RecipientType.TO)[0].toString());
     }
 
     @Test

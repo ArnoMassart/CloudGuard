@@ -89,22 +89,41 @@ public class AccessRequestEmailService {
         Locale locale = LocaleContextHolder.getLocale();
         String requestType = "Toegangsaanvraag voor CloudGuard";
         String actionRequired = "Deze gebruiker is succesvol ingelogd, maar heeft nog geen toegang tot het platform. Keur de toegangsaanvraag goed via de Accounts Manager.";
-        String subject = "Actie vereist: Nieuw toegangsverzoek in CloudGuard";
-
-        messageSource.getMessage("email.access.subject", null, "Actie vereist: Nieuw toegangsverzoek in CloudGuard", locale);
+        String subject = messageSource.getMessage(
+                "email.access.subject",
+                null,
+                "Actie vereist: Nieuw toegangsverzoek in CloudGuard",
+                locale);
 
         sendEmail(userEmail, requestType, actionRequired, subject, locale);
     }
 
     @Async
-    public void sendAccessRequestConfirmationEmailToUser(String userEmail){
+    public void sendAccessRequestConfirmationEmailToUser(String userEmail) {
         Locale locale = LocaleContextHolder.getLocale();
-        String subject = messageSource.getMessage("email.access.user.subject", null, "CloudGuard: Your access request has been received.", locale);
-        String intro = messageSource.getMessage("email.access.user.intro", null, locale);
-        String body = messageSource.getMessage("email.access.user.body", null, locale);
-        String footer = messageSource.getMessage("email.access.user.footer", null, locale);
 
-        try{
+        try {
+            String subject = messageSource.getMessage(
+                    "email.access.user.subject",
+                    null,
+                    "CloudGuard: Your access request has been received.",
+                    locale);
+            String intro = messageSource.getMessage(
+                    "email.access.user.intro",
+                    null,
+                    "Thank you for your request. We have received your CloudGuard access request.",
+                    locale);
+            String body = messageSource.getMessage(
+                    "email.access.user.body",
+                    null,
+                    "A CLOUDMEN administrator will review your request. You will be notified once your access is approved.",
+                    locale);
+            String footer = messageSource.getMessage(
+                    "email.access.user.footer",
+                    null,
+                    "This is an automated message from CloudGuard.",
+                    locale);
+
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -125,8 +144,8 @@ public class AccessRequestEmailService {
             );
             helper.setText(plainText, html);
             mailSender.send(message);
-            log.info("Sending registration access confirmation email to " + userEmail);
-        }catch(MessagingException | MailException e){
+            log.info("Bevestigingsmail toegangsaanvraag verstuurd naar {}", userEmail);
+        } catch (MessagingException | MailException e) {
             log.error("Fout bij versturen bevestigingsmail naar {}", userEmail, e);
         }
     }
@@ -147,7 +166,7 @@ public class AccessRequestEmailService {
             try {
                 helper.setFrom(fromEmail, "CloudGuard");
             } catch (Exception e) {
-                throw new MessagingException(e.getMessage());
+                throw new MessagingException(e.getMessage(), e);
             }
 
             helper.setText(
