@@ -113,6 +113,7 @@ public class UserService {
                 userRepository.save(user);
 
                 accessRequestEmailService.notifyAccessRequest(email);
+                accessRequestEmailService.sendAccessRequestConfirmationEmailToUser(email);
             }
         }
     }

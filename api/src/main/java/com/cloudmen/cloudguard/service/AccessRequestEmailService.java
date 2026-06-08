@@ -33,7 +33,7 @@ public class AccessRequestEmailService {
     private final JavaMailSender mailSender;
     private final MessageSource messageSource;
 
-    @Value("${app.feedback.notification-emails:}")
+    @Value("${app.registration.notification-emails:}")
     private List<String> recipientEmails;
 
     @Value("${spring.mail.username:noreply@cloudguard.com}")
@@ -94,6 +94,41 @@ public class AccessRequestEmailService {
         messageSource.getMessage("email.access.subject", null, "Actie vereist: Nieuw toegangsverzoek in CloudGuard", locale);
 
         sendEmail(userEmail, requestType, actionRequired, subject, locale);
+    }
+
+    @Async
+    public void sendAccessRequestConfirmationEmailToUser(String userEmail){
+        Locale locale = LocaleContextHolder.getLocale();
+        String subject = messageSource.getMessage("email.access.user.subject", null, "CloudGuard: Your access request has been received.", locale);
+        String intro = messageSource.getMessage("email.access.user.intro", null, locale);
+        String body = messageSource.getMessage("email.access.user.body", null, locale);
+        String footer = messageSource.getMessage("email.access.user.footer", null, locale);
+
+        try{
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(userEmail);
+            helper.setSubject(subject);
+            try {
+                helper.setFrom(fromEmail, "CloudGuard");
+            } catch (Exception e) {
+                throw new MessagingException(e.getMessage(), e);
+            }
+
+            String plainText = intro + "\n\n" + body;
+            String html = SecurityEmailHtml.document(
+                    "",
+                    true,
+                    "<p>" + UtilityFunctions.escapeHtml(intro) + "</p><p>" + UtilityFunctions.escapeHtml(body) + "</p>",
+                    UtilityFunctions.escapeHtml(footer)
+            );
+            helper.setText(plainText, html);
+            mailSender.send(message);
+            log.info("Sending registration access confirmation email to " + userEmail);
+        }catch(MessagingException | MailException e){
+            log.error("Fout bij versturen bevestigingsmail naar {}", userEmail, e);
+        }
     }
 
     private void sendEmail(String userEmail, String requestType, String actionRequired, String subject, Locale locale) {
