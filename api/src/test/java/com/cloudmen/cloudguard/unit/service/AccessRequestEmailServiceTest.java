@@ -20,8 +20,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +31,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import jakarta.mail.internet.MimeMessage.RecipientType;
 
 @ExtendWith(MockitoExtension.class)
 class AccessRequestEmailServiceTest {
@@ -47,8 +50,74 @@ class AccessRequestEmailServiceTest {
         ReflectionTestUtils.setField(service, "recipientEmails", List.of("ops@example.com"));
         ReflectionTestUtils.setField(service, "fromEmail", "noreply@example.com");
 
-        lenient().when(messageSource.getMessage(anyString(), isNull(), anyString(), any())).thenAnswer(inv -> inv.getArgument(2));
-        lenient().when(messageSource.getMessage(anyString(), isNull(), any())).thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(messageSource.getMessage(anyString(), isNull(), anyString(), any()))
+                .thenAnswer(inv -> inv.getArgument(2));
+    }
+
+    @Test
+    void notifyAccessRequest_sendsToConfiguredAdminsWithDutchContent() throws Exception {
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        service.notifyAccessRequest("requester@tenant.com");
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(captor.capture());
+        MimeMessage sent = captor.getValue();
+
+        assertEquals("ops@example.com", sent.getRecipients(RecipientType.TO)[0].toString());
+        assertEquals("Actie vereist: Nieuw toegangsverzoek in CloudGuard", sent.getSubject());
+
+        String combined = flattenContent(sent.getContent());
+        assertTrue(combined.contains("requester@tenant.com"));
+        assertTrue(combined.contains("Toegangsaanvraag voor CloudGuard"));
+        assertTrue(combined.contains("Keur de toegangsaanvraag goed via de Accounts Manager"));
+    }
+
+    @Test
+    void sendAccessRequestConfirmationEmailToUser_sendsToRequestingUser() throws Exception {
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        service.sendAccessRequestConfirmationEmailToUser("requester@tenant.com", Locale.ENGLISH);
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(captor.capture());
+        MimeMessage sent = captor.getValue();
+
+        assertEquals("requester@tenant.com", sent.getRecipients(RecipientType.TO)[0].toString());
+        assertEquals("CloudGuard: Your access request has been received.", sent.getSubject());
+    }
+
+    @Test
+    void sendRequestAcceptedEmailToUser_sendsToAcceptedUser() throws Exception {
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        service.sendRequestAcceptedEmailToUser("accepted@tenant.com", Locale.ENGLISH);
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(captor.capture());
+        MimeMessage sent = captor.getValue();
+
+        assertEquals("accepted@tenant.com", sent.getRecipients(RecipientType.TO)[0].toString());
+        assertEquals("CloudGuard: Your access has been approved.", sent.getSubject());
+    }
+
+    @Test
+    void sendRequestAcceptedEmailToUser_includesLoginButtonWhenPublicUrlConfigured() throws Exception {
+        ReflectionTestUtils.setField(service, "appPublicUrl", "https://cloudguard.example.com");
+        MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        service.sendRequestAcceptedEmailToUser("accepted@tenant.com", Locale.ENGLISH);
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender).send(captor.capture());
+        String combined = flattenContent(captor.getValue().getContent());
+
+        assertTrue(combined.contains("https://cloudguard.example.com"));
+        assertTrue(combined.contains("Go to CloudGuard"));
     }
 
     @Test

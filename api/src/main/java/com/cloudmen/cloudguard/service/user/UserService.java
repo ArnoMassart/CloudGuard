@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -113,6 +114,7 @@ public class UserService {
                 userRepository.save(user);
 
                 accessRequestEmailService.notifyAccessRequest(email);
+                accessRequestEmailService.sendAccessRequestConfirmationEmailToUser(email, localeForUser(user));
             }
         }
     }
@@ -343,6 +345,13 @@ public class UserService {
         user.setRoles(request.roles());
 
         save(user);
+
+        accessRequestEmailService.sendRequestAcceptedEmailToUser(user.getEmail(), localeForUser(user));
+    }
+
+    private static Locale localeForUser(User user) {
+        String userLang = user.getLanguage() != null ? user.getLanguage() : "nl";
+        return Locale.forLanguageTag(userLang.replace('_', '-'));
     }
 
     public void denyUser(UserDenyRequest request) {

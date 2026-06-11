@@ -33,7 +33,7 @@ public class AccessRequestEmailService {
     private final JavaMailSender mailSender;
     private final MessageSource messageSource;
 
-    @Value("${app.feedback.notification-emails:}")
+    @Value("${app.registration.notification-emails:}")
     private List<String> recipientEmails;
 
     @Value("${spring.mail.username:noreply@cloudguard.com}")
@@ -86,14 +86,131 @@ public class AccessRequestEmailService {
      */
     @Async
     public void notifyAccessRequest(String userEmail) {
-        Locale locale = LocaleContextHolder.getLocale();
+        Locale locale = Locale.forLanguageTag("nl");
         String requestType = "Toegangsaanvraag voor CloudGuard";
         String actionRequired = "Deze gebruiker is succesvol ingelogd, maar heeft nog geen toegang tot het platform. Keur de toegangsaanvraag goed via de Accounts Manager.";
         String subject = "Actie vereist: Nieuw toegangsverzoek in CloudGuard";
 
-        messageSource.getMessage("email.access.subject", null, "Actie vereist: Nieuw toegangsverzoek in CloudGuard", locale);
-
         sendEmail(userEmail, requestType, actionRequired, subject, locale);
+    }
+
+    @Async
+    public void sendAccessRequestConfirmationEmailToUser(String userEmail, Locale locale) {
+
+        try {
+            String subject = messageSource.getMessage(
+                    "email.access.user.subject",
+                    null,
+                    "CloudGuard: Your access request has been received.",
+                    locale);
+            String intro = messageSource.getMessage(
+                    "email.access.user.intro",
+                    null,
+                    "Thank you for your request. We have received your CloudGuard access request.",
+                    locale);
+            String body = messageSource.getMessage(
+                    "email.access.user.body",
+                    null,
+                    "A CLOUDMEN administrator will review your request. You will be notified once your access is approved.",
+                    locale);
+            String footer = messageSource.getMessage(
+                    "email.access.user.footer",
+                    null,
+                    "This is an automated message from CloudGuard.",
+                    locale);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(userEmail);
+            helper.setSubject(subject);
+            try {
+                helper.setFrom(fromEmail, "CloudGuard");
+            } catch (Exception e) {
+                throw new MessagingException(e.getMessage(), e);
+            }
+
+            String plainText = intro + "\n\n" + body;
+            String html = SecurityEmailHtml.document(
+                    "",
+                    true,
+                    "<p>" + UtilityFunctions.escapeHtml(intro) + "</p><p>" + UtilityFunctions.escapeHtml(body) + "</p>",
+                    UtilityFunctions.escapeHtml(footer)
+            );
+            helper.setText(plainText, html);
+            mailSender.send(message);
+            log.info("Bevestigingsmail toegangsaanvraag verstuurd naar {}", userEmail);
+        } catch (MessagingException | MailException e) {
+            log.error("Fout bij versturen bevestigingsmail naar {}", userEmail, e);
+        }
+    }
+
+    @Async
+    public void sendRequestAcceptedEmailToUser(String userEmail, Locale locale) {
+        try {
+            String subject = messageSource.getMessage(
+                    "email.access.accepted.subject",
+                    null,
+                    "CloudGuard: Your access has been approved.",
+                    locale);
+            String intro = messageSource.getMessage(
+                    "email.access.accepted.intro",
+                    null,
+                    "Good news! Your CloudGuard access request has been approved.",
+                    locale);
+            String body = messageSource.getMessage(
+                    "email.access.accepted.body",
+                    null,
+                    "You can now sign in and use the platform. If you still need a role or workspace setup, you will be redirected to the appropriate page after login.",
+                    locale);
+            String footer = messageSource.getMessage(
+                    "email.access.accepted.footer",
+                    null,
+                    "This is an automated message from CloudGuard.",
+                    locale);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(userEmail);
+            helper.setSubject(subject);
+            try {
+                helper.setFrom(fromEmail, "CloudGuard");
+            } catch (Exception e) {
+                throw new MessagingException(e.getMessage(), e);
+            }
+
+            String plainText = intro + "\n\n" + body;
+            String buttonBlock = "";
+            String baseUrl = appPublicUrl != null ? appPublicUrl.trim() : "";
+            if (!baseUrl.isEmpty()) {
+                String link = baseUrl.endsWith("/") ? baseUrl : baseUrl;
+                String buttonLabel = messageSource.getMessage(
+                        "email.access.accepted.button",
+                        null,
+                        "Go to CloudGuard",
+                        locale);
+                buttonBlock = """
+                <div style="margin-top: 24px; text-align: center;">
+                    <a href="%s" style="display: inline-block; background: %s; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">%s</a>
+                </div>
+                """.formatted(safeHref(link), SecurityEmailHtml.PRIMARY, UtilityFunctions.escapeHtml(buttonLabel));
+                plainText += "\n\n" + link;
+            }
+
+            String html = SecurityEmailHtml.document(
+                    "",
+                    true,
+                    "<p>" + UtilityFunctions.escapeHtml(intro) + "</p><p>"
+                            + UtilityFunctions.escapeHtml(body) + "</p>" + buttonBlock,
+                    UtilityFunctions.escapeHtml(footer)
+            );
+            helper.setText(plainText, html);
+            mailSender.send(message);
+            log.info("Toegang-goedgekeurd e-mail verstuurd naar {}", userEmail);
+        } catch (MessagingException | MailException e) {
+            log.error("Fout bij het versturen van acceptatie bevestigingsmail naar {}", userEmail, e);
+        }
     }
 
     private void sendEmail(String userEmail, String requestType, String actionRequired, String subject, Locale locale) {
@@ -112,11 +229,11 @@ public class AccessRequestEmailService {
             try {
                 helper.setFrom(fromEmail, "CloudGuard");
             } catch (Exception e) {
-                throw new MessagingException(e.getMessage());
+                throw new MessagingException(e.getMessage(), e);
             }
 
             helper.setText(
-                    buildPlainText(userEmail, requestType, actionRequired),
+                    buildPlainText(userEmail, requestType, actionRequired, locale),
                     buildHtmlContent(userEmail, requestType, actionRequired, locale)
             );
             mailSender.send(message);
@@ -126,18 +243,43 @@ public class AccessRequestEmailService {
         }
     }
 
-    private String buildPlainText(String userEmail, String requestType, String actionRequired) {
+    private String buildPlainText(String userEmail, String requestType, String actionRequired, Locale locale) {
+        String intro = messageSource.getMessage(
+                "email.access.admin.plain.intro",
+                null,
+                "New request in CloudGuard",
+                locale);
+        String userLabel = messageSource.getMessage(
+                "email.access.admin.label.user",
+                null,
+                "User",
+                locale);
+        String requestTypeLabel = messageSource.getMessage(
+                "email.access.admin.label.requestType",
+                null,
+                "Request type",
+                locale);
+        String actionLabel = messageSource.getMessage(
+                "email.access.admin.label.actionRequired",
+                null,
+                "Action required",
+                locale);
+        String platformUrlLabel = messageSource.getMessage(
+                "email.access.admin.label.platformUrl",
+                null,
+                "Platform URL",
+                locale);
+
         StringBuilder sb = new StringBuilder();
-        sb.append("Nieuw toegangsverzoek in CloudGuard\n\n")
-                .append("Gebruiker: ").append(userEmail).append("\n")
-                .append("Type verzoek: ").append(requestType).append("\n\n")
-                .append("Vereiste actie:\n").append(actionRequired);
+        sb.append(intro).append("\n\n")
+                .append(userLabel).append(": ").append(userEmail).append("\n")
+                .append(requestTypeLabel).append(": ").append(requestType).append("\n\n")
+                .append(actionLabel).append(":\n").append(actionRequired);
 
         String baseUrl = appPublicUrl != null ? appPublicUrl.trim() : "";
         if (!baseUrl.isEmpty()) {
-            // Voorkom dubbele slashes!
             String link = baseUrl.endsWith("/") ? baseUrl + "accounts-manager" : baseUrl + "/accounts-manager";
-            sb.append("\n\nPlatform URL: ").append(link);
+            sb.append("\n\n").append(platformUrlLabel).append(": ").append(link);
         }
 
         return sb.toString();
@@ -175,29 +317,57 @@ public class AccessRequestEmailService {
                 """.formatted(safeHref(link), SecurityEmailHtml.PRIMARY, UtilityFunctions.escapeHtml(buttonLabel));
         }
 
+        String htmlTitle = messageSource.getMessage(
+                "email.access.admin.html.title",
+                null,
+                "Action required: Account update needed",
+                locale);
+        String userLabel = messageSource.getMessage(
+                "email.access.admin.label.user",
+                null,
+                "User",
+                locale);
+        String requestTypeLabel = messageSource.getMessage(
+                "email.access.admin.label.requestType",
+                null,
+                "Request type",
+                locale);
+        String actionLabel = messageSource.getMessage(
+                "email.access.admin.label.actionRequired",
+                null,
+                "Action required",
+                locale);
+        String footerText = messageSource.getMessage(
+                "email.access.admin.footer",
+                null,
+                "This is an automatically generated message from the CloudGuard platform.",
+                locale);
+
         String content =
                 """
-                          <h2 class="title">Actie vereist: Aanpassing account nodig</h2>
+                          <h2 class="title">%s</h2>
                           <div class="card">
-                            <div class="label">GEBRUIKER</div>
+                            <div class="label">%s</div>
                             <div class="value"><a href="mailto:%s" class="user-email">%s</a></div>
-                            <div class="label">TYPE AANVRAAG</div>
+                            <div class="label">%s</div>
                             <div class="value">%s</div>
-                            <div class="label">VEREISTE ACTIE</div>
+                            <div class="label">%s</div>
                             <div class="action-box">%s</div>
                           </div>
                           %s
                         """
                         .formatted(
+                                UtilityFunctions.escapeHtml(htmlTitle),
+                                UtilityFunctions.escapeHtml(userLabel.toUpperCase(locale)),
                                 UtilityFunctions.escapeHtml(userEmail),
                                 UtilityFunctions.escapeHtml(userEmail),
+                                UtilityFunctions.escapeHtml(requestTypeLabel.toUpperCase(locale)),
                                 UtilityFunctions.escapeHtml(requestType),
+                                UtilityFunctions.escapeHtml(actionLabel.toUpperCase(locale)),
                                 UtilityFunctions.escapeHtml(actionRequired),
                                 buttonBlock);
 
-        String footer =
-                UtilityFunctions.escapeHtml(
-                        "Dit is een automatisch gegenereerd bericht vanuit het CloudGuard platform.");
+        String footer = UtilityFunctions.escapeHtml(footerText);
 
         return SecurityEmailHtml.document(extraCss, true, content, footer);
     }
